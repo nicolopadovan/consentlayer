@@ -7,6 +7,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "publish:package": "pnpm --filter @nicolopadovan/analytics-consent-manager publish --no-git-checks",
     "test": "turbo test",
     "typecheck": "turbo typecheck"
   },

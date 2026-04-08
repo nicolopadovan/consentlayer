@@ -5,8 +5,8 @@ import {
   trackAddToCart,
   trackEvent,
   updateConsent,
-} from '@your-scope/analytics-consent-manager'
-import { useConsent } from '@your-scope/analytics-consent-manager/react'
+} from '@nicolopadovan/analytics-consent-manager'
+import { useConsent } from '@nicolopadovan/analytics-consent-manager/react'
 
 export function DemoClient() {
   const { consent } = useConsent()

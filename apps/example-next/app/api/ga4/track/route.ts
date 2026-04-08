@@ -4,7 +4,7 @@ import {
   createGa4MeasurementPayload,
   parseJsonWithLimit,
   sendGa4MeasurementEvent,
-} from '@your-scope/analytics-consent-manager/server'
+} from '@nicolopadovan/analytics-consent-manager/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {

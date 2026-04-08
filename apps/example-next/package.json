@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@your-scope/analytics-consent-manager": "workspace:*",
+    "@nicolopadovan/analytics-consent-manager": "workspace:*",
     "next": "16.1.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"

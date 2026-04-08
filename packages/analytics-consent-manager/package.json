@@ -1,8 +1,17 @@
 {
-  "name": "@your-scope/analytics-consent-manager",
+  "name": "@nicolopadovan/analytics-consent-manager",
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicolopadovan/analytics-consent-manager-npm.git",
+    "directory": "packages/analytics-consent-manager"
+  },
+  "homepage": "https://github.com/nicolopadovan/analytics-consent-manager-npm",
   "files": ["dist"],
   "sideEffects": false,
   "main": "./dist/index.js",

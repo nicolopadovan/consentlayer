@@ -3,10 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@your-scope/analytics-consent-manager": [
+      "@nicolopadovan/analytics-consent-manager": [
         "../../packages/analytics-consent-manager/src/index.ts"
       ],
-      "@your-scope/analytics-consent-manager/*": [
+      "@nicolopadovan/analytics-consent-manager/*": [
         "../../packages/analytics-consent-manager/src/*"
       ]
     },

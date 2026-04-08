@@ -9,27 +9,27 @@ import {
   setDefaultConsentEngine,
   setDefaultIdentityStorage,
   setDefaultRuntimeAnalyticsManager,
-} from '@your-scope/analytics-consent-manager'
+} from '@nicolopadovan/analytics-consent-manager'
 import {
   AnalyticsManager,
   AutoTracking,
   ConsentControllerProvider,
   ConsentProvider,
-} from '@your-scope/analytics-consent-manager/react'
+} from '@nicolopadovan/analytics-consent-manager/react'
 import {
   CookieBanner,
   CookieDialog,
   ManageConsentTrigger,
-} from '@your-scope/analytics-consent-manager/ui'
-import { createGa4Adapter } from '@your-scope/analytics-consent-manager/providers/ga4'
-import { createHotjarAdapter } from '@your-scope/analytics-consent-manager/providers/hotjar'
+} from '@nicolopadovan/analytics-consent-manager/ui'
+import { createGa4Adapter } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
+import { createHotjarAdapter } from '@nicolopadovan/analytics-consent-manager/providers/hotjar'
 import {
   createMetaAdapter,
-} from '@your-scope/analytics-consent-manager/providers/meta'
+} from '@nicolopadovan/analytics-consent-manager/providers/meta'
 import {
   createShopifyAnalyticsAdapter,
   createShopifyCustomerPrivacyAdapter,
-} from '@your-scope/analytics-consent-manager/providers/shopify'
+} from '@nicolopadovan/analytics-consent-manager/providers/shopify'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useState, type ReactNode } from 'react'
 

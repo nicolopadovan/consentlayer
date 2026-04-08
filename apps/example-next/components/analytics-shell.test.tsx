@@ -49,10 +49,10 @@ describe('AnalyticsShell', () => {
       NEXT_PUBLIC_FACEBOOK_PIXEL_ID: '1959498944961766',
     })
     const { createEnvConfig } = await import(
-      '@your-scope/analytics-consent-manager'
+      '@nicolopadovan/analytics-consent-manager'
     )
     const { useConsent } = await import(
-      '@your-scope/analytics-consent-manager/react'
+      '@nicolopadovan/analytics-consent-manager/react'
     )
     const { AnalyticsShell } = await import('./analytics-shell')
 

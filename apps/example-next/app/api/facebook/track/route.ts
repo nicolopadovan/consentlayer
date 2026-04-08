@@ -4,7 +4,7 @@ import {
   createMetaEventPayload,
   parseJsonWithLimit,
   sendMetaCapiEvent,
-} from '@your-scope/analytics-consent-manager/server'
+} from '@nicolopadovan/analytics-consent-manager/server'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
