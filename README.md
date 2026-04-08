@@ -1,71 +1,53 @@
 # Analytics Consent Manager
 
-Private monorepo for the `@nicolopadovan/analytics-consent-manager` package and its example Next.js consumer.
+Private monorepo for `@nicolopadovan/analytics-consent-manager` and its example Next.js consumer.
 
-## Private publishing target
+## Quick Links
 
-The package is configured for GitHub Packages and is intended to stay private.
+- [Docs index](./docs/README.md)
+- [Installation and access](./docs/installation-and-access.md)
+- [Next.js integration](./docs/nextjs-integration.md)
+- [Provider configuration](./docs/provider-configuration.md)
+- [Server-side tracking](./docs/server-side-tracking.md)
+- [Publishing and releases](./docs/publishing-and-releases.md)
+- [Troubleshooting](./docs/troubleshooting.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Security](./SECURITY.md)
+- [Support](./SUPPORT.md)
+
+## Package
 
 - Package name: `@nicolopadovan/analytics-consent-manager`
 - Registry: `https://npm.pkg.github.com`
-- Repository: `https://github.com/nicolopadovan/analytics-consent-manager-npm`
+- Repository: [github.com/nicolopadovan/analytics-consent-manager-npm](https://github.com/nicolopadovan/analytics-consent-manager-npm)
+- Example consumer: [`apps/example-next`](./apps/example-next)
 
-## Publish from GitHub Actions
+## Install
 
-The repo includes a workflow at `.github/workflows/publish-package.yml` that publishes the package with the repository `GITHUB_TOKEN`.
-
-Recommended flow:
-
-1. Bump the package version in `packages/analytics-consent-manager/package.json`.
-2. Push to `main`.
-3. Create a GitHub release or run the `Publish Package` workflow manually.
-
-## Install for teammates
-
-GitHub Packages npm auth currently requires a classic GitHub personal access token for local installs.
-
-Required scope:
-
-- `read:packages`
-
-If the package inherits permissions from the private repository, the user also needs read access to the repository.
-
-User-level `~/.npmrc` example:
+GitHub Packages local installs require a classic GitHub PAT with `read:packages`.
 
 ```ini
 @nicolopadovan:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=YOUR_CLASSIC_PAT
 always-auth=true
 ```
-
-Install command:
 
 ```bash
 pnpm add @nicolopadovan/analytics-consent-manager
 ```
 
-## Local publishing
+See [installation and access](./docs/installation-and-access.md) for the full setup.
 
-For local publishes, use a classic PAT with:
+## Repo Layout
 
-- `write:packages`
-- `read:packages`
+- [`packages/analytics-consent-manager`](./packages/analytics-consent-manager): publishable package
+- [`apps/example-next`](./apps/example-next): reference consumer and route examples
+- [`.github/workflows/publish-package.yml`](./.github/workflows/publish-package.yml): private package publish workflow
 
-Add it to your user-level `~/.npmrc`:
+## Publish Flow
 
-```ini
-@nicolopadovan:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_CLASSIC_PAT
-always-auth=true
-```
+1. Update the version in [`packages/analytics-consent-manager/package.json`](./packages/analytics-consent-manager/package.json).
+2. Push to `main`.
+3. Run the `Publish Package` workflow or publish a GitHub release.
 
-Then run:
-
-```bash
-pnpm publish:package
-```
-
-## Notes
-
-- The committed `.npmrc` only pins the `@nicolopadovan` scope to GitHub Packages and does not store a secret.
-- Your current `gh auth` login is useful for repository operations, but GitHub’s npm registry still requires package scopes for local install/publish tokens.
+Details live in [publishing and releases](./docs/publishing-and-releases.md).
