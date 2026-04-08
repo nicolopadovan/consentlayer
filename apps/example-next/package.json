@@ -1,0 +1,19 @@
+{
+  "name": "example-next",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run --config vitest.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@your-scope/analytics-consent-manager": "workspace:*",
+    "next": "16.1.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  }
+}

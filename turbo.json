@@ -1,0 +1,40 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  },
+  "globalEnv": [
+    "NODE_ENV",
+    "NEXT_PUBLIC_ENABLE_ANALYTICS",
+    "NEXT_PUBLIC_ANALYTICS_DEBUG",
+    "NEXT_PUBLIC_GA4_MEASUREMENT_ID",
+    "NEXT_PUBLIC_HOTJAR_SITE_ID",
+    "NEXT_PUBLIC_HOTJAR_VERSION",
+    "NEXT_PUBLIC_FACEBOOK_PIXEL_ID",
+    "NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT",
+    "NEXT_PUBLIC_SHOPIFY_STORE_ID",
+    "NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN",
+    "NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN",
+    "META_TOKEN",
+    "FACEBOOK_TEST_EVENT_CODE",
+    "GA4_API_SECRET"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@your-scope/analytics-consent-manager": [
+        "../../packages/analytics-consent-manager/src/index.ts"
+      ],
+      "@your-scope/analytics-consent-manager/*": [
+        "../../packages/analytics-consent-manager/src/*"
+      ]
+    },
+    "plugins": [{ "name": "next" }]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,9 @@
+node_modules
+dist
+.turbo
+.next
+coverage
+pnpm-lock.yaml
+.env.local
+apps/*/.env.local
+.playwright-cli

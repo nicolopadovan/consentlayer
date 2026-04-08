@@ -1,0 +1,70 @@
+{
+  "name": "@your-scope/analytics-consent-manager",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "files": ["dist"],
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
+    "./providers/meta": {
+      "types": "./dist/providers/meta.d.ts",
+      "import": "./dist/providers/meta.js"
+    },
+    "./providers/ga4": {
+      "types": "./dist/providers/ga4.d.ts",
+      "import": "./dist/providers/ga4.js"
+    },
+    "./providers/shopify": {
+      "types": "./dist/providers/shopify.d.ts",
+      "import": "./dist/providers/shopify.js"
+    },
+    "./providers/hotjar": {
+      "types": "./dist/providers/hotjar.d.ts",
+      "import": "./dist/providers/hotjar.js"
+    },
+    "./providers/vercel": {
+      "types": "./dist/providers/vercel.d.ts",
+      "import": "./dist/providers/vercel.js"
+    },
+    "./providers/tiktok": {
+      "types": "./dist/providers/tiktok.d.ts",
+      "import": "./dist/providers/tiktok.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "import": "./dist/ui/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "lint": "eslint src test --max-warnings 0",
+    "test": "vitest run --config vitest.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0 || ^19.0.0",
+    "react-dom": "^18.3.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}

@@ -1,0 +1,101 @@
+html {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: #111827;
+  background: #f8fafc;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.12), transparent 28rem),
+    linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 6rem;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.08);
+  padding: 1.5rem;
+}
+
+.stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.banner,
+.dialog,
+.manage {
+  position: fixed;
+  z-index: 1000;
+}
+
+.banner {
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  padding: 1rem;
+}
+
+.dialog {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(32rem, calc(100vw - 2rem));
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  padding: 1rem;
+}
+
+.manage {
+  right: 1rem;
+  bottom: 1rem;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1rem;
+  background: #111827;
+  color: white;
+  cursor: pointer;
+}
+
+.button.secondary {
+  background: #e2e8f0;
+  color: #111827;
+}
