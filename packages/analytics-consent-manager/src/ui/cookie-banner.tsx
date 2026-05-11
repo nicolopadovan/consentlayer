@@ -3,6 +3,10 @@
 import type { ComponentPropsWithoutRef } from 'react'
 import { useConsentController } from '../react/consent-controller'
 
+function cx(...values: Array<string | undefined>): string {
+  return values.filter(Boolean).join(' ')
+}
+
 export function CookieBanner(
   props: Omit<ComponentPropsWithoutRef<'section'>, 'children'>,
 ) {
@@ -17,27 +21,44 @@ export function CookieBanner(
 
   if (!ready || !bannerVisible) return null
 
+  const { className, ...rest } = props
+
   return (
     <section
-      {...props}
+      {...rest}
+      className={cx('acm-banner', className)}
       role="dialog"
       aria-modal="true"
       aria-labelledby="acm-cookie-banner-title"
     >
-      <h2 id="acm-cookie-banner-title">Cookie preferences</h2>
-      <p>
+      <h2 id="acm-cookie-banner-title" className="acm-banner__title">
+        Cookie preferences
+      </h2>
+      <p className="acm-banner__description">
         We use cookies for essential functionality and, with consent, for
         analytics and marketing.
       </p>
-      {error ? <p>{error}</p> : null}
-      <div>
-        <button type="button" onClick={() => void rejectNonEssential()}>
+      {error ? <p className="acm-banner__error">{error}</p> : null}
+      <div className="acm-banner__actions">
+        <button
+          type="button"
+          className="acm-banner__button acm-banner__button--secondary"
+          onClick={() => void rejectNonEssential()}
+        >
           Reject non-essential
         </button>
-        <button type="button" onClick={() => void openDialog()}>
+        <button
+          type="button"
+          className="acm-banner__button acm-banner__button--secondary"
+          onClick={() => void openDialog()}
+        >
           Customize
         </button>
-        <button type="button" onClick={() => void acceptAll()}>
+        <button
+          type="button"
+          className="acm-banner__button acm-banner__button--primary"
+          onClick={() => void acceptAll()}
+        >
           Accept all
         </button>
       </div>

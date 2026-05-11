@@ -16,7 +16,7 @@ describe('providers', () => {
     })
 
     const adapter = createMetaAdapter({
-      pixelId: 'pixel-123',
+      pixelId: '123456789012345',
       serverEndpoint: '/api/facebook/track',
       fetchImpl: fetchImpl as unknown as typeof fetch,
     })
@@ -36,6 +36,7 @@ describe('providers', () => {
         identity: { email: 'demo@example.com' },
         debug: false,
         isBooted: true,
+        emitError: () => undefined,
       },
     )
 

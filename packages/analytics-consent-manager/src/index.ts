@@ -29,7 +29,20 @@ export {
   createMemoryConsentStorage,
   createMemoryIdentityStorage,
 } from './core/storage'
+export {
+  assertHttpsOrRelativeUrl,
+  assertValidGa4MeasurementId,
+  assertValidMetaPixelId,
+  isHttpsOrRelativeUrl,
+  isValidEmail,
+  isValidGa4MeasurementId,
+  isValidMetaPixelId,
+  isValidPhoneE164,
+} from './core/validation'
 export type {
+  AnalyticsError,
+  AnalyticsErrorHandler,
+  AnalyticsErrorScope,
   AnalyticsEventPayload,
   AnalyticsManager,
   AnalyticsManagerOptions,

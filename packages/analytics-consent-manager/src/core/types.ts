@@ -103,6 +103,25 @@ export type AnalyticsManagerStateSnapshot = {
   activeProviders: string[]
 }
 
+export type AnalyticsErrorScope =
+  | 'provider-setup'
+  | 'provider-init'
+  | 'provider-teardown'
+  | 'provider-consent-change'
+  | 'provider-track-event'
+  | 'provider-track-page'
+  | 'provider-script-load'
+  | 'identity-validation'
+
+export type AnalyticsError = {
+  scope: AnalyticsErrorScope
+  providerId?: string
+  message: string
+  cause?: unknown
+}
+
+export type AnalyticsErrorHandler = (error: AnalyticsError) => void
+
 export type AnalyticsManagerOptions = {
   providers?: ProviderAdapter[]
   consent?: ConsentState | null
@@ -112,6 +131,7 @@ export type AnalyticsManagerOptions = {
   debug?: boolean
   lazy?: LazyBootConfig
   defaultEventDestinations?: string[]
+  onError?: AnalyticsErrorHandler
 }
 
 export type AnalyticsProviderContext = {
@@ -119,6 +139,7 @@ export type AnalyticsProviderContext = {
   identity: UserIdentity
   debug: boolean
   isBooted: boolean
+  emitError: AnalyticsErrorHandler
 }
 
 export interface ProviderAdapter {

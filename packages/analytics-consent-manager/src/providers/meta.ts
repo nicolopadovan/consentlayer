@@ -8,6 +8,10 @@ import type {
   UserIdentity,
 } from '../core/types'
 import { createEventId } from '../core/utils'
+import {
+  assertHttpsOrRelativeUrl,
+  assertValidMetaPixelId,
+} from '../core/validation'
 
 declare global {
   interface Window {
@@ -53,6 +57,11 @@ const STANDARD_EVENTS = new Set([
 export function createMetaAdapter(
   options: MetaAdapterOptions,
 ): ProviderAdapter {
+  const pixelId = assertValidMetaPixelId(options.pixelId)
+  const serverEndpoint =
+    options.serverEndpoint !== undefined
+      ? assertHttpsOrRelativeUrl(options.serverEndpoint, 'Meta serverEndpoint')
+      : undefined
   const locale = options.locale ?? 'en_US'
 
   const isReady = () =>
@@ -66,11 +75,11 @@ export function createMetaAdapter(
     customData: Record<string, unknown> | undefined,
     identity: UserIdentity,
   ) => {
-    if (!options.serverEndpoint) return
+    if (!serverEndpoint) return
     const fetchImpl = options.fetchImpl ?? globalThis.fetch
     if (!fetchImpl) return
     const hasIdentity = identity.email || identity.phone || identity.external_id
-    await fetchImpl(options.serverEndpoint, {
+    await fetchImpl(serverEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -88,17 +97,36 @@ export function createMetaAdapter(
   return {
     id: 'meta',
     requiredConsent: 'marketing',
-    setup() {
+    setup(setupContext) {
       if (typeof window === 'undefined' || window.__acmMetaPixelInitialized) return
-      const script = document.createElement('script')
-      script.setAttribute('data-analytics-consent-manager', 'meta-pixel')
-      script.innerHTML = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+
+      const bootstrap = document.createElement('script')
+      bootstrap.setAttribute(
+        'data-analytics-consent-manager',
+        'meta-pixel-bootstrap',
+      )
+      bootstrap.text = `!function(f,b,e,v,n){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
-(window, document,'script','https://connect.facebook.net/${locale}/fbevents.js');
-fbq('init', '${options.pixelId}');`
-      document.head.appendChild(script)
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];}(window);
+fbq('init', ${JSON.stringify(pixelId)});`
+      document.head.appendChild(bootstrap)
+
+      const loader = document.createElement('script')
+      loader.setAttribute(
+        'data-analytics-consent-manager',
+        'meta-pixel-loader',
+      )
+      loader.async = true
+      loader.src = `https://connect.facebook.net/${encodeURIComponent(locale)}/fbevents.js`
+      loader.onerror = () => {
+        setupContext.emitError({
+          scope: 'provider-script-load',
+          providerId: 'meta',
+          message: 'Failed to load Meta Pixel (fbevents.js)',
+        })
+      }
+      document.head.appendChild(loader)
+
       window.__acmMetaPixelInitialized = true
     },
     onConsentChange(context) {

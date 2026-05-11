@@ -4,6 +4,7 @@ import type {
   ProviderConsentRequirement,
   UserIdentity,
 } from './types'
+import { isValidEmail, isValidPhoneE164 } from './validation'
 
 export function isBrowser(): boolean {
   return typeof window !== 'undefined' && typeof document !== 'undefined'
@@ -44,8 +45,14 @@ export function hasRequiredConsent(
 
 export function normalizeIdentity(identity: Partial<UserIdentity>): UserIdentity {
   const output: UserIdentity = {}
-  if (identity.email) output.email = identity.email.trim().toLowerCase()
-  if (identity.phone) output.phone = identity.phone.replace(/\s+/g, '')
+  if (identity.email) {
+    const candidate = identity.email.trim().toLowerCase()
+    if (isValidEmail(candidate)) output.email = candidate
+  }
+  if (identity.phone) {
+    const candidate = identity.phone.replace(/[\s\-().]/g, '')
+    if (isValidPhoneE164(candidate)) output.phone = candidate
+  }
   if (identity.external_id) output.external_id = String(identity.external_id)
   return output
 }

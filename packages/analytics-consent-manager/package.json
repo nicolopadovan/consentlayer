@@ -1,6 +1,6 @@
 {
   "name": "@nicolopadovan/analytics-consent-manager",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.0",
   "type": "module",
   "license": "MIT",
   "publishConfig": {
@@ -58,6 +58,7 @@
       "types": "./dist/ui/index.d.ts",
       "import": "./dist/ui/index.js"
     },
+    "./ui/styles.css": "./dist/ui/styles.css",
     "./package.json": "./package.json"
   },
   "scripts": {

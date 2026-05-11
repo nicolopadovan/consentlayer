@@ -1,3 +1,5 @@
+import { copyFile, mkdir } from 'node:fs/promises'
+import path from 'node:path'
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
@@ -19,4 +21,9 @@ export default defineConfig({
   sourcemap: true,
   treeshake: true,
   external: ['react', 'react-dom'],
+  async onSuccess() {
+    const target = path.resolve('dist/ui/styles.css')
+    await mkdir(path.dirname(target), { recursive: true })
+    await copyFile(path.resolve('src/ui/styles.css'), target)
+  },
 })

@@ -1,4 +1,6 @@
 import type {
+  AnalyticsError,
+  AnalyticsErrorScope,
   AnalyticsEventPayload,
   AnalyticsManager,
   AnalyticsManagerOptions,
@@ -69,12 +71,40 @@ export function createAnalyticsManager(
     return true
   }
 
-  const context = () => ({
+  const emitError = (error: AnalyticsError) => {
+    debugLog(options.debug ?? false, `[${error.scope}] ${error.message}`, error.cause)
+    try {
+      options.onError?.(error)
+    } catch (handlerError) {
+      debugLog(
+        options.debug ?? false,
+        'onError handler threw',
+        handlerError,
+      )
+    }
+  }
+
+  const providerEmitError =
+    (providerId: string) => (error: AnalyticsError) =>
+      emitError({ ...error, providerId: error.providerId ?? providerId })
+
+  const context = (providerId?: string) => ({
     consent,
     identity: identityStorage.read(),
     debug: options.debug ?? false,
     isBooted: booted,
+    emitError: providerId ? providerEmitError(providerId) : emitError,
   })
+
+  const scopeForLabel = (label: string): AnalyticsErrorScope => {
+    if (label.endsWith('.setup')) return 'provider-setup'
+    if (label.endsWith('.init')) return 'provider-init'
+    if (label.endsWith('.teardown')) return 'provider-teardown'
+    if (label.endsWith('.onConsentChange')) return 'provider-consent-change'
+    if (label.endsWith('.trackEvent')) return 'provider-track-event'
+    if (label.endsWith('.trackPage')) return 'provider-track-page'
+    return 'provider-setup'
+  }
 
   const ensureProviderState = (provider: ProviderAdapter): ProviderState => {
     const existing = providerStates.get(provider.id)
@@ -96,33 +126,42 @@ export function createAnalyticsManager(
     try {
       await Promise.resolve(callback())
     } catch (error) {
-      debugLog(options.debug ?? false, `${label} failed`, error)
+      const [providerId] = label.split('.')
+      emitError({
+        scope: scopeForLabel(label),
+        providerId,
+        message: `${label} failed`,
+        cause: error,
+      })
     }
   }
 
   const ensureSetup = async (state: ProviderState) => {
     if (state.setup || !booted || !runtimeEnabled()) return
-    const enabled = state.adapter.enabled?.(context()) ?? true
+    const enabled = state.adapter.enabled?.(context(state.adapter.id)) ?? true
     if (!enabled) return
-    await safeCall(`${state.adapter.id}.setup`, () => state.adapter.setup?.(context()))
+    await safeCall(`${state.adapter.id}.setup`, () =>
+      state.adapter.setup?.(context(state.adapter.id)),
+    )
     state.setup = true
   }
 
   const evaluateProvider = async (state: ProviderState) => {
     const enabled =
-      runtimeEnabled() && (state.adapter.enabled?.(context()) ?? true)
+      runtimeEnabled() &&
+      (state.adapter.enabled?.(context(state.adapter.id)) ?? true)
     const allowed = hasRequiredConsent(consent, state.adapter.requiredConsent)
 
     if (booted && enabled) {
       await ensureSetup(state)
       await safeCall(`${state.adapter.id}.onConsentChange`, () =>
-        state.adapter.onConsentChange?.(context()),
+        state.adapter.onConsentChange?.(context(state.adapter.id)),
       )
     }
 
     if (booted && enabled && allowed && !state.active) {
       await safeCall(`${state.adapter.id}.init`, () =>
-        state.adapter.init?.(context()),
+        state.adapter.init?.(context(state.adapter.id)),
       )
       state.active = true
       return
@@ -130,7 +169,7 @@ export function createAnalyticsManager(
 
     if ((!booted || !enabled || !allowed) && state.active) {
       await safeCall(`${state.adapter.id}.teardown`, () =>
-        state.adapter.teardown?.(context()),
+        state.adapter.teardown?.(context(state.adapter.id)),
       )
       state.active = false
     }
@@ -251,7 +290,7 @@ export function createAnalyticsManager(
         if (!providerStates.has(provider.id)) return
         if (state.active) {
           void safeCall(`${provider.id}.teardown`, () =>
-            provider.teardown?.(context()),
+            provider.teardown?.(context(provider.id)),
           )
         }
         providerStates.delete(provider.id)
@@ -269,7 +308,7 @@ export function createAnalyticsManager(
       const page = { ...getWindowLocation(), ...payload }
       await trackAgainstProviders([], async (state) => {
         await safeCall(`${state.adapter.id}.trackPage`, () =>
-          state.adapter.trackPage?.(page, context()),
+          state.adapter.trackPage?.(page, context(state.adapter.id)),
         )
       })
     },
@@ -295,7 +334,7 @@ export function createAnalyticsManager(
       await trackAgainstProviders(destinations, async (state) => {
         if (!hasRequiredConsent(consent, state.adapter.requiredConsent)) return
         await safeCall(`${state.adapter.id}.trackEvent`, () =>
-          state.adapter.trackEvent?.(event, context()),
+          state.adapter.trackEvent?.(event, context(state.adapter.id)),
         )
       })
     },
@@ -351,7 +390,7 @@ export function createAnalyticsManager(
       for (const state of providerStates.values()) {
         if (state.active) {
           void safeCall(`${state.adapter.id}.teardown`, () =>
-            state.adapter.teardown?.(context()),
+            state.adapter.teardown?.(context(state.adapter.id)),
           )
         }
       }

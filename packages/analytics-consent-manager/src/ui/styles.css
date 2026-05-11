@@ -1,0 +1,162 @@
+/*
+ * Default theme for @nicolopadovan/analytics-consent-manager UI components.
+ *
+ * Every visible property is driven by a CSS custom property so consumers can
+ * override the theme without rewriting markup. Override at any selector:
+ *
+ *   :root { --acm-accent: #3b82f6; --acm-radius: 8px; }
+ *
+ * Or scope to a single component:
+ *
+ *   .acm-banner { --acm-bg: #111; --acm-fg: #eee; }
+ */
+
+:where(.acm-banner, .acm-dialog, .acm-manage-trigger) {
+  --acm-bg: #ffffff;
+  --acm-fg: #111827;
+  --acm-muted: #6b7280;
+  --acm-border: #e5e7eb;
+  --acm-accent: #111827;
+  --acm-accent-fg: #ffffff;
+  --acm-danger: #b91c1c;
+  --acm-radius: 12px;
+  --acm-radius-button: 8px;
+  --acm-padding: 20px;
+  --acm-gap: 12px;
+  --acm-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --acm-font-family:
+    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --acm-z-index: 1000;
+
+  box-sizing: border-box;
+  font-family: var(--acm-font-family);
+  color: var(--acm-fg);
+}
+
+:where(.acm-banner, .acm-dialog) *,
+:where(.acm-banner, .acm-dialog) *::before,
+:where(.acm-banner, .acm-dialog) *::after {
+  box-sizing: inherit;
+}
+
+.acm-banner {
+  position: fixed;
+  inset: auto 16px 16px 16px;
+  max-width: 640px;
+  margin-inline: auto;
+  padding: var(--acm-padding);
+  background: var(--acm-bg);
+  border: 1px solid var(--acm-border);
+  border-radius: var(--acm-radius);
+  box-shadow: var(--acm-shadow);
+  z-index: var(--acm-z-index);
+  display: flex;
+  flex-direction: column;
+  gap: var(--acm-gap);
+}
+
+.acm-banner__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.acm-banner__description {
+  margin: 0;
+  color: var(--acm-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.acm-banner__error {
+  margin: 0;
+  color: var(--acm-danger);
+  font-size: 0.85rem;
+}
+
+.acm-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.acm-banner__button,
+.acm-dialog__button,
+.acm-manage-trigger {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: var(--acm-radius-button);
+  border: 1px solid var(--acm-border);
+  background: transparent;
+  color: var(--acm-fg);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.acm-banner__button:hover,
+.acm-dialog__button:hover,
+.acm-manage-trigger:hover {
+  background: color-mix(in srgb, var(--acm-fg) 5%, transparent);
+}
+
+.acm-banner__button--primary,
+.acm-dialog__button--primary {
+  background: var(--acm-accent);
+  color: var(--acm-accent-fg);
+  border-color: var(--acm-accent);
+}
+
+.acm-banner__button--primary:hover,
+.acm-dialog__button--primary:hover {
+  background: color-mix(in srgb, var(--acm-accent) 90%, black);
+}
+
+.acm-dialog {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, calc(100vw - 32px));
+  padding: var(--acm-padding);
+  background: var(--acm-bg);
+  border: 1px solid var(--acm-border);
+  border-radius: var(--acm-radius);
+  box-shadow: var(--acm-shadow);
+  z-index: calc(var(--acm-z-index) + 1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--acm-gap);
+}
+
+.acm-dialog__title {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.acm-dialog__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.acm-dialog__option:has(input:disabled) {
+  cursor: default;
+  color: var(--acm-muted);
+}
+
+.acm-dialog__checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--acm-accent);
+}
+
+.acm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}

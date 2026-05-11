@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { isValidEmail, isValidPhoneE164 } from '../core/validation'
 import { parseCookieHeader } from './http'
 
 export type MetaUserDataInput = {
@@ -70,6 +71,12 @@ export function sanitizeMetaCustomData(
 
 export function createMetaEventPayload(input: MetaEventInput) {
   const cookies = extractMetaCookies(input.cookieHeader ?? '')
+  const normalizedEmail = input.user?.email
+    ? input.user.email.toLowerCase().trim()
+    : undefined
+  const normalizedPhone = input.user?.phone
+    ? `+${input.user.phone.replace(/\D/g, '')}`
+    : undefined
   return {
     data: [
       {
@@ -87,12 +94,14 @@ export function createMetaEventPayload(input: MetaEventInput) {
           client_user_agent: input.clientUserAgent,
           fbp: input.user?.fbp ?? cookies.fbp,
           fbc: input.user?.fbc ?? cookies.fbc,
-          em: input.user?.email
-            ? sha256(input.user.email.toLowerCase().trim())
-            : undefined,
-          ph: input.user?.phone
-            ? sha256(input.user.phone.replace(/\D/g, ''))
-            : undefined,
+          em:
+            normalizedEmail && isValidEmail(normalizedEmail)
+              ? sha256(normalizedEmail)
+              : undefined,
+          ph:
+            normalizedPhone && isValidPhoneE164(normalizedPhone)
+              ? sha256(normalizedPhone.slice(1))
+              : undefined,
           external_id: input.user?.external_id
             ? sha256(input.user.external_id)
             : undefined,
