@@ -13,3 +13,4 @@ export {
   type ConsentProviderProps,
   useConsent,
 } from './consent-provider'
+export { useTracker, type Tracker } from './use-tracker'

@@ -4,6 +4,29 @@ All notable changes to `@nicolopadovan/analytics-consent-manager` are documented
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-rc.1] — 2026-05-11
+
+### Added
+- `AutoTrackingConfig` — granular per-feature control over auto-tracking. Pass to
+  `manager.enableAutoTracking(config)` or `<AutoTracking config={...} />`.
+  - `clicks`: `boolean | { mode: 'all' | 'attribute', attribute?, selectors? }`.
+    Default `'all'` matches every clickable element; switch to `'attribute'` to
+    only fire for elements bearing a `data-track` (or custom) attribute.
+  - `scroll`: `boolean | { thresholds: number[] }` — replace the default
+    `[25, 50, 75, 100]` with any depths you want, or disable entirely.
+  - `timeOnPage`: `boolean | { intervals: number[] }` — replace the default
+    `[5, 15, 30, 60, 120]` seconds, or disable.
+  - `pageViews`: `boolean` — toggle the `acm.page_session_start` marker event.
+- `useTracker()` React hook returning `{ trackEvent, trackPage, newPageSession }`
+  so consumers don't have to thread the manager through their component tree.
+- Public type exports: `AutoTrackingConfig`, `AutoTrackingClickConfig`,
+  `AutoTrackingClickMode`, `AutoTrackingScrollConfig`, `AutoTrackingTimeConfig`.
+
+### Changed
+- `enableAutoTracking()` with no arguments still produces the previous behaviour
+  (all clicks, scroll 25/50/75/100, time 5/15/30/60/120, page-session marker).
+  Backwards-compatible.
+
 ## [1.0.0-rc.0] — 2026-05-11
 
 ### Added

@@ -78,6 +78,29 @@ export type LazyBootConfig = {
   timeoutMs?: number
 }
 
+export type AutoTrackingClickMode = 'all' | 'attribute'
+
+export type AutoTrackingClickConfig = {
+  mode?: AutoTrackingClickMode
+  attribute?: string
+  selectors?: string[]
+}
+
+export type AutoTrackingScrollConfig = {
+  thresholds?: number[]
+}
+
+export type AutoTrackingTimeConfig = {
+  intervals?: number[]
+}
+
+export type AutoTrackingConfig = {
+  clicks?: boolean | AutoTrackingClickConfig
+  scroll?: boolean | AutoTrackingScrollConfig
+  timeOnPage?: boolean | AutoTrackingTimeConfig
+  pageViews?: boolean
+}
+
 export type PageViewPayload = {
   url?: string
   path?: string
@@ -171,7 +194,7 @@ export interface AnalyticsManager {
     params?: Record<string, unknown>,
     options?: TrackEventOptions,
   ): Promise<void>
-  enableAutoTracking(): void
+  enableAutoTracking(config?: AutoTrackingConfig): void
   newPageSession(): void
   getSnapshot(): AnalyticsManagerStateSnapshot
   subscribe(listener: (snapshot: AnalyticsManagerStateSnapshot) => void): () => void

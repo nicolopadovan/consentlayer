@@ -5,6 +5,7 @@ import type {
   AnalyticsManager,
   AnalyticsManagerOptions,
   AnalyticsManagerStateSnapshot,
+  AutoTrackingConfig,
   ProviderAdapter,
 } from './types'
 import { getDefaultIdentityStorage } from './identity'
@@ -28,6 +29,74 @@ type ProviderState = {
   active: boolean
 }
 
+const DEFAULT_CLICK_SELECTORS = [
+  'button',
+  '[role="button"]',
+  'a',
+  'input[type="submit"]',
+  'input[type="button"]',
+]
+const DEFAULT_CLICK_ATTRIBUTE = 'data-track'
+const DEFAULT_SCROLL_THRESHOLDS = [25, 50, 75, 100]
+const DEFAULT_TIME_INTERVALS = [5, 15, 30, 60, 120]
+
+type ResolvedAutoTracking = {
+  clicks:
+    | { enabled: false }
+    | {
+        enabled: true
+        mode: 'all' | 'attribute'
+        attribute: string
+        selectors: string[]
+      }
+  scroll: { enabled: false } | { enabled: true; thresholds: number[] }
+  timeOnPage: { enabled: false } | { enabled: true; intervals: number[] }
+  pageViews: boolean
+}
+
+function resolveAutoTracking(
+  config: AutoTrackingConfig | undefined,
+): ResolvedAutoTracking {
+  const clicks = config?.clicks
+  const scroll = config?.scroll
+  const time = config?.timeOnPage
+
+  return {
+    clicks:
+      clicks === false
+        ? { enabled: false }
+        : {
+            enabled: true,
+            mode: (clicks === true || clicks == null ? undefined : clicks.mode) ?? 'all',
+            attribute:
+              (clicks === true || clicks == null ? undefined : clicks.attribute) ??
+              DEFAULT_CLICK_ATTRIBUTE,
+            selectors:
+              (clicks === true || clicks == null ? undefined : clicks.selectors) ??
+              DEFAULT_CLICK_SELECTORS,
+          },
+    scroll:
+      scroll === false
+        ? { enabled: false }
+        : {
+            enabled: true,
+            thresholds:
+              (scroll === true || scroll == null ? undefined : scroll.thresholds) ??
+              DEFAULT_SCROLL_THRESHOLDS,
+          },
+    timeOnPage:
+      time === false
+        ? { enabled: false }
+        : {
+            enabled: true,
+            intervals:
+              (time === true || time == null ? undefined : time.intervals) ??
+              DEFAULT_TIME_INTERVALS,
+          },
+    pageViews: config?.pageViews ?? true,
+  }
+}
+
 export function createAnalyticsManager(
   options: AnalyticsManagerOptions = {},
 ): AnalyticsManager {
@@ -41,6 +110,7 @@ export function createAnalyticsManager(
   let lifecycleQueue = Promise.resolve()
   let unsubscribeConsent: (() => void) | undefined
   let autoBound = false
+  let autoTracking: ResolvedAutoTracking = resolveAutoTracking(undefined)
   let activeScrollHandler: ((event: Event) => void) | null = null
   let activeClickHandler: ((event: Event) => void) | null = null
   let pageSessionIdCounter = 0
@@ -213,52 +283,66 @@ export function createAnalyticsManager(
     clearSessionTimers()
     pageSessionIdCounter += 1
     const sessionId = pageSessionIdCounter
-    void api.trackEvent(
-      defaultRuntimePreset.autoTrackingEvents.pageSessionStart,
-      { session_id: sessionId },
-    )
 
-    const scrollMarks = new Set<number>()
-    const emitDepth = (depth: number) => {
-      if (scrollMarks.has(depth)) return
-      scrollMarks.add(depth)
-      void api.trackEvent(defaultRuntimePreset.autoTrackingEvents.scrollDepth, {
-        depth,
-        session_id: sessionId,
-      })
+    if (autoTracking.pageViews) {
+      void api.trackEvent(
+        defaultRuntimePreset.autoTrackingEvents.pageSessionStart,
+        { session_id: sessionId },
+      )
     }
 
     if (activeScrollHandler) {
       window.removeEventListener('scroll', activeScrollHandler)
+      activeScrollHandler = null
     }
 
-    activeScrollHandler = () => {
-      const doc = document.documentElement
-      const scrollTop = window.scrollY || doc.scrollTop
-      const total = doc.scrollHeight - window.innerHeight
-      if (total <= 0) return
-      const ratio = Math.min(1, scrollTop / total)
-      const depth = Math.round(ratio * 100)
-      if (depth >= 25) emitDepth(25)
-      if (depth >= 50) emitDepth(50)
-      if (depth >= 75) emitDepth(75)
-      if (depth >= 95) emitDepth(100)
-      if (scrollMarks.size === 4 && activeScrollHandler) {
-        window.removeEventListener('scroll', activeScrollHandler)
+    if (autoTracking.scroll.enabled) {
+      const thresholds = [...autoTracking.scroll.thresholds]
+        .filter((value) => Number.isFinite(value) && value > 0 && value <= 100)
+        .sort((a, b) => a - b)
+      const emitted = new Set<number>()
+      const emitDepth = (threshold: number) => {
+        if (emitted.has(threshold)) return
+        emitted.add(threshold)
+        void api.trackEvent(
+          defaultRuntimePreset.autoTrackingEvents.scrollDepth,
+          { depth: threshold, session_id: sessionId },
+        )
       }
+
+      activeScrollHandler = () => {
+        const doc = document.documentElement
+        const scrollTop = window.scrollY || doc.scrollTop
+        const total = doc.scrollHeight - window.innerHeight
+        if (total <= 0) return
+        const ratio = Math.min(1, scrollTop / total)
+        const depth = Math.round(ratio * 100)
+        for (const threshold of thresholds) {
+          // Allow a small buffer for the 100% threshold so it fires near the
+          // bottom even when scroll math doesn't land exactly on 100.
+          const triggerAt = threshold === 100 ? 95 : threshold
+          if (depth >= triggerAt) emitDepth(threshold)
+        }
+        if (emitted.size === thresholds.length && activeScrollHandler) {
+          window.removeEventListener('scroll', activeScrollHandler)
+        }
+      }
+
+      window.addEventListener('scroll', activeScrollHandler, { passive: true })
     }
 
-    window.addEventListener('scroll', activeScrollHandler, { passive: true })
-
-    for (const seconds of [5, 15, 30, 60, 120]) {
-      const handle = window.setTimeout(() => {
-        if (sessionId !== pageSessionIdCounter) return
-        void api.trackEvent(defaultRuntimePreset.autoTrackingEvents.timeOnPage, {
-          seconds,
-          session_id: sessionId,
-        })
-      }, seconds * 1000)
-      timeouts.push(handle)
+    if (autoTracking.timeOnPage.enabled) {
+      for (const seconds of autoTracking.timeOnPage.intervals) {
+        if (!Number.isFinite(seconds) || seconds <= 0) continue
+        const handle = window.setTimeout(() => {
+          if (sessionId !== pageSessionIdCounter) return
+          void api.trackEvent(
+            defaultRuntimePreset.autoTrackingEvents.timeOnPage,
+            { seconds, session_id: sessionId },
+          )
+        }, seconds * 1000)
+        timeouts.push(handle)
+      }
     }
   }
 
@@ -338,33 +422,44 @@ export function createAnalyticsManager(
         )
       })
     },
-    enableAutoTracking() {
+    enableAutoTracking(config) {
       if (!isBrowser() || autoBound) return
       autoBound = true
+      autoTracking = resolveAutoTracking(config)
 
-      activeClickHandler = (event) => {
-        const target = event.target as HTMLElement | null
-        if (!target) return
-        const button = target.closest(
-          'button, [role="button"], a, input[type="submit"], input[type="button"]',
-        )
-        if (!(button instanceof HTMLElement)) return
-        const name =
-          button.getAttribute('data-track') ||
-          button.getAttribute('aria-label') ||
-          button.getAttribute('name') ||
-          button.textContent?.trim()?.slice(0, 80) ||
-          'unknown'
-        void api.trackEvent(defaultRuntimePreset.autoTrackingEvents.uiClick, {
-          ui_target: name,
-          ui_element: button.tagName.toLowerCase(),
-          ui_id: button.id || undefined,
-          path: window.location.pathname,
-          session_id: pageSessionIdCounter || undefined,
-        })
+      const clicks = autoTracking.clicks
+      if (clicks.enabled) {
+        const selectorList = clicks.selectors.join(', ')
+        activeClickHandler = (event) => {
+          const target = event.target as HTMLElement | null
+          if (!target) return
+          let element: HTMLElement | null = null
+          if (clicks.mode === 'attribute') {
+            const closest = target.closest(`[${clicks.attribute}]`)
+            if (closest instanceof HTMLElement) element = closest
+          } else {
+            const closest = selectorList ? target.closest(selectorList) : null
+            if (closest instanceof HTMLElement) element = closest
+          }
+          if (!element) return
+          const name =
+            element.getAttribute(clicks.attribute) ||
+            element.getAttribute('aria-label') ||
+            element.getAttribute('name') ||
+            element.textContent?.trim()?.slice(0, 80) ||
+            'unknown'
+          void api.trackEvent(defaultRuntimePreset.autoTrackingEvents.uiClick, {
+            ui_target: name,
+            ui_element: element.tagName.toLowerCase(),
+            ui_id: element.id || undefined,
+            path: window.location.pathname,
+            session_id: pageSessionIdCounter || undefined,
+          })
+        }
+
+        window.addEventListener('click', activeClickHandler)
       }
 
-      window.addEventListener('click', activeClickHandler)
       startPageSession()
     },
     newPageSession() {
