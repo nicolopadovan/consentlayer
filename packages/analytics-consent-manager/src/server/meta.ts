@@ -1,6 +1,8 @@
 import crypto from 'node:crypto'
 import { isValidEmail, isValidPhoneE164 } from '../core/validation'
 import { parseCookieHeader } from './http'
+import { toMetaEvent } from '../core/meta-events'
+import type { ServerDestination } from './handler'
 
 export type MetaUserDataInput = {
   email?: string
@@ -153,4 +155,45 @@ export async function sendMetaCapiEvent(input: {
       body: JSON.stringify(input.payload),
     },
   )
+}
+
+/** Meta Conversions API. Receives browser events too; Meta dedupes them by event ID. */
+export function metaCapi(options: {
+  pixelId: string
+  accessToken: string
+  testEventCode?: string
+  fetchImpl?: typeof fetch
+}): ServerDestination<true> {
+  return {
+    id: 'meta',
+    requiredConsent: 'marketing',
+    forwardBrowserEvents: true,
+    async send(event, request) {
+      const { name, params } = toMetaEvent({
+        id: event.id ?? '',
+        name: event.name,
+        params: event.params ?? {},
+        options: { providers: event.providers },
+      })
+      const response = await sendMetaCapiEvent({
+        ...options,
+        payload: createMetaEventPayload({
+          eventName: name,
+          eventId: event.id,
+          eventSourceUrl: event.url,
+          customData: params,
+          user: {
+            email: event.identity?.email,
+            phone: event.identity?.phone,
+            external_id: event.identity?.userId,
+            fbc: request?.cookies._fbc,
+            fbp: request?.cookies._fbp,
+          },
+          clientIpAddress: request?.ip,
+          clientUserAgent: request?.userAgent,
+        }),
+      })
+      if (!response.ok) throw new Error(`Meta CAPI ${response.status}: ${await response.text()}`)
+    },
+  }
 }

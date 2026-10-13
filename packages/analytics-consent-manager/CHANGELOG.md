@@ -32,12 +32,23 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
   `requiredConsent` runs without consent. Error scopes renamed to match.
 - Provider factories renamed: `ga4()`, `meta()`, `hotjar()`, `shopify()`,
   `tiktok()`, `vercel()`. `vercel()` no longer requires analytics consent.
+- `meta()` loses `serverEndpoint` and `fetchImpl`: browser → server forwarding
+  moved to `createAnalytics({ server: { endpoint } })`, which posts a new
+  event shape for `createAnalyticsHandler`.
 
 ### Added
 - `definePlugin`, `loadScript`, `getFlag` / `setFlag` for plugin authors, and
   `checkPlugin()` in `/testing`, which every built-in passes. The manager runs
   `setup` → `consent` → `load` (once) and `teardown` on withdrawal.
 - `requiredConsent: 'none'` for cookieless providers.
+- Server: `createAnalyticsHandler` (one web-standard route that forwards browser
+  events to Meta CAPI), `sendServerEvent` for webhook events, and the
+  destinations `metaCapi` (`/server/meta`) and `ga4Server` (`/server/ga4`).
+  Each checks the consent sent with the event, hashes personal data and reads
+  `_fbp` / `_fbc` / `_ga`. GA4 receives server-only events, with the
+  Measurement Protocol `consent` field.
+- `createAnalytics({ server: { endpoint } })` forwards `track` and `page` with
+  their event ID; page views reach Meta CAPI as `PageView`.
 - Page views carry an ID (`page.id`) that Meta uses as `eventID`.
 - Typed `StandardEvents` params; `providers: { [id]: extras }` per-event option.
 - `identify(userId, traits)`, `reset()`, `group(id, traits)` and matching

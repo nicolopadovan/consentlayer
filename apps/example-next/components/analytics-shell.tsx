@@ -34,12 +34,7 @@ function createShellAnalytics(env: AnalyticsShellEnv) {
     providers.push(ga4({ measurementId: env.ga4.measurementId }))
   }
   if (env.meta.pixelId) {
-    providers.push(
-      meta({
-        pixelId: env.meta.pixelId,
-        serverEndpoint: '/api/facebook/track',
-      }),
-    )
+    providers.push(meta({ pixelId: env.meta.pixelId }))
   }
   if (env.shopify.storeId) {
     providers.push(shopify())
@@ -69,6 +64,7 @@ function createShellAnalytics(env: AnalyticsShellEnv) {
         }),
       ],
     },
+    server: env.meta.pixelId ? { endpoint: '/api/analytics' } : undefined,
     autoTracking: true,
     enabled: env.runtimeEnabled,
     debug: env.debug,

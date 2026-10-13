@@ -28,7 +28,9 @@ Subpath entrypoints are available under the same package:
 
 - `@nicolopadovan/analytics-consent-manager`
 - `@nicolopadovan/analytics-consent-manager/react`
-- `@nicolopadovan/analytics-consent-manager/server`
+- `@nicolopadovan/analytics-consent-manager/server` (plus `/server/ga4`, `/server/meta`)
+- `@nicolopadovan/analytics-consent-manager/ecommerce`
+- `@nicolopadovan/analytics-consent-manager/testing`
 - `@nicolopadovan/analytics-consent-manager/ui`
 - `@nicolopadovan/analytics-consent-manager/providers/*`
 

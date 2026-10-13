@@ -186,7 +186,7 @@ describe('createAnalytics', () => {
     analytics.destroy()
   })
 
-  it('keeps the Meta pixel off after a withdrawal once it holds an email', async () => {
+  it('keeps the Meta pixel off after a withdrawal once it holds an email', () => {
     const fbq = vi.fn()
     Object.assign(window, { fbq, __npcmMetaPixelInitialized: undefined, __acmMetaPixelInitialized: undefined })
     const pixel = meta({ pixelId: '123456789012345' })
@@ -197,7 +197,7 @@ describe('createAnalytics', () => {
     window.fbq = fbq
     pixel.consent?.(off)
     pixel.consent?.({ ...on, identity: {} })
-    await pixel.track?.(event('purchase', {}), { ...on, identity: {} })
+    pixel.track?.(event('purchase', {}), { ...on, identity: {} })
     expect(fbq.mock.calls).toEqual([['consent', 'revoke'], ['consent', 'revoke']])
   })
 

@@ -14,6 +14,8 @@ export default defineConfig({
     'providers/vercel': 'src/providers/vercel.ts',
     'providers/tiktok': 'src/providers/tiktok.ts',
     'server/index': 'src/server/index.ts',
+    'server/ga4': 'src/server/ga4.ts',
+    'server/meta': 'src/server/meta.ts',
     testing: 'src/testing.ts',
     'ui/index': 'src/ui/index.ts',
   },

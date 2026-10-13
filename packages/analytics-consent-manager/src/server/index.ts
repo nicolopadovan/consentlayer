@@ -17,3 +17,12 @@ export {
   sendMetaCapiEvent,
   sha256,
 } from './meta'
+export {
+  createAnalyticsHandler,
+  requestInfo,
+  sendServerEvent,
+  type ServerDestination,
+  type ServerEvent,
+  type ServerRequestInfo,
+  type ServerSendResult,
+} from './handler'

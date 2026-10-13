@@ -217,6 +217,24 @@ export type AnalyticsManagerOptions = {
   /** Starts once analytics consent is granted. `true` turns everything on; off by default. */
   autoTracking?: AutoTrackingConfig | boolean
   onError?: AnalyticsErrorHandler
+  /** Also send each event to this route (see `createAnalyticsHandler`). HTTPS URL or a path starting with "/". */
+  server?: { endpoint: string }
+}
+
+/** What the browser sends to the server, and what `sendServerEvent` takes. */
+export type ServerEvent = {
+  /** Shared with the browser event so destinations can dedupe. */
+  id?: string
+  name: string
+  params?: Record<string, unknown>
+  /** The consent the event was collected under. */
+  consent: ConsentState
+  identity?: UserIdentity
+  url?: string
+  /** GA4 client ID; read from the `_ga` cookie when omitted. */
+  clientId?: string
+  only?: string[]
+  providers?: Record<string, Record<string, unknown>>
 }
 
 export type PluginContext = {

@@ -5,7 +5,7 @@
 | Provider | Factory | Consent gate | Required config | Notes |
 | --- | --- | --- | --- | --- |
 | GA4 | `ga4` | `analytics` | `measurementId` | Initializes Google Consent Mode with denied defaults, then updates on consent changes |
-| Meta Pixel | `meta` | `marketing` | `pixelId` | Browser pixel plus optional CAPI mirror; marketing consent is enforced in core |
+| Meta Pixel | `meta` | `marketing` | `pixelId` | Browser pixel; add CAPI with `metaCapi` on the server ([server-side tracking](./server-side-tracking.md)) |
 | Shopify analytics | `shopify` | `analytics` | optional script URLs | Queues page/event payloads for Shopify browser analytics |
 | Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter` | consent source | optional headless storefront config | Bootstraps and syncs consent state |
 | Hotjar | `hotjar` | `analytics` | `siteId`, `version`, `reloadOnRevoke` | Loads only after analytics consent; on withdrawal its cookies and storage are deleted, but its script keeps running and recreates them until the page reloads; set `reloadOnRevoke` to reload and stop it |
@@ -30,7 +30,6 @@ sources such as Shopify Customer Privacy to
 - `NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN`
 - `META_TOKEN`
 - `FACEBOOK_TEST_EVENT_CODE`
-- `GA4_API_SECRET`
 
 ## Consent Notes
 

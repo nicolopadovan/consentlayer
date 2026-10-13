@@ -129,8 +129,8 @@
       <p><code>&lt;AnalyticsProvider analytics={…}&gt;</code> takes the <code>createAnalytics()</code> instance, boots it (immediately, on idle, or manually) and fires a page view per route · <code>&lt;CookieBanner&gt;</code>/<code>&lt;CookieDialog&gt;</code> give you Accept all / Reject / Customize; <code>useAnalytics()</code> / <code>useConsent()</code> for your own UI. <code>window.NPCM_openConsent()</code> reopens the dialog.</p>
     </div>
     <div class="panel">
-      <h3>Server helpers <span class="tag">/server</span></h3>
-      <p>For your own API routes: GA4 Measurement Protocol, Meta Conversions API (hashing, <code>_fbp</code>/<code>_fbc</code> extraction), same-origin checks, body size limits. These run on your server; consent checks there are up to the app.</p>
+      <h3>Server <span class="tag">/server</span></h3>
+      <p><code>createAnalyticsHandler</code> is one route that receives browser events (with <code>server: { endpoint }</code>) and forwards them to Meta CAPI, deduped by event ID. <code>sendServerEvent</code> sends webhook events to GA4 and Meta. Both check the consent sent with each event, hash personal data and read <code>_fbp</code>/<code>_fbc</code>/<code>_ga</code>.</p>
     </div>
   </div>
 

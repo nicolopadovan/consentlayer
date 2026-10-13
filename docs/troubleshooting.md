@@ -21,10 +21,12 @@ Check:
 
 Check:
 
-- `META_TOKEN` for Meta
-- `GA4_API_SECRET` for GA4
-- same-origin headers are present
-- your route stays app-local and is reachable from the browser adapter
+- `onError` on `createAnalytics` (scope `server-forward`) and on `createAnalyticsHandler`
+- `META_TOKEN` for Meta, `GA4_API_SECRET` for GA4
+- the handler answers 403: the request is cross-origin or has no `Origin` / `Referer`
+- the handler answers 400: the body isn't a valid event
+- GA4 fails with "needs event.clientId": the webhook event has no saved client ID
+- no request at all: `server.endpoint` isn't set, or neither analytics nor marketing is granted
 
 ## Consent Looks Stale In The UI
 

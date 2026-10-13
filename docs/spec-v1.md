@@ -1,6 +1,6 @@
 # Spec: v1 architecture
 
-Status: stage 1 implemented; stage 2 in progress · 2026-10-13
+Status: stages 1 and 2 implemented · 2026-10-13
 
 ## Goal
 
@@ -241,7 +241,7 @@ Each destination follows its vendor's recommended setup (decided
    - Standard events and packs; per-provider translation.
    - `identify` / `reset`.
    - Instance-based React provider.
-2. **Contract and server**
+2. **Contract and server** (done)
    - `definePlugin`, the manager-enforced lifecycle, the public helpers and the
      contract test kit; built-ins ported to them.
    - `createAnalyticsHandler`, the server destinations and automatic browser →

@@ -58,6 +58,14 @@
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.js"
     },
+    "./server/ga4": {
+      "types": "./dist/server/ga4.d.ts",
+      "import": "./dist/server/ga4.js"
+    },
+    "./server/meta": {
+      "types": "./dist/server/meta.d.ts",
+      "import": "./dist/server/meta.js"
+    },
     "./testing": {
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js"

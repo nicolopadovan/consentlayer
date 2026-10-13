@@ -75,14 +75,11 @@ describe('adapter construction', () => {
     )
   })
 
-  it('throws at construction when Meta pixel id or endpoint is invalid', () => {
+  it('throws at construction when Meta pixel id or the server endpoint is invalid', () => {
     expect(() => meta({ pixelId: 'oops' })).toThrow(/Meta Pixel ID/)
     expect(() =>
-      meta({
-        pixelId: '123456789012345',
-        serverEndpoint: 'http://insecure.example.com',
-      }),
-    ).toThrow(/Meta serverEndpoint/)
+      createAnalyticsManager({ server: { endpoint: 'http://insecure.example.com' } }),
+    ).toThrow(/server\.endpoint/)
   })
 })
 

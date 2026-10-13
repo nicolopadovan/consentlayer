@@ -55,6 +55,7 @@ export type {
   PageViewPayload,
   PluginContext,
   ProviderConsentRequirement,
+  ServerEvent,
   StandardEvents,
   TrackEventOptions,
   UserIdentity,

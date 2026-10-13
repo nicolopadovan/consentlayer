@@ -20,8 +20,7 @@ Include:
 ## Good Reference Files
 
 - consumer wiring: [`apps/example-next/components/analytics-shell.tsx`](./apps/example-next/components/analytics-shell.tsx)
-- Meta route example: [`apps/example-next/app/api/facebook/track/route.ts`](./apps/example-next/app/api/facebook/track/route.ts)
-- GA4 route example: [`apps/example-next/app/api/ga4/track/route.ts`](./apps/example-next/app/api/ga4/track/route.ts)
+- Server route example: [`apps/example-next/app/api/analytics/route.ts`](./apps/example-next/app/api/analytics/route.ts)
 
 ## Escalation
 

@@ -96,7 +96,7 @@ await analytics.reset() // on logout
 | Provider | User ID | Email and phone (marketing consent) |
 |---|---|---|
 | GA4 | `user_id` | `user_data` ([user-provided data collection](https://support.google.com/analytics/answer/14077171) must be on in GA4 admin) |
-| Meta | `external_id` | browser pixel advanced matching only if known when the pixel starts (Meta accepts it only then, so usually not on a first visit), and the server mirror on every event. If the pixel started with an email or phone and marketing is withdrawn, the browser pixel stays off until the next page load |
+| Meta | `external_id` | browser pixel advanced matching only if known when the pixel starts (Meta accepts it only then, so usually not on a first visit), and on every event sent to CAPI. If the pixel started with an email or phone and marketing is withdrawn, the browser pixel stays off until the next page load |
 | Hotjar | identify | email as an attribute, when there is a user ID |
 | Vercel, Shopify | — | — (no API for it) |
 - `reset()` clears the stored identity and tells each provider that has loaded

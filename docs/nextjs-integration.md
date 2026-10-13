@@ -7,8 +7,7 @@ The example app in [`apps/example-next`](../apps/example-next) is the reference 
 - consumer shell: [`apps/example-next/components/analytics-shell.tsx`](../apps/example-next/components/analytics-shell.tsx)
 - layout wiring: [`apps/example-next/app/layout.tsx`](../apps/example-next/app/layout.tsx)
 - tracking from components: [`apps/example-next/components/demo-client.tsx`](../apps/example-next/components/demo-client.tsx)
-- Meta route example: [`apps/example-next/app/api/facebook/track/route.ts`](../apps/example-next/app/api/facebook/track/route.ts)
-- GA4 route example: [`apps/example-next/app/api/ga4/track/route.ts`](../apps/example-next/app/api/ga4/track/route.ts)
+- server route: [`apps/example-next/app/api/analytics/route.ts`](../apps/example-next/app/api/analytics/route.ts)
 
 ## Integration Shape
 
@@ -17,7 +16,7 @@ The example app in [`apps/example-next`](../apps/example-next) is the reference 
 3. Wrap the app with `<AnalyticsProvider analytics={analytics} routeKey={…}>`.
 4. Render the UI components (or your own UI built on `useConsent()` / `useConsentController()`).
 5. Track from components with `useAnalytics()`. See [events and identity](./events.md).
-6. Keep server tracking routes app-local and build them from the exported server helpers.
+6. Optionally forward events to Meta CAPI: one route with `createAnalyticsHandler` and `server: { endpoint }`. See [server-side tracking](./server-side-tracking.md).
 
 ## Minimal Wiring
 

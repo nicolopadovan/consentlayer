@@ -168,28 +168,29 @@ reach the browser bundle.
 ### Do this
 
 ```ts
-// app/api/track/route.ts (Next.js Route Handler)
-import { sendGa4MeasurementEvent } from '@nicolopadovan/analytics-consent-manager/server'
+// app/api/analytics/route.ts — server-only
+import { createAnalyticsHandler } from '@nicolopadovan/analytics-consent-manager/server'
+import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
 
-export async function POST(request: Request) {
-  await sendGa4MeasurementEvent({
-    measurementId: process.env.GA4_MEASUREMENT_ID!,
-    apiSecret: process.env.GA4_API_SECRET!, // server-only
-    payload: await request.json(),
-  })
-  return new Response(null, { status: 204 })
-}
+export const POST = createAnalyticsHandler({
+  destinations: [
+    metaCapi({
+      pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID!,
+      accessToken: process.env.META_TOKEN!,
+    }),
+  ],
+})
 ```
+
+The browser only knows the route: `createAnalytics({ server: { endpoint: '/api/analytics' } })`.
+See [server-side tracking](./docs/server-side-tracking.md).
 
 ### Never do this
 
 ```ts
-// Don't inline secrets, even in "private" code — bundlers ship this to the browser.
-const adapter = meta({
-  pixelId: '123456789012345',
-  serverEndpoint: 'https://graph.facebook.com/...',
-  // The browser bundle MUST NOT contain the CAPI access token.
-})
+// Anything imported into client code ships in the browser bundle.
+'use client'
+metaCapi({ pixelId, accessToken: 'EAAB…' })
 ```
 
 If you're using Next.js, prefer `NEXT_PUBLIC_*` only for the values that are

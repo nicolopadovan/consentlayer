@@ -6,53 +6,50 @@ import { meta } from '../src/providers/meta'
 describe('providers', () => {
   it('reuses the same Meta event id for browser and server dedupe', async () => {
     const fbq = vi.fn()
-    ;(window as unknown as { fbq?: typeof fbq; __acmMetaPixelInitialized?: boolean }).fbq =
-      fbq
-    ;(
-      window as unknown as { __acmMetaPixelInitialized?: boolean }
-    ).__acmMetaPixelInitialized = true
+    ;(window as unknown as { fbq?: typeof fbq }).fbq = fbq
+    ;(window as unknown as { __npcmMetaPixelInitialized?: boolean }).__npcmMetaPixelInitialized = true
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
 
-    const fetchImpl = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({}),
+    const pixel = meta({ pixelId: '123456789012345' })
+    const manager = createAnalyticsManager({
+      providers: [{ ...pixel, load: undefined }],
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
     })
-
-    const adapter = meta({
-      pixelId: '123456789012345',
-      serverEndpoint: '/api/facebook/track',
-      fetchImpl: fetchImpl as unknown as typeof fetch,
-    })
-
-    await adapter.track?.(
-      {
-        id: 'dedupe-123',
-        name: 'purchase',
-        params: { value: 10 },
-        options: {},
-      },
-      {
-        consent: {
-          preferences: true,
-          analytics: true,
-          marketing: true,
-        },
-        identity: { email: 'demo@example.com' },
-        debug: false,
-        emitError: () => undefined,
-      },
-    )
+    await manager.boot()
+    await manager.track('purchase', { transaction_id: 'o1', value: 10 }, { eventId: 'dedupe-123' })
+    vi.unstubAllGlobals()
 
     expect(fbq).toHaveBeenCalledWith(
       'track',
       'Purchase',
-      { value: 10 },
+      { transaction_id: 'o1', value: 10 },
       { eventID: 'dedupe-123' },
     )
+    const [url, init] = fetchMock.mock.calls[0] ?? []
+    expect(url).toBe('/api/analytics')
+    expect(JSON.parse(init?.body as string)).toMatchObject({
+      id: 'dedupe-123',
+      name: 'purchase',
+      consent: { marketing: true },
+    })
+    manager.destroy()
+  })
 
-    const body = JSON.parse(
-      (fetchImpl.mock.calls[0]?.[1] as { body: string }).body,
-    ) as { event_id: string }
-    expect(body.event_id).toBe('dedupe-123')
+  it('forwards nothing to the server without analytics or marketing consent', async () => {
+    const fetchMock = vi.fn<typeof fetch>()
+    vi.stubGlobal('fetch', fetchMock)
+    const manager = createAnalyticsManager({
+      consent: { preferences: true, analytics: false, marketing: false },
+      server: { endpoint: '/api/analytics' },
+    })
+    await manager.boot()
+    await manager.track('sign_up')
+    await manager.page()
+    vi.unstubAllGlobals()
+    expect(fetchMock).not.toHaveBeenCalled()
+    manager.destroy()
   })
 
   it('sets Meta consent before init', () => {

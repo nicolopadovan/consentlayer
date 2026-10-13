@@ -7,6 +7,7 @@ import type {
   AnalyticsPlugin,
   AutoTrackingConfig,
   PluginContext,
+  ServerEvent,
   UserIdentity,
   UserTraits,
 } from './types'
@@ -22,6 +23,7 @@ import {
   isBrowser,
   normalizeIdentity,
 } from './utils'
+import { assertHttpsOrRelativeUrl } from './validation'
 
 type ProviderState = {
   plugin: AnalyticsPlugin
@@ -178,6 +180,32 @@ export function createAnalyticsManager(
     (providerId: string) => (error: AnalyticsError) =>
       emitError({ ...error, providerId: error.providerId ?? providerId })
 
+  const serverEndpoint =
+    options.server && assertHttpsOrRelativeUrl(options.server.endpoint, 'server.endpoint')
+
+  const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
+    if (!serverEndpoint || !(consent?.analytics || consent?.marketing)) return
+    const body = JSON.stringify({ ...event, consent, identity: sharedIdentity() })
+    const fail = (cause: unknown) =>
+      emitError({ scope: 'server-forward', message: `Sending ${event.name} to ${serverEndpoint} failed`, cause })
+    if (typeof fetch !== 'function') {
+      if (!navigator.sendBeacon(serverEndpoint, new Blob([body], { type: 'application/json' }))) {
+        fail(undefined)
+      }
+      return
+    }
+    fetch(serverEndpoint, {
+      method: 'POST',
+      keepalive: true,
+      headers: { 'content-type': 'application/json' },
+      body,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      })
+      .catch(fail)
+  }
+
   const sharedIdentity = (): UserIdentity =>
     consent?.marketing ? identity : identity.userId ? { userId: identity.userId } : {}
 
@@ -270,23 +298,27 @@ export function createAnalyticsManager(
   const trackAgainstProviders = async (
     selectedProviderIds: string[] | undefined,
     callback: (state: ProviderState) => Promise<void>,
+    serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined,
   ) => {
     if (destroyed || !runtimeEnabled()) return
     if (!ready) {
       // ponytail: fixed cap; calls past it are dropped until boot
       if (pending.length < 100) {
-        pending.push(() => deliver(selectedProviderIds, callback))
+        pending.push(() => deliver(selectedProviderIds, callback, serverEvent))
       }
       return
     }
-    await deliver(selectedProviderIds, callback)
+    await deliver(selectedProviderIds, callback, serverEvent)
   }
 
   const deliver = async (
     selectedProviderIds: string[] | undefined,
     callback: (state: ProviderState) => Promise<void>,
+    serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined,
   ) => {
     if (destroyed) return
+    const event = serverEvent?.()
+    if (event) forward(event)
     for (const state of providerStates.values()) {
       if (!state.active) continue
       if (!hasRequiredConsent(consent, state.plugin.requiredConsent)) continue
@@ -436,9 +468,13 @@ export function createAnalyticsManager(
     },
     async page(payload = {}, pageOptions = {}) {
       const page = { ...getWindowLocation(), ...payload, id: createEventId() }
-      await trackAgainstProviders(pageOptions.only, async (state) => {
-        await call(state, 'page', (p, ctx) => p.page?.(page, ctx))
-      })
+      await trackAgainstProviders(
+        pageOptions.only,
+        async (state) => {
+          await call(state, 'page', (p, ctx) => p.page?.(page, ctx))
+        },
+        () => ({ id: page.id, name: 'page_view', url: page.url, only: pageOptions.only }),
+      )
     },
     async track(name, params, optionsInput = {}) {
       const event: AnalyticsEventPayload = {
@@ -447,11 +483,26 @@ export function createAnalyticsManager(
         params: params ?? {},
         options: optionsInput,
       }
-      await trackAgainstProviders(optionsInput.only, async (state) => {
-        if (optionsInput.requireAnalyticsConsent && !consent?.analytics) return
-        if (optionsInput.requireMarketingConsent && !consent?.marketing) return
-        await call(state, 'track', (p, ctx) => p.track?.(event, ctx))
-      })
+      const allowed = () =>
+        !(optionsInput.requireAnalyticsConsent && !consent?.analytics) &&
+        !(optionsInput.requireMarketingConsent && !consent?.marketing)
+      await trackAgainstProviders(
+        optionsInput.only,
+        async (state) => {
+          if (allowed()) await call(state, 'track', (p, ctx) => p.track?.(event, ctx))
+        },
+        () =>
+          allowed()
+            ? {
+                id: event.id,
+                name,
+                params: event.params,
+                url: getWindowLocation().url,
+                only: optionsInput.only,
+                providers: optionsInput.providers,
+              }
+            : undefined,
+      )
     },
     async identify(userId, traits = {}) {
       if (userId && userId !== identity.userId) identity = {}

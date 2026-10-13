@@ -124,7 +124,7 @@ What reaches each provider:
 Call `analytics.consent.bootstrap()` once at startup to load stored consent,
 then `analytics.boot()`. `AnalyticsProvider` does both.
 
-## 1.0.0-rc.3: plugin contract
+## 1.0.0-rc.3: plugin contract and server
 
 ### Provider factories
 
@@ -168,3 +168,29 @@ import { checkPlugin } from '@nicolopadovan/analytics-consent-manager/testing'
 expect(await checkPlugin(posthog({ apiKey }))).toEqual([])
 ```
 
+### Server routes
+
+One route replaces the hand-written Meta and GA4 routes:
+
+```ts
+// app/api/analytics/route.ts
+import { createAnalyticsHandler } from '@nicolopadovan/analytics-consent-manager/server'
+import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
+
+export const runtime = 'nodejs'
+export const POST = createAnalyticsHandler({
+  destinations: [metaCapi({ pixelId, accessToken: process.env.META_TOKEN! })],
+})
+```
+
+| Before | After |
+|---|---|
+| `meta({ pixelId, serverEndpoint, fetchImpl })` | `meta({ pixelId })` + `createAnalytics({ server: { endpoint: '/api/analytics' } })` |
+| Route calling `createMetaEventPayload` + `sendMetaCapiEvent` | `createAnalyticsHandler({ destinations: [metaCapi(…)] })` |
+| Route forwarding browser events to GA4 with `sendGa4MeasurementEvent` | delete it: gtag already sends them. Use `sendServerEvent` with `ga4Server(…)` for webhook events only |
+
+The browser now posts `{ id, name, params, consent, identity, url, only,
+providers }`, so an old route won't understand it. Forwarding now covers
+page views and every destination, not only Meta's `track` calls. The
+low-level helpers are still exported. See
+[server-side tracking](./server-side-tracking.md).
