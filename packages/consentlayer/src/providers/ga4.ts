@@ -78,15 +78,14 @@ export function ga4(options: Ga4Options) {
   const measurementId = assertValidGa4MeasurementId(options.measurementId.trim())
   const { mode = 'basic', regions = [], waitForUpdate, urlPassthrough, adsDataRedaction } = options.consentMode ?? {}
   const advanced = mode === 'advanced'
-  const invalid = (option: string, expected: string) => {
-    throw new Error(`[consentlayer] ga4 consentMode.${option} ${expected}`)
-  }
-  if (regions.length && !advanced) invalid('regions', "needs mode: 'advanced'")
-  if (!regions.every(({ region }) => region.length && region.every((code) => REGION.test(code)))) {
-    invalid('regions', "takes ISO 3166-2 codes such as 'US' or 'US-CA'")
+  if (regions.length && !advanced) throw new Error("[consentlayer] ga4 consentMode.regions needs mode: 'advanced'")
+  for (const { region } of regions) {
+    if (!region.length || !region.every((code) => REGION.test(code))) {
+      throw new Error(`[consentlayer] ga4 consentMode.regions: ${JSON.stringify(region)} is not a list of ISO 3166-2 codes such as 'US' or 'US-CA'`)
+    }
   }
   if (waitForUpdate !== undefined && !(Number.isInteger(waitForUpdate) && waitForUpdate >= 0)) {
-    invalid('waitForUpdate', 'must be a whole number of milliseconds')
+    throw new Error(`[consentlayer] ga4 consentMode.waitForUpdate must be a whole number of milliseconds, received ${waitForUpdate}`)
   }
   const wait = waitForUpdate === undefined ? {} : { wait_for_update: waitForUpdate }
   const gtag = (...args: unknown[]) => window.gtag?.(...args)
