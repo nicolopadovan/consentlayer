@@ -166,16 +166,33 @@ Public helpers for plugin authors: `loadScript(src, attrs)`, `getFlag` /
 ```ts
 // app/api/analytics/route.ts
 import { createAnalyticsHandler } from '@nicolopadovan/analytics-consent-manager/server'
-import { ga4Server } from '@nicolopadovan/analytics-consent-manager/server/ga4'
 import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
 
 export const POST = createAnalyticsHandler({
-  destinations: [
-    ga4Server({ measurementId, apiSecret: process.env.GA4_API_SECRET! }),
-    metaCapi({ pixelId, accessToken: process.env.META_CAPI_TOKEN! }),
-  ],
+  destinations: [metaCapi({ pixelId, accessToken: process.env.META_CAPI_TOKEN! })],
 })
+
+// a Stripe / Shopify webhook
+import { sendServerEvent } from '@nicolopadovan/analytics-consent-manager/server'
+import { ga4Server } from '@nicolopadovan/analytics-consent-manager/server/ga4'
+
+await sendServerEvent(
+  { name: 'purchase', params: orderParams(order), clientId, consent },
+  { destinations: [ga4Server({ measurementId, apiSecret }), metaCapi({ pixelId, accessToken })] },
+)
 ```
+
+Each destination follows its vendor's recommended setup (decided
+2026-10-13):
+
+- **Meta** dedupes browser and server events by `eventId`, so the handler
+  forwards every browser event to CAPI.
+- **GA4** has no such dedupe (only `purchase` by `transaction_id`), and Google
+  says the Measurement Protocol augments the browser tag rather than
+  replacing it. So `ga4Server` receives only server-only events through
+  `sendServerEvent`; the handler never forwards browser events to it. The
+  browser's GA client ID (and consent) must be saved with the order so the
+  webhook event joins the user's session.
 
 - Web-standard `(Request) => Promise<Response>`: works in the Next.js App
   Router, Remix, Hono, Cloudflare, Bun and Deno. An Express adapter is a
@@ -194,7 +211,9 @@ export const POST = createAnalyticsHandler({
 - Server-only events (webhooks, e.g. a Stripe `purchase`) use
   `sendServerEvent(event, { destinations })` with the same event shapes.
 - Server destinations follow a server plugin contract:
-  `{ id, requiredConsent, send(event, request) }`.
+  `{ id, requiredConsent, forwardBrowserEvents, send(event, request?) }`.
+  The handler only uses destinations with `forwardBrowserEvents: true`
+  (`metaCapi`); passing `ga4Server` to it is a type error.
 
 ## Built-in providers
 
