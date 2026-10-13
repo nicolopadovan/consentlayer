@@ -181,4 +181,106 @@ describe('analytics manager', () => {
       eventPayloads.find((payload) => payload.depth === 100),
     ).toBeDefined()
   })
+
+  it('holds calls until a deferred load runs, then delivers them in order', async () => {
+    vi.useFakeTimers()
+    const calls: string[] = []
+    const provider = {
+      id: 'heavy',
+      defer: 2000,
+      load: () => {
+        calls.push('load')
+      },
+      track: (event: { name: string }) => {
+        calls.push(event.name)
+      },
+      error: (error: unknown) => {
+        calls.push(String(error))
+      },
+    }
+    const manager = createAnalyticsManager({
+      providers: [provider],
+      consent: { preferences: false, analytics: false, marketing: false },
+    })
+    await manager.boot()
+    await manager.track('a')
+    await manager.captureError('boom')
+    expect(calls).toEqual([])
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(calls).toEqual(['load', 'a', 'boom'])
+    await manager.track('b')
+    expect(calls).toEqual(['load', 'a', 'boom', 'b'])
+    manager.destroy()
+  })
+
+  it('loads an interaction-deferred provider on the first interaction', async () => {
+    const load = vi.fn()
+    const manager = createAnalyticsManager({
+      providers: [{ id: 'later', defer: 'interaction', load }],
+      consent: { preferences: false, analytics: false, marketing: false },
+    })
+    await manager.boot()
+    await Promise.resolve()
+    expect(load).not.toHaveBeenCalled()
+    window.dispatchEvent(new Event('keydown'))
+    await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(1))
+    manager.destroy()
+  })
+
+  it('skips a deferred load when consent is withdrawn before it fires', async () => {
+    vi.useFakeTimers()
+    const load = vi.fn()
+    const manager = createAnalyticsManager({
+      providers: [{ id: 'gated', requiredConsent: 'analytics' as const, defer: 1000, load }],
+      consent: { preferences: false, analytics: true, marketing: false },
+    })
+    await manager.boot()
+    await manager.updateConsent({ preferences: false, analytics: false, marketing: false })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(load).not.toHaveBeenCalled()
+    await manager.updateConsent({ preferences: false, analytics: true, marketing: false })
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(load).toHaveBeenCalledTimes(1)
+    manager.destroy()
+  })
+
+  it('sends caught and uncaught errors to providers with an error hook', async () => {
+    const error = vi.fn()
+    const manager = createAnalyticsManager({
+      providers: [{ id: 'monitor', error }],
+      consent: { preferences: false, analytics: false, marketing: false },
+    })
+    await manager.boot()
+    const failure = new Error('checkout')
+    await manager.captureError(failure, { tags: { area: 'cart' } })
+    window.dispatchEvent(new ErrorEvent('error', { error: new Error('uncaught') }))
+    await vi.waitFor(() => expect(error).toHaveBeenCalledTimes(2))
+    expect(error.mock.calls[0]?.slice(0, 2)).toEqual([failure, { source: 'manual', tags: { area: 'cart' } }])
+    expect(error.mock.calls[1]?.[1]).toEqual({ source: 'global', level: 'fatal' })
+    manager.destroy()
+    window.dispatchEvent(new ErrorEvent('error', { error: new Error('after destroy') }))
+    await Promise.resolve()
+    expect(error).toHaveBeenCalledTimes(2)
+  })
+
+  it('turns error capture off with errors: false, and only the handlers with globalHandlers: false', async () => {
+    const off = vi.fn()
+    const manual = vi.fn()
+    const consent = { preferences: false, analytics: false, marketing: false }
+    const a = createAnalyticsManager({ providers: [{ id: 'a', error: off }], consent, errors: false })
+    const b = createAnalyticsManager({
+      providers: [{ id: 'b', error: manual }],
+      consent,
+      errors: { globalHandlers: false },
+    })
+    await a.boot()
+    await b.boot()
+    window.dispatchEvent(new ErrorEvent('error', { error: new Error('x') }))
+    await a.captureError('y')
+    await b.captureError('z')
+    expect(off).not.toHaveBeenCalled()
+    expect(manual).toHaveBeenCalledTimes(1)
+    a.destroy()
+    b.destroy()
+  })
 })

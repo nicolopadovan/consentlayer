@@ -10,11 +10,70 @@
 | Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter` | consent source | optional headless storefront config | Bootstraps and syncs consent state |
 | Hotjar | `hotjar` | `analytics` | `siteId`, `version`, `reloadOnRevoke` | Loads only after analytics consent; on withdrawal its cookies and storage are deleted, but its script keeps running and recreates them until the page reloads; set `reloadOnRevoke` to reload and stop it |
 | TikTok consent bridge | `tiktok` | `marketing` | `ttq` loaded by consumer | Consent sync only; no SDK bootstrap in package |
+| PostHog | `posthog` (`/providers/posthog`) | none (cookieless) | `apiKey` | Counts without cookies until analytics is granted, then uses cookies; needs cookieless mode on in the PostHog project. `cookieless: false` loads only after consent |
+| Sentry | `sentry` (`/providers/sentry`) | none | `dsn` | Errors without personal data whatever the consent; Replay, tracing and the user ID after analytics consent |
 | Vercel Analytics | `vercel` | none (cookieless) | `trackEvent` from `@vercel/analytics` | Receives events whatever the consent |
 
 Pass browser providers to `createAnalytics({ providers: [...] })` and consent
 sources such as Shopify Customer Privacy to
 `createAnalytics({ consent: { adapters: [...] } })`.
+
+## PostHog And Sentry
+
+Install the SDKs you use; they are optional peer dependencies:
+
+```bash
+pnpm add posthog-js                        # posthog()
+pnpm add @sentry/browser @sentry/nextjs    # sentry(); @sentry/nextjs only for the Next helpers
+```
+
+Everything heavy is off by default and loads only when turned on:
+
+```ts
+posthog({
+  apiKey,
+  apiHost,             // default https://us.i.posthog.com
+  cookieless: true,    // false: load nothing until analytics consent
+  autocapture: false,
+  recording: false,    // session recording, after analytics consent
+  errors: true,        // receive captureError
+  groupType: 'company',
+  defer: 'idle',       // see "Deferred Loading"
+})
+
+sentry({
+  dsn,
+  environment,
+  release,
+  replay: false,       // true or { sessionSampleRate, onErrorSampleRate }
+  tracing: false,      // true or { sampleRate }
+  defer: 'interaction',
+})
+```
+
+PostHog never captures page views, page leaves, exceptions, heatmaps or dead
+clicks by itself, and flags, surveys and remote scripts are off: page views and
+errors come from the manager. Identify and group wait for analytics consent.
+
+Sentry sends errors without IP, cookies, headers, bodies or query strings.
+Analytics consent adds the user ID (and email, with marketing consent), Replay
+and tracing; withdrawing it stops Replay and drops transactions. The manager
+installs the window error handlers, so Sentry's own are removed.
+
+## Errors
+
+`analytics.captureError(error, { level, tags, extra })` sends to every plugin
+with an `error` hook (Sentry, PostHog). The manager also reports window
+`error` and `unhandledrejection` events. Turn them off with
+`createAnalytics({ errors: { globalHandlers: false } })`, or all error
+reporting with `errors: false`. React apps add `ErrorBoundary` and
+`createGlobalError` (see [Next.js integration](./nextjs-integration.md)).
+
+## Deferred Loading
+
+Any plugin takes `defer`: `'idle'`, `'interaction'` (first pointer, key,
+scroll or touch) or a number of milliseconds. Calls made meanwhile are held, up to 100,
+and delivered after the SDK loads.
 
 ## Environment Variables Used By The Example App
 
@@ -28,6 +87,9 @@ sources such as Shopify Customer Privacy to
 - `NEXT_PUBLIC_SHOPIFY_STORE_ID`
 - `NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN`
 - `NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN`
+- `NEXT_PUBLIC_POSTHOG_KEY`
+- `NEXT_PUBLIC_SENTRY_DSN`
+- `SENTRY_DSN` (server)
 - `META_TOKEN`
 - `FACEBOOK_TEST_EVENT_CODE`
 

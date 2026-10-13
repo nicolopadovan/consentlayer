@@ -46,6 +46,14 @@
       "types": "./dist/providers/hotjar.d.ts",
       "import": "./dist/providers/hotjar.js"
     },
+    "./providers/posthog": {
+      "types": "./dist/providers/posthog.d.ts",
+      "import": "./dist/providers/posthog.js"
+    },
+    "./providers/sentry": {
+      "types": "./dist/providers/sentry.d.ts",
+      "import": "./dist/providers/sentry.js"
+    },
     "./providers/vercel": {
       "types": "./dist/providers/vercel.d.ts",
       "import": "./dist/providers/vercel.js"
@@ -66,6 +74,14 @@
       "types": "./dist/server/meta.d.ts",
       "import": "./dist/server/meta.js"
     },
+    "./sentry/server": {
+      "types": "./dist/sentry/server.d.ts",
+      "import": "./dist/sentry/server.js"
+    },
+    "./sentry/next": {
+      "types": "./dist/sentry/next.d.ts",
+      "import": "./dist/sentry/next.js"
+    },
     "./testing": {
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js"
@@ -84,12 +100,35 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
+    "@sentry/browser": "^11.0.0",
+    "@sentry/nextjs": "^11.0.0",
+    "posthog-js": "^1.438.0",
     "react": "^18.3.0 || ^19.0.0",
     "react-dom": "^18.3.0 || ^19.0.0"
   },
+  "peerDependenciesMeta": {
+    "@sentry/browser": {
+      "optional": true
+    },
+    "@sentry/nextjs": {
+      "optional": true
+    },
+    "posthog-js": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@sentry/browser": "^11.7.0",
+    "@sentry/nextjs": "^11.7.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "posthog-js": "^1.438.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   }

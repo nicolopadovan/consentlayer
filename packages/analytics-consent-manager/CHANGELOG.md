@@ -76,6 +76,19 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
   `requireMarketingConsent` are checked at delivery.
 - `page(payload, { only })`. `AnalyticsProvider` sends the current page to a
   provider that starts later on the same route (e.g. Meta after marketing consent).
+- `posthog()` (`/providers/posthog`): cookieless until analytics consent, then
+  cookies; events, page views, identify, group, reset and errors. Autocapture
+  and session recording are opt-in.
+- `sentry()` (`/providers/sentry`): errors without consent or personal data;
+  the user ID, Replay and tracing (both opt-in) after analytics consent.
+  `/sentry/server` (`sentryInstrumentation` for `instrumentation.ts`) and
+  `/sentry/next` (`withSentry`) for Next.js.
+- `captureError(error, { level, tags, extra })`, the plugin `error` hook and the
+  `errors` option; window `error` and `unhandledrejection` are reported by default.
+- React: `ErrorBoundary` and `createGlobalError(analytics)` for `app/global-error.tsx`.
+- `defer` on any plugin: load when idle, on the first interaction or after a delay.
+- `posthog-js`, `@sentry/browser`, `@sentry/nextjs`, `react` and `react-dom` are
+  optional peer dependencies; each feature's SDK code is a separate chunk loaded on use.
 
 ### Fixed
 - `ConsentEngine.bootstrap()` runs once even when called from several places.

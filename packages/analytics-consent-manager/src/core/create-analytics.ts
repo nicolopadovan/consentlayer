@@ -57,6 +57,7 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     identify: manager.identify,
     reset: manager.reset,
     group: manager.group,
+    captureError: manager.captureError,
     newPageSession: manager.newPageSession,
     getSnapshot: manager.getSnapshot,
     subscribe: manager.subscribe,

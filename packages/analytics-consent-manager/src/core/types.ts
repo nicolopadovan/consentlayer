@@ -193,6 +193,7 @@ export type AnalyticsErrorScope =
   | 'provider-page'
   | 'provider-track'
   | 'provider-identify'
+  | 'provider-error'
   | 'provider-teardown'
   | 'provider-script-load'
   | 'server-forward'
@@ -217,6 +218,11 @@ export type AnalyticsManagerOptions = {
   /** Starts once analytics consent is granted. `true` turns everything on; off by default. */
   autoTracking?: AutoTrackingConfig | boolean
   onError?: AnalyticsErrorHandler
+  /**
+   * `captureError` and the window `error` / `unhandledrejection` handlers.
+   * `false` turns both off; `{ globalHandlers: false }` keeps only `captureError`.
+   */
+  errors?: boolean | { globalHandlers?: boolean }
   /** Also send each event to this route (see `createAnalyticsHandler`). HTTPS URL or a path starting with "/". */
   server?: { endpoint: string }
 }
@@ -249,6 +255,21 @@ export type PageEvent = PageViewPayload & {
   id: string
 }
 
+export type ErrorContext = {
+  level?: 'fatal' | 'error' | 'warning'
+  tags?: Record<string, string>
+  extra?: Record<string, unknown>
+  /** Where it was caught. */
+  source?: 'manual' | 'global' | 'boundary'
+}
+
+/**
+ * When `load` runs once consent allows it: right away (default), when the
+ * browser is idle, on the first interaction, or after a delay in ms. Calls made
+ * meanwhile are held (up to 100) and delivered after `load`.
+ */
+export type LoadTiming = false | 'idle' | 'interaction' | number
+
 type Hook<Args extends unknown[] = []> = (
   ...args: [...Args, PluginContext]
 ) => Promise<void> | void
@@ -267,6 +288,7 @@ export interface AnalyticsPlugin {
   requiredConsent?: ProviderConsentRequirement
   /** Load before consent and rely on the provider's own consent mode. */
   loadBeforeConsent?: boolean
+  defer?: LoadTiming
   /** No network, no cookies. */
   setup?: Hook
   /** Inject scripts. Runs once. */
@@ -278,6 +300,8 @@ export interface AnalyticsPlugin {
   identify?: Hook<[identity: UserIdentity, traits: UserTraits]>
   reset?: Hook
   group?: Hook<[groupId: string, traits: Record<string, unknown>]>
+  /** Receives errors from `captureError` and the global handlers. */
+  error?: Hook<[error: unknown, context: ErrorContext]>
   /** Stop sending; remove cookies where possible. */
   teardown?: Hook
 }
@@ -297,6 +321,7 @@ export interface AnalyticsManager {
   identify: (userId?: string, traits?: UserTraits) => Promise<void>
   reset: () => Promise<void>
   group: (groupId: string, traits?: Record<string, unknown>) => Promise<void>
+  captureError: (error: unknown, context?: ErrorContext) => Promise<void>
   enableAutoTracking: (config?: AutoTrackingConfig) => void
   newPageSession: () => void
   getSnapshot: () => AnalyticsManagerStateSnapshot

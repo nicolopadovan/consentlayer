@@ -24,7 +24,6 @@ One package that an ecommerce store, a web app or a SaaS product drops in to:
 - Every built-in provider passes one shared contract test suite.
 - `apps/example-next` uses no provider globals and no provider-specific calls.
 - Server-side tracking is one route file plus config.
-- `docs/writing-a-plugin.md` is enough to build the PostHog plugin from scratch.
 - A migration guide covers the 9 consuming apps.
 
 Breaking changes are allowed: the package is still a release candidate.
@@ -225,9 +224,8 @@ Each destination follows its vendor's recommended setup (decided
 |---|---|---|---|
 | GA4 | ✓ | ✓ Measurement Protocol | consent mode |
 | Meta Pixel | ✓ | ✓ CAPI | consent mode; sets consent before `init` |
-| Google Ads | ✓ (stage 3) | — | shares GA4's gtag loader |
-| PostHog | ✓ (stage 3) | later | replaces the adapters in Scriptie and Bruciami |
-| Microsoft Clarity | ✓ (stage 3) | — | uses Clarity's consent API |
+| PostHog | ✓ | later | cookieless until analytics consent; replaces the adapters in Scriptie and Bruciami |
+| Sentry | ✓ | ✓ Next instrumentation | errors without consent or personal data; Replay, tracing and the user after analytics consent |
 | Hotjar | ✓ | — | gains `teardown` |
 | Shopify | ✓ | — | analytics + Customer Privacy sync |
 | TikTok | ✓ (loads the pixel) | later | today it only forwards consent to an SDK the app loads |
@@ -246,9 +244,12 @@ Each destination follows its vendor's recommended setup (decided
      contract test kit; built-ins ported to them.
    - `createAnalyticsHandler`, the server destinations and automatic browser →
      server forwarding.
-3. **New providers**
-   - PostHog, Google Ads, Clarity and a TikTok loader.
-   - `docs/writing-a-plugin.md`.
+3. **PostHog, Sentry and errors** (done)
+   - `posthog()` and `sentry()`, with SDKs as optional peer dependencies loaded
+     per feature; every feature can be turned off and loading can be deferred.
+   - `captureError`, the plugin `error` hook, `ErrorBoundary`, `createGlobalError`
+     and the Sentry Next helpers (`/sentry/server`, `/sentry/next`).
+   - Google Ads, Clarity, a TikTok loader and `docs/writing-a-plugin.md` are dropped.
 
 Each stage ships as its own release candidate with a migration-guide section.
 

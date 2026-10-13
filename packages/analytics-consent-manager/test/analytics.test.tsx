@@ -6,7 +6,13 @@ import { cartParams, orderParams, productParams } from '../src/ecommerce'
 import { ga4EventName, ga4UserData } from '../src/providers/ga4'
 import { hotjar } from '../src/providers/hotjar'
 import { meta, metaUserData, toMetaEvent } from '../src/providers/meta'
-import { AnalyticsProvider, useAnalytics, useConsent } from '../src/react'
+import {
+  AnalyticsProvider,
+  createGlobalError,
+  ErrorBoundary,
+  useAnalytics,
+  useConsent,
+} from '../src/react'
 
 const granted = { preferences: true, analytics: true, marketing: true }
 
@@ -375,5 +381,45 @@ describe('provider identity', () => {
     expect(localStorage.getItem('_hjUserAttributes')).toBeNull()
     expect(sessionStorage.getItem('hjViewportId')).toBeNull()
     expect(localStorage.getItem('hjActiveViewportIds')).toBeNull()
+  })
+})
+
+describe('errors in React', () => {
+  const monitor = () => ({ id: 'monitor', error: vi.fn() }) satisfies AnalyticsPlugin
+  function Boom(): never {
+    throw new Error('render failed')
+  }
+
+  it('renders the fallback and captures the error', async () => {
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const plugin = monitor()
+    const analytics = createAnalytics({ providers: [plugin] })
+    await analytics.boot()
+    render(
+      <AnalyticsProvider analytics={analytics}>
+        <ErrorBoundary tags={{ area: 'cart' }} fallback={({ reset }) => <button onClick={reset}>retry</button>}>
+          <Boom />
+        </ErrorBoundary>
+      </AnalyticsProvider>,
+    )
+    expect(screen.getByText('retry')).toBeTruthy()
+    await waitFor(() => expect(plugin.error).toHaveBeenCalledTimes(1))
+    expect(plugin.error.mock.calls[0]?.[1]).toEqual({ source: 'boundary', tags: { area: 'cart' } })
+    quiet.mockRestore()
+  })
+
+  it('boots the instance from global-error and captures with the digest', async () => {
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const plugin = monitor()
+    const GlobalError = createGlobalError(createAnalytics({ providers: [plugin] }))
+    const error = Object.assign(new Error('layout failed'), { digest: 'd1' })
+    render(<GlobalError error={error} reset={() => undefined} />)
+    await waitFor(() => expect(plugin.error).toHaveBeenCalledTimes(1))
+    expect(plugin.error.mock.calls[0]?.slice(0, 2)).toEqual([
+      error,
+      { source: 'boundary', level: 'fatal', tags: { digest: 'd1' } },
+    ])
+    expect(screen.getByText('Try again')).toBeTruthy()
+    quiet.mockRestore()
   })
 })

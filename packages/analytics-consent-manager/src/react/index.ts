@@ -5,3 +5,4 @@ export {
   useConsent,
 } from './analytics-provider'
 export { useConsentController } from './consent-controller'
+export { createGlobalError, ErrorBoundary, type ErrorBoundaryProps } from './error-boundary'

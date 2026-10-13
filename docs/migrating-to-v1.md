@@ -124,7 +124,21 @@ What reaches each provider:
 Call `analytics.consent.bootstrap()` once at startup to load stored consent,
 then `analytics.boot()`. `AnalyticsProvider` does both.
 
-## 1.0.0-rc.3: plugin contract and server
+## 1.0.0-rc.4: PostHog, Sentry and errors
+
+Nothing is renamed. New:
+
+- Install `posthog-js` and/or `@sentry/browser` (plus `@sentry/nextjs` for the
+  Next helpers), then add `posthog({ apiKey })` and `sentry({ dsn })` to
+  `providers`. A PostHog plugin you wrote yourself can go. See
+  [provider configuration](./provider-configuration.md#posthog-and-sentry).
+- Window errors and unhandled rejections now go to plugins with an `error`
+  hook. Turn that off with `createAnalytics({ errors: { globalHandlers: false } })`.
+- `app/global-error.tsx` needs the instance, so create it at module level
+  (`export const analytics = createAnalytics(…)`) instead of inside a
+  component. See [Next.js integration](./nextjs-integration.md#errors).
+- `react` and `react-dom` are now optional peer dependencies.
+
 
 ### Provider factories
 

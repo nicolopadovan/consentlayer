@@ -48,9 +48,6 @@ describe('AnalyticsShell', () => {
     Object.assign(process.env, {
       NEXT_PUBLIC_FACEBOOK_PIXEL_ID: '1959498944961766',
     })
-    const { createEnvConfig } = await import(
-      '@nicolopadovan/analytics-consent-manager'
-    )
     const { useConsent } = await import(
       '@nicolopadovan/analytics-consent-manager/react'
     )
@@ -62,7 +59,7 @@ describe('AnalyticsShell', () => {
     }
 
     render(
-      <AnalyticsShell env={createEnvConfig(process.env)}>
+      <AnalyticsShell>
         <ConsentProbe />
       </AnalyticsShell>,
     )

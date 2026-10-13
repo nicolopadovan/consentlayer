@@ -6,6 +6,7 @@ import type {
   AnalyticsManagerStateSnapshot,
   AnalyticsPlugin,
   AutoTrackingConfig,
+  LoadTiming,
   PluginContext,
   ServerEvent,
   UserIdentity,
@@ -30,9 +31,38 @@ type ProviderState = {
   setup: boolean
   loaded: boolean
   active: boolean
+  /** Calls held while a deferred `load` is pending. */
+  backlog?: Array<() => Promise<void>>
 }
 
-type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent'>
+type HookName = Exclude<
+  keyof AnalyticsPlugin,
+  'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer'
+>
+
+const LIFECYCLE_HOOKS = new Set<HookName>(['setup', 'consent', 'load', 'teardown'])
+const INTERACTIONS = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const
+
+function whenDue(timing: Exclude<LoadTiming, false>): Promise<void> {
+  if (!isBrowser()) return Promise.resolve()
+  return new Promise((resolve) => {
+    if (typeof timing === 'number') {
+      window.setTimeout(resolve, timing)
+    } else if (timing === 'idle') {
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(() => resolve(), { timeout: 5000 })
+      } else window.setTimeout(resolve, 1)
+    } else {
+      const done = () => {
+        for (const type of INTERACTIONS) window.removeEventListener(type, done)
+        resolve()
+      }
+      for (const type of INTERACTIONS) {
+        window.addEventListener(type, done, { once: true, passive: true })
+      }
+    }
+  })
+}
 
 const DEFAULT_CLICK_SELECTORS = [
   'button',
@@ -229,6 +259,11 @@ export function createAnalyticsManager(
   ) => {
     if (destroyed) return
     const { plugin } = state
+    if (state.backlog && !LIFECYCLE_HOOKS.has(hook)) {
+      // ponytail: fixed cap; calls past it are dropped until load
+      if (state.backlog.length < 100) state.backlog.push(() => call(state, hook, run))
+      return
+    }
     try {
       await run(plugin, context(plugin.id))
     } catch (error) {
@@ -266,7 +301,8 @@ export function createAnalyticsManager(
     await call(state, 'consent', (p, ctx) => p.consent?.(ctx))
     if (!state.loaded && (allowed || plugin.loadBeforeConsent)) {
       state.loaded = true
-      await call(state, 'load', (p, ctx) => p.load?.(ctx))
+      if (plugin.defer) deferLoad(state, plugin.defer)
+      else await call(state, 'load', (p, ctx) => p.load?.(ctx))
     }
     if (!allowed) return teardown(state)
     if (state.active) return
@@ -275,6 +311,22 @@ export function createAnalyticsManager(
     if (Object.keys(shared).length && !identifyQueued) {
       await call(state, 'identify', (p, ctx) => p.identify?.(shared, {}, ctx))
     }
+  }
+
+  const deferLoad = (state: ProviderState, timing: Exclude<LoadTiming, false>) => {
+    state.backlog = []
+    void whenDue(timing).then(() => {
+      lifecycleQueue = lifecycleQueue.then(async () => {
+        const backlog = state.backlog ?? []
+        state.backlog = undefined
+        if (!state.active && !state.plugin.loadBeforeConsent) {
+          state.loaded = false
+          return
+        }
+        await call(state, 'load', (p, ctx) => p.load?.(ctx))
+        for (const run of backlog) if (state.active) await run()
+      })
+    })
   }
 
   const runLifecycle = async () => {
@@ -419,10 +471,24 @@ export function createAnalyticsManager(
     ensureProviderState(provider)
   }
 
+  const errorsEnabled = options.errors !== false
+  const onWindowError = (event: ErrorEvent) =>
+    void api.captureError(event.error ?? event.message, { source: 'global', level: 'fatal' })
+  const onRejection = (event: PromiseRejectionEvent) =>
+    void api.captureError(event.reason, { source: 'global' })
+  const globalHandlers =
+    errorsEnabled &&
+    isBrowser() &&
+    !(typeof options.errors === 'object' && options.errors.globalHandlers === false)
+
   const api: AnalyticsManager = {
     async boot() {
       if (destroyed || booted) return
       booted = true
+      if (globalHandlers) {
+        window.addEventListener('error', onWindowError)
+        window.addEventListener('unhandledrejection', onRejection)
+      }
       await queueLifecycle()
       for (let run = pending.shift(); run; run = pending.shift()) await run()
       ready = true
@@ -531,6 +597,13 @@ export function createAnalyticsManager(
         await call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx))
       })
     },
+    async captureError(error, errorContext = {}) {
+      if (!errorsEnabled) return
+      const captured = { source: 'manual' as const, ...errorContext }
+      await trackAgainstProviders(undefined, async (state) => {
+        await call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx))
+      })
+    },
     enableAutoTracking(config) {
       if (!isBrowser() || autoBound) return
       autoBound = true
@@ -585,6 +658,10 @@ export function createAnalyticsManager(
     destroy() {
       destroyed = true
       unsubscribeConsent?.()
+      if (globalHandlers) {
+        window.removeEventListener('error', onWindowError)
+        window.removeEventListener('unhandledrejection', onRejection)
+      }
       clearSessionTimers()
       if (activeScrollHandler && isBrowser()) {
         window.removeEventListener('scroll', activeScrollHandler)

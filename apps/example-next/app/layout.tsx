@@ -29,7 +29,7 @@ export default function RootLayout({
           />
         ) : null}
         <Suspense fallback={null}>
-          <AnalyticsShell env={env}>{children}</AnalyticsShell>
+          <AnalyticsShell>{children}</AnalyticsShell>
         </Suspense>
       </body>
     </html>

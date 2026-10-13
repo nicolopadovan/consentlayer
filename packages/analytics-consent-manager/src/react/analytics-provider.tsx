@@ -23,7 +23,7 @@ type AnalyticsContextValue = {
   consent: ConsentState | null
 }
 
-const AnalyticsContext = createContext<AnalyticsContextValue | undefined>(undefined)
+export const AnalyticsContext = createContext<AnalyticsContextValue | undefined>(undefined)
 
 export type AnalyticsProviderProps = {
   analytics: Analytics
