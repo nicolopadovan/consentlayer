@@ -3,8 +3,9 @@ title: Consent records
 description: Keep proof of each consent choice in your own database, and let the server trust only recorded consent.
 ---
 
-This page covers consent records: the record schema, the consent route and
-its signed cookie, the built-in stores, and what remains your responsibility.
+This page covers consent records: the record schema, how long each piece of
+consent data is kept, the consent route and its signed cookie, the built-in
+stores, and what remains your responsibility.
 
 A regulator can ask you to demonstrate that a visitor consented. With a
 consent endpoint configured, ConsentLayer posts each choice to a route on your
@@ -32,6 +33,22 @@ adapter's subscription, such as Shopify's `visitorConsentCollected` event.
 Nothing is recorded when a stored choice is restored on a later visit, when a
 choice is read from an adapter at bootstrap, when another tab changes the
 stored choice, or when a submitted choice is identical to the current one.
+
+## How long data is kept
+
+ConsentLayer never deletes a consent record. Every other piece of consent data
+has a fixed lifetime:
+
+| Data | Where | Kept for |
+|---|---|---|
+| Consent records | Your database, through the [store](#stores) | Until you delete them. See [Retention and deletion](#retention-and-deletion). |
+| The consent cookie, `consentlayer_proof` | The visitor's browser | 400 days from the last recorded choice (`Max-Age=34560000`), the longest lifetime browsers allow, or until the visitor clears cookies. |
+| The `consentId` | Inside the consent cookie | As long as the cookie. Each recorded choice reuses the ID from a valid cookie; without one, a new ID is generated. |
+| The visitor's choice | `localStorage`, under `consentlayer_consent` | Until the visitor changes it or clears site data, unless you set [`consent.maxAgeDays`](/guides/consent-ui/#asking-again), after which they are asked again. |
+
+The cookie and the stored choice expire independently: with the defaults, a
+choice can outlive its cookie. See the lost-cookie case under
+[The consent cookie](#the-consent-cookie).
 
 ## Setup
 
@@ -287,7 +304,41 @@ cookie.
 
 ## Retention and deletion
 
-How long you keep records, and deleting a person's records when they ask, are
-your responsibility: ConsentLayer only appends. Find a browser's records by
-`consent_id`, read from the cookie with `readConsentCookie`, and a signed-in
-user's by `user_id`.
+ConsentLayer only appends records. Choosing how long to keep them, deleting
+old ones and deleting a person's records when they ask are your
+responsibility, so schedule the deletion yourself, for example in a cron job.
+
+With the Postgres, Prisma, Drizzle and Supabase stores, records live in the
+`consent_records` table, unless you renamed it. To delete records older than a
+retention period:
+
+```sql
+delete from consent_records where created_at < now() - interval '3 years';
+```
+
+A record proves the consent that a browser currently has, so deleting by age
+alone can remove the proof for a choice still in force. To keep each browser's
+latest record regardless of its age:
+
+```sql
+delete from consent_records r
+where r.created_at < now() - interval '3 years'
+  and exists (
+    select 1 from consent_records newer
+    where newer.consent_id = r.consent_id and newer.created_at > r.created_at
+  );
+```
+
+To delete a person's records, find a browser's records by `consent_id`, which
+you can read in your own route with
+[`readConsentCookie(request, { secret })`](#the-consent-cookie), and a
+signed-in user's by `user_id`:
+
+```sql
+delete from consent_records where consent_id = $1 or user_id = $2;
+```
+
+With the Upstash Redis and Vercel KV store, each browser's records are one
+list, so `DEL consent:<consentId>` deletes them. Redis cannot expire single
+entries of a list; to delete by age, read the list with `LRANGE`, keep the
+entries whose `createdAt` is recent enough, and write them back.
