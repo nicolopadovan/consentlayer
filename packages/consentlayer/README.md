@@ -6,7 +6,8 @@ each one receives and when, and translates your events into each provider's
 format.
 
 - **Providers:** GA4, Meta Pixel and Conversions API, PostHog, Sentry, Hotjar,
-  Shopify, Vercel Analytics, and your own plugins.
+  Vercel Analytics, and your own plugins. Consent syncs with Shopify's
+  Customer Privacy API.
 - **Consent:** three categories (preferences, analytics, marketing). A provider
   loads only once its category is granted (or loads in its vendor's consent
   mode), stops on withdrawal. Email and phone reach providers only with marketing consent.

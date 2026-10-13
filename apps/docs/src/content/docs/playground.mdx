@@ -1,0 +1,25 @@
+---
+title: Playground
+description: The real consent banner and three logging providers, one per consent category.
+---
+
+import Playground from '../../components/Playground.tsx'
+
+This page runs consentlayer with three providers that only log what the
+manager asks them to do:
+
+| Provider | Needs |
+|---|---|
+| `cookieless` | nothing (`'none'`) |
+| `product-analytics` | analytics |
+| `ads-pixel` | marketing |
+
+Choose in the banner, change your mind with **Manage cookies**, and track a few
+events. The log shows each hook as it runs, newest first: nothing reaches a
+provider before its category is granted, `load` runs once, and withdrawal runs
+`teardown`. Your choice is stored under `playground_consent`, so it survives a
+reload.
+
+<Playground client:only="react" />
+
+How each step works: [Lifecycle](/internals/lifecycle/).

@@ -2,7 +2,7 @@
 
 ## Start Here
 
-- Read the [docs index](./docs/README.md).
+- Read the [docs](https://consentlayer.vercel.app).
 - Check the working reference app in [`apps/example-next`](./apps/example-next).
 - Review the latest publish workflow runs in GitHub Actions if the issue is install or release related.
 

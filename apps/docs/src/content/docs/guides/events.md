@@ -1,4 +1,7 @@
-# Events and Identity
+---
+title: Events and Identity
+description: Standard events, how each provider receives them, identity and consent checks.
+---
 
 Track through the instance from `createAnalytics()` (or `useAnalytics()` in
 React). Never call `gtag`, `fbq` or other provider globals: each provider

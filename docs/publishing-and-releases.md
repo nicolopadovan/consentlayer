@@ -26,6 +26,15 @@ runs typecheck, lint, test and build, then `npm publish` with Node 24. It
 publishes with `npm` rather than `pnpm` because trusted publishing needs npm
 11.5.1 or later.
 
+## When The Workflow Fails
+
+Check:
+
+- the package version was bumped when needed
+- `pnpm-lock.yaml` is committed
+- the workflow still has `id-token: write` permission
+- npmjs.com lists this repository and `publish-package.yml` as the package's trusted publisher
+
 ## Versioning
 
 Semver. The workflow publishes prereleases (`1.0.0-rc.N`) under the `next`

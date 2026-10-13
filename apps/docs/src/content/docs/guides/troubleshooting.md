@@ -1,4 +1,7 @@
-# Troubleshooting
+---
+title: Troubleshooting
+description: Fixes for common problems.
+---
 
 ## Meta Pixel Helper Shows No Pixel
 
@@ -27,12 +30,3 @@ Check:
 - the rendered page content is inside the consent/provider tree
 - the consumer uses the same engine instance for the shell and the UI
 - storage is writing to `consentlayer_consent` (or your `configureNames` key)
-
-## GitHub Publish Workflow Fails
-
-Check:
-
-- the package version was bumped when needed
-- `pnpm-lock.yaml` is committed
-- the workflow still has `id-token: write` permission
-- npmjs.com lists this repository and `publish-package.yml` as the package's trusted publisher

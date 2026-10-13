@@ -1,0 +1,28 @@
+.pg-controls p { margin: 0 0 0.75rem; }
+.pg-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.pg-buttons button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.4rem;
+  background: var(--sl-color-gray-6);
+  color: var(--sl-color-white);
+  cursor: pointer;
+}
+.pg-log {
+  list-style: none;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  max-height: 24rem;
+  overflow: auto;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.4rem;
+  font-size: var(--sl-text-sm);
+}
+.pg-log li { margin: 0.2rem 0; }
+.pg-log time { color: var(--sl-color-gray-3); }
+.pg-log code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  background: var(--sl-color-gray-6);
+  font-family: var(--__sl-font-mono);
+}

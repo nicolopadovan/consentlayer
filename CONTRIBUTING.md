@@ -27,7 +27,7 @@ pnpm --filter example-next dev
 - Keep package code framework-agnostic unless it belongs in the React or server entrypoints.
 - Preserve consent-first semantics.
 - Keep Meta dispatch gated by marketing consent.
-- Update docs in [`docs`](./docs/README.md) when public behavior, environment variables, or publish/install steps change.
+- Update the docs site in [`apps/docs`](./apps/docs) when public behavior, environment variables, or install steps change.
 - Use the example app as the canonical integration reference for new features.
 
 ## Release Process

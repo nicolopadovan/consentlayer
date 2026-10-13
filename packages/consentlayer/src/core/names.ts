@@ -125,7 +125,7 @@ export function setFlag<T>(name: string, value: T): T {
   return value
 }
 
-/** `ui('banner__button')` → `"cl-banner__button acm-banner__button"`. */
+/** `ui('banner__button')` → `"cl-banner__button"`, plus `acm-banner__button` with `legacy`. */
 export function ui(...blocks: string[]): string {
   return blocks
     .flatMap((block) =>

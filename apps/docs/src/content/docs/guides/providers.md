@@ -1,11 +1,14 @@
-# Provider Configuration
+---
+title: Provider Configuration
+description: Options for every provider, deferred loading and loading before consent.
+---
 
 ## Providers
 
 | Provider | Factory | Consent gate | Required config | Notes |
 | --- | --- | --- | --- | --- |
 | GA4 | `ga4` | `analytics` | `measurementId` | Initializes Google Consent Mode with denied defaults, then updates on consent changes |
-| Meta Pixel | `meta` | `marketing` | `pixelId` | Browser pixel; add CAPI with `metaCapi` on the server ([server-side tracking](./server-side-tracking.md)) |
+| Meta Pixel | `meta` | `marketing` | `pixelId` | Browser pixel; add CAPI with `metaCapi` on the server ([server-side tracking](/guides/server-side-tracking/)) |
 | Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter` | consent source | optional headless storefront config | Bootstraps and syncs consent state |
 | Hotjar | `hotjar` | `analytics` | `siteId`, `version`, `reloadOnRevoke` | Loads only after analytics consent; on withdrawal its cookies and storage are deleted, but its script keeps running and recreates them until the page reloads; set `reloadOnRevoke` to reload and stop it |
 | TikTok consent bridge | `tiktok` | `marketing` | `ttq` loaded by consumer | Consent sync only; no SDK bootstrap in package |
@@ -66,7 +69,7 @@ with an `error` hook (Sentry, PostHog). The manager also reports window
 `error` and `unhandledrejection` events. Turn them off with
 `createAnalytics({ errors: { globalHandlers: false } })`, or all error
 reporting with `errors: false`. React apps add `ErrorBoundary` and
-`createGlobalError` (see [Next.js integration](./nextjs-integration.md)).
+`createGlobalError` (see [Next.js integration](/start/nextjs/)).
 
 ## Deferred Loading
 

@@ -1,0 +1,50 @@
+---
+title: consentlayer
+description: Consent-first analytics for React, Next.js and the server.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components'
+
+You call one API. consentlayer decides, from the visitor's consent, which
+providers load, what each one receives and when, and translates your events into
+each provider's format.
+
+```ts
+import { createAnalytics } from 'consentlayer'
+import { ga4 } from 'consentlayer/providers/ga4'
+import { meta } from 'consentlayer/providers/meta'
+
+export const analytics = createAnalytics({
+  providers: [ga4({ measurementId: 'G-XXXXXXX' }), meta({ pixelId: '123456789012345' })],
+})
+
+analytics.track('purchase', { transaction_id: 'o1', value: 30, currency: 'EUR' })
+// GA4 gets `purchase` once analytics is granted; Meta gets `Purchase` once marketing is.
+```
+
+<CardGrid>
+  <Card title="Consent decides what loads" icon="approve-check">
+    Three categories: preferences, analytics, marketing. Each provider names the
+    one it needs and loads once it is granted (PostHog runs cookieless until
+    then). Withdrawal stops it.
+  </Card>
+  <Card title="One event, every provider" icon="random">
+    Standard events like `purchase` or `sign_up` are translated into GA4, Meta,
+    PostHog and Sentry formats, with a shared event ID for server dedupe.
+  </Card>
+  <Card title="Light by default" icon="rocket">
+    The core is about 6 kB (brotli). Each provider, and each heavy feature such as Replay,
+    is a separate chunk loaded only when used.
+  </Card>
+  <Card title="Browser and server" icon="seti:json">
+    One route forwards browser events to the Meta Conversions API; webhooks send
+    server-only events to GA4 and Meta.
+  </Card>
+</CardGrid>
+
+<CardGrid>
+  <LinkCard title="Install" href="/start/installation/" />
+  <LinkCard title="Next.js quick start" href="/start/nextjs/" />
+  <LinkCard title="Try it in the playground" href="/playground/" />
+  <LinkCard title="How it works" href="/internals/lifecycle/" />
+</CardGrid>

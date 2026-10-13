@@ -1,4 +1,7 @@
-# Server-Side Tracking
+---
+title: Server-Side Tracking
+description: Forward browser events to Meta CAPI and send server-only events to GA4.
+---
 
 Two pieces, both from `consentlayer/server`:
 
@@ -96,7 +99,7 @@ const results = await sendServerEvent(
   ([user-provided data collection](https://support.google.com/analytics/answer/14077171)
   must be on), plus the Measurement Protocol `consent` field.
 - Event names and params are translated as in the browser
-  ([events](./events.md)).
+  ([events](/guides/events/)).
 
 ## Writing a destination
 
@@ -112,3 +115,22 @@ const myDestination: ServerDestination<true> = {
   },
 }
 ```
+
+## Secrets
+
+`ga4Server` and `metaCapi` take credentials that must never reach the browser
+bundle: GA4's `apiSecret` and Meta's `accessToken`. Keep both in server-only
+environment variables. For Meta, prefer a system-user token, and rotate it when
+team members leave.
+
+```ts
+// Never: anything imported into client code ships in the browser bundle.
+'use client'
+metaCapi({ pixelId, accessToken: 'EAAB…' })
+```
+
+If you're using Next.js, prefer `NEXT_PUBLIC_*` only for the values that are
+genuinely safe to expose (the GA4 measurement ID and Meta pixel ID are public
+identifiers and may be inlined). The `apiSecret` and `accessToken` must stay
+in non-prefixed env vars accessed only inside Route Handlers, Server Actions,
+or other server-only code paths.

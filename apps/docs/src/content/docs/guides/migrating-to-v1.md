@@ -1,7 +1,10 @@
-# Migrating to v1
+---
+title: Migrating to v1
+description: Upgrade from the acm releases to consentlayer v1.
+---
 
 v1 ships in stages, each as its own release candidate. This guide gains a
-section per stage. The design is in [spec-v1.md](./spec-v1.md).
+section per stage. The design is in [spec-v1.md](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/docs/spec-v1.md).
 
 ## 1.0.0-rc.2: names, one instance, standard events
 
@@ -86,7 +89,7 @@ drop their `storage` and `broadcast` options.
 ### Events
 
 Event names are GA4-style and each provider translates them, so stop using
-Meta names. See [events and identity](./events.md).
+Meta names. See [events and identity](/guides/events/).
 
 | Before | After |
 |---|---|
@@ -143,12 +146,12 @@ Nothing is renamed. New:
 - Install `posthog-js` and/or `@sentry/browser` (plus `@sentry/nextjs` for the
   Next helpers), then add `posthog({ apiKey })` and `sentry({ dsn })` to
   `providers`. A PostHog plugin you wrote yourself can go. See
-  [provider configuration](./provider-configuration.md#posthog-and-sentry).
+  [provider configuration](/guides/providers/#posthog-and-sentry).
 - Window errors and unhandled rejections now go to plugins with an `error`
   hook. Turn that off with `createAnalytics({ errors: { globalHandlers: false } })`.
 - `app/global-error.tsx` needs the instance, so create it at module level
   (`export const analytics = createAnalytics(…)`) instead of inside a
-  component. See [Next.js integration](./nextjs-integration.md#errors).
+  component. See [Next.js integration](/start/nextjs/#errors).
 - `react` and `react-dom` are now optional peer dependencies.
 - "Reject non-essential" stores `preferences: false` instead of `true`. If your
   app reads `consent.preferences` (for a language or theme cookie), visitors who
@@ -231,4 +234,4 @@ The browser now posts `{ id, name, params, consent, identity, url, only,
 providers }`, so an old route won't understand it. Forwarding now covers
 page views and every destination, not only Meta's `track` calls. The
 low-level helpers are still exported. See
-[server-side tracking](./server-side-tracking.md).
+[server-side tracking](/guides/server-side-tracking/).

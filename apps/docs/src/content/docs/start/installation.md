@@ -1,4 +1,7 @@
-# Installation
+---
+title: Installation
+description: Install consentlayer and the optional provider SDKs.
+---
 
 ```bash
 pnpm add consentlayer

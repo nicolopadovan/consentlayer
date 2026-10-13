@@ -1,25 +1,28 @@
-# Next.js Integration
+---
+title: Next.js Integration
+description: Wire consentlayer into a Next.js App Router app.
+---
 
-The example app in [`apps/example-next`](../apps/example-next) is the reference implementation.
+The example app in [`apps/example-next`](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/apps/example-next) is the reference implementation.
 
 ## Main Files
 
-- analytics instance: [`apps/example-next/lib/analytics.ts`](../apps/example-next/lib/analytics.ts)
-- consumer shell: [`apps/example-next/components/analytics-shell.tsx`](../apps/example-next/components/analytics-shell.tsx)
-- layout wiring: [`apps/example-next/app/layout.tsx`](../apps/example-next/app/layout.tsx)
-- tracking from components: [`apps/example-next/components/demo-client.tsx`](../apps/example-next/components/demo-client.tsx)
-- global error page: [`apps/example-next/app/global-error.tsx`](../apps/example-next/app/global-error.tsx)
-- Sentry server setup: [`apps/example-next/instrumentation.ts`](../apps/example-next/instrumentation.ts)
-- server route: [`apps/example-next/app/api/analytics/route.ts`](../apps/example-next/app/api/analytics/route.ts)
+- analytics instance: [`apps/example-next/lib/analytics.ts`](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/apps/example-next/lib/analytics.ts)
+- consumer shell: [`apps/example-next/components/analytics-shell.tsx`](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/apps/example-next/components/analytics-shell.tsx)
+- layout wiring: [`apps/example-next/app/layout.tsx`](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/apps/example-next/app/layout.tsx)
+- tracking from components: [`apps/example-next/components/demo-client.tsx`](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/apps/example-next/components/demo-client.tsx)
+- global error page: [`apps/example-next/app/global-error.tsx`](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/apps/example-next/app/global-error.tsx)
+- Sentry server setup: [`apps/example-next/instrumentation.ts`](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/apps/example-next/instrumentation.ts)
+- server route: [`apps/example-next/app/api/analytics/route.ts`](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/apps/example-next/app/api/analytics/route.ts)
 
 ## Integration Shape
 
 1. Create one instance at module level with `createAnalytics({ providers })`, passing only the providers that are configured. Read each `NEXT_PUBLIC_*` variable literally (`process.env.NEXT_PUBLIC_X`): Next inlines only those into browser code.
 2. In a client shell, Wrap the app with `<AnalyticsProvider analytics={analytics} routeKey={…}>`.
 3. Render the UI components (or your own UI built on `useConsent()` / `useConsentController()`).
-4. Track from components with `useAnalytics()`. See [events and identity](./events.md).
+4. Track from components with `useAnalytics()`. See [events and identity](/guides/events/).
 5. Add `app/global-error.tsx` and, for Sentry, `instrumentation.ts` (see "Errors").
-6. Optionally forward events to Meta CAPI: one route with `createAnalyticsHandler` and `server: { endpoint }`. See [server-side tracking](./server-side-tracking.md).
+6. Optionally forward events to Meta CAPI: one route with `createAnalyticsHandler` and `server: { endpoint }`. See [server-side tracking](/guides/server-side-tracking/).
 
 ## Minimal Wiring
 
