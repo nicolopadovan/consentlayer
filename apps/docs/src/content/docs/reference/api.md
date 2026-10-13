@@ -101,7 +101,7 @@ type AnalyticsOptions = {
 | `initialConsent` | `ConsentState \| null` | `null` | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one. |
 | `broadcast` | `ConsentBroadcastConfig` | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set. |
 | `maxAgeDays` | `number` | None | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`. |
-| `policyVersion` | `string` | None | A stored choice made under another version, or under none, is stale. Surrounding whitespace is trimmed; `''` counts as unset. Use the value you pass to [`createConsentHandler()`](#createconsenthandleroptions). |
+| `policyVersion` | `string` | None | A stored choice made under another version, or under none, is stale. Surrounding whitespace is trimmed; `''` counts as unset. Change it only when visitors must agree again; it can differ from the version passed to [`createConsentHandler()`](#createconsenthandleroptions), which records the policy text in force. |
 | `onStale` | `'discard' \| 'keep'` | `'discard'` | What a stale choice means until the visitor chooses again. `'discard'` treats it as no choice: consent is `null` and only `'none'` providers run. `'keep'` keeps it in force. Either way the banner is shown. See [Asking again](/guides/consent-ui/#asking-again). |
 
 Custom categories and the error callback are set with the top-level

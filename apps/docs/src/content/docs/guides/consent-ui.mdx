@@ -81,8 +81,11 @@ A stored choice does not expire by default. Two options of
 - **`maxAgeDays`** makes a choice stale once it is older than that many days.
   The CNIL, for example, recommends asking again after six months.
 - **`policyVersion`** makes a choice stale when it was made under another
-  version of your privacy policy. Change the value when the policy changes in
-  a way visitors must agree to again.
+  version. It is the version visitors must have agreed to, not necessarily the
+  current version of your privacy policy: change it only when the policy
+  changes in a way visitors must agree to again, such as a new purpose or a new
+  recipient of their data. Edits that need no new consent, such as a new
+  contact address, leave it unchanged.
 
 ```ts title="lib/analytics.ts"
 export const analytics = createAnalytics({
@@ -115,6 +118,27 @@ set, so turning on `maxAgeDays` or `policyVersion` asks every returning
 visitor once. Choices supplied by a consent adapter, such as Shopify Customer
 Privacy, are stored with the current date and version, since the adapter is
 their source.
+
+</details>
+
+<details>
+<summary>The browser's and the server's policy versions</summary>
+
+[`createConsentHandler({ policyVersion })`](/guides/consent-records/#the-consent-route)
+records which policy text was in force when each choice was recorded, so
+update it on every policy change. `createAnalytics({ consent: { policyVersion } })`
+decides who is asked again, so update it only for changes that need consent
+again. The two values are independent and often differ:
+
+```ts
+// Minor edit on 2026-11-15: new records cite the new text, nobody is asked again.
+createConsentHandler({ store, secret, policyVersion: '2026-11-15' })
+createAnalytics({ consent: { policyVersion: '2026-10-01' } })
+```
+
+A visitor who chose under `'2026-10-01'` keeps the record made then. That
+record remains the proof of their consent, because the policy they agreed to
+did not change in a way that needs it again.
 
 </details>
 
