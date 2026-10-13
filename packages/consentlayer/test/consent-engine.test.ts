@@ -116,6 +116,26 @@ describe('consent engine', () => {
       sale_of_data: false,
     })
   })
+
+  it('leaves an undecided Shopify sale_of_data unset', async () => {
+    const adapter = createShopifyCustomerPrivacyAdapter({
+      loadFeature: false,
+      window: {
+        Shopify: {
+          customerPrivacy: {
+            currentVisitorConsent: () => ({ marketing: 'yes', analytics: 'no', preferences: '', sale_of_data: '' }),
+          },
+        },
+      } as unknown as Window,
+      document,
+    })
+
+    await expect(adapter.bootstrap?.()).resolves.toEqual({
+      preferences: false,
+      analytics: false,
+      marketing: true,
+    })
+  })
 })
 
 describe('Shopify Customer Privacy sync', () => {

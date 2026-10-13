@@ -102,7 +102,7 @@ export function createShopifyCustomerPrivacyAdapter(
         preferences: coerceShopifyConsent(explicit.preferences),
         analytics: coerceShopifyConsent(explicit.analytics),
         marketing: coerceShopifyConsent(explicit.marketing),
-        ...(typeof explicit.sale_of_data === 'string'
+        ...(explicit.sale_of_data
           ? { sale_of_data: coerceShopifyConsent(explicit.sale_of_data) }
           : {}),
       }

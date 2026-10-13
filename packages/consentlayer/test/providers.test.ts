@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
+import { loadScript } from '../src/core/plugin'
 import { ga4 } from '../src/providers/ga4'
 import { meta } from '../src/providers/meta'
 
@@ -92,5 +93,25 @@ describe('providers', () => {
     expect(document.querySelector('script[src*="gtag/js?id=G-ABC123"]')).toBeTruthy()
     expect(commands().filter((command) => command === 'config')).toHaveLength(1)
     manager.destroy()
+  })
+})
+
+describe('loadScript', () => {
+  it('adds a relative src once and shares the pending load', async () => {
+    const first = loadScript('/lib.js')
+    const second = loadScript('/lib.js')
+    const scripts = [...document.scripts].filter((script) => script.src.endsWith('/lib.js'))
+    expect(scripts).toHaveLength(1)
+    expect(second).toBe(first)
+    scripts[0].dispatchEvent(new Event('load'))
+    await expect(first).resolves.toBeUndefined()
+  })
+
+  it('retries after a failed load', async () => {
+    const failed = loadScript('/broken.js')
+    document.querySelector<HTMLScriptElement>('script[src$="/broken.js"]')!.dispatchEvent(new Event('error'))
+    await expect(failed).rejects.toThrow('Failed to load /broken.js')
+    void loadScript('/broken.js')
+    expect(document.querySelectorAll('script[src$="/broken.js"]')).toHaveLength(1)
   })
 })

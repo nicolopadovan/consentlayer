@@ -56,8 +56,9 @@
   gap: var(--_cl-gap);
 }
 
-:is(.cl-banner__title, .acm-banner__title) {
+:is(.cl-banner, .acm-banner) :is(.cl-banner__title, .acm-banner__title) {
   margin: 0;
+  color: inherit;
   font-size: 1.05rem;
   font-weight: 600;
 }
@@ -130,8 +131,9 @@
   gap: var(--_cl-gap);
 }
 
-:is(.cl-dialog__title, .acm-dialog__title) {
+:is(.cl-dialog, .acm-dialog) :is(.cl-dialog__title, .acm-dialog__title) {
   margin: 0 0 4px 0;
+  color: inherit;
   font-size: 1.1rem;
   font-weight: 600;
 }

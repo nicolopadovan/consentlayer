@@ -6,7 +6,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
+Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating-to-v1/).
 
 ### Breaking
 - "Reject non-essential" now stores `preferences: false`; it used to grant
@@ -127,6 +127,10 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
 - `ConsentEngine.bootstrap()` runs once even when called from several places.
 - `newPageSession()` no longer sends a page-session event before auto-tracking is enabled.
 - Auto-tracking could start before providers were active and lose the first page-session event.
+- `CookieBanner` and `CookieDialog` titles were invisible on sites that colour their headings.
+- `loadScript` added a relative `src` again on every call, and a call made while
+  the script was loading resolved before it ran.
+- Shopify bootstrap stored an undecided `sale_of_data` as `false`.
 
 ### Changed
 - `IdentityStorageAdapter.write` replaces the stored identity instead of
