@@ -11,7 +11,6 @@ const env = createEnvConfig({
   NODE_ENV: process.env.NODE_ENV,
   NEXT_PUBLIC_ENABLE_ANALYTICS: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS,
   NEXT_PUBLIC_ANALYTICS_DEBUG: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG,
-  NEXT_PUBLIC_ANALYTICS_LOCALE: process.env.NEXT_PUBLIC_ANALYTICS_LOCALE,
   NEXT_PUBLIC_FACEBOOK_PIXEL_ID: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID,
   NEXT_PUBLIC_GA4_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,
   NEXT_PUBLIC_HOTJAR_SITE_ID: process.env.NEXT_PUBLIC_HOTJAR_SITE_ID,
@@ -47,5 +46,4 @@ export const analytics = createAnalytics({
   autoTracking: true,
   enabled: env.runtimeEnabled,
   debug: env.debug,
-  locale: env.locale,
 })

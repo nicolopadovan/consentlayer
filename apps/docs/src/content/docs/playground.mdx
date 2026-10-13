@@ -1,6 +1,6 @@
 ---
 title: Playground
-description: The real consent banner and three logging providers, one per consent category.
+description: The consent banner recipe and three logging providers, one per consent category.
 ---
 
 import Playground from '../../components/Playground.tsx'
@@ -14,7 +14,7 @@ manager asks them to do:
 | `product-analytics` | analytics |
 | `ads-pixel` | marketing |
 
-Choose in the banner, change your mind with **Manage cookies**, and track a few
+Choose in the banner, change your mind with **Cookie settings**, and track a few
 events. The log shows each hook as it runs, newest first: nothing reaches a
 provider before its category is granted, `load` runs once, and withdrawal runs
 `teardown`. Your choice is stored under `playground_consent`, so it survives a

@@ -25,7 +25,6 @@ createAnalytics({
   names: {
     prefix: 'shop',                     // shop_consent, shop:consent, SHOP_CONSENT, …
     consentStorageKey: 'my_consent',    // any single name can be overridden
-    classPrefix: 'shop',                // .shop-banner, .shop-dialog, …
     legacy: true,                       // also read and write the acm_* names below
   },
 })

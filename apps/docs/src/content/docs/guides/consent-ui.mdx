@@ -1,0 +1,63 @@
+---
+title: Consent UI
+description: Build your consent banner on useConsentController, starting from a copy-paste recipe.
+---
+
+import { Code } from '@astrojs/starlight/components'
+import banner from '../../../components/ConsentBanner.tsx?raw'
+import css from '../../../components/consent-banner.css?raw'
+
+consentlayer ships no banner: your site's design, copy and languages are
+yours. `useConsentController()` from `consentlayer/react` gives the state and
+actions, and the recipe below is a working starting point to copy into your
+app. It is the banner the [Playground](/playground/) runs.
+
+## `useConsentController()`
+
+Use it inside `<AnalyticsProvider>`.
+
+| Field | What it is |
+|---|---|
+| `ready` | `true` once stored consent has been read. Render nothing before it, so returning visitors don't see the banner flash |
+| `bannerVisible` | `true` until the visitor chooses (with `<AnalyticsProvider autoShowBanner>`, the default) |
+| `dialogVisible` | the settings dialog is open |
+| `prefs`, `setPrefs` | the dialog's draft choices, saved only by `savePreferences` |
+| `acceptAll()` | grants every category and closes both |
+| `rejectNonEssential()` | denies preferences, analytics and marketing and closes both |
+| `savePreferences()` | saves `prefs` and closes both |
+| `openDialog()`, `closeDialog()`, `showBanner()`, `hideBanner()` | visibility |
+| `error` | why reading stored consent failed, if it did |
+
+To reopen the settings from a footer link outside React, call
+`window.CONSENTLAYER_openConsent()` (the name follows
+[`names.prefix`](/guides/names/)).
+
+## Recipe
+
+Copy both files, then change the text, the categories you show and the styles.
+Necessary cookies are always on, so the dialog shows them checked and disabled.
+
+<Code code={banner} lang="tsx" title="components/consent-banner.tsx" />
+
+<Code code={css} lang="css" title="components/consent-banner.css" />
+
+Render it once inside the provider, and add a way back to the settings:
+
+```tsx
+import { AnalyticsProvider, useConsentController } from 'consentlayer/react'
+import { ConsentBanner } from './consent-banner'
+
+function CookieSettingsButton() {
+  const { openDialog } = useConsentController()
+  return <button onClick={openDialog}>Cookie settings</button>
+}
+
+<AnalyticsProvider analytics={analytics}>
+  {children}
+  <ConsentBanner privacyPolicyUrl="/privacy" />
+  <CookieSettingsButton />
+</AnalyticsProvider>
+```
+
+Translations are plain strings in your component; use whatever i18n your app
+already has.

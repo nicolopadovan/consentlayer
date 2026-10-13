@@ -1,5 +1,4 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
-import path from 'node:path'
+import { readFile, writeFile } from 'node:fs/promises'
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
@@ -22,7 +21,6 @@ export default defineConfig({
     'server/ga4': 'src/server/ga4.ts',
     'server/meta': 'src/server/meta.ts',
     testing: 'src/testing.ts',
-    'ui/index': 'src/ui/index.ts',
   },
   dts: true,
   format: ['esm'],
@@ -31,11 +29,8 @@ export default defineConfig({
   treeshake: true,
   external: ['react', 'react-dom'],
   async onSuccess() {
-    const target = path.resolve('dist/ui/styles.css')
-    await mkdir(path.dirname(target), { recursive: true })
-    await copyFile(path.resolve('src/ui/styles.css'), target)
     // esbuild drops module directives; prepended on line 1 so the sourcemaps stay aligned.
-    for (const entry of ['dist/react/index.js', 'dist/ui/index.js']) {
+    for (const entry of ['dist/react/index.js']) {
       await writeFile(entry, `'use client';${await readFile(entry, 'utf8')}`)
     }
   },

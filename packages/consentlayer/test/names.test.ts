@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
-import { configureNames, getFlag, getNames, setFlag, ui } from '../src/core/names'
+import { configureNames, getFlag, getNames, setFlag } from '../src/core/names'
 import { createLocalStorageConsentStorage } from '../src/core/storage'
 import type { ConsentState } from '../src/core/types'
 
@@ -24,7 +24,6 @@ describe('names', () => {
     expect(getNames().consentStorageKey).toBe('shop_consent')
     expect(getNames().consentGlobalKey).toBe('SHOP_CONSENT')
     expect(getNames().consentEventName).toBe('shop-consent')
-    expect(ui('banner')).toBe('cl-banner')
   })
 
   it('moves a legacy stored value to the new key', () => {
@@ -40,7 +39,6 @@ describe('names', () => {
     localStorage.setItem('acm_consent', JSON.stringify(granted))
     const storage = createLocalStorageConsentStorage({ key: 'consentlayer_consent' })
     expect(storage.read()).toBeNull()
-    expect(ui('banner')).toBe('cl-banner')
   })
 
   it('broadcasts under the new and legacy names', async () => {

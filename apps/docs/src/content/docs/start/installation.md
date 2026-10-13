@@ -12,7 +12,7 @@ dependencies, so nothing is pulled in for providers you don't use:
 
 | You use | Also install |
 |---|---|
-| `consentlayer/react`, `consentlayer/ui` | `react`, `react-dom` |
+| `consentlayer/react` | `react`, `react-dom` |
 | `posthog()` | `posthog-js` |
 | `sentry()` | `@sentry/browser` |
 | `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs` |
@@ -21,7 +21,6 @@ dependencies, so nothing is pulled in for providers you don't use:
 
 - `consentlayer`
 - `consentlayer/react`
-- `consentlayer/ui` (plus `consentlayer/ui/styles.css`)
 - `consentlayer/server` (plus `/server/ga4` for `ga4Server`, `/server/meta` for `metaCapi`)
 - `consentlayer/ecommerce`
 - `consentlayer/testing`

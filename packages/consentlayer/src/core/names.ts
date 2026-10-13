@@ -6,10 +6,9 @@ export type AutoTrackingEventNames = {
   uiClick: string
 }
 
-/** Storage keys, globals, DOM events and CSS class prefix in use. */
+/** Storage keys, globals and DOM events in use. */
 export type Names = {
   prefix: string
-  classPrefix: string
   legacy: boolean
   consentStorageKey: string
   identityStorageKey: string
@@ -25,13 +24,11 @@ export type NamesInput = Partial<Omit<Names, 'autoTrackingEvents'>> & {
 }
 
 export const DEFAULT_PREFIX = 'consentlayer'
-export const DEFAULT_CLASS_PREFIX = 'cl'
 
-function derive(prefix: string, classPrefix: string, legacy: boolean): Names {
+function derive(prefix: string, legacy: boolean): Names {
   const upper = prefix.toUpperCase()
   return {
     prefix,
-    classPrefix,
     legacy,
     consentStorageKey: `${prefix}_consent`,
     identityStorageKey: `${prefix}_user_identity`,
@@ -48,20 +45,19 @@ function derive(prefix: string, classPrefix: string, legacy: boolean): Names {
 }
 
 /** Names used before 1.0.0-rc.2. Read and written too when `legacy` is on. */
-export const legacyNames: Names = derive('acm', 'acm', false)
+export const legacyNames: Names = derive('acm', false)
 
-let current = derive(DEFAULT_PREFIX, DEFAULT_CLASS_PREFIX, false)
+let current = derive(DEFAULT_PREFIX, false)
 
 /**
- * Sets every storage key, global, DOM event, auto-tracking event name and CSS
- * class prefix the package uses. Each call starts again from the defaults.
+ * Sets every storage key, global, DOM event and auto-tracking event name the
+ * package uses. Each call starts again from the defaults.
  * Call it before the first read of consent, e.g. at the top of the module
  * that sets up analytics.
  */
 export function configureNames(input: NamesInput = {}): Names {
   const base = derive(
     input.prefix ?? DEFAULT_PREFIX,
-    input.classPrefix ?? DEFAULT_CLASS_PREFIX,
     input.legacy ?? false,
   )
   const overrides = Object.fromEntries(
@@ -123,13 +119,4 @@ export function setFlag<T>(name: string, value: T): T {
   win[`__${current.prefix}${name}`] = value
   if (current.legacy) win[`__${legacyNames.prefix}${name}`] = value
   return value
-}
-
-/** `ui('banner__button')` → `"cl-banner__button"`, plus `acm-banner__button` with `legacy`. */
-export function ui(...blocks: string[]): string {
-  return blocks
-    .flatMap((block) =>
-      withLegacy((names) => `${names.classPrefix}-${block}`),
-    )
-    .join(' ')
 }

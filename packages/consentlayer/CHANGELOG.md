@@ -9,6 +9,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating-to-v1/).
 
 ### Breaking
+- `consentlayer/ui` (`CookieBanner`, `CookieDialog`, `ManageConsentTrigger`,
+  the stylesheet and messages) is removed. Build your banner on
+  `useConsentController()`, starting from the copy-paste recipe in the docs.
+  `names.classPrefix` and `createAnalytics({ locale })` go with it.
 - `consent.setConsent()` rejects with a `TypeError` unless `preferences`,
   `analytics` and `marketing` are booleans; `null` used to be ignored and
   strings such as `'false'` counted as granted.
@@ -73,11 +77,6 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `onError` reports a second provider with an `id` already in use (scope
   `provider-setup`), and the first call dropped by a full 100-call queue (scope
   `queue-full`).
-- Consent UI localization: English and Italian built in, picked from
-  `<AnalyticsProvider locale>`, then `createAnalytics({ locale })` (fed by
-  `NEXT_PUBLIC_ANALYTICS_LOCALE` through `createEnvConfig`), then `<html lang>`.
-  `messages` overrides any string for any locale; `privacyPolicyUrl` adds a
-  policy link. The dialog describes each category.
 - `definePlugin`, `loadScript`, `getFlag` / `setFlag` for plugin authors, and
   `checkPlugin()` in `/testing`, which every built-in passes. The manager runs
   `setup` → `consent` → `load` (once) and `teardown` on withdrawal.
@@ -138,7 +137,6 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `ConsentEngine.bootstrap()` runs once even when called from several places.
 - `newPageSession()` no longer sends a page-session event before auto-tracking is enabled.
 - Auto-tracking could start before providers were active and lose the first page-session event.
-- `CookieBanner` and `CookieDialog` titles were invisible on sites that colour their headings.
 - `loadScript` added a relative `src` again on every call, and a call made while
   the script was loading resolved before it ran.
 - Shopify bootstrap stored an undecided `sale_of_data` as `false`.
@@ -160,7 +158,7 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   shadowed variables set on ancestors.
 
 ### Added
-- `configureNames({ prefix, classPrefix, legacy, ...overrides })` and `getNames()`.
+- `configureNames({ prefix, legacy, ...overrides })` and `getNames()`.
 - Legacy compatibility (on by default, `legacy: false` to disable): stored
   `acm_*` values move to the new keys on first read; `acm:consent`,
   `ACM_CONSENT` and `ACM_openConsent` keep being set; `.acm-*` classes and

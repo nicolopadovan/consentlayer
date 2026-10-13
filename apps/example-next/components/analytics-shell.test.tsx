@@ -64,16 +64,16 @@ describe('AnalyticsShell', () => {
       </AnalyticsShell>,
     )
 
-    await waitFor(() => expect(screen.getByText('Cookie preferences')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Cookies')).toBeTruthy())
     expect(requestIdleCallbackMock).toHaveBeenCalled()
 
     fireEvent.click(screen.getByText('Accept all'))
 
     await waitFor(() =>
-      expect(screen.queryByText('Cookie preferences')).toBeNull(),
+      expect(screen.queryByText('Cookies')).toBeNull(),
     )
     expect(localStorage.getItem('consentlayer_consent')).toContain('"marketing":true')
-    expect(screen.getByText('Manage cookies')).toBeTruthy()
+    expect(screen.getByText('Cookie settings')).toBeTruthy()
     expect(screen.getByTestId('consent-probe').textContent).toContain(
       '"marketing":true',
     )

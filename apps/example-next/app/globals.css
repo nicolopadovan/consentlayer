@@ -44,34 +44,9 @@ input {
   gap: 1rem;
 }
 
-.banner,
-.dialog,
 .manage {
   position: fixed;
   z-index: 1000;
-}
-
-.banner {
-  left: 1rem;
-  right: 1rem;
-  bottom: 1rem;
-  background: white;
-  border-radius: 1rem;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
-  padding: 1rem;
-}
-
-.dialog {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(32rem, calc(100vw - 2rem));
-  background: white;
-  border-radius: 1rem;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
-  padding: 1rem;
 }
 
 .manage {

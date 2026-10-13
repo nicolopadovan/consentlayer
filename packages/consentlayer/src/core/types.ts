@@ -372,6 +372,4 @@ export type Analytics = Omit<
   'updateConsent' | 'getConsent' | 'enableAutoTracking'
 > & {
   consent: ConsentApi
-  /** Default consent UI language passed to `createAnalytics`. */
-  locale?: string
 }

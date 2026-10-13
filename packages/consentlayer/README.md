@@ -47,14 +47,13 @@ export const analytics = createAnalytics({
 ```tsx
 'use client'
 import { AnalyticsProvider } from 'consentlayer/react'
-import { CookieBanner, CookieDialog } from 'consentlayer/ui'
+import { ConsentBanner } from './consent-banner' // the Consent UI recipe in the docs
 import { analytics } from '../lib/analytics'
 
 export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <AnalyticsProvider analytics={analytics}>
-      <CookieBanner />
-      <CookieDialog />
+      <ConsentBanner />
       {children}
     </AnalyticsProvider>
   )

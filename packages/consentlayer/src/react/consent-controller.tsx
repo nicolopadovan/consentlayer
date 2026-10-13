@@ -11,7 +11,6 @@ import {
 } from 'react'
 import { withLegacy } from '../core/names'
 import type { ConsentState } from '../core/types'
-import type { ConsentMessageOverrides } from '../ui/messages'
 import { useConsent } from './analytics-provider'
 
 type ConsentControllerValue = {
@@ -30,9 +29,6 @@ type ConsentControllerValue = {
   acceptAll: () => Promise<void>
   rejectNonEssential: () => Promise<void>
   savePreferences: () => Promise<void>
-  locale?: string
-  messages?: ConsentMessageOverrides
-  privacyPolicyUrl?: string
 }
 
 const ConsentControllerContext = createContext<
@@ -44,18 +40,12 @@ export type ConsentControllerProviderProps = {
   autoShowBanner?: boolean
   /** Defaults to the configured name (plus `ACM_openConsent` with `names.legacy`). */
   openConsentGlobalKey?: string
-  locale?: string
-  messages?: ConsentMessageOverrides
-  privacyPolicyUrl?: string
 }
 
 export function ConsentControllerProvider({
   children,
   autoShowBanner = true,
   openConsentGlobalKey,
-  locale,
-  messages,
-  privacyPolicyUrl,
 }: ConsentControllerProviderProps) {
   const { engine, consent, setConsent } = useConsent()
   const [ready, setReady] = useState(false)
@@ -155,11 +145,8 @@ export function ConsentControllerProvider({
           analytics: prefs.analytics,
           marketing: prefs.marketing,
         }),
-      locale,
-      messages,
-      privacyPolicyUrl,
     }),
-    [applyAndClose, bannerVisible, dialogVisible, error, locale, messages, prefs, privacyPolicyUrl, ready],
+    [applyAndClose, bannerVisible, dialogVisible, error, prefs, ready],
   )
 
   return (

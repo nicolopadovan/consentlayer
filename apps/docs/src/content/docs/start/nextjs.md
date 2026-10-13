@@ -41,10 +41,10 @@ export const analytics = createAnalytics({
 'use client'
 
 import { AnalyticsProvider } from 'consentlayer/react'
-import { CookieBanner, CookieDialog, ManageConsentTrigger } from 'consentlayer/ui'
 import { usePathname, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { analytics } from '../lib/analytics'
+import { ConsentBanner } from './consent-banner'
 
 export function AnalyticsShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
@@ -56,16 +56,15 @@ export function AnalyticsShell({ children }: { children: ReactNode }) {
       boot={{ mode: 'idle', timeoutMs: 3000 }}
       routeKey={`${pathname}?${searchParams.toString()}`}
     >
-      <CookieBanner />
-      <CookieDialog />
-      <ManageConsentTrigger />
+      <ConsentBanner privacyPolicyUrl="/privacy" />
       {children}
     </AnalyticsProvider>
   )
 }
 ```
 
-`AnalyticsProvider` reads stored consent, shows the banner when there is none,
+`ConsentBanner` is the [Consent UI recipe](/guides/consent-ui/), copied into
+your app. `AnalyticsProvider` reads stored consent, shows the banner when there is none,
 boots the providers, sends a page view per `routeKey` and starts a new
 auto-tracking page session on navigation.
 

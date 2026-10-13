@@ -1,8 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { createAnalytics, definePlugin, type ConsentState, type ProviderConsentRequirement } from 'consentlayer'
-import { AnalyticsProvider, useAnalytics, useConsent } from 'consentlayer/react'
-import { CookieBanner, CookieDialog, ManageConsentTrigger } from 'consentlayer/ui'
-import 'consentlayer/ui/styles.css'
+import { AnalyticsProvider, useAnalytics, useConsent, useConsentController } from 'consentlayer/react'
+import { ConsentBanner } from './ConsentBanner'
 import './playground.css'
 
 type Entry = { id: number; time: string; provider: string; hook: string; detail: string }
@@ -49,6 +48,7 @@ const analytics = createAnalytics({
 function Controls() {
   const tracker = useAnalytics()
   const { consent } = useConsent()
+  const { openDialog } = useConsentController()
   return (
     <div className="pg-controls">
       <p>
@@ -60,7 +60,7 @@ function Controls() {
           Track purchase
         </button>
         <button onClick={() => void tracker.identify('user_1', { email: 'ada@example.com' })}>Identify</button>
-        <ManageConsentTrigger />
+        <button onClick={openDialog}>Cookie settings</button>
         <button
           onClick={() => {
             localStorage.removeItem('playground_consent')
@@ -94,8 +94,7 @@ export default function Playground() {
       <div className="not-content">
         <Controls />
         <Log />
-        <CookieBanner />
-        <CookieDialog />
+        <ConsentBanner />
       </div>
     </AnalyticsProvider>
   )

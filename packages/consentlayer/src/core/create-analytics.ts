@@ -19,10 +19,8 @@ export type AnalyticsOptions = Omit<
 > & {
   /** Storage, CMP integrations (e.g. Shopify Customer Privacy) and broadcast. Defaults to localStorage. */
   consent?: Omit<ConsentEngineOptions, 'debug'>
-  /** Renames storage keys, globals, DOM events and CSS classes. */
+  /** Renames storage keys, globals and DOM events. */
   names?: NamesInput
-  /** Default consent UI language, e.g. from `NEXT_PUBLIC_ANALYTICS_LOCALE`. `<AnalyticsProvider locale>` wins over it. */
-  locale?: string
 }
 
 const DENIED: ConsentState = {
@@ -33,7 +31,7 @@ const DENIED: ConsentState = {
 
 /** Creates the analytics instance. Nothing loads until `boot()` (which `<AnalyticsProvider>` calls) and then only what consent allows. */
 export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
-  const { consent: consentOptions, names, locale, ...managerOptions } = options
+  const { consent: consentOptions, names, ...managerOptions } = options
   if (names) configureNames(names)
 
   const engine = createConsentEngine({
@@ -55,7 +53,6 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
   })
 
   return {
-    locale,
     boot: manager.boot,
     registerProvider: manager.registerProvider,
     page: manager.page,

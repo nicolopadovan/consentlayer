@@ -23,8 +23,8 @@ imports and delete the `@nicolopadovan:registry` line from `.npmrc`.
 ### Names (`acm` → `consentlayer`)
 
 Nothing to do unless you read the names yourself. Stored `acm_*` values move
-to `consentlayer_*` on first read, and the old globals, DOM events, classes and CSS
-variables keep working. New classes and variables use `cl` (`.cl-banner`, `--cl-accent`). Two things do change:
+to `consentlayer_*` on first read, and the old globals and DOM events keep
+working. Two things do change:
 
 - Auto-tracking events are now `consentlayer.*`. Update dashboards that filter on `acm.*`.
 - GA4 receives them as `consentlayer_page_session_start`, `consentlayer_scroll_depth`,
@@ -159,8 +159,11 @@ Nothing is renamed. New:
 - `consent.setConsent()` rejects with a `TypeError` unless `preferences`,
   `analytics` and `marketing` are booleans. Values read from your own cookie or
   form (`'true'`, `1`) need converting first; `'false'` used to grant.
-- The consent UI follows `<html lang>` and ships English and Italian. To keep
-  English on an Italian page, pass `<AnalyticsProvider locale="en">`.
+- `consentlayer/ui` and its stylesheet are gone, along with the `locale`,
+  `messages` and `privacyPolicyUrl` props, `createAnalytics({ locale })` and
+  `names.classPrefix`. Copy the [Consent UI recipe](/guides/consent-ui/) into
+  your app and restyle it; if you copied the `.acm-*` markup or themed the
+  `--acm-*` variables, move those styles onto your component.
 - The `acm_*` names are off by default. Upgrading from rc.1 or earlier, pass
   `names: { legacy: true }` so stored consent and identity carry over.
 - `ga4()` and `meta()` no longer load before consent. For the old behaviour
