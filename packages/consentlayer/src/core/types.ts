@@ -1,3 +1,4 @@
+/** Consent per category. Necessary cookies are always allowed, so they have no flag. */
 export type ConsentState = {
   preferences: boolean
   analytics: boolean
@@ -5,22 +6,26 @@ export type ConsentState = {
   sale_of_data?: boolean
 }
 
+/** What a plugin needs before it runs: a category, `'none'`, or a custom check. */
 export type ProviderConsentRequirement =
   | keyof ConsentState
   | 'none'
   | ((consent: ConsentState | null) => boolean)
 
+/** Who the visitor is, once known. Stored only with analytics or marketing consent. */
 export type UserIdentity = {
   userId?: string
   email?: string
   phone?: string
 }
 
+/** Extra traits passed to `identify`; `email` and `phone` also update the identity. */
 export type UserTraits = Record<string, unknown> & {
   email?: string
   phone?: string
 }
 
+/** Where a consent change came from. */
 export type ConsentChangeSource =
   | 'bootstrap'
   | 'storage'
@@ -28,6 +33,7 @@ export type ConsentChangeSource =
   | 'imperative'
   | 'unknown'
 
+/** DOM event names and window globals that announce consent changes to other scripts. */
 export type ConsentBroadcastConfig = {
   eventName?: string | string[]
   globalKey?: string | string[]
@@ -35,6 +41,7 @@ export type ConsentBroadcastConfig = {
   window?: Window
 }
 
+/** Where consent is kept. Defaults to localStorage. */
 export interface ConsentStorageAdapter {
   read(): ConsentState | null
   write(consent: ConsentState | null): void
@@ -42,12 +49,14 @@ export interface ConsentStorageAdapter {
   clear?(): void
 }
 
+/** Where the visitor identity is kept. Defaults to localStorage. */
 export interface IdentityStorageAdapter {
   read(): UserIdentity
   write(identity: Partial<UserIdentity>): void
   clear?(): void
 }
 
+/** Syncs consent with an outside consent platform: reads its choice at boot, pushes changes to it, and listens for its updates. */
 export interface ConsentIntegrationAdapter {
   id: string
   bootstrap?(): Promise<ConsentState | null> | ConsentState | null
@@ -66,6 +75,7 @@ export type ConsentEngineOptions = {
   onError?: AnalyticsErrorHandler
 }
 
+/** What consent subscribers receive. */
 export type ConsentEngineSnapshot = {
   consent: ConsentState | null
 }
@@ -78,29 +88,36 @@ export interface ConsentEngine {
   destroy: () => void
 }
 
+/** When providers load: right away, when the browser is idle, or when you call `analytics.boot()`. */
 export type LazyBootMode = 'immediate' | 'idle' | 'manual'
 
+/** When providers load, and how long to wait for idle time. */
 export type LazyBootConfig = {
   mode?: LazyBootMode
   timeoutMs?: number
 }
 
+/** `'all'` tracks clicks on elements matching `selectors`; `'attribute'` only elements with the tracking attribute. */
 export type AutoTrackingClickMode = 'all' | 'attribute'
 
+/** Which clicks are tracked automatically. */
 export type AutoTrackingClickConfig = {
   mode?: AutoTrackingClickMode
   attribute?: string
   selectors?: string[]
 }
 
+/** Scroll depths (percent) that send an event. */
 export type AutoTrackingScrollConfig = {
   thresholds?: number[]
 }
 
+/** Seconds on page that send an event. */
 export type AutoTrackingTimeConfig = {
   intervals?: number[]
 }
 
+/** Events tracked without code. `true` uses the defaults for that kind. */
 export type AutoTrackingConfig = {
   clicks?: boolean | AutoTrackingClickConfig
   scroll?: boolean | AutoTrackingScrollConfig
@@ -110,12 +127,14 @@ export type AutoTrackingConfig = {
   only?: string[]
 }
 
+/** Page view details; read from `location` and `document.title` when omitted. */
 export type PageViewPayload = {
   url?: string
   path?: string
   title?: string
 }
 
+/** Per-event options for `track`. */
 export type TrackEventOptions = {
   requireAnalyticsConsent?: boolean
   requireMarketingConsent?: boolean
@@ -127,6 +146,7 @@ export type TrackEventOptions = {
   providers?: Record<string, Record<string, unknown>>
 }
 
+/** An event as plugins receive it. */
 export type AnalyticsEventPayload = {
   id: string
   name: string
@@ -134,6 +154,7 @@ export type AnalyticsEventPayload = {
   options: TrackEventOptions
 }
 
+/** A product line in GA4 item format. */
 export type EcommerceItem = {
   item_id: string
   item_name?: string
@@ -177,16 +198,19 @@ export interface StandardEvents {
   subscription_cancelled: { plan?: string; reason?: string }
 }
 
+/** Params for an event: typed for the standard events, free-form for the rest. */
 export type EventParams<Name extends string> = Name extends keyof StandardEvents
   ? StandardEvents[Name] & Record<string, unknown>
   : Record<string, unknown>
 
+/** What `analytics.subscribe` listeners receive. */
 export type AnalyticsManagerStateSnapshot = {
   booted: boolean
   consent: ConsentState | null
   activeProviders: string[]
 }
 
+/** Which step failed. */
 export type AnalyticsErrorScope =
   | 'provider-setup'
   | 'provider-load'
@@ -200,6 +224,7 @@ export type AnalyticsErrorScope =
   | 'server-forward'
   | 'consent-adapter'
 
+/** A failure inside a provider, the server forward or a consent adapter. Never thrown; passed to `onError`. */
 export type AnalyticsError = {
   scope: AnalyticsErrorScope
   providerId?: string
@@ -207,6 +232,7 @@ export type AnalyticsError = {
   cause?: unknown
 }
 
+/** Receives every `AnalyticsError`. */
 export type AnalyticsErrorHandler = (error: AnalyticsError) => void
 
 export type AnalyticsManagerOptions = {
@@ -244,6 +270,7 @@ export type ServerEvent = {
   providers?: Record<string, Record<string, unknown>>
 }
 
+/** What plugins receive on each call. */
 export type PluginContext = {
   consent: ConsentState | null
   identity: UserIdentity
@@ -251,11 +278,13 @@ export type PluginContext = {
   emitError: AnalyticsErrorHandler
 }
 
+/** A page view as plugins receive it. */
 export type PageEvent = PageViewPayload & {
   /** Shared by browser and server so providers can dedupe. */
   id: string
 }
 
+/** Extra details for `captureError`. */
 export type ErrorContext = {
   level?: 'fatal' | 'error' | 'warning'
   tags?: Record<string, string>
@@ -330,11 +359,13 @@ export interface AnalyticsManager {
   destroy: () => void
 }
 
+/** Reads and changes consent: `analytics.consent`. */
 export type ConsentApi = Omit<ConsentEngine, 'destroy'> & {
   /** Merges into the current consent; categories left out stay as they are (denied if unset). */
   update(partial: Partial<ConsentState>): Promise<void>
 }
 
+/** The instance `createAnalytics` returns. */
 export type Analytics = Omit<
   AnalyticsManager,
   'updateConsent' | 'getConsent' | 'enableAutoTracking'

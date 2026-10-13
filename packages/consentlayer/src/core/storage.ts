@@ -15,6 +15,7 @@ export type LocalStorageAdapterOptions = {
   window?: Window
 }
 
+/** Consent in localStorage, synced across tabs. Never throws when storage is blocked or full. */
 export function createLocalStorageConsentStorage(
   options: LocalStorageAdapterOptions,
 ): ConsentStorageAdapter {
@@ -51,6 +52,7 @@ export function createLocalStorageConsentStorage(
   }
 }
 
+/** Visitor identity in localStorage. Never throws when storage is blocked or full. */
 export function createLocalStorageIdentityStorage(
   options: LocalStorageAdapterOptions,
 ): IdentityStorageAdapter {
@@ -84,6 +86,7 @@ export function createLocalStorageIdentityStorage(
   }
 }
 
+/** Consent kept in memory only, e.g. for tests or when you store it yourself. */
 export function createMemoryConsentStorage(
   initial: ConsentState | null = null,
 ): ConsentStorageAdapter {
@@ -108,6 +111,7 @@ export function createMemoryConsentStorage(
   }
 }
 
+/** Identity kept in memory only. */
 export function createMemoryIdentityStorage(
   initial: UserIdentity = {},
 ): IdentityStorageAdapter {

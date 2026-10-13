@@ -1,6 +1,7 @@
 import { definePlugin } from '../core/plugin'
 import { sanitizeVercelPayload } from '../core/utils'
 
+/** Options for `vercel`: pass `track` from `@vercel/analytics` as `trackEvent`. */
 export type VercelOptions = {
   trackEvent: (
     name: string,

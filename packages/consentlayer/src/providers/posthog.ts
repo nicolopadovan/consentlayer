@@ -2,6 +2,7 @@ import type { PostHog } from 'posthog-js'
 import { definePlugin } from '../core/plugin'
 import type { LoadTiming, PluginContext } from '../core/types'
 
+/** Options for `posthog`. */
 export type PostHogOptions = {
   apiKey: string
   /** Defaults to `https://us.i.posthog.com`. */
@@ -23,6 +24,7 @@ export type PostHogOptions = {
   defer?: LoadTiming
 }
 
+/** PostHog product analytics, cookieless until analytics consent. */
 export function posthog(options: PostHogOptions) {
   const cookieless = options.cookieless ?? true
   let ready: Promise<PostHog> | undefined

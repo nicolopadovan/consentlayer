@@ -4,6 +4,7 @@ import type { LoadTiming, PluginContext } from '../core/types'
 
 type Replay = ReturnType<typeof replayIntegration>
 
+/** Options for `sentry`. */
 export type SentryOptions = {
   dsn: string
   environment?: string

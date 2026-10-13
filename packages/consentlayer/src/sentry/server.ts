@@ -1,5 +1,6 @@
 import { captureRequestError, init } from '@sentry/nextjs'
 
+/** Options for `sentryInstrumentation`. */
 export type SentryServerOptions = {
   dsn: string | undefined
   environment?: string

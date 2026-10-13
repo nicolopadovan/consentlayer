@@ -6,6 +6,7 @@ import { AnalyticsContext } from './analytics-provider'
 
 type FallbackProps = { error: unknown; reset: () => void }
 
+/** Props for `<ErrorBoundary>`. */
 export type ErrorBoundaryProps = {
   children: ReactNode
   fallback: ReactNode | ((props: FallbackProps) => ReactNode)

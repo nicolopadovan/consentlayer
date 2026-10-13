@@ -9,6 +9,7 @@ function cx(...values: Array<string | undefined>): string {
   return values.filter(Boolean).join(' ')
 }
 
+/** A button that reopens the consent dialog, e.g. in the footer. */
 export function ManageConsentTrigger(
   props: ButtonHTMLAttributes<HTMLButtonElement>,
 ) {

@@ -9,6 +9,7 @@ declare global {
   }
 }
 
+/** Options for `ga4`. */
 export type Ga4Options = {
   measurementId: string
   /**
@@ -35,6 +36,7 @@ export function ga4UserData(identity: UserIdentity): Record<string, string> {
   return data
 }
 
+/** Google Analytics 4 via gtag.js, with Consent Mode v2. Needs analytics consent; ad signals follow marketing consent. */
 export function ga4(options: Ga4Options) {
   const measurementId = assertValidGa4MeasurementId(options.measurementId)
   const gtag = (...args: unknown[]) => window.gtag?.(...args)

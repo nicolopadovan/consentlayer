@@ -3,6 +3,7 @@ import { ANALYTICS_MAX_BODY, assertSameOrigin, parseCookieHeader, parseJsonWithL
 
 export type { ServerEvent }
 
+/** Request details destinations use: client IP, user agent and cookies. */
 export type ServerRequestInfo = {
   ip?: string
   userAgent?: string
@@ -18,6 +19,7 @@ export interface ServerDestination<Forward extends boolean = boolean> {
   send(event: ServerEvent, request?: ServerRequestInfo): Promise<void>
 }
 
+/** Whether one destination accepted the event. */
 export type ServerSendResult = { id: string; ok: boolean; error?: unknown }
 
 /** Sends to every destination the event's consent and `only` allow, in parallel. */

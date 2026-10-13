@@ -12,6 +12,7 @@ import type {
   ConsentState,
 } from './types'
 
+/** Options for `createAnalytics`. */
 export type AnalyticsOptions = Omit<
   AnalyticsManagerOptions,
   'consent' | 'consentEngine'
@@ -30,6 +31,7 @@ const DENIED: ConsentState = {
   marketing: false,
 }
 
+/** Creates the analytics instance. Nothing loads until `boot()` (which `<AnalyticsProvider>` calls) and then only what consent allows. */
 export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
   const { consent: consentOptions, names, locale, ...managerOptions } = options
   if (names) configureNames(names)

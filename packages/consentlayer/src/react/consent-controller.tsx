@@ -169,6 +169,7 @@ export function ConsentControllerProvider({
   )
 }
 
+/** State and actions for building your own consent UI. */
 export function useConsentController(): ConsentControllerValue {
   const value = useContext(ConsentControllerContext)
   if (!value) {

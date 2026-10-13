@@ -73,6 +73,7 @@ const it: ConsentMessages = {
   privacyPolicy: 'Informativa sulla privacy',
 }
 
+/** The built-in consent UI text, keyed by language. */
 export const builtInMessages: Readonly<Record<string, ConsentMessages>> = { en, it }
 
 /** English, then the built-in language, then overrides for the language, then for the exact locale. */

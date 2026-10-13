@@ -16,6 +16,7 @@ declare global {
   }
 }
 
+/** Options for `meta`. */
 export type MetaOptions = {
   pixelId: string
   locale?: string
@@ -26,6 +27,7 @@ export type MetaOptions = {
   loadBeforeConsent?: boolean
 }
 
+/** Meta Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Conversions API. */
 export function meta(options: MetaOptions) {
   const pixelId = assertValidMetaPixelId(options.pixelId)
   const locale = options.locale ?? 'en_US'

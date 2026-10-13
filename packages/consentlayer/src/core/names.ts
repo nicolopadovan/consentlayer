@@ -1,3 +1,4 @@
+/** Event names used by auto-tracking. */
 export type AutoTrackingEventNames = {
   pageSessionStart: string
   scrollDepth: string
@@ -5,6 +6,7 @@ export type AutoTrackingEventNames = {
   uiClick: string
 }
 
+/** Storage keys, globals, DOM events and CSS class prefix in use. */
 export type Names = {
   prefix: string
   classPrefix: string
@@ -17,6 +19,7 @@ export type Names = {
   autoTrackingEvents: AutoTrackingEventNames
 }
 
+/** Overrides for `createAnalytics({ names })`; the rest derives from `prefix`. */
 export type NamesInput = Partial<Omit<Names, 'autoTrackingEvents'>> & {
   autoTrackingEvents?: Partial<AutoTrackingEventNames>
 }
@@ -75,6 +78,7 @@ export function configureNames(input: NamesInput = {}): Names {
   return current
 }
 
+/** The names in use, after `createAnalytics({ names })`. */
 export function getNames(): Names {
   return current
 }
@@ -112,6 +116,7 @@ export function getFlag<T>(name: string): T | undefined {
     | undefined
 }
 
+/** Sets a `window.__<prefix><name>` flag, so custom plugins can mark one-time setup. */
 export function setFlag<T>(name: string, value: T): T {
   if (typeof window === 'undefined') return value
   const win = window as unknown as FlagWindow

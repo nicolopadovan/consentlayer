@@ -11,6 +11,7 @@ function cx(...values: Array<string | undefined>): string {
 
 const CATEGORIES = ['necessary', 'preferences', 'analytics', 'marketing'] as const
 
+/** The per-category consent dialog. */
 export function CookieDialog(
   props: Omit<ComponentPropsWithoutRef<'section'>, 'children'>,
 ) {

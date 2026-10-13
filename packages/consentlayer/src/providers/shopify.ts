@@ -39,6 +39,7 @@ type ShopifyCustomerPrivacy = {
   }
 }
 
+/** Options for `createShopifyCustomerPrivacyAdapter`. `headlessStorefront` is needed off Shopify-hosted themes. */
 export type ShopifyCustomerPrivacyAdapterOptions = {
   canBootstrap?: () => boolean
   headlessStorefront?: {
@@ -78,6 +79,7 @@ async function ensureCustomerPrivacyFeature(
   })
 }
 
+/** Syncs consent with Shopify's Customer Privacy API, so Shopify and the store analytics agree. */
 export function createShopifyCustomerPrivacyAdapter(
   options: ShopifyCustomerPrivacyAdapterOptions = {},
 ): ConsentIntegrationAdapter {
@@ -154,6 +156,7 @@ export function createShopifyCustomerPrivacyAdapter(
   }
 }
 
+/** URL of Shopify's Customer Privacy script, for headless storefronts that load it themselves. */
 export function getShopifyCustomerPrivacyScriptUrl(): string {
   return 'https://cdn.shopify.com/shopifycloud/consent-tracking-api/v0.1/consent-tracking-api.js'
 }

@@ -5,6 +5,7 @@ type MoneyLike = {
   currencyCode: string
 }
 
+/** A product or cart line, in the shape most storefront APIs return. */
 export type ProductRef = {
   id: string
   variantId?: string
@@ -15,11 +16,13 @@ export type ProductRef = {
   quantity?: number
 }
 
+/** A cart: its lines and optional subtotal. */
 export type CartRef = {
   subtotal?: MoneyLike
   lines: ProductRef[]
 }
 
+/** A completed order. */
 export type OrderRef = {
   orderId: string
   value: number
@@ -30,6 +33,7 @@ export type OrderRef = {
   lines: ProductRef[]
 }
 
+/** Converts a product to a GA4-style item. */
 export function toItem(product: ProductRef): EcommerceItem {
   return {
     item_id: product.id,
@@ -64,6 +68,7 @@ export function cartParams(cart: CartRef): StandardEvents['begin_checkout'] {
   }
 }
 
+/** Params for `purchase`. */
 export function orderParams(order: OrderRef): StandardEvents['purchase'] {
   return {
     transaction_id: order.orderId,

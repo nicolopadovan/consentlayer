@@ -7,6 +7,7 @@ declare global {
   }
 }
 
+/** Options for `hotjar`. */
 export type HotjarOptions = {
   siteId: number
   version: number
@@ -50,6 +51,7 @@ function ensureHotjar(options: HotjarOptions): void {
   setFlag('HotjarInitialized', true)
 }
 
+/** Hotjar, after analytics consent. */
 export function hotjar(options: HotjarOptions) {
   return definePlugin({
     id: 'hotjar',

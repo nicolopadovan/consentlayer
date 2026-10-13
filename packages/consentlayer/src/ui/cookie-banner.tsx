@@ -9,6 +9,7 @@ function cx(...values: Array<string | undefined>): string {
   return values.filter(Boolean).join(' ')
 }
 
+/** The consent banner shown until the visitor chooses. */
 export function CookieBanner(
   props: Omit<ComponentPropsWithoutRef<'section'>, 'children'>,
 ) {

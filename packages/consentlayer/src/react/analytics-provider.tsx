@@ -26,6 +26,7 @@ type AnalyticsContextValue = {
 
 export const AnalyticsContext = createContext<AnalyticsContextValue | undefined>(undefined)
 
+/** Props for `<AnalyticsProvider>`. */
 export type AnalyticsProviderProps = {
   analytics: Analytics
   children: ReactNode
@@ -69,6 +70,7 @@ function scheduleBoot(
   return () => globalThis.clearTimeout(timeout)
 }
 
+/** Boots analytics, sends page views on navigation and provides the consent UI state. */
 export function AnalyticsProvider({
   analytics,
   children,
@@ -144,10 +146,12 @@ function useAnalyticsContext(hook: string): AnalyticsContextValue {
   return value
 }
 
+/** The analytics instance from `<AnalyticsProvider>`. */
 export function useAnalytics(): Analytics {
   return useAnalyticsContext('useAnalytics').analytics
 }
 
+/** Current consent, re-rendering when it changes. */
 export function useConsent(): {
   consent: ConsentState | null
   engine: ConsentApi
