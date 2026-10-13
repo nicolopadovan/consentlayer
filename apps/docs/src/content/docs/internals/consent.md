@@ -1,113 +1,144 @@
 ---
 title: Consent
-description: How consent is stored, restored, broadcast and synced, step by step.
+description: How the consent engine stores, restores, broadcasts and syncs consent, and how identity storage follows it.
 sidebar:
   order: 2
 ---
 
-Consent is owned by a small **consent engine** (`core/consent-engine.ts`).
-`createAnalytics` builds one, and the analytics manager subscribes to it. The
-engine knows nothing about providers: it reads and writes storage, broadcasts
-changes, and syncs with outside consent systems through adapters. The manager
-reacts to each change by loading, updating or tearing down providers (see
-[Lifecycle](/internals/lifecycle/)).
+Consent is owned by the consent engine (`src/core/consent-engine.ts`).
+`createAnalytics()` creates one engine per instance and subscribes the
+analytics manager to it. The engine has no knowledge of providers: it reads
+and writes storage, broadcasts each change to the page, and synchronises with
+external consent platforms through adapters. The manager reacts to every
+change by loading, updating or tearing down providers, as described in
+[Lifecycle](/internals/lifecycle/).
 
 ## The shape
 
 ```ts
-type ConsentState = {
-  preferences: boolean
-  analytics: boolean
-  marketing: boolean
+type ConsentState = Record<ConsentCategory, boolean> & {
   sale_of_data?: boolean
 }
+
+// 'preferences' | 'analytics' | 'marketing', plus every key you declare
+type ConsentCategory = keyof ({ preferences: true; analytics: true; marketing: true } & ConsentCategories)
 ```
 
-Your own [categories](/guides/consent-ui/#custom-categories) sit next to
-`preferences`, `analytics` and `marketing` as more booleans.
+[Custom categories](/guides/consent-ui/#custom-categories) are declared in
+`ConsentCategories`, passed to `createAnalytics({ categories })`, and stored,
+broadcast and sent to the server exactly like the built-in ones.
 
-Every value is coerced to a boolean on the way in (`normalizeConsent`).
-`sale_of_data` is kept only if it is a real boolean, otherwise it is dropped.
+Every value entering the engine is normalised (`normalizeConsent` in
+`src/core/utils.ts`):
 
-`null` means **the visitor hasn't chosen yet**. It is not the same as "all
-denied": with `null` the banner shows, and only providers whose required
-category is `'none'` run. Once a choice is made, consent is never `null` again
-in that page: `setConsent` rejects with a `TypeError` unless every category
-is a boolean (and `sale_of_data`, if present), so
-`null` or `'false'` never slip through. To forget a choice, remove the storage
-key and reload.
+| Input | Result |
+|---|---|
+| A known category | Coerced with `Boolean()`; a missing category becomes `false`. |
+| `sale_of_data` | Kept only if it is a real boolean; otherwise removed. |
+| Any other key | Removed. |
+| `null` or `undefined` | `null`. |
+
+`null` means the visitor has not chosen yet. It is not the same as "all
+denied": while consent is `null`, the banner is shown and only providers
+whose requirement is `'none'` run. Once a choice is committed, the engine
+never returns to `null` during that page load: a `null` commit is ignored, and
+`setConsent` rejects with a `TypeError` unless every category is a boolean
+and `sale_of_data`, if present, is a boolean too. To forget a choice, remove
+the storage key and reload the page.
 
 ## Bootstrap: where consent comes from
 
-`analytics.consent.bootstrap()` runs once per engine; later calls get the same
-promise back. `<AnalyticsProvider>` calls it on mount. It tries, in order:
+`analytics.consent.bootstrap()` runs once per engine; later calls return the
+same promise. `<AnalyticsProvider>` calls it on mount. It tries these sources in order and stops at the first that yields
+a value:
 
-| Step | Source | Saved to storage? | Adapters told? |
-|---|---|---|---|
-| 1 | The value in storage (`localStorage["consentlayer_consent"]`) | no (already there) | no |
-| 2 | Each adapter's `bootstrap()`, in the order given; the first non-null result wins | yes | no (the winner is the source) |
-| 3 | Nothing found: keep `initialConsent` (or `null`) | no | no |
+| Step | Source | Written to storage | Broadcast | Adapters applied |
+|---|---|---|---|---|
+| 1 | The storage adapter, by default `localStorage["consentlayer_consent"]` | no (already stored) | yes | none |
+| 2 | Each adapter's `bootstrap()`, in the order given, awaited one at a time | yes | yes | none |
+| 3 | Nothing found: the engine keeps `initialConsent` (default `null`) | no | no | none |
 
-Before bootstrap finishes, the engine holds `consent.initialConsent` (default
-`null`), and the manager starts from that same value. If step 1 or 2 finds a
-value equal to the one already held, nothing changes and nothing is broadcast.
+Until bootstrap resolves, the engine holds `consent.initialConsent`, and the
+manager starts from the same value. If step 1 or 2 yields a value equal to the
+one already held, nothing is written or broadcast. In step 3 the engine still
+notifies its subscribers once, with the unchanged consent, so the manager
+runs a lifecycle pass. Bootstrap resolves to the resulting consent.
 
-With `names: { legacy: true }`, step 1 also reads the old `acm_consent` key: if
-the new key is missing, the old value is copied over and the old key deleted.
+<details>
+<summary>Legacy keys and bootstrap failures</summary>
+
+With `names: { legacy: true }`, step 1 also reads the pre-1.0 key
+`acm_consent`: if the current key is empty and the legacy key holds a value,
+the value is copied to the current key, the legacy key is removed, and the
+value is used. The same migration applies to the identity key
+(`acm_user_identity`).
+
+Errors thrown by an adapter's `bootstrap()` are not caught by the engine, so
+they reject `bootstrap()`. `useConsentController()` reports the rejection as
+`error` and shows the banner (see [`ready` and the banner](#ready-and-the-banner)).
+
+</details>
 
 ## Set vs update
 
 | Call | What it commits |
 |---|---|
-| `consent.setConsent(state)` | `state` exactly; rejects with a `TypeError` if it isn't a valid consent object |
-| `consent.update(partial)` | waits for `bootstrap()`, then commits every category denied, overlaid with the current consent and then `partial` |
+| `consent.setConsent(state)` | `state` exactly, after validation. Rejects with a `TypeError` if any category is missing or not a boolean. |
+| `consent.update(partial)` | Awaits `bootstrap()`, then commits every category set to `false`, overlaid with the current consent, overlaid with `partial`. |
 
-So `update({ analytics: true })` on a first visit gives
+`update({ analytics: true })` on a first visit therefore commits
 `{ preferences: false, analytics: true, marketing: false }`, and on a visitor
-who already granted marketing it keeps marketing on.
+who had already granted marketing it keeps marketing granted. Both calls
+resolve only after the [adapters](#adapters) have finished applying the
+change.
 
 ## What a change does
 
-Every change goes through one function, `commit`, in this order:
+Every change goes through one function, `commit`, which runs these steps in
+order:
 
-1. **Skip** if the engine was destroyed, the value is `null`, or it equals the
-   current value (all three categories and `sale_of_data` compared).
-2. **Store** it in memory, then **write** it to storage (except for changes that
-   came from storage itself).
-3. **Broadcast** it (below).
-4. **Notify** subscribers. The analytics manager is one: it starts
-   `updateConsent`, which loads, updates or tears down providers. This is not
-   awaited, so providers react right away.
-5. **Apply** it to every adapter except the one it came from, in parallel.
+1. **Skip** the change if the engine was destroyed, the value is `null`, or it
+   equals the current value. Equality compares the normalised objects, so it
+   covers every category, custom ones included, and `sale_of_data`.
+2. **Store** the value in memory and, unless it came from storage itself,
+   **write** it to the storage adapter.
+3. **Broadcast** it as a DOM event and a window global (see
+   [Broadcast](#broadcast)).
+4. **Notify** subscribers synchronously. The analytics manager is one of them:
+   it starts `updateConsent` without awaiting it, so providers begin reacting
+   before step 5.
+5. **Apply** it to every adapter that has an `apply` method, except the
+   adapter the change came from, in parallel. `commit` awaits all of them.
 
-Adapters run last on purpose. A slow or broken adapter (Shopify not loaded,
-a network call hanging) can't delay a withdrawal: by the time adapters start,
-the manager is already tearing providers down. An adapter that throws is
-reported to `onError` with `scope: 'consent-adapter'`, its `providerId`, and
-the message `Consent adapter "<id>" failed to apply consent`; the others still
+Adapters run last by design. A slow or failing adapter, such as a Shopify
+script that never loads or a consent endpoint that times out, cannot delay a
+withdrawal: by the time adapters start, the manager is already tearing
+providers down. An adapter that throws or rejects is reported to `onError`
+with scope `consent-adapter`, its `providerId`, and the message
+`Consent adapter "<id>" failed to apply consent`; the other adapters still
 run.
 
 | Source of the change | Written to storage | Broadcast | Adapters applied |
 |---|---|---|---|
-| `setConsent` / `update` / the banner | yes | yes | all |
-| An adapter's `subscribe` callback | yes | yes | all but that adapter |
+| `setConsent`, `update` or a consent UI action | yes | yes | all |
+| An adapter's `subscribe` callback | yes | yes | all except that adapter |
 | Bootstrap from storage | no | yes | none |
 | Bootstrap from an adapter | yes | yes | none |
 | Another tab (`storage` event) | no | yes | none |
 
 ## Broadcast
 
-Each committed change is published two ways, for code that doesn't hold the
-analytics instance (a tag manager, an inline script):
+Each committed change is published on two channels, for code that does not
+hold the analytics instance, such as a tag manager or an inline script:
 
 | Channel | Default name | Value |
 |---|---|---|
-| DOM event on `document` | `consentlayer:consent` | `CustomEvent` with `detail` = the consent |
-| Window global | `window.CONSENTLAYER_CONSENT` | the consent object |
+| DOM event dispatched on `document` | `consentlayer:consent` | `CustomEvent` whose `detail` is the consent |
+| Window global | `window.CONSENTLAYER_CONSENT` | The consent object |
 
-With `legacy` on, both are also published under the old names
-(`acm:consent`, `window.ACM_CONSENT`). Names follow `names.prefix`; see
-[Names](/guides/names/).
+With `names.legacy` on, both are also published under the pre-1.0 names
+`acm:consent` and `window.ACM_CONSENT`. The names derive from `names.prefix`
+(see [Names](/guides/names/)) and can be replaced with `consent.broadcast`.
 
 ```js
 document.addEventListener('consentlayer:consent', (event) => {
@@ -115,146 +146,164 @@ document.addEventListener('consentlayer:consent', (event) => {
 })
 ```
 
-The global is only set once a value is committed, so it is `undefined` until
-the first stored, adapter or user choice. `initialConsent` alone is never
-broadcast.
+The global is set only when a value is committed, so it is `undefined` until
+the first stored, adapter or visitor choice. `initialConsent` on its own is
+never broadcast.
 
 ### Across tabs
 
-The localStorage storage listens to the browser's `storage` event for its
-key. When another tab saves a choice, this tab reads it and commits it: it
-broadcasts and notifies the manager, so providers load or stop here too. It
-doesn't write it back (it is already stored) and it doesn't call adapters (the
-tab that made the choice already did).
+The default localStorage storage subscribes to the browser's `storage` event
+for its key, which fires only in other tabs. When another tab saves a choice,
+this tab reads the key, normalises the value and commits it with the
+"Another tab" behaviour from the table above: it broadcasts and notifies the
+manager, so providers load or stop here too, but it neither writes the value
+back nor calls adapters, because the originating tab already did both. A
+removed or unreadable key is ignored.
 
 ## Adapters
 
-An adapter connects the engine to an outside consent system. All three parts
-are optional:
+An adapter connects the engine to an external consent platform. Every part
+except `id` is optional:
 
 ```ts
-type ConsentIntegrationAdapter = {
+interface ConsentIntegrationAdapter {
   id: string
   bootstrap?(): Promise<ConsentState | null> | ConsentState | null
   apply?(consent: ConsentState): Promise<void> | void
-  subscribe?(onConsent: (consent: ConsentState) => void): () => void
+  subscribe?(onConsent: (consent: ConsentState) => void): (() => void) | void
 }
 ```
 
 | Part | When it runs | Purpose |
 |---|---|---|
-| `bootstrap` | during bootstrap, only if storage is empty | read a choice the outside system already has |
-| `apply` | after each `setConsent`, `update`, banner choice or other adapter's change | push our choice to the outside system |
-| `subscribe` | once, when the engine is created | hear choices made in the outside system |
+| `bootstrap` | During bootstrap, only if storage holds no value and no earlier adapter returned one | Read a choice the external platform already has |
+| `apply` | After every committed change except those from storage, bootstrap, or this adapter's own `subscribe` | Push the choice to the external platform |
+| `subscribe` | Once, when the engine is created | Receive choices made in the external platform |
 
-Pass them with `createAnalytics({ consent: { adapters: [...] } })`.
-`destroy()` calls every `subscribe` cleanup. A choice from `subscribe` is
-merged into the current consent, so categories the outside system doesn't know
-(your own, or `sale_of_data`) keep their value.
+Pass adapters with `createAnalytics({ consent: { adapters: [...] } })`.
+`destroy()` calls every cleanup function returned by `subscribe`. A value from
+`subscribe` is merged over the current consent before it is normalised, so
+categories the external platform does not know, such as your own or
+`sale_of_data`, keep their current value.
+
+When `server.consentEndpoint` is set, `createAnalytics()` appends one more
+adapter, `consent-endpoint`, after yours. Its `apply` POSTs
+`{ consent }` as JSON to the endpoint and throws on a non-2xx response, which
+is reported with scope `consent-adapter`. See
+[Consent records](/guides/consent-records/).
 
 ### Shopify Customer Privacy
 
 `createShopifyCustomerPrivacyAdapter()` from `consentlayer/providers/shopify`
-keeps Shopify's own consent and ours in step.
+keeps Shopify's consent state and ConsentLayer's in step. Its adapter ID is
+`shopify-customer-privacy`.
 
-**Bootstrap.** Unless `loadFeature: false`, it first asks Shopify to load the
-`consent-tracking-api` feature (`Shopify.loadFeatures`). Then it reads
-`Shopify.customerPrivacy.currentVisitorConsent()`. If every value is empty,
-the visitor hasn't chosen, and it returns `null`. Otherwise it maps Shopify's
-strings:
+| Part | Behaviour |
+|---|---|
+| `bootstrap` | Returns `null` if `canBootstrap()` returns false. Unless `loadFeature: false`, awaits `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`. Reads `Shopify.customerPrivacy.currentVisitorConsent()` and returns `null` if it is missing or every value is empty, which means the visitor has not chosen. Otherwise maps the values as below. |
+| `apply` | Loads the feature in the same way, then calls `setTrackingConsent({ preferences, analytics, marketing, sale_of_data? })`. With `headlessStorefront` set, it adds `headlessStorefront: true` and your `checkoutRootDomain`, `storefrontRootDomain` and `storefrontAccessToken`, which Shopify requires outside its hosted themes. It does not wait for Shopify's callback. |
+| `subscribe` | Listens for Shopify's `visitorConsentCollected` DOM event and maps `preferencesAllowed`, `analyticsAllowed`, `marketingAllowed` and `saleOfDataAllowed` to the matching categories. |
 
 | Shopify value | Becomes |
 |---|---|
-| `'yes'`, `'granted'`, `'allow'`, `'accepted'`, `'true'` | `true` |
-| `'no'`, `'denied'`, `'reject'`, `'refused'`, `'false'`, empty or unknown | `false` |
+| `true`, `'yes'`, `'granted'`, `'allow'`, `'accepted'`, `'true'` (case-insensitive) | `true` |
+| `false`, `'no'`, `'denied'`, `'reject'`, `'refused'`, `'false'`, empty or unknown | `false` |
 
-`preferences`, `analytics` and `marketing` map one to one. `sale_of_data` is
-included only when Shopify returns a non-empty value; an undecided visitor
-leaves it unset. `canBootstrap: () => false`
-skips the Shopify read.
-
-**Apply.** Calls `setTrackingConsent({ preferences, analytics, marketing,
-sale_of_data? })`. With `headlessStorefront` set, it adds
-`headlessStorefront: true` and your `checkoutRootDomain`,
-`storefrontRootDomain` and `storefrontAccessToken`, which Shopify needs off its
-hosted themes. It does not wait for Shopify's callback.
-
-**Subscribe.** Listens for Shopify's `visitorConsentCollected` DOM event and
-maps `marketingAllowed`, `analyticsAllowed`, `preferencesAllowed` and
-`saleOfDataAllowed` to our categories. When our own `apply` makes Shopify fire
-that event, the value equals ours, so the engine skips it and there is no loop.
+`sale_of_data` is included only when Shopify returns a non-empty value for it,
+so an undecided visitor leaves it unset. When ConsentLayer's own `apply`
+causes Shopify to fire `visitorConsentCollected` with the same values, the
+merged result equals the current consent, `commit` skips it, and no loop
+occurs.
 
 ## Identity storage
 
-`identify(userId, { email, phone })` keeps an identity in memory and in
-`localStorage["consentlayer_user_identity"]`. What is shared and stored
-depends on consent:
+`identify(userId, { email, phone })` keeps an identity in memory and persists
+part of it to `localStorage["consentlayer_user_identity"]`. What is shared
+with providers and what is persisted depends on consent:
 
-| Consent | Shared with providers | Stored |
+| Consent | Shared with providers | Persisted |
 |---|---|---|
-| none yet, or analytics and marketing both off | `userId` only, and only to providers allowed to run | nothing (the key is cleared) |
-| analytics on, marketing off | `userId` | `{ userId }` |
-| marketing on | `userId`, `email`, `phone` | `{ userId, email, phone }` |
+| Not chosen yet, or analytics and marketing both denied | `userId` only, and only with providers allowed to run | nothing; the key is removed |
+| Analytics granted, marketing denied | `userId` | `{ userId }` |
+| Marketing granted | `userId`, `email`, `phone` | `{ userId, email, phone }` |
 
-Email is trimmed and lowercased and kept only if it looks valid. Phone has
-spaces, dashes, dots and brackets removed and is kept only if it is E.164. A
-new `userId` replaces the whole identity.
+The identity is normalised on the way in (`normalizeIdentity` in
+`src/core/utils.ts`):
 
-On the next page load, the stored `userId` is used at once. A stored email or
-phone is held aside until consent is known: it is used only if marketing is on
-and the stored `userId` still matches, and dropped otherwise.
+| Field | Normalisation |
+|---|---|
+| `email` | Trimmed and lowercased; kept only if it has the form `name@domain.tld` with no whitespace. |
+| `phone` | Spaces, dashes, dots and parentheses removed; kept only if it is an E.164 number, with or without the leading `+`. |
+| `userId` | Converted to a string. A `userId` different from the current one replaces the whole identity, so a previous visitor's contact details are not carried over. |
 
-On withdrawal:
+On the next page load, the stored `userId` is used immediately. A stored
+email or phone is held aside until consent is known, then used only if
+marketing is granted and the current `userId` still matches the stored one;
+otherwise it is discarded.
 
-- **Marketing off.** Email and phone are removed from memory and storage.
-  Active providers are identified again with just `userId`, so they drop the
-  contact details. Providers that were set up but are now stopped get
-  `reset()`.
-- **Analytics and marketing both off.** The storage key is removed.
-- **`reset()`** clears memory and storage and calls `reset` on every provider that was set up.
+On a consent change:
+
+| Change | Effect on identity |
+|---|---|
+| Marketing withdrawn | Email and phone are removed from memory and storage. If they were set, active providers receive `identify` again with only `userId`, and providers that have run `setup` but are now inactive receive `reset`. |
+| Marketing granted | If an email or phone is held in memory, the providers that were already active receive `identify` with the full identity. Newly activated providers receive it on activation. |
+| Analytics and marketing both denied | The storage key is removed. |
+
+`analytics.reset()` clears the identity from memory and storage and calls
+`reset` on every provider whose `setup` has run, whatever the consent.
 
 ## Reject non-essential
 
-`useConsentController()`'s actions all go through `setConsent`, then hide the
-banner and the dialog:
+`useConsentController()`'s actions all call `setConsent`, await it, and then
+hide both the banner and the preferences dialog:
 
 | Action | Commits |
 |---|---|
-| `acceptAll()` | every category `true` |
-| `rejectNonEssential()` | every category `false` |
-| `savePreferences()` | the dialog's toggles as set |
+| `acceptAll()` | Every category in `analytics.consent.categories` set to `true` |
+| `rejectNonEssential()` | Every category set to `false` |
+| `savePreferences()` | The dialog's toggles (`prefs`) as set |
 
-"Reject" is a real choice: it is stored, so the banner doesn't come back, and
-only providers that need no consent keep running. `sale_of_data` is not set by
-these actions; set it yourself with `update({ sale_of_data: false })` if you need it.
+Rejecting is a real choice: it is stored, so the banner does not return, and
+only providers that need no consent keep running. None of these actions sets
+`sale_of_data`, and because `setConsent` commits exactly what it receives, a
+previously stored `sale_of_data` value is dropped. Set it with
+`update({ sale_of_data: false })` if you need it.
 
 ## `ready` and the banner
 
-`useConsentController()` exposes `ready`. It is `false` until bootstrap has finished,
-then `true` whether bootstrap found a choice, found nothing, or failed. Use it
-to avoid flashing UI that depends on consent.
+`useConsentController()` exposes `ready`, which is `false` until bootstrap
+settles and `true` afterwards, whether bootstrap found a choice, found
+nothing or failed. Use it to avoid rendering consent-dependent UI before the
+stored choice is known.
 
-When bootstrap finishes:
+When bootstrap settles:
 
-| Result | Banner |
-|---|---|
-| A choice was found | hidden |
-| No choice | shown, if `autoShowBanner` (default `true`) |
-| Bootstrap threw | shown (if `autoShowBanner`), and `error` is set |
+| Result | Banner | Dialog toggles |
+|---|---|---|
+| A choice was found | hidden | set from the choice |
+| No choice | shown if `autoShowBanner` (default `true`) | all `false` |
+| Bootstrap rejected | shown if `autoShowBanner`; `error` holds the message | all `false` |
 
-`window.CONSENTLAYER_openConsent()` opens the preferences dialog from anywhere,
-for example a "Cookie settings" link in the footer. See
+The toggles also follow every later consent change. `<AnalyticsProvider>`
+defines `window.CONSENTLAYER_openConsent()` (or the name passed as
+`openConsentGlobalKey`), which opens the preferences dialog from anywhere,
+such as a "Cookie settings" link in the footer. See
 [Consent UI](/guides/consent-ui/).
 
 ## When storage fails
 
-Every storage access is wrapped in `try/catch`. If localStorage is blocked
-(private mode, a sandboxed iframe, a strict browser setting) or full, reads
-return "nothing stored" and writes do nothing. Nothing throws.
+Every access to the default localStorage storage is wrapped in `try/catch`
+(`src/core/storage.ts`). If localStorage is blocked, as in a sandboxed iframe
+or with all cookies blocked, or if the quota is full, reads return "nothing
+stored" and writes do nothing. No error is thrown or reported.
 
 The visitor can still choose, and the choice applies for the rest of the page
-(it lives in memory and is broadcast as usual). It just isn't remembered, so
-the banner appears again on the next page load. The same goes for identity.
+load: it is held in memory and broadcast as usual. It is not remembered, so
+the banner appears again on the next page load. Identity behaves the same
+way.
 
-To store consent somewhere else (a cookie, your backend), pass
-`consent: { storage }` with your own `read`, `write` and optional `subscribe`.
+To keep consent elsewhere, such as in a cookie or your backend, pass
+`consent: { storage }` with your own `ConsentStorageAdapter`: synchronous
+`read()` and `write(consent)`, plus optional `subscribe(listener)` for
+external changes and `clear()`. `createMemoryConsentStorage()` keeps consent
+in memory only.

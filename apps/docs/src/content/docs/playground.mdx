@@ -1,26 +1,87 @@
 ---
 title: Playground
-description: The consent banner recipe and four logging providers, one per consent category.
+description: The consent banner recipe and four logging providers, one per consent requirement.
 ---
 
 import Playground from '../../components/Playground.tsx'
 
-This page runs consentlayer with four providers that only log what the
-manager asks them to do:
+This page runs a real ConsentLayer instance in your browser with the
+[consent banner recipe](/guides/consent-ui/) and four providers that implement
+no vendor integration. Each one only logs the hooks ConsentLayer calls on it,
+so you can observe the provider lifecycle as you grant and withdraw consent.
 
-| Provider | Needs |
+| Provider ID | `requiredConsent` |
 |---|---|
-| `cookieless` | nothing (`'none'`) |
-| `product-analytics` | analytics |
-| `ads-pixel` | marketing |
-| `support-chat` | functional, a [custom category](/guides/consent-ui/#custom-categories) |
+| `cookieless` | `'none'`: runs without consent |
+| `product-analytics` | `'analytics'` |
+| `ads-pixel` | `'marketing'` |
+| `support-chat` | `'functional'`, a [custom category](/guides/consent-ui/#custom-categories) |
 
-Choose in the banner, change your mind with **Cookie settings**, and track a few
-events. The log shows each hook as it runs, newest first: nothing reaches a
-provider before its category is granted, `load` runs once, and withdrawal runs
-`teardown`. Your choice is stored under `playground_consent`, so it survives a
-reload.
+Make a choice in the banner, change it with **Cookie settings**, and use the
+buttons to track events and identify a user. The log lists every hook call,
+newest first, with the provider ID and the hook's argument: the consent state
+for `consent`, the path for `page`, the event name and parameters for `track`,
+and the identity for `identify`.
 
 <Playground client:only="react" />
 
-How each step works: [Lifecycle](/internals/lifecycle/).
+## What to observe
+
+- **Nothing before consent.** Before a choice, only `cookieless` receives `load`,
+  `page` and `track`. The other providers receive `setup`, which must not use
+  the network or set cookies, and `consent`, and nothing else.
+- **`load` runs once.** The first time a category is granted, its providers
+  receive `load` and then a `page` call for the current page. Withdrawing the
+  category and granting it again runs neither a second time.
+- **Withdrawal runs `teardown`.** Unchecking a category in **Cookie settings**
+  and saving runs `teardown` on its providers, which then receive only
+  `consent` calls until the category is granted again.
+- **Identity follows consent.** **Identify** calls `identify('user_1', { email: 'ada@example.com' })`.
+  Providers receive the email only while `marketing` is granted; otherwise they
+  receive the user ID alone.
+
+<details>
+<summary>The exact sequence on a first visit</summary>
+
+On a first visit there is no stored choice, so consent is `null`. Boot
+evaluates the providers one at a time, in the order they were passed to
+`createAnalytics()`:
+
+1. Each provider receives `setup`, then `consent` with "no choice yet".
+2. `cookieless` also receives `load`, because `'none'` is the only requirement
+   a `null` consent satisfies.
+3. After boot, `<AnalyticsProvider>` sends `page` to `cookieless`, the only
+   active provider.
+
+**Accept all** then sets every category to `true`. Each provider in turn
+receives `consent` with the new state, and `product-analytics`, `ads-pixel` and
+`support-chat` also receive `load`. `<AnalyticsProvider>` then sends `page` to
+those three. `cookieless` does not receive a second page view, because it has
+already received one for this page.
+
+If you click **Identify** while `marketing` is granted and then withdraw
+`marketing`, `ads-pixel` receives `teardown`, and the providers that remain
+active receive `identify` again with the email removed.
+
+</details>
+
+<details>
+<summary>How the playground is configured</summary>
+
+The instance is created with `names: { prefix: 'playground' }` and
+`categories: ['functional']`, with `functional` declared in the
+`ConsentCategories` interface. The prefix keeps it apart from any other
+ConsentLayer instance on this domain: the choice is stored in `localStorage`
+under `playground_consent`, so it survives a reload, and the identity under
+`playground_user_identity`. **Forget my choice** removes both keys and reloads
+the page. From the browser console, `window.PLAYGROUND_openConsent()` opens the
+settings dialog.
+
+Each provider is created with `definePlugin()` and implements only `setup`,
+`load`, `consent`, `page`, `track`, `identify` and `teardown`, so the log shows
+no other hooks. The source is `apps/docs/src/components/Playground.tsx` in the
+repository.
+
+</details>
+
+[Lifecycle](/internals/lifecycle/) describes each of these steps in detail.

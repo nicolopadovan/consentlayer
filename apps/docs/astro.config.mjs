@@ -8,7 +8,7 @@ export default defineConfig({
   integrations: [
     react(),
     starlight({
-      title: 'consentlayer',
+      title: 'ConsentLayer',
       disable404Route: true,
       description: 'Consent-first analytics for React, Next.js and the server.',
       social: [
@@ -19,7 +19,7 @@ export default defineConfig({
       },
       customCss: ['./src/styles/custom.css'],
       sidebar: [
-        { label: 'Start', items: ['start/installation', 'start/nextjs', 'playground'] },
+        { label: 'Getting started', items: [{ label: 'Introduction', link: '/' }, 'start/installation', 'start/nextjs', 'playground'] },
         {
           label: 'Guides',
           items: [
@@ -31,7 +31,7 @@ export default defineConfig({
             'guides/names',
           ],
         },
-        { label: 'Reference', items: ['reference/api'] },
+        { label: 'API reference', items: ['reference/api'] },
         { label: 'How it works', items: [{ autogenerate: { directory: 'internals' } }] },
         { label: 'Help', items: ['guides/migrating-to-v1', 'guides/troubleshooting'] },
       ],

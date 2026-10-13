@@ -5,50 +5,66 @@ sidebar:
   order: 3
 ---
 
-This page lists, for each built-in provider, what reaches the vendor and when.
-Setup and options are in [Providers](/guides/providers/); event names in
-[Events](/guides/events/).
+This page lists, for each built-in provider, which script or SDK it loads,
+which vendor calls each hook makes, and what personal data reaches the vendor
+under which consent. Options and setup are covered in
+[Providers](/guides/providers/), and event name translation in
+[Events](/guides/events/). The source of each provider is in
+`src/providers/<name>.ts`.
 
 ## Rules that apply to every provider
 
-The analytics manager drives each provider the same way (details in
+The analytics manager drives every provider through the same contract (see
 [Lifecycle](/internals/lifecycle/)):
 
-- **`setup`** runs once, on the first evaluation after `boot()`, whatever the consent.
-- **`consent`** runs on every consent change, for every provider, before
-  loading. That's how providers that aren't allowed to run still hear "denied".
-- **`load`** runs once, when the provider's category is granted, or at boot
-  with `loadBeforeConsent: true`. With `defer`, it waits until the given
-  moment and calls made meanwhile are queued (up to 100).
-- **`page`, `track`, `identify`, `group`, `error`** reach a provider only while
-  it is active, meaning its required category is granted.
-- **`teardown`** runs when the category is withdrawn (and on `destroy()`).
-  Scripts already on the page can't be unloaded, so withdrawal means: no more
-  calls from consentlayer, plus whatever the vendor's own consent switch does.
-- **Identity.** Providers get `userId` under any consent they run with; `email`
-  and `phone` only with marketing. See [Consent](/internals/consent/#identity-storage).
+| Hook | When it runs |
+|---|---|
+| `setup` | Once, on the first lifecycle pass after `boot()`, whatever the consent. |
+| `consent` | On every lifecycle pass (boot, each consent change, each registration after boot), for every provider, before `load`. Providers that are not allowed to run still receive it, which is how vendor consent modes learn about a denial. |
+| `load` | Once, on the first pass where the provider's requirement is met, or at boot with `loadBeforeConsent`. With `defer`, later; calls made in the meantime are held, up to 100. |
+| `page`, `track`, `identify`, `group`, `error` | Only while the provider is active, which means its `requiredConsent` is met. |
+| `teardown` | When the requirement stops being met, when the provider is unregistered, and on `destroy()`. |
 
-Built-in providers have no `teardown` unless listed below.
+Scripts already executed cannot be unloaded. A withdrawal therefore means
+that ConsentLayer stops calling the provider, plus whatever the vendor's own
+consent switch or opt-out does.
+
+Providers receive `userId` under any consent they run with, and `email` and
+`phone` only with marketing consent (see
+[Identity storage](/internals/consent/#identity-storage)).
+
+| Provider | `id` | `requiredConsent` | `loadBeforeConsent` | `defer` | `teardown` |
+|---|---|---|---|---|---|
+| GA4 | `ga4` | `analytics` | option | — | — |
+| Meta Pixel | `meta` | `marketing` | option | — | — |
+| PostHog | `posthog` | `none` (cookieless) or `analytics` | — | option | — |
+| Sentry | `sentry` | `none` | — | option | — |
+| Contentsquare | `contentsquare` | `analytics` | — | — | yes |
+| Hotjar | `hotjar` | `analytics` | — | — | yes |
+| Vercel Analytics | `vercel` | `none` | — | — | — |
+| TikTok | `tiktok` | `marketing` | — | — | — |
+
+A dash means the provider does not set that field. The `id` is the value to
+use in `only` and the `providerId` in `onError`.
 
 ## GA4
 
 `ga4({ measurementId, loadBeforeConsent? })` from `consentlayer/providers/ga4`.
+An `undefined` or empty `measurementId` returns a stand-in plugin with only a
+`setup` hook that logs the skip in debug mode. Any other value that does not
+match `G-` followed by 4 to 16 uppercase letters or digits throws.
 
-| | |
+| Hook | Behaviour |
 |---|---|
-| Required category | `analytics` |
 | Script | `https://www.googletagmanager.com/gtag/js?id=<measurementId>` |
-| Loads | on analytics consent; at boot with `loadBeforeConsent: true` |
-| Setup (always) | creates `window.dataLayer` and `window.gtag`, then `gtag('consent', 'default', …)` all denied except `security_storage`, then `gtag('js', new Date())` |
-| On each consent change | `gtag('consent', 'update', …)` mapped as below |
-| First analytics grant | `gtag('config', measurementId, { send_page_view: false })`, once per measurement ID |
+| `setup` | Creates `window.dataLayer` and `window.gtag` if absent, then calls `gtag('consent', 'default', …)` with every key denied except `security_storage`, then `gtag('js', new Date())`. |
+| `consent` | `gtag('consent', 'update', …)` mapped as below. On the first pass with analytics granted, also `gtag('config', measurementId, { send_page_view: false })`, once per measurement ID per page. |
+| `load` | Injects gtag.js. A failed load is reported with scope `provider-script-load`. |
 | `page` | `gtag('event', 'page_view', { page_location, page_path, page_title })` |
 | `track` | `gtag('event', ga4EventName(name), { ...params, ...providers.ga4 })` |
-| `identify` | `gtag('set', { user_id })` if there's a user ID; `gtag('set', 'user_data', { email, phone_number })` |
-| `reset` | `user_id: null`, `user_data: {}` |
-| Withdrawal | Consent Mode update to denied; no more events |
-
-Consent Mode mapping:
+| `identify` | `gtag('set', { user_id })` when there is a user ID, then `gtag('set', 'user_data', { email, phone_number })` with whichever fields are present. |
+| `reset` | `gtag('set', { user_id: null })` and `gtag('set', 'user_data', {})` |
+| Withdrawal | The `consent` hook sends the denied Consent Mode update; the manager stops sending events. |
 
 | Consent Mode key | Follows |
 |---|---|
@@ -57,181 +73,213 @@ Consent Mode mapping:
 | `functionality_storage` | preferences |
 | `security_storage` | always `granted` |
 
-`config` waits for analytics consent on purpose: with `loadBeforeConsent`,
-gtag.js is on the page but has no `config` yet, so it sends no cookieless pings
-before the visitor agrees.
+`config` waits for analytics consent on purpose. With `loadBeforeConsent`,
+gtag.js is on the page from boot but has no `config`, so it sends no
+cookieless pings before the visitor agrees.
 
-**Names.** `lead` becomes `generate_lead`; any character other than letters,
-digits and `_` becomes `_` (`consentlayer.scroll_depth` →
-`consentlayer_scroll_depth`).
+**Names.** `lead` becomes `generate_lead`. Any character other than a letter,
+digit or `_` becomes `_`, so `consentlayer.scroll_depth` is sent as
+`consentlayer_scroll_depth`.
 
-**Personal data.** `user_id` with analytics. Email and phone (with a leading
-`+`) go into `user_data` only with marketing; gtag hashes them itself.
+**Personal data.** `user_id` with analytics consent. Email and phone go into
+`user_data` only with marketing consent; the phone is prefixed with `+` if
+needed, and gtag hashes both itself.
 
 ## Meta Pixel
 
-`meta({ pixelId, locale?, loadBeforeConsent? })` from `consentlayer/providers/meta`.
+`meta({ pixelId, locale?, loadBeforeConsent? })` from
+`consentlayer/providers/meta`. The factory throws if `pixelId` is not an 8 to
+20 digit string.
 
-| | |
+| Hook | Behaviour |
 |---|---|
-| Required category | `marketing` |
-| Script | `https://connect.facebook.net/<locale>/fbevents.js` (default `en_US`) |
-| Loads | on marketing consent; at boot with `loadBeforeConsent: true` |
-| On load | an inline stub defines `fbq`, then `fbq('consent', 'grant' or 'revoke')` from the current consent, then `fbq('init', pixelId, advancedMatching)` |
-| On each consent change | `fbq('consent', 'grant' or 'revoke')` |
+| Script | `https://connect.facebook.net/<locale>/fbevents.js`, default locale `en_US` |
+| `load` | Skipped if a pixel was already initialised on the page. Otherwise runs an inline bootstrap that defines the `fbq` queue, calls `fbq('consent', 'grant' \| 'revoke')` from the current consent, then `fbq('init', pixelId, advancedMatching)`; then injects `fbevents.js`. A failed load is reported with scope `provider-script-load`. |
+| `consent` | `fbq('consent', 'grant')` with marketing consent, otherwise `fbq('consent', 'revoke')`. |
 | `page` | `fbq('track', 'PageView', {}, { eventID })` |
-| `track` | `fbq('track' or 'trackCustom', name, params, { eventID })` |
-| `identify` | nothing (see below) |
-| Withdrawal | `fbq('consent', 'revoke')`; no more events |
+| `track` | `fbq('track' \| 'trackCustom', name, params, { eventID })` |
+| `identify`, `reset`, `group`, `teardown` | Not implemented. |
 
-`consent` is called before `init`, so with `loadBeforeConsent` the pixel starts
-revoked and sends nothing until marketing is granted.
+Because `consent` is called before `init` in the bootstrap, a pixel loaded
+with `loadBeforeConsent` starts revoked and sends nothing until marketing is
+granted. `page` and `track` also check marketing consent themselves.
 
 **Names.** Standard events map to Meta's (`purchase` → `Purchase`,
-`add_to_cart` → `AddToCart`, …, full list in [Events](/guides/events/)); others
-go out with `trackCustom` under their own name. `items` becomes `content_ids`,
-`contents`, `content_type: 'product'` and `num_items`; `search_term` becomes
-`search_string`. `providers.meta` is merged last.
+`add_to_cart` → `AddToCart`; the full list is in [Events](/guides/events/)).
+Other names are sent with `trackCustom` under their own name. `items` becomes
+`content_ids`, `contents`, `content_type: 'product'` and `num_items`;
+`search_term` becomes `search_string`; `providers.meta` is merged last.
 
-**Personal data.** Advanced matching is passed to `init` only, because that's
-the only place Meta accepts it: `em` (email), `ph` (phone digits) and
-`external_id` (user ID), from the identity at load time; the pixel hashes them.
-Email and phone are there only if marketing was on. If you call `identify`
-after the pixel loaded, the pixel doesn't learn it until the next page load
-(the server route still sends it, see [Server forwarding](/internals/server/)).
+**Personal data.** Meta accepts advanced matching only in `fbq('init')`, so
+it is taken from the identity at load time: `em` (email), `ph` (phone digits)
+and `external_id` (user ID). The pixel hashes them. Email and phone are
+present only if marketing consent was granted at that point. An `identify()`
+after the pixel has loaded does not reach the pixel until the next page load;
+the server route still sends it (see [Server forwarding](/internals/server/)).
 
-**Withdrawal after matching.** The pixel keeps `init`'s email and phone for the
-page's lifetime. So if it was initialised with them and marketing is then
-withdrawn, it stays revoked and silent until reload, even if marketing is
-granted again.
+**Withdrawal after matching.** The pixel keeps `init`'s email and phone for
+the lifetime of the page. If it was initialised with them and marketing is
+then withdrawn, the provider keeps the pixel revoked and silent until the page
+reloads, even if marketing is granted again.
 
-**Dedupe.** Each `page` and `track` passes `eventID`, the same ID the server
-route sends to the Conversions API.
+**Deduplication.** Each `page` and `track` passes `eventID`, the same ID the
+server route sends to the Conversions API.
 
 ## PostHog
 
-`posthog({ apiKey, apiHost?, cookieless?, autocapture?, recording?, errors?, groupType?, defer? })`
-from `consentlayer/providers/posthog`. `posthog-js` is imported dynamically.
+`posthog({ apiKey, apiHost?, uiHost?, cookieless?, autocapture?, recording?, errors?, groupType?, defer? })`
+from `consentlayer/providers/posthog`. `posthog-js` is imported dynamically
+in `load`.
 
-| | |
+| Hook | Behaviour |
 |---|---|
-| Required category | `none` with `cookieless` (default); `analytics` with `cookieless: false` |
-| Loads | at boot (or `defer`) when cookieless; on analytics consent otherwise |
-| `init` options | `api_host` (default `https://us.i.posthog.com`), `cookieless_mode: 'on_reject'` when cookieless, opted out and no persistence by default; autocapture off unless asked; no automatic pageview, pageleave, exceptions, heatmaps, dead clicks, recording, surveys, feature flags or remote dependencies |
-| Analytics granted | `opt_in_capturing()`, then `identify(userId)` if there is one, then session recording if `recording: true` (the recorder is imported only then) |
-| Analytics withdrawn | `opt_out_capturing()` |
+| Requirement | `none` with `cookieless` (default); `analytics` with `cookieless: false` |
+| `load` | Imports `posthog-js` and calls `init` with the options below, then applies the latest consent. |
+| `consent` | Stores the context. Once the SDK is loaded, applies it: without analytics, `opt_out_capturing()`; with analytics, `opt_in_capturing()`, then `identify(userId)` if there is one, then session recording if `recording: true`. |
 | `page` | `capture('$pageview', { $current_url, title })` |
 | `track` | `capture(name, { ...params, ...providers.posthog })` |
-| `identify` | `identify(userId, { ...traits, email? })`, only with analytics and a user ID |
-| `group` | `group(groupType ?? 'company', id, traits)`, only with analytics |
-| `reset` | `reset()`, then re-applies the consent state |
-| `error` | `captureException(error, { level, ...tags, ...extra })`, unless `errors: false` |
+| `identify` | `identify(userId, { ...traits, email? })`, only with analytics consent and a user ID. |
+| `group` | `group(groupType ?? 'company', groupId, traits)`, only with analytics consent. |
+| `reset` | `reset()`, then re-applies the current consent. |
+| `error` | `captureException(error, { level, ...tags, ...extra })`, unless `errors: false`. |
+| `teardown` | Not implemented; the `consent` hook has already opted out. |
 
-**Cookieless.** Before analytics consent PostHog is opted out, which in
+<details>
+<summary><code>init</code> options</summary>
+
+| Option | Value |
+|---|---|
+| `api_host` | `apiHost`, default `https://us.i.posthog.com` |
+| `ui_host` | `uiHost` |
+| `cookieless_mode` | `'on_reject'` when cookieless, otherwise unset |
+| `opt_out_capturing_by_default`, `opt_out_persistence_by_default` | `true` |
+| `autocapture` | `autocapture`, default `false` |
+| `capture_pageview`, `capture_pageleave`, `capture_exceptions`, `capture_heatmaps`, `capture_dead_clicks` | `false` |
+| `disable_session_recording`, `disable_surveys`, `advanced_disable_flags`, `disable_external_dependency_loading` | `true` |
+
+The session recorder (`posthog-js/dist/recorder`) is imported only when
+`recording: true` and analytics consent is granted.
+
+</details>
+
+**Cookieless mode.** Before analytics consent PostHog is opted out, which in
 `on_reject` mode means it counts events without cookies or storage. This
-needs cookieless mode turned on in the PostHog project settings. Events sent
-before consent are anonymous; nothing about the user is passed until
+requires cookieless mode to be enabled in the PostHog project settings.
+Events sent before consent are anonymous; no user identity is passed until
 analytics is granted.
 
 **Names.** Unchanged.
 
-**Personal data.** User ID with analytics; email (as a trait on `identify`)
-only with marketing too.
+**Personal data.** User ID with analytics consent; email, as a trait on
+`identify`, only with marketing consent as well.
 
 ## Sentry
 
-`sentry({ dsn, environment?, release?, replay?, tracing?, defer? })` from
-`consentlayer/providers/sentry`. The SDK is imported dynamically.
+`sentry({ dsn, environment?, release?, replay?, tracing?, tunnel?, defer? })`
+from `consentlayer/providers/sentry`. `@sentry/browser` is imported
+dynamically in `load`, and Replay and tracing are separate chunks.
 
-| | |
+| Hook | Behaviour |
 |---|---|
-| Required category | `none` |
-| Loads | at boot (or `defer`) |
-| `init` options | `dataCollection` with user info, cookies, headers, bodies and URL query strings all off; Sentry's own `GlobalHandlers` integration removed; transactions dropped while analytics is off |
-| Analytics granted | `setUser({ id, email })` if there's a user ID; Replay added (or restarted, buffering for errors); tracing added once |
-| Analytics withdrawn | `setUser(null)`; Replay stopped |
-| `page`, `track` | nothing |
-| `identify` | re-applies `setUser` from the current consent |
+| Requirement | `none` |
+| `load` | Imports the SDK and calls `init` (below), then applies the latest consent. |
+| `consent` | Stores the context. Once the SDK is loaded: `setUser({ id, email })` with analytics consent and a user ID, otherwise `setUser(null)`. With `replay` and analytics consent, adds the Replay integration the first time and calls its `startBuffering()` on every later application; without analytics consent, calls its `stop()`. With `tracing`, adds the tracing integration the first time analytics consent is granted. |
+| `page`, `track`, `group` | Not implemented. |
+| `identify` | Re-applies `setUser` and the integrations from the current consent. |
 | `reset` | `setUser(null)` |
 | `error` | `captureException(error, { level, tags: { ...tags, source }, extra })` |
 
-**Errors without consent.** Error reports are treated as needed to run the
-site, so they are sent under any consent, with no IP, cookies, headers, bodies
-or query strings. Uncaught errors reach Sentry through consentlayer's own
-`window` `error` and `unhandledrejection` listeners (that's why Sentry's are
-removed, to avoid duplicates), unless `errors: false` or
-`errors: { globalHandlers: false }`.
+<details>
+<summary><code>init</code> options</summary>
 
-**Replay and tracing** are features of analytics consent. Tracing, once added,
-can't be removed, so after a withdrawal its transactions are dropped by
-`beforeSendTransaction`. Replay sample rates default to 0.1 for sessions and
-1 for errors; tracing to 1. A regrant after a withdrawal only buffers for
-errors; full session recording resumes on the next page load.
+| Option | Value |
+|---|---|
+| `dsn`, `environment`, `release`, `tunnel` | From the options |
+| `dataCollection` | `userInfo`, `cookies`, `httpHeaders` and `urlQueryParams` `false`; `httpBodies` empty |
+| `integrations` | Sentry's defaults without `GlobalHandlers` |
+| `tracesSampleRate` | `tracing.sampleRate ?? 1` when tracing is on |
+| `replaysSessionSampleRate`, `replaysOnErrorSampleRate` | `replay.sessionSampleRate ?? 0.1` and `replay.onErrorSampleRate ?? 1` when Replay is on |
+| `beforeSendTransaction` | Drops every transaction while analytics consent is not granted |
 
-**Personal data.** User ID with analytics; email with analytics and marketing.
+</details>
+
+**Errors without consent.** Error reports are treated as necessary for
+operating the site, so they are sent under any consent, without IP address,
+cookies, headers, bodies or query strings. Uncaught errors reach Sentry
+through ConsentLayer's own `error` and `unhandledrejection` listeners, which
+is why Sentry's `GlobalHandlers` integration is removed; this avoids
+duplicates. Turn the listeners off with `errors: false` or
+`errors: { globalHandlers: false }` on `createAnalytics`.
+
+**Replay and tracing** require analytics consent. A tracing integration
+cannot be removed once added, so after a withdrawal its transactions are
+dropped by `beforeSendTransaction`. A grant after a withdrawal only buffers
+Replay for errors; full session recording resumes on the next page load.
+
+**Personal data.** User ID with analytics consent; email with analytics and
+marketing consent.
 
 ## Contentsquare
 
 `contentsquare({ tagId })` from `consentlayer/providers/contentsquare`.
 
-| | |
+| Hook | Behaviour |
 |---|---|
-| Required category | `analytics` |
 | Script | `https://t.contentsquare.net/uxa/<tagId>.js` |
-| Loads | on analytics consent (no `loadBeforeConsent`) |
-| On load | defines the `window._uxa` command queue; the tag sends the first page view itself |
-| `page` | `['trackPageview', path]` without query or hash, skipping the page the tag loaded on |
-| `track` | `['trackPageEvent', name]`; params are not sent. `purchase` becomes `['ec:transaction:create', { id: transaction_id, revenue: value, currency }]` and `['ec:transaction:send']` |
+| `load` | Skipped if the tag was already initialised on the page. Otherwise defines the `window._uxa` command queue, remembers the current path and injects the tag. The tag sends the first page view itself. Script failures are ignored. |
+| `consent` | With analytics consent, expires the `_cs_optout` cookie on the current host and every parent domain. |
+| `page` | `['trackPageview', path]`, with the query string and hash removed. The first page view after `load` is skipped if its path equals the path the tag loaded on. |
+| `track` | `['trackPageEvent', name]`; params are not sent. `purchase` instead sends `['ec:transaction:create', { id: transaction_id, revenue: value, currency }]` followed by `['ec:transaction:send']`. |
 | `identify` | `['identify', userId]` when there is a user ID |
 | `reset` | `['resetIdentity']` |
-| Teardown on analytics withdrawal | `['optout']`: Contentsquare stops collecting, removes its cookies and sets `_cs_optout` |
+| `teardown` | `['optout']`, only if analytics consent is no longer granted and the tag was initialised |
 
-Contentsquare has no web command to opt back in. When analytics is granted
-again, `_cs_optout` is deleted, so collection resumes on the next page load.
-See [Contentsquare's consent docs](https://docs.contentsquare.com/en/web/send-the-users-decisions-about-data-collection/).
+`['optout']` is Contentsquare's opt-out command. Contentsquare has no web
+command to opt back in, so when analytics is granted again the provider
+deletes the `_cs_optout` cookie and collection resumes on the next page load.
+See [Contentsquare's consent documentation](https://docs.contentsquare.com/en/web/send-the-users-decisions-about-data-collection/).
 
-**Personal data.** User ID with analytics. Email is never sent: Contentsquare
-advises against identifying by email.
+**Personal data.** User ID with analytics consent. Email is never sent;
+Contentsquare advises against identifying visitors by email.
 
 ## Hotjar
 
-Deprecated: Hotjar accounts are moving to Contentsquare, after which the
-Hotjar account stops collecting. Switch to [`contentsquare`](#contentsquare)
-once yours has moved; `hotjar` is removed in the next major.
+:::caution[Deprecated]
+Hotjar accounts are moving to Contentsquare, after which the Hotjar account
+stops collecting. Switch to [`contentsquare`](#contentsquare) once yours has
+moved; `hotjar` will be removed in the next major version.
+:::
 
+`hotjar({ siteId, version, reloadOnRevoke? })` from
+`consentlayer/providers/hotjar`.
 
-`hotjar({ siteId, version, reloadOnRevoke? })` from `consentlayer/providers/hotjar`.
-
-| | |
+| Hook | Behaviour |
 |---|---|
-| Required category | `analytics` |
 | Script | `https://static.hotjar.com/c/hotjar-<siteId>.js?sv=<version>` |
-| Loads | on analytics consent (no `loadBeforeConsent`) |
-| On load | defines a queueing `window.hj` and `window._hjSettings = { hjid, hjsv }` |
-| `page` | nothing (Hotjar tracks page views itself) |
-| `track` | `hj('event', name)`; params are not sent |
+| `load` | Skipped if Hotjar was already initialised on the page. Otherwise defines a queueing `window.hj` and `window._hjSettings = { hjid, hjsv }` and injects the script. Script failures are ignored. |
+| `page` | Not implemented; Hotjar tracks page views itself. |
+| `track` | `hj('event', name)`; params are not sent. |
 | `identify` | `hj('identify', userId ?? null, { ...traits, email? })` |
 | `reset` | `hj('identify', null, {})` |
-| Teardown on analytics withdrawal | deletes every `_hj*` cookie on the current host and each parent domain, every `_hj*`/`hj*` key in localStorage and sessionStorage, then reloads the page if `reloadOnRevoke` |
+| `teardown` | Only if analytics consent is no longer granted: expires every `_hj*` cookie on the current host and every parent domain, removes every key starting with `hj` or `_hj` from localStorage and sessionStorage, then reloads the page if `reloadOnRevoke` is set. |
 
-Hotjar has no off switch once loaded: it keeps recording until the page
-unloads. Clearing its storage stops it from recognising the visitor later;
-`reloadOnRevoke: true` stops the current recording too.
+Hotjar cannot be switched off once loaded: it keeps recording until the page
+unloads. Clearing its storage prevents it from recognising the visitor later,
+and `reloadOnRevoke: true` also ends the current recording.
 
-**Personal data.** User ID with analytics; email only when there is also a user
-ID and marketing is on.
+**Personal data.** User ID with analytics consent; email only when there is
+also a user ID and marketing consent is granted.
 
 ## Vercel Analytics
 
-`vercel({ trackEvent })` from `consentlayer/providers/vercel`, with `track`
-from `@vercel/analytics` as `trackEvent`.
+`vercel({ trackEvent })` from `consentlayer/providers/vercel`, where
+`trackEvent` is `track` from `@vercel/analytics`.
 
-| | |
+| Hook | Behaviour |
 |---|---|
-| Required category | `none` (Vercel Analytics is cookieless) |
-| Loads | nothing; you render Vercel's `<Analytics />` yourself, which also counts page views |
-| `track` | `trackEvent(name, params)` with params flattened: strings, numbers and booleans kept, `null`/`undefined` become `null`, dates become ISO strings, objects and arrays dropped |
-| Everything else | nothing |
+| `load` | Not implemented. Render Vercel's `<Analytics />` yourself; it also counts page views. |
+| `track` | `trackEvent(name, params)` with params flattened: strings, numbers and booleans kept, `null` and `undefined` sent as `null`, `Date` values as ISO strings, objects and arrays dropped. |
+| All other hooks | Not implemented. |
 
 **Personal data.** None; identity is never passed.
 
@@ -239,11 +287,9 @@ from `@vercel/analytics` as `trackEvent`.
 
 `tiktok()` from `consentlayer/providers/tiktok`.
 
-| | |
+| Hook | Behaviour |
 |---|---|
-| Required category | `marketing` |
-| Loads | nothing; you load the TikTok pixel (`ttq`) yourself |
-| On each consent change | `ttq('consent', 'grant')` with marketing, `ttq('consent', 'reject')` without, if `window.ttq` exists |
-| Everything else | nothing |
+| `consent` | If `window.ttq` is a function: `ttq('consent', 'grant')` with marketing consent, otherwise `ttq('consent', 'reject')`. |
+| All other hooks | Not implemented. Load the TikTok pixel and send its events yourself. |
 
-It only forwards consent; send TikTok events yourself through `ttq`.
+The provider exists only to forward consent to a pixel you manage.

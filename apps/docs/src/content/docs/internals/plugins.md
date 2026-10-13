@@ -1,124 +1,194 @@
 ---
 title: Writing a plugin
-description: The plugin contract, what each hook receives, and what the manager guarantees around it.
+description: The plugin contract, what each hook receives and when, and what the manager guarantees around it.
 sidebar:
   order: 5
 ---
 
-Every built-in provider (GA4, Meta Pixel, PostHog, Sentry and the rest) is a
-plain object that the manager drives through hooks. A plugin of your own uses
-the same contract and gets the same consent handling. This page describes the
-contract; [Lifecycle](/internals/lifecycle/) describes when the manager calls
-each hook.
+Every built-in provider is a plain object that the analytics manager drives
+through hooks. A plugin of your own uses the same contract and gets the same
+consent handling, queueing and error isolation. This page defines the
+contract; [Lifecycle](/internals/lifecycle/) describes the passes that call
+each hook. The types are in `src/core/types.ts` and the manager in
+`src/core/analytics-manager.ts`.
 
 ## The contract
 
-`definePlugin(plugin)` returns its argument unchanged. It exists only so
-TypeScript checks the object against `AnalyticsPlugin`.
+`definePlugin(plugin)` from `consentlayer` returns its argument unchanged. It
+exists so TypeScript checks the object against `AnalyticsPlugin`.
 
 ```ts
 type LoadTiming = false | 'idle' | 'interaction' | number
 
+type Hook<Args extends unknown[] = []> = (...args: [...Args, PluginContext]) => Promise<void> | void
+
 interface AnalyticsPlugin {
   id: string
-  requiredConsent?: 'none' | ConsentCategory // 'preferences', 'analytics', 'marketing' or a custom category
-    | ((consent: ConsentState | null) => boolean)
+  requiredConsent?: keyof ConsentState | 'none' | ((consent: ConsentState | null) => boolean)
   loadBeforeConsent?: boolean
   defer?: LoadTiming
-  setup?(ctx): void | Promise<void>
-  load?(ctx): void | Promise<void>
-  consent?(ctx): void | Promise<void>
-  page?(page, ctx): void | Promise<void>
-  track?(event, ctx): void | Promise<void>
-  identify?(identity, traits, ctx): void | Promise<void>
-  reset?(ctx): void | Promise<void>
-  group?(groupId, traits, ctx): void | Promise<void>
-  error?(error, context, ctx): void | Promise<void>
-  teardown?(ctx): void | Promise<void>
+  setup?: Hook
+  load?: Hook
+  consent?: Hook
+  page?: Hook<[page: PageEvent]>
+  track?: Hook<[event: AnalyticsEventPayload]>
+  identify?: Hook<[identity: UserIdentity, traits: UserTraits]>
+  reset?: Hook
+  group?: Hook<[groupId: string, traits: Record<string, unknown>]>
+  error?: Hook<[error: unknown, context: ErrorContext]>
+  teardown?: Hook
 }
 ```
 
 | Field | Meaning |
-| --- | --- |
-| `id` | Unique per instance. It is the key for `only`, `activeProviders` and `onError`'s `providerId`. Registering a second plugin with an existing `id` keeps the first one. |
-| `requiredConsent` | Default `'none'`: the plugin is active even before the visitor chooses. A function is called with the current consent and only once consent is known. |
-| `loadBeforeConsent` | Run `load` before consent allows the plugin. It still gets no events until it does. |
-| `defer` | Delay `load`: milliseconds, `'idle'` or `'interaction'`. Events wait in a backlog meanwhile. |
+|---|---|
+| `id` | Unique per instance. It is the key for `only`, `activeProviders` and the `providerId` passed to `onError`. Registering a different object with an `id` already in use keeps the first and reports a `provider-setup` error; registering the same object again does nothing. |
+| `requiredConsent` | Default `'none'`: the plugin is active from boot, before the visitor chooses. A category name (`preferences`, `analytics`, `marketing`, a custom category or `sale_of_data`) requires that category to be `true`. A function is called only once consent is known; before that the plugin is not allowed. |
+| `loadBeforeConsent` | Run `load` at boot even if the plugin is not yet allowed. It still receives no events until it is. |
+| `defer` | Delay `load` by a number of milliseconds, until the browser is idle (`'idle'`, with a 5 second cap), or until the first `pointerdown`, `keydown`, `scroll` or `touchstart` (`'interaction'`). Outside the browser it is due at once. |
 
 ### Hooks
 
-Every hook gets a `PluginContext` as its last argument, built fresh for each
-call:
+Every hook receives a `PluginContext` as its last argument, built fresh for
+each call:
 
 | `ctx` field | Value |
-| --- | --- |
-| `consent` | Current `ConsentState`, or `null` before the visitor has chosen |
-| `identity` | The known identity: `userId`, plus `email` and `phone` only with marketing consent |
+|---|---|
+| `consent` | The current `ConsentState`, or `null` before the visitor has chosen |
+| `identity` | `userId`, plus `email` and `phone` only with marketing consent |
 | `debug` | The `debug` option |
 | `emitError` | Reports an `AnalyticsError` to `onError`; `providerId` defaults to this plugin's `id` |
 
-| Hook | Called | Arguments before `ctx` |
-| --- | --- | --- |
-| `setup` | Once, on the first lifecycle pass after boot, whatever the consent. No network, no cookies. | none |
-| `consent` | On every lifecycle pass: boot, each consent change, each provider registration. | none |
-| `load` | Once, when the plugin is first allowed (or at boot with `loadBeforeConsent`), after `defer`. Inject scripts here. | none |
-| `page` | For each page view while active. | `PageEvent`: `url`, `path`, `title`, plus `id` |
-| `track` | For each event while active. | `AnalyticsEventPayload`: `id`, `name`, `params`, `options` |
-| `identify` | On `identify()`, on activation if an identity is known, and when marketing consent changes. | `identity`, `traits` (never `email` or `phone`; those are in `identity`) |
-| `reset` | On `reset()`, and when marketing is withdrawn from an inactive plugin. | none |
+| Hook | When it runs | Arguments before `ctx` |
+|---|---|---|
+| `setup` | Once, on the first lifecycle pass after boot, whatever the consent. Must not touch the network or set cookies. | none |
+| `consent` | On every lifecycle pass (boot, each consent change, each registration after boot), whether or not the plugin is allowed, before `load`. | none |
+| `load` | Once, on the first pass where the plugin is allowed, or at boot with `loadBeforeConsent`; with `defer`, when the timing is due. | none |
+| `page` | On `page()` while active. | `PageEvent`: `url`, `path`, `title`, `id` |
+| `track` | On `track()` while active, if the call's `requireAnalyticsConsent` and `requireMarketingConsent` are met. | `AnalyticsEventPayload`: `id`, `name`, `params`, `options` |
+| `identify` | On `identify()` while active; once on activation if an identity is known; after a marketing change while the visitor has an email or phone (see below). | `identity`, `traits` without `email` and `phone` |
+| `reset` | On `reset()`, for every plugin whose `setup` has run, active or not. | none |
 | `group` | On `group()` while active. | `groupId`, `traits` |
-| `error` | On `captureError()` and on uncaught errors while active. | `error`, `ErrorContext`: `level`, `tags`, `extra`, `source` |
-| `teardown` | When consent no longer allows the plugin, when it is unregistered, and on `destroy()`. Stop sending; remove cookies where possible. | none |
+| `error` | On `captureError()` and on uncaught errors while active, unless `errors: false`. | `error`, `ErrorContext`: `level`, `tags`, `extra`, `source` |
+| `teardown` | When an active plugin stops being allowed, when it is unregistered, and on `destroy()`. | none |
 
-`consent` can run before `load` (it does on the first pass), and `teardown`
-can run without `load` ever having run. A plugin that needs both its SDK and
-the consent should store the context in `consent` and apply it at the end of
-`load`; the PostHog provider does exactly this.
+<details>
+<summary>What a marketing change triggers</summary>
 
-`load` is not called again after a teardown. When the visitor grants consent
-again, the plugin becomes active and receives `consent` and events, so
-`teardown` should leave the SDK in a state that `consent` can turn back on.
+These calls run after the lifecycle pass for the change, and only when the
+visitor has an email or phone and marketing consent actually changed:
+
+| Change | Plugins | Hook |
+|---|---|---|
+| Marketing withdrawn | Active | `identify` with `userId` only, so the SDK can drop the contact details |
+| Marketing withdrawn | Set up but not active | `reset` |
+| Marketing granted | Active before the change and still active | `identify` with email and phone |
+
+</details>
+
+`consent` runs before `load` on the first pass, and `teardown` can run
+without `load` having run, for example while a deferred `load` is pending. A
+plugin that needs both its SDK and the consent should store the context in
+`consent` and apply it at the end of `load`; the PostHog and Sentry providers
+do this.
+
+`load` is not called again after a teardown. When consent is granted again
+the plugin becomes active and receives `consent` and events, so `teardown`
+must leave the SDK in a state that `consent` can turn back on.
 
 ### Helpers
 
-| Export | What it does |
-| --- | --- |
-| `loadScript(src, attributes?)` | Appends `<script async src>` to `<head>` with the given attributes. Resolves on `load`, rejects with `Failed to load <src>` on `error`. Relative `src` is resolved against the page, so each script is added once: a second call while it loads gets the same promise, a script already in the document resolves at once, and a failed load is removed so it can be retried. Resolves at once outside the browser. |
-| `setFlag(name, value)` | Sets `window.__<prefix><name>` (and the legacy `__acm<name>` when `names.legacy` is on). Use it to mark one-time global setup. |
-| `getFlag(name)` | Reads that flag, falling back to the legacy name when `legacy` is on. |
+All three are exported from `consentlayer` and defined in
+`src/core/plugin.ts` and `src/core/names.ts`.
 
-A rejected `loadScript` inside `load` is caught by the manager and reported as
-`provider-load`. The built-in providers catch it themselves and call
-`emitError({ scope: 'provider-script-load', ... })` so it can be told apart.
+| Export | What it does |
+|---|---|
+| `loadScript(src, attributes?)` | Appends `<script async src>` to `<head>` with the given attributes. Resolves on `load`; on `error` removes the element and rejects with `Failed to load <src>`, so a later call retries. |
+| `setFlag(name, value)` | Sets `window.__<prefix><name>`, and the legacy `__acm<name>` when `names.legacy` is on. Returns `value`. Use it to mark one-time global setup. |
+| `getFlag(name)` | Reads that flag, falling back to the legacy name when `names.legacy` is on. |
+
+<details>
+<summary><code>loadScript</code> deduplication</summary>
+
+1. `src` is resolved against `document.baseURI`, so relative and absolute
+   forms of the same URL are one script.
+2. A call while that URL is still loading returns the same promise.
+3. If a `<script>` with that URL is already in the document, the call
+   resolves at once, even if that script has not finished loading.
+4. Without a `document`, as during server rendering, it resolves at once.
+
+</details>
+
+A `load` hook that throws or rejects is reported with scope `provider-load`.
+GA4 and Meta catch their `loadScript` failure themselves and report it with
+scope `provider-script-load`; Contentsquare and Hotjar ignore it.
 
 ## What the manager guarantees
 
-- **Consent is checked for you.** `page`, `track`, `identify`, `group` and
-  `error` only run while the plugin is active and its `requiredConsent` holds
-  at that moment. You don't need to check consent in those hooks.
-- **Lifecycle hooks never overlap.** `setup`, `consent`, `load` and
-  `teardown` run on one queue, one plugin at a time, in registration order.
-- **Order is kept.** Events reach plugins in the order they were made, one
-  plugin after another. A plugin's async hook is awaited before the next
-  plugin gets the event.
-- **Events wait for a deferred `load`.** While a deferred `load` is pending,
-  event hooks are queued (up to 100) and replayed after it in order. If
-  consent is withdrawn first, they are discarded and `load` doesn't run.
-- **Errors stay contained.** A hook that throws or rejects is caught; the
-  error goes to `onError` with scope `provider-<hook>` (`identify`, `reset`
-  and `group` all use `provider-identify`). Other plugins and your app carry
-  on.
-- **Nothing after `destroy()`.** Once the instance is destroyed, no hook runs.
+- **Consent is checked for you.** `page`, `track`, `group` and `error`, and
+  `identify` from `identify()`, run only while the plugin is active and its
+  `requiredConsent` holds at that moment. `reset` is the exception: it runs
+  for every plugin that was set up.
+- **Lifecycle passes are serialised.** Each pass runs `setup`, `consent`,
+  `load` and `teardown` plugin by plugin, in registration order, and a pass
+  starts only after the previous one finished. A deferred `load` joins the
+  same queue. Two calls run outside it: `teardown` on unregister and on
+  `destroy()`, which is not awaited, and the `identify` and `reset` calls
+  after a marketing change.
+- **One call, one plugin at a time.** A single `page()`, `track()` or other
+  call reaches plugins in registration order, and each plugin's hook is
+  awaited before the next plugin gets it. Calls you don't await can
+  interleave.
+- **Calls before boot wait.** `page`, `track`, `identify`, `group` and
+  `captureError` made before `boot()` are queued, up to 100, and delivered in
+  order once the first pass has finished.
+- **Calls wait for a deferred `load`.** From the pass that schedules `load`
+  until it runs, `page`, `track`, `identify`, `reset`, `group` and `error`
+  calls for that plugin are held, up to 100, and replayed in order after
+  `load` while the plugin is still active. If the plugin is no longer active
+  when the timing is due and has no `loadBeforeConsent`, they are discarded and `load` does not run; it is
+  scheduled again on the next pass that allows the plugin.
+- **Errors stay contained.** A hook that throws or rejects is caught and
+  reported with scope `provider-<hook>`; `reset` and `group` use
+  `provider-identify`. Other plugins and your app carry on. A full queue is
+  reported once with scope `queue-full`.
+- **Nothing after `destroy()`.** Once `destroy()` has started each active
+  plugin's `teardown`, no further hook runs.
 - **Same IDs everywhere.** `page.id` and `event.id` are the IDs the server
-  receives, so a server destination can deduplicate against your plugin.
+  route receives, so a server destination can deduplicate against your
+  plugin (see [Server forwarding](/internals/server/)).
 
-The manager doesn't make your hooks idempotent or stop your SDK from setting
-cookies; that's the plugin's job.
+The manager does not make your hooks idempotent and does not stop your SDK
+from setting cookies; that is the plugin's job.
+
+### Testing a plugin
+
+`checkPlugin(plugin)` from `consentlayer/testing` runs a plugin through a
+real manager in a DOM test environment such as jsdom or happy-dom, and
+returns the problems it found; an empty array means it passed.
+
+1. Boots with every category denied and calls `page`, `track`, `identify`
+   and `group`.
+2. Unless `requiredConsent` is `'none'` or unset, reports a script added
+   (allowed with `loadBeforeConsent`), a `fetch` request, or a cookie change.
+3. Grants every category and repeats the calls, then calls `reset()`, then
+   denies every category.
+4. Reports every error a hook threw, then destroys the manager and restores
+   `fetch`.
+
+```ts
+import { checkPlugin } from 'consentlayer/testing'
+
+expect(await checkPlugin(beaconLogger('/api/log'))).toEqual([])
+```
+
+It does not detect `sendBeacon`, image pixels or storage writes.
 
 ## Example: a beacon logger
 
 This plugin sends page views and events to your own endpoint with
-`navigator.sendBeacon`. It needs analytics consent and loads at idle time.
+`navigator.sendBeacon`. It requires analytics consent and starts at idle
+time.
 
 ```ts
 import { definePlugin } from 'consentlayer'
@@ -131,9 +201,6 @@ export function beaconLogger(endpoint: string) {
     id: 'beacon-logger',
     requiredConsent: 'analytics',
     defer: 'idle',
-    consent({ consent, debug }) {
-      if (debug) console.debug('[beacon-logger] consent', consent)
-    },
     page(page, { emitError }) {
       if (!send({ type: 'page', ...page })) {
         emitError({ scope: 'provider-page', message: 'sendBeacon refused the page view' })
@@ -146,7 +213,7 @@ export function beaconLogger(endpoint: string) {
 }
 ```
 
-Register it like any built-in provider:
+Register it like a built-in provider:
 
 ```ts
 const analytics = createAnalytics({
@@ -154,10 +221,10 @@ const analytics = createAnalytics({
 })
 ```
 
-It has no `load`, because there's no script to fetch: `defer: 'idle'` still
-holds its events in the backlog until the browser is idle. It has no
-`teardown` either: beacons set no cookies, and the manager stops calling
-`page` and `track` as soon as analytics is withdrawn.
+It has no `load` because there is no script to fetch, yet `defer: 'idle'`
+still holds its events until the browser is idle. It has no `teardown`
+either: beacons set no cookies, and the manager stops calling `page` and
+`track` as soon as analytics is withdrawn.
 
 For events that must reach your server even when no browser plugin is
-active, use [server-side tracking](/guides/server-side-tracking/) instead.
+active, use [server-side tracking](/guides/server-side-tracking/).

@@ -1,20 +1,32 @@
 ---
-title: Consent-first analytics
-description: Consent-first analytics for React, Next.js and the server.
-template: splash
-hero:
-  title: consentlayer
-  tagline: One analytics API for GA4, Meta, PostHog, Sentry and more. Each provider loads only after the visitor consents to it.
-  actions:
-    - text: Get started
-      link: /start/installation/
-      icon: right-arrow
-    - text: Try the playground
-      link: /playground/
-      variant: minimal
+title: Introduction
+description: ConsentLayer is a consent-first analytics library for React, Next.js and the server.
 ---
 
-import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components'
+This page describes what ConsentLayer does, how the documentation is organized,
+what runs in the browser and on the server, and what each entry point adds to
+your bundle.
+
+## What is ConsentLayer?
+
+ConsentLayer is an analytics library that routes your events to GA4, Meta
+Pixel, PostHog, Sentry and the other supported providers, and decides from the
+visitor's consent which of those providers may load and receive data. You
+create one instance with `createAnalytics()`, track events through it once, and
+each provider translates them into its own format.
+
+Every provider declares a `requiredConsent`: one of the built-in categories
+`preferences`, `analytics` and `marketing`, a
+[custom category](/guides/consent-ui/#custom-categories) you declare, `'none'`,
+or a function of the current consent. ConsentLayer runs a provider's `load`
+hook, which injects the vendor's script or imports its SDK, only once that
+requirement is met. Page views, events, identity and errors are delivered only
+while it is met, and withdrawing consent runs the provider's `teardown` hook.
+The exceptions are explicit: providers with `'none'`, such as Sentry error
+reporting and cookieless PostHog, run without consent, and GA4 and Meta load
+before consent only when you set `loadBeforeConsent: true` to rely on the
+vendor's own consent mode. The [Providers](/guides/providers/) guide lists the
+category of each provider.
 
 ```ts
 import { createAnalytics } from 'consentlayer'
@@ -26,45 +38,102 @@ export const analytics = createAnalytics({
 })
 
 analytics.track('purchase', { transaction_id: 'o1', value: 30, currency: 'EUR' })
-// GA4 receives `purchase` once analytics is granted; Meta receives `Purchase` once marketing is.
 ```
 
-## Why consentlayer
+Creating the instance loads nothing. Providers start when `analytics.boot()`
+runs, which `<AnalyticsProvider>` calls for you. Calls made before then are held,
+up to 100, and delivered when boot completes to the providers whose requirement
+is met at that moment.
 
-<CardGrid>
-  <Card title="Consent decides what loads" icon="approve-check">
-    Each provider declares the category it needs: preferences, analytics,
-    marketing or one of your own. Nothing loads before that category is
-    granted, and withdrawing it stops the provider.
-  </Card>
-  <Card title="One event, every provider" icon="random">
-    Track `purchase` or `sign_up` once. consentlayer translates it into the
-    format of GA4, Meta, PostHog and the rest, with one event ID for
-    deduplication.
-  </Card>
-  <Card title="Browser and server" icon="seti:json">
-    One route forwards browser events to the Meta Conversions API, and
-    webhooks send server-only events to GA4 and Meta.
-  </Card>
-  <Card title="Proof of consent" icon="document">
-    Record every choice in your own Postgres, Supabase, Prisma, Drizzle or
-    Redis database, and have your server trust only the consent you recorded.
-  </Card>
-  <Card title="Your banner, your design" icon="pencil">
-    No UI ships with the package. Copy the banner recipe and restyle it, or
-    build your own on `useConsentController()`.
-  </Card>
-  <Card title="Small by default" icon="rocket">
-    The core is about 6 kB (brotli). Each provider, and heavy features such as
-    session replay, load as separate chunks only when used.
-  </Card>
-</CardGrid>
+ConsentLayer ships no consent banner. `useConsentController()` exposes the
+banner's state and actions, and the [Consent UI](/guides/consent-ui/) guide
+provides a recipe to copy and restyle, so the markup, wording and translations
+stay in your codebase.
 
-## Next steps
+<details>
+<summary>Where consent is stored and how it is announced</summary>
 
-<CardGrid>
-  <LinkCard title="Installation" description="Add the package and the SDKs you need." href="/start/installation/" />
-  <LinkCard title="Next.js" description="Set up the App Router in five steps." href="/start/nextjs/" />
-  <LinkCard title="API reference" description="Every option, method, hook and route handler." href="/reference/api/" />
-  <LinkCard title="How it works" description="The lifecycle, step by step." href="/internals/lifecycle/" />
-</CardGrid>
+The visitor's choice is a `ConsentState` object with one boolean per category.
+It is stored in `localStorage` under `consentlayer_consent`. On every change,
+ConsentLayer assigns it to `window.CONSENTLAYER_CONSENT` and dispatches a
+`consentlayer:consent` DOM event whose `detail` is the new state, so scripts
+outside ConsentLayer can react to it. All three names derive from
+[`names.prefix`](/guides/names/).
+
+On startup, `analytics.consent.bootstrap()` reads the stored choice. If there
+is none, it asks each consent adapter in order, such as the Shopify Customer
+Privacy adapter, and keeps the first non-null answer. If neither yields a
+choice, consent stays `null`, which satisfies no requirement other than
+`'none'`, and `<AnalyticsProvider>` shows the banner. The full sequence is described in
+[Consent](/internals/consent/).
+
+</details>
+
+## How to use the docs
+
+The docs are organized into the following sections:
+
+- **Getting started**: Installation, a step-by-step setup for the Next.js App
+  Router, and an interactive [Playground](/playground/) that logs every
+  provider hook as you change consent.
+- **Guides**: Task-oriented pages for tracking [events and identity](/guides/events/),
+  building the [consent UI](/guides/consent-ui/), configuring
+  [providers](/guides/providers/), [server-side tracking](/guides/server-side-tracking/),
+  [consent records](/guides/consent-records/) and [names](/guides/names/).
+- **API reference**: Every export, option, method, hook and route handler, with
+  types and defaults.
+- **How it works**: The internals: the [instance lifecycle](/internals/lifecycle/),
+  the [consent engine](/internals/consent/), the [providers](/internals/providers/),
+  the [server handlers](/internals/server/) and the [plugin contract](/internals/plugins/).
+- **Help**: [Migrating to v1](/guides/migrating-to-v1/) and
+  [Troubleshooting](/guides/troubleshooting/).
+
+Use the sidebar to navigate between sections, or search with <kbd>Ctrl</kbd>+<kbd>K</kbd>
+or <kbd>Cmd</kbd>+<kbd>K</kbd>.
+
+## Browser and server
+
+ConsentLayer runs on both sides of your application:
+
+- **In the browser**, `createAnalytics()` holds the consent state and the
+  providers. It loads each provider when its requirement is met, translates
+  your events into each provider's format, and routes errors from
+  `captureError` and the window's `error` and `unhandledrejection` events to the
+  providers that report errors, Sentry and PostHog.
+- **On the server**, `consentlayer/server` provides web-standard route
+  handlers of the form `(request: Request) => Promise<Response>`.
+  `createAnalyticsHandler` receives the events the browser forwards when you set
+  `server.endpoint` and sends them to the Meta Conversions API.
+  `sendServerEvent` sends events that never pass through the browser, such as a
+  confirmed payment from a webhook, to the Meta Conversions API and the GA4
+  Measurement Protocol. `createConsentHandler` appends each consent choice to
+  your database and sets a signed cookie that proves it.
+
+The browser forwards an event to the server only while `analytics` or
+`marketing` is granted, and the server sends it only to the destinations whose
+own category is granted in the event's consent: `marketing` for Meta and
+`analytics` for GA4. Each event carries one ID, the `eventId` you pass to
+`track()` or a generated UUID, which is used both in the browser and on the
+server, so Meta can deduplicate an event it receives from both.
+
+## Bundle size
+
+Each entry point is a separate module, and provider SDKs, Sentry Session Replay
+and Sentry tracing are loaded with dynamic `import()` only when they are first
+needed. The package's CI checks every entry point below against its size limit,
+measured minified and brotli-compressed. Vendor SDKs, whether installed from
+npm or loaded from the vendor's CDN, are not included in these figures.
+
+| Entry point | Limit |
+|---|---|
+| `consentlayer` | 7 kB |
+| `consentlayer/react` | 2.5 kB |
+| `consentlayer/providers/ga4` | 1.5 kB |
+| `consentlayer/providers/meta` | 2.5 kB |
+| `consentlayer/providers/contentsquare` | 1.2 kB |
+| `consentlayer/providers/posthog` | 1.2 kB |
+| `consentlayer/providers/sentry` | 1.2 kB |
+| `consentlayer/server` | 2.5 kB |
+| `consentlayer/server/meta` | 1.5 kB |
+
+The core currently measures 6.2 kB and `consentlayer/react` 1.9 kB.

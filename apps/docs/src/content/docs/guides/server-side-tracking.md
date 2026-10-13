@@ -3,20 +3,22 @@ title: Server-side tracking
 description: Forward browser events to the Meta Conversions API and send server-only events to GA4 and Meta.
 ---
 
-Server-side tracking has two parts, both from `consentlayer/server`:
+This page covers the two server entry points in `consentlayer/server`, the
+built-in destinations for the Meta Conversions API and the GA4 Measurement
+Protocol, writing your own destination, and handling the vendor secrets.
 
-- `createAnalyticsHandler`: one route that receives the browser's events and
-  forwards them to the Meta Conversions API (CAPI).
-- `sendServerEvent`: sends events that only the server knows about (a Stripe
-  or Shopify webhook) to GA4 and Meta.
+- `createAnalyticsHandler` is a route handler that receives the events the
+  browser forwards and sends them to the Meta Conversions API (CAPI).
+- `sendServerEvent` sends events that only the server observes, such as a
+  Stripe or Shopify webhook, to GA4 and Meta.
 
-Each follows its vendor's recommended setup. Meta deduplicates browser and
-server events by event ID, so every browser event is also sent to CAPI. GA4
-doesn't deduplicate, and its Measurement Protocol is meant to add to gtag, not
-mirror it, so GA4 receives only server-only events.
+The split follows each vendor's recommended setup. Meta deduplicates browser
+and server events that share an event ID, so every browser event is also sent
+to CAPI. GA4 does not deduplicate, and its Measurement Protocol is meant to
+supplement gtag rather than mirror it, so GA4 receives only server-only events.
 
-To make the route trust only the consent you recorded, rather than what the
-browser sends, see [Consent records](/guides/consent-records/).
+To make the route trust only consent you recorded, instead of the consent the
+browser reports, see [Consent records](/guides/consent-records/).
 
 ## Forward browser events
 
@@ -29,49 +31,105 @@ export const POST = createAnalyticsHandler({
   destinations: [
     metaCapi({
       pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID!,
-      accessToken: process.env.META_TOKEN!, // server-only
+      accessToken: process.env.META_TOKEN!,
     }),
   ],
   onError: console.error,
 })
 ```
 
-Then point the instance at the route:
+Point the instance at the route. `server.endpoint` must be an HTTPS URL or a
+path starting with `/`; any other value throws when `createAnalytics` is
+called.
 
 ```ts
 createAnalytics({ providers, server: { endpoint: '/api/analytics' } })
 ```
 
-With `server.endpoint` set, every `track` and `page` is also posted there
-(with `fetch` and `keepalive`, or `sendBeacon` where `fetch` is missing), with its event ID,
-the consent it was collected under and the identity consent allows. Nothing
-is posted until analytics or marketing is granted. Failures reach `onError`
-with scope `server-forward`.
+### What the browser sends
 
-The handler:
+With `server.endpoint` set, every `track` and `page` call is also posted to
+the endpoint as JSON, independently of which browser providers are active.
+Calls made before `boot()` are posted once it completes. Nothing is posted unless analytics or marketing consent is
+granted, and an event blocked by `requireAnalyticsConsent` or
+`requireMarketingConsent` is not posted either. The request uses `fetch` with
+`keepalive: true`, or `navigator.sendBeacon` where `fetch` is unavailable. A
+failed request or a non-2xx response is reported to `onError` with scope
+`server-forward`.
 
-1. Rejects cross-origin requests (403), bodies over 16 KB (413) and invalid
-   events (400).
-2. Sends only to destinations whose consent category the event carries, and
-   honours `only`. With `consentCookie` set, the consent comes from the signed
-   cookie instead of the body.
-3. Reads the `_fbp`, `_fbc` and `_ga` cookies, the IP address
-   (`x-forwarded-for`, then `x-real-ip`) and the user agent. The IP address is
-   the first `x-forwarded-for` entry, so it is trustworthy only behind a proxy
-   that overwrites the header, as Vercel does. Behind a proxy that appends to
-   it, as Cloudflare does, the client controls that entry.
-4. Hashes the email, phone and user ID.
-5. Sends to each destination in parallel and answers 204. Vendor errors go to
-   `onError`.
+| Field | Content |
+|---|---|
+| `id` | The event ID, shared with the browser providers so Meta can deduplicate. |
+| `name` | The event name; `page_view` for `page()`. |
+| `params` | The event params (omitted for page views). |
+| `url` | `location.href` at the time of the call, or the `url` passed to `page()`. |
+| `consent` | The consent the event was collected under, including custom categories. |
+| `identity` | The user ID, plus the email and phone number only with marketing consent. |
+| `only` | The call's `only` option, if set. |
+| `providers` | The call's per-provider params, if set. |
 
-The handler is a web-standard `(Request) => Promise<Response>`, so the Next.js
-App Router, Remix, Hono, Cloudflare Workers, Bun and Deno use it as it is. It
-needs only `fetch` and WebCrypto, so it runs on Node 20+ and edge runtimes.
+### How the handler processes a request
 
-`ga4Server` can't be passed to the handler; TypeScript reports it as an
-error.
+The handler is a web-standard `(request: Request) => Promise<Response>`. For
+each request it:
+
+1. Checks the origin. The `Origin` header, or the origin of `Referer` when
+   `Origin` is absent, must equal the request URL's origin. A request with
+   neither header, a malformed `Referer` or a different origin gets 403.
+2. Reads the body. A `Content-Type` other than `application/json` gets 415, a
+   body over 16 KB (16,384 bytes) gets 413, and an empty body or invalid JSON
+   gets 400.
+3. Validates the event and answers 400 if it is invalid.
+4. With `consentCookie` set, replaces the body's `consent` with the consent in
+   the signed cookie, or with everything denied if the cookie is missing or
+   its signature does not verify.
+5. Selects the destinations whose `requiredConsent` category is `true` in the
+   event's consent and, when the event has `only`, whose `id` is listed in it.
+6. Reads the client IP address, the user agent and the cookies (including
+   `_fbp`, `_fbc` and `_ga`) and passes them to each destination.
+7. Sends to the selected destinations in parallel and answers 204 once all
+   have settled. Each destination failure is passed to `onError`; it does not
+   change the response.
+
+Responses have no body. An unexpected error is passed to `onError` and
+answered with 500; the rejections in steps 1 to 3 are not reported.
+
+The IP address is the first entry of `x-forwarded-for`, falling back to
+`x-real-ip`. That entry is trustworthy only behind a proxy that overwrites
+the header, as Vercel does. Behind a proxy that appends to it, as Cloudflare
+does, the client controls the first entry.
+
+The handler needs only `fetch` and Web Crypto, so it runs unchanged in the
+Next.js App Router, Remix, Hono, Cloudflare Workers, Bun, Deno and Node.js 20
+or later.
+
+<details>
+<summary>Handler options and body validation</summary>
+
+| Option | Type | Description |
+|---|---|---|
+| `destinations` | `ServerDestination<true>[]` | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, and any destination with `forwardBrowserEvents: false` is skipped at runtime. |
+| `consentCookie` | `{ secret: string; cookie?: string }` | Takes consent from the signed cookie set by `createConsentHandler`. See [Consent records](/guides/consent-records/). |
+| `onError` | `(error: unknown) => void` | Receives destination failures and unexpected errors. |
+
+An event is valid when:
+
+- `name` is a string of 1 to 100 characters from `A–Z`, `a–z`, `0–9`, `_`,
+  `.`, `:` and `-`;
+- `consent` is an object whose `preferences`, `analytics` and `marketing` are
+  booleans, even when `consentCookie` will replace it;
+- `id`, `url` and `clientId`, when present, are strings;
+- `params` and `providers`, when present, are plain objects;
+- `only`, when present, is an array of strings;
+- `identity`, when present, is an object whose values are strings or
+  `undefined`.
+
+</details>
 
 ## Send server-only events
+
+Some events, such as a paid order, reach only your server, through a payment
+or commerce webhook. Send them with `sendServerEvent`:
 
 ```ts
 import { sendServerEvent } from 'consentlayer/server'
@@ -81,11 +139,11 @@ import { orderParams } from 'consentlayer/ecommerce'
 
 const results = await sendServerEvent(
   {
-    id: order.id,               // same ID as a browser purchase event, if any
+    id: order.id,               // the browser purchase event's ID, if there was one
     name: 'purchase',
     params: orderParams(order),
     consent: order.consent,     // saved at checkout
-    clientId: order.gaClientId, // saved at checkout; GA4 needs it
+    clientId: order.gaClientId, // saved at checkout; required by GA4
     identity: { userId, email },
   },
   {
@@ -98,20 +156,137 @@ const results = await sendServerEvent(
 // [{ id: 'ga4', ok: true }, { id: 'meta', ok: false, error }]
 ```
 
-Events such as a paid order often reach only your server, through a Stripe or
-Shopify webhook. Send them with `sendServerEvent`:
+`sendServerEvent` applies the same selection as the handler: a destination
+receives the event only if its `requiredConsent` category is `true` in
+`event.consent` and, when `only` is set, its `id` is listed. The selected
+destinations are called in parallel. The promise never rejects because of a
+destination; it resolves to one `{ id, ok, error? }` result per selected
+destination, in the order they were passed. Destinations skipped for lack of
+consent or by `only` do not appear in the results.
 
-- Save the consent and the GA client ID with the order while the visitor is in
-  the browser: the webhook has neither. The client ID is the last two parts
-  of the `_ga` cookie (`GA1.1.123.456` → `123.456`); inside a request,
-  `ga4Server` reads it from the cookie itself.
-- GA4 receives `user_id`, the hashed email and phone only with marketing consent
-  ([user-provided data collection](https://support.google.com/analytics/answer/14077171)
-  must be on), and the Measurement Protocol `consent` field.
-- Event names and params are translated as in the browser
-  (see [Events and identity](/guides/events/)).
+A webhook carries neither the visitor's consent nor their GA client ID, so
+save both with the order while the visitor is still in the browser. The client
+ID is the last two dot-separated parts of the `_ga` cookie (`GA1.1.123.456`
+becomes `123.456`). When you pass the optional `request` with the visitor's
+cookies, `ga4Server` falls back to the `_ga` cookie if `clientId` is omitted.
+
+Event names and params are translated as in the browser; see
+[Events and identity](/guides/events/).
+
+<details>
+<summary>Types</summary>
+
+```ts
+type ServerEvent = {
+  id?: string                 // shared with the browser event for deduplication
+  name: string
+  params?: Record<string, unknown>
+  consent: ConsentState       // the consent the event was collected under
+  identity?: { userId?: string; email?: string; phone?: string }
+  url?: string
+  clientId?: string           // GA4 client ID; read from the _ga cookie when omitted
+  only?: string[]
+  providers?: Record<string, Record<string, unknown>>
+}
+
+type ServerRequestInfo = {
+  ip?: string
+  userAgent?: string
+  cookies: Record<string, string>
+}
+
+function sendServerEvent(
+  event: ServerEvent,
+  options: { destinations: ServerDestination[]; request?: ServerRequestInfo },
+): Promise<{ id: string; ok: boolean; error?: unknown }[]>
+```
+
+</details>
+
+## Destinations
+
+### Meta Conversions API
+
+`metaCapi` from `consentlayer/server/meta` requires marketing consent and
+accepts browser events, so it can be passed to both `createAnalyticsHandler`
+and `sendServerEvent`. Its `id` is `meta`.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `pixelId` | `string` | Required | The pixel ID. |
+| `accessToken` | `string` | Required | A Conversions API access token. Server only. |
+| `testEventCode` | `string` | None | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
+| `apiVersion` | `string` | `'v26.0'` | The Graph API version. |
+| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+
+<details>
+<summary>Request sent to Meta</summary>
+
+Each event is one `POST` to
+`https://graph.facebook.com/<apiVersion>/<pixelId>/events`, with
+`access_token` (and `test_event_code`, when set) in the query string and a
+single entry in `data`:
+
+| Field | Value |
+|---|---|
+| `event_name` | The Meta name for the event: a standard event where one maps, otherwise the original name. |
+| `event_time` | The send time, in Unix seconds. |
+| `event_id` | The event's `id`, which Meta uses to deduplicate it against the pixel event. |
+| `event_source_url` | The event's `url`. |
+| `action_source` | `website`. |
+| `custom_data` | The translated params, keeping only strings, numbers, booleans, `null`, arrays and plain objects. |
+| `user_data.client_ip_address`, `client_user_agent` | From the request, when there is one. |
+| `user_data.fbp`, `fbc` | The `_fbp` and `_fbc` cookies, when there is a request. |
+| `user_data.em` | The SHA-256 hex digest of the trimmed, lowercased email, if it is a valid address. |
+| `user_data.ph` | The SHA-256 hex digest of the phone number's digits, without `+`, if it is a valid E.164 number. |
+| `user_data.external_id` | The SHA-256 hex digest of the user ID. |
+
+A non-2xx response throws `Meta CAPI <status>: <response body>`.
+
+</details>
+
+### GA4 Measurement Protocol
+
+`ga4Server` from `consentlayer/server/ga4` requires analytics consent and has
+`forwardBrowserEvents: false`, so it can be passed only to `sendServerEvent`.
+Its `id` is `ga4`.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `measurementId` | `string` | Required | The `G-` measurement ID. |
+| `apiSecret` | `string` | Required | A Measurement Protocol API secret. Server only. |
+| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+
+GA4 always receives the user ID, when there is one. The hashed email and
+phone number are added only with marketing consent, and they are used only if
+[user-provided data collection](https://support.google.com/analytics/answer/14077171)
+is turned on in the property. The Measurement Protocol `consent` field is set
+from marketing consent.
+
+<details>
+<summary>Request sent to GA4</summary>
+
+Each event is one `POST` to `https://www.google-analytics.com/mp/collect`,
+with `measurement_id` and `api_secret` in the query string and this body:
+
+| Field | Value |
+|---|---|
+| `client_id` | `event.clientId`, or the client ID from the request's `_ga` cookie. |
+| `user_id` | `event.identity.userId`. |
+| `user_data` | With marketing consent only: `sha256_email_address` (trimmed, lowercased) and `sha256_phone_number` (digits prefixed with `+`), each when valid. Omitted when empty. |
+| `consent` | `ad_user_data` and `ad_personalization`, both `GRANTED` with marketing consent and `DENIED` without it. |
+| `events[0].name` | The event name with every character outside `A–Z`, `a–z`, `0–9` and `_` replaced by `_`; `lead` becomes `generate_lead`. |
+| `events[0].params` | The params merged with `providers.ga4`. |
+
+Without a client ID, `send` throws `ga4Server needs event.clientId or the _ga
+cookie` before any request is made. A non-2xx response throws
+`GA4 Measurement Protocol <status>: <response body>`.
+
+</details>
 
 ## Writing a destination
+
+A destination is an object implementing `ServerDestination`:
 
 ```ts
 import type { ServerDestination } from 'consentlayer/server'
@@ -121,16 +296,23 @@ const myDestination: ServerDestination<true> = {
   requiredConsent: 'analytics',
   forwardBrowserEvents: true, // false keeps it out of createAnalyticsHandler
   async send(event, request) {
-    // request: { ip, userAgent, cookies } when there is one; throw on failure
+    // request is a ServerRequestInfo when there is a request; throw on failure
   },
 }
 ```
+
+`requiredConsent` is a consent category name, built-in or custom; unlike a
+browser provider, a destination cannot use `'none'` or a function. The type
+parameter is the literal value of `forwardBrowserEvents`, which is what lets
+TypeScript reject a server-only destination in `createAnalyticsHandler`. A
+thrown error becomes `{ ok: false, error }` in `sendServerEvent`'s results,
+or an `onError` call in the handler.
 
 ## Secrets
 
 `ga4Server` and `metaCapi` take credentials that must never reach the browser
 bundle: GA4's `apiSecret` and Meta's `accessToken`. Keep both in server-only
-environment variables. For Meta, use a system-user token, and rotate it when
+environment variables. For Meta, use a system-user token and rotate it when
 someone with access leaves the team.
 
 ```ts

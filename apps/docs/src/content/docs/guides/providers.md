@@ -1,107 +1,349 @@
 ---
 title: Providers
-description: Configure each provider, load SDKs later, proxy them past ad blockers and report errors.
+description: The built-in providers, their consent requirements and options, deferred loading, reverse proxies and error reporting.
 ---
 
-A provider is a plugin that connects one vendor to consentlayer. Pass browser
-providers to `createAnalytics({ providers })`. Pass consent sources, such as
-Shopify Customer Privacy, to `createAnalytics({ consent: { adapters } })`.
+This page covers the providers that ship with ConsentLayer: the consent
+category each one requires, its options and its exact behaviour, followed by
+deferred SDK loading, loading before consent, reverse proxies and error
+reporting.
+
+A provider is a plugin that connects one vendor to the instance. Browser
+providers are passed to `createAnalytics({ providers })`. Consent sources,
+such as Shopify Customer Privacy, are adapters and are passed to
+`createAnalytics({ consent: { adapters } })` instead.
 
 ## Available providers
 
-| Provider | Needs consent | Required options | Behaviour |
-|---|---|---|---|
-| GA4 | analytics | `measurementId` | Starts Google Consent Mode with everything denied and updates it when consent changes. |
-| Meta Pixel | marketing | `pixelId` | The browser pixel. Add the Conversions API on the server with `metaCapi` (see [Server-side tracking](/guides/server-side-tracking/)). |
-| PostHog | none (cookieless) | `apiKey` | Counts without cookies until analytics is granted, then uses cookies. Turn on cookieless mode in the PostHog project. With `cookieless: false` it loads only after consent. |
-| Sentry | none | `dsn` | Errors without personal data, whatever the consent. Replay, tracing and the user ID need analytics consent. |
-| Contentsquare | analytics | `tagId` | Sends single-page-app page views, events, purchases and the user ID. Opts the visitor out when consent is withdrawn. |
-| Vercel Analytics | none (cookieless) | `trackEvent` from `@vercel/analytics` | Receives events whatever the consent. |
-| TikTok | marketing | none | Syncs consent to a `ttq` pixel you load yourself; it doesn't load the SDK. |
-| Hotjar (deprecated) | analytics | `siteId`, `version` | Hotjar accounts are moving to Contentsquare; switch once yours has. Withdrawing consent deletes its cookies, but its script keeps running until the page reloads. Set `reloadOnRevoke: true` to reload. |
-| Shopify Customer Privacy | consent source | none | `createShopifyCustomerPrivacyAdapter()` reads the visitor's choice from Shopify and keeps both in sync. |
+Each provider is a named export of its own entry point,
+`consentlayer/providers/<name>`, so importing one never bundles another.
 
-Each factory has the provider's short name (`ga4()`, `meta()`, `posthog()`, `sentry()`,
-`contentsquare()`, `vercel()`, `tiktok()`, `hotjar()`) and is imported from
-`consentlayer/providers/<name>`, for example `consentlayer/providers/ga4`.
-Shopify's is `createShopifyCustomerPrivacyAdapter()`, from `consentlayer/providers/shopify`. A provider can also require one
-of your [custom categories](/guides/consent-ui/#custom-categories).
+| Provider | Factory | Required consent | Required options |
+|---|---|---|---|
+| GA4 | `ga4()` from `consentlayer/providers/ga4` | `analytics` | `measurementId` |
+| Meta Pixel | `meta()` from `consentlayer/providers/meta` | `marketing` | `pixelId` |
+| PostHog | `posthog()` from `consentlayer/providers/posthog` | `'none'`; `analytics` with `cookieless: false` | `apiKey` |
+| Sentry | `sentry()` from `consentlayer/providers/sentry` | `'none'` | `dsn` |
+| Contentsquare | `contentsquare()` from `consentlayer/providers/contentsquare` | `analytics` | `tagId` |
+| Vercel Analytics | `vercel()` from `consentlayer/providers/vercel` | `'none'` | `trackEvent` |
+| TikTok | `tiktok()` from `consentlayer/providers/tiktok` | `marketing` | None |
+| Hotjar (deprecated) | `hotjar()` from `consentlayer/providers/hotjar` | `analytics` | `siteId`, `version` |
+| Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter()` from `consentlayer/providers/shopify` | Consent source | None |
+
+The ID option of GA4, Meta, PostHog, Sentry and Contentsquare may be
+`undefined` or empty: the provider is then turned off, and with `debug: true`
+it logs `[consentlayer] <id> is off: <option> is not set.` at boot. Pass
+`process.env` values directly instead of guarding each provider. A value that
+is set but malformed still throws.
+
+A provider whose required consent is `'none'` loads at boot and receives
+calls regardless of the visitor's choice. Every other provider loads only once
+its category is granted (or at boot with `loadBeforeConsent`), receives `page`, `track`, `identify` and `group`
+calls only while it stays granted, and is torn down when it is withdrawn.
+The exact order of these hooks is described in
+[Lifecycle](/internals/lifecycle/).
+
+`ga4()` and `meta()` validate their IDs when called and throw on a malformed
+value: `measurementId` must match `G-` followed by 4 to 16 uppercase letters
+or digits, and `pixelId` must be a string of 8 to 20 digits.
+
+Event names follow GA4 and each provider translates them to its own; see
+[Events and identity](/guides/events/). A
+[custom plugin](/internals/plugins/) can also require one of your
+[custom categories](/guides/consent-ui/#custom-categories).
+
+## Provider reference
+
+<details>
+<summary>GA4</summary>
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `measurementId` | `string \| undefined` | Required | The `G-` measurement ID. |
+| `loadBeforeConsent` | `boolean` | `false` | Loads gtag.js at boot with Consent Mode denied. See [Loading before consent](#loading-before-consent). |
+
+At setup, before any network request, `ga4()` creates `window.dataLayer` and
+`window.gtag` and sets the Consent Mode v2 defaults: `ad_storage`,
+`ad_user_data`, `ad_personalization`, `analytics_storage` and
+`functionality_storage` denied, `security_storage` granted. On every consent
+change it sends `gtag('consent', 'update')` with this mapping:
+
+| Consent Mode signal | Granted when |
+|---|---|
+| `analytics_storage` | `analytics` is granted |
+| `ad_storage`, `ad_user_data`, `ad_personalization` | `marketing` is granted |
+| `functionality_storage` | `preferences` is granted |
+| `security_storage` | Always |
+
+`gtag('config', measurementId, { send_page_view: false })` runs once, after
+analytics consent is first granted, so GA4 never sends a hit before it. Page
+views are sent as `page_view` events with `page_location`, `page_path` and
+`page_title`. `identify` sets `user_id` and `user_data` (the email, and the
+phone number prefixed with `+`); `reset` clears both. A failed script load is
+reported to `onError` with scope `provider-script-load`.
+
+</details>
+
+<details>
+<summary>Meta Pixel</summary>
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `pixelId` | `string \| undefined` | Required | The 8 to 20 digit pixel ID. |
+| `locale` | `string` | `'en_US'` | The locale segment of the `fbevents.js` URL. |
+| `loadBeforeConsent` | `boolean` | `false` | Loads the pixel at boot with `fbq('consent', 'revoke')`. See [Loading before consent](#loading-before-consent). |
+
+On load, `meta()` runs Meta's bootstrap snippet, calls `fbq('consent', …)`
+with the current marketing consent and `fbq('init', pixelId, userData)` with
+advanced-matching data (`em`, `ph` as digits only, and `external_id`), then
+loads `https://connect.facebook.net/<locale>/fbevents.js`. Every consent
+change calls `fbq('consent', 'grant')` or `fbq('consent', 'revoke')`.
+
+Page views are sent as `PageView`; events are sent with `fbq('track')` for
+Meta standard events and `fbq('trackCustom')` otherwise. Both carry
+`eventID`, the same ID that is forwarded to the Conversions API, so Meta
+deduplicates the pair (see [Server-side tracking](/guides/server-side-tracking/)).
+
+Meta accepts advanced-matching data only in `fbq('init')`. If the pixel was
+initialised with an email address or phone number and marketing consent is
+then withdrawn, the pixel stays revoked and sends nothing for the rest of the
+page's lifetime, even if consent is granted again. It resumes after a reload.
+
+For visitors without JavaScript, `<MetaPixelNoscript pixelId enabled />` from
+`consentlayer/react` renders Meta's `<noscript>` image pixel. It fires without
+consent, since those visitors never see a banner.
+
+</details>
+
+<details>
+<summary>Contentsquare</summary>
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `tagId` | `string \| undefined` | Required | The ID in the tag URL, `https://t.contentsquare.net/uxa/<tagId>.js`. |
+
+The tag tracks the initial page view itself, so the first `page()` call for the
+path the tag loaded on is skipped. Later page views are sent as
+`trackPageview` with the path, without its query string and fragment.
+`purchase` is sent as an ecommerce transaction (`transaction_id`, `value` and
+`currency` become `id`, `revenue` and `currency`); every other event is sent
+as `trackPageEvent` with its name only, without params. `identify` sends the
+user ID and `reset` calls `resetIdentity`.
+
+Contentsquare has no web opt-in. Withdrawing analytics consent pushes
+Contentsquare's `optout` command. Granting consent again expires the
+`_cs_optout` cookie, which takes effect on the next page load.
+
+</details>
+
+<details>
+<summary>Vercel Analytics</summary>
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `trackEvent` | `(name: string, payload: Record<string, string \| number \| boolean \| null>) => void` | Required | `track` from `@vercel/analytics`. |
+
+Vercel Analytics sets no cookies, so `vercel()` requires no consent and
+receives every `track` call. It does not handle page views. Params are
+reduced to the types Vercel accepts: `null` and `undefined` become `null`,
+strings, numbers and booleans are kept, `Date` values become ISO strings, and
+all other values are dropped. To gate it on consent anyway, spread it:
+`{ ...vercel(options), requiredConsent: 'analytics' }`.
+
+</details>
+
+<details>
+<summary>TikTok</summary>
+
+`tiktok()` takes no options and does not load TikTok's SDK. Load the `ttq`
+pixel yourself; on every consent change, if `window.ttq` is a function,
+`tiktok()` calls `ttq('consent', 'grant')` when marketing is granted and
+`ttq('consent', 'reject')` otherwise. It forwards no events.
+
+</details>
+
+<details>
+<summary>Hotjar (deprecated)</summary>
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `siteId` | `number` | Required | The Hotjar site ID. |
+| `version` | `number` | Required | The snippet version, `hjsv`. |
+| `reloadOnRevoke` | `boolean` | `false` | Reloads the page when analytics consent is withdrawn. |
+
+Hotjar accounts are moving to Contentsquare; switch to `contentsquare()` once
+yours has. Events are sent as `hj('event', name)`. `identify` calls
+`hj('identify', userId, traits)`, adding the email to the attributes when both
+a user ID and an email are known.
+
+Hotjar's script cannot be stopped once loaded. Withdrawing analytics consent
+expires every cookie whose name starts with `_hj` and removes every
+`localStorage` and `sessionStorage` key matching `^_?hj`, but the script keeps
+running until the page reloads. Set `reloadOnRevoke: true` to reload
+immediately.
+
+</details>
 
 ## PostHog and Sentry
 
-Install the SDKs you use; they are optional peer dependencies:
+Both providers are built on the vendor's npm SDK, which is an optional peer
+dependency. Install the ones you use:
 
 ```bash
-pnpm add posthog-js                        # posthog()
-pnpm add @sentry/browser @sentry/nextjs    # sentry(); @sentry/nextjs only for the Next.js helpers
+pnpm add posthog-js         # posthog()
+pnpm add @sentry/browser    # sentry()
+pnpm add @sentry/nextjs     # consentlayer/sentry/server and consentlayer/sentry/next only
 ```
 
-Heavy features are off by default and load only when you turn them on:
-
-```ts
-posthog({
-  apiKey,
-  apiHost,             // default https://us.i.posthog.com
-  uiHost,              // set with a proxy apiHost, e.g. https://us.posthog.com
-  cookieless: true,    // false: load nothing until analytics consent
-  autocapture: false,
-  recording: false,    // session recording, after analytics consent
-  errors: true,        // receive captureError
-  groupType: 'company',
-  defer: 'idle',       // see "Loading SDKs later"
-})
-
-sentry({
-  dsn,
-  environment,
-  release,
-  replay: false,       // true or { sessionSampleRate, onErrorSampleRate }
-  tracing: false,      // true or { sampleRate }
-  tunnel,              // see "Reverse proxies"
-  defer: 'interaction',
-})
-```
+The SDK is imported with a dynamic `import()` when the provider loads, and
+features that pull in more code, such as session recording, Session Replay and
+tracing, are off by default and imported only once enabled and consented to.
 
 PostHog never captures page views, page leaves, exceptions, heatmaps or dead
-clicks by itself, and its flags, surveys and remote scripts are off: page
-views and errors come from consentlayer. `identify` and `group` wait for
-analytics consent.
+clicks on its own, and its feature flags, surveys and remote script loading
+are disabled: page views, events and errors come from ConsentLayer. It starts
+opted out of capturing and persistence. With the default `cookieless: true`,
+PostHog counts visitors in its cookieless mode until analytics consent is
+granted, then opts in and uses cookies; this requires cookieless mode to be
+enabled in the PostHog project settings. `identify` and `group` are sent only
+with analytics consent.
 
-Sentry sends errors without IP addresses, cookies, headers, bodies or query
-strings. Analytics consent adds the user ID (and the email, with marketing
-consent), Replay and tracing. Withdrawing it stops Replay and drops
-transactions. consentlayer installs the window error handlers, so Sentry's
-own are removed.
+Sentry reports errors regardless of consent and without personal data: user
+info, cookies, HTTP headers, request bodies and URL query strings are not
+collected. Analytics consent adds the user ID (and the email address, which
+ConsentLayer shares only with marketing consent), Session Replay and tracing.
+Withdrawing analytics consent stops Replay and drops transactions.
+ConsentLayer installs the window error handlers itself, so Sentry's
+`GlobalHandlers` integration is removed.
+
+<details>
+<summary>PostHog options</summary>
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `apiKey` | `string \| undefined` | Required | The project API key. |
+| `apiHost` | `string` | `'https://us.i.posthog.com'` | The ingestion host, or a reverse-proxy path. |
+| `uiHost` | `string` | None | PostHog's app URL, such as `https://us.posthog.com`, for toolbar links when `apiHost` is a proxy. |
+| `cookieless` | `boolean` | `true` | `true` loads PostHog at boot in cookieless mode (`cookieless_mode: 'on_reject'`). `false` makes the provider require analytics consent and load nothing before it. |
+| `autocapture` | `boolean` | `false` | PostHog autocapture. |
+| `recording` | `boolean` | `false` | Session recording, started after analytics consent. Imports `posthog-js/dist/recorder` on first use. |
+| `errors` | `boolean` | `true` | Sends `captureError` errors to PostHog error tracking with `captureException`. |
+| `groupType` | `string` | `'company'` | The group type `analytics.group()` uses. |
+| `defer` | `false \| 'idle' \| 'interaction' \| number` | `false` | See [Loading SDKs later](#loading-sdks-later). |
+
+Page views are captured as `$pageview` with `$current_url` and `title`.
+`track` captures the event name with its params merged with
+`options.providers.posthog`. `identify` sends the user ID, with the email as a
+person property when it is known. `reset` calls PostHog's `reset()` and
+re-applies the current consent.
+
+</details>
+
+<details>
+<summary>Sentry options</summary>
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `dsn` | `string \| undefined` | Required | The project DSN. |
+| `environment` | `string` | None | Passed to `Sentry.init`. |
+| `release` | `string` | None | Passed to `Sentry.init`. |
+| `replay` | `boolean \| { sessionSampleRate?: number; onErrorSampleRate?: number }` | `false` | Session Replay after analytics consent. `true` uses a session sample rate of `0.1` and an on-error sample rate of `1`. |
+| `tracing` | `boolean \| { sampleRate?: number }` | `false` | Performance tracing after analytics consent. `true` uses a sample rate of `1`. |
+| `tunnel` | `string` | None | Sends envelopes to this URL instead of the DSN host. See [Sentry](#sentry). |
+| `defer` | `false \| 'idle' \| 'interaction' \| number` | `false` | See [Loading SDKs later](#loading-sdks-later). |
+
+The Replay integration is imported and added when analytics consent is first
+granted, and stopped when it is withdrawn. Granting consent again restarts it
+in buffering mode, which records only around errors; session sampling resumes
+on the next page load. The tracing integration is added once, on the first
+grant. `captureError` calls reach Sentry with their `level`, `extra` and
+`tags`, plus a `source` tag of `manual`, `global` or `boundary`.
+
+For Next.js server and edge code, `sentryInstrumentation` from
+`consentlayer/sentry/server` configures `@sentry/nextjs` with the same data
+collection settings; see the [Next.js guide](/start/nextjs/#5-report-errors).
+
+</details>
+
+## Shopify Customer Privacy
+
+`createShopifyCustomerPrivacyAdapter()` keeps the instance and Shopify's
+Customer Privacy API in agreement. When no choice is stored locally, it reads
+the visitor's existing choice from `Shopify.customerPrivacy.currentVisitorConsent()`
+at bootstrap. Every choice made through ConsentLayer is written to Shopify with
+`setTrackingConsent()`, and Shopify's `visitorConsentCollected` DOM event is
+applied back to the instance. The optional `sale_of_data` flag is passed
+through in both directions.
+
+<details>
+<summary>Shopify adapter options</summary>
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `loadFeature` | `boolean` | `true` | Calls `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`, when available, before reading or writing consent. |
+| `headlessStorefront` | `{ checkoutRootDomain?, storefrontRootDomain?, storefrontAccessToken? }` | None | Required off Shopify-hosted themes. Passed to `setTrackingConsent` with `headlessStorefront: true`. |
+| `canBootstrap` | `() => boolean` | None | Returning `false` skips reading Shopify's existing choice at bootstrap. |
+| `document` | `Document` | The global `document` | The document to listen on. |
+| `window` | `Window` | The global `window` | The window that holds `Shopify`. |
+
+Shopify reports consent as strings. `granted`, `allow`, `accepted`, `yes` and
+`true` (case-insensitive) map to `true`; any other value maps to `false`. If
+Shopify reports no value for any category, the visitor is treated as not
+having chosen yet.
+
+Headless storefronts load Shopify's script themselves; its URL is returned by
+`getShopifyCustomerPrivacyScriptUrl()`, exported from the same entry point.
+
+</details>
 
 ## Loading SDKs later
 
-Every provider accepts `defer`: `'idle'`, `'interaction'` (the first pointer,
-key, scroll or touch event) or a number of milliseconds. Calls made in the
-meantime are held, up to 100, and delivered once the SDK has loaded.
+`posthog()` and `sentry()` accept `defer`, which postpones loading the SDK
+until after its consent requirement is met. A [custom plugin](/internals/plugins/)
+can set the same `defer` field.
+
+| Value | Loads |
+|---|---|
+| `false` (default) | Immediately. |
+| `'idle'` | In a `requestIdleCallback` with a 5,000 ms timeout, or after `setTimeout(…, 1)` where it is unavailable. |
+| `'interaction'` | On the first `pointerdown`, `keydown`, `scroll` or `touchstart` event on `window`. |
+| `number` | After that many milliseconds. |
+
+Calls made to the provider in the meantime are held in order and delivered
+once it has loaded. At most 100 calls are held per provider; later ones are
+dropped and a single `queue-full` error is reported to `onError`. If consent
+is withdrawn before the provider loads, it is not loaded and its held calls
+are discarded.
 
 ## Loading before consent
 
-GA4 and Meta load nothing until their category is granted. You can load them
-at boot with consent denied instead (Google Consent Mode, or
-`fbq('consent', 'revoke')`). That keeps Google's cookieless pings and
-modelling, but sends the visitor's IP address to Google or Meta before
-consent:
+By default, GA4 and Meta Pixel load nothing until their category is granted.
+With `loadBeforeConsent: true`, the vendor script is loaded at boot with
+consent denied: gtag.js with the Consent Mode defaults above, and the pixel
+with `fbq('consent', 'revoke')`.
 
 ```ts
 ga4({ measurementId, loadBeforeConsent: true })
 meta({ pixelId, loadBeforeConsent: true })
 ```
 
+No hits are sent before consent either way: GA4 is configured only after
+analytics consent is granted, and the pixel sends events only with marketing
+consent. The effect is that the script is already loaded when the visitor
+consents. The script request itself discloses the visitor's IP address to
+Google or Meta before consent.
+
 ## Reverse proxies
 
-Ad blockers drop requests to `posthog.com` and `sentry.io`. Serving them from
-your own domain gets them through. For GA4 and Meta, use
+Ad blockers drop requests to `posthog.com` and `sentry.io`. Serving them
+through your own domain avoids this. For GA4 and Meta, use
 [server-side tracking](/guides/server-side-tracking/) instead.
 
 ### PostHog
 
 Add the rewrites from [PostHog's guide](https://posthog.com/docs/advanced/proxy/nextjs),
-then point `apiHost` at them. Use `eu` instead of `us` for an EU project.
+then set `apiHost` to the proxy path and `uiHost` to PostHog's app URL. For an
+EU project, replace `us` with `eu` in every host.
 
 ```js
 // next.config.js
@@ -123,30 +365,46 @@ posthog({ apiKey, apiHost: '/ingest', uiHost: 'https://us.posthog.com' })
 
 ### Sentry
 
-On a Next.js server, `withSentryConfig(config, { tunnelRoute: '/monitoring' })`
-adds the route ([Sentry's guide](https://docs.sentry.io/platforms/javascript/troubleshooting/)).
-It sets the tunnel only for `@sentry/nextjs`'s own client, so pass it to
-`sentry()` yourself, with the organisation and project IDs from your DSN
-(`https://<key>@o<orgId>.ingest.sentry.io/<projectId>`). If the DSN host is
-`o<orgId>.ingest.<region>.sentry.io`, add `&r=<region>`.
+In Next.js, `withSentryConfig(config, { tunnelRoute: '/monitoring' })` from
+`consentlayer/sentry/next` adds a rewrite from
+`/monitoring?o=<orgId>&p=<projectId>` to
+`https://o<orgId>.ingest.sentry.io/api/<projectId>/envelope/`
+([Sentry's guide](https://docs.sentry.io/platforms/javascript/troubleshooting/)).
+It configures the tunnel only for `@sentry/nextjs`'s own client, so pass it to
+`sentry()` as well, with the organisation and project IDs from your DSN,
+`https://<key>@o<orgId>.ingest.sentry.io/<projectId>`. If the DSN host is
+`o<orgId>.ingest.<region>.sentry.io`, append `&r=<region>`.
 
 ```ts
 sentry({ dsn, tunnel: '/monitoring?o=<orgId>&p=<projectId>' })
 ```
 
-The tunnel works only with sentry.io (not self-hosted Sentry) and not with a
-static export. Keep middleware off the route.
+The rewrite targets sentry.io only, so it does not work with self-hosted
+Sentry, and Next.js rewrites are unavailable in a static export. Exclude the
+route from your middleware matcher.
 
 ## Errors
 
-`analytics.captureError(error, { level, tags, extra })` sends the error to
-every provider that handles errors (Sentry and PostHog). consentlayer also
-reports the window's `error` and `unhandledrejection` events. Turn those off
-with `createAnalytics({ errors: { globalHandlers: false } })`, or turn off all
-error reporting with `errors: false`. In React, add `ErrorBoundary` and
-`createGlobalError` (see the [Next.js guide](/start/nextjs/#5-report-errors)).
+`analytics.captureError(error, { level, tags, extra })` sends an error to
+every active provider that handles errors: Sentry, and PostHog unless
+`errors: false`. `level` is `'fatal'`, `'error'` or `'warning'`.
+
+ConsentLayer also reports the window's `error` events, with level `fatal`,
+and `unhandledrejection` events. Like every other call, errors captured before
+`boot()` are queued, up to 100 calls, and delivered once it completes.
+
+| `createAnalytics` option | Effect |
+|---|---|
+| `errors: true` (default) | `captureError` and the window handlers. |
+| `errors: { globalHandlers: false }` | `captureError` only. |
+| `errors: false` | No error reporting; `captureError` does nothing. |
+
+In React, wrap the tree in `ErrorBoundary` and export
+`createGlobalError(analytics)` from `app/global-error.tsx`, both from
+`consentlayer/react`; see the [Next.js guide](/start/nextjs/#5-report-errors).
 
 ## Writing your own
 
-A provider is an object made with `definePlugin`. See
-[Writing a plugin](/internals/plugins/).
+A provider is an object typed with `definePlugin` from `consentlayer`. See
+[Writing a plugin](/internals/plugins/) and
+[What each provider receives](/internals/providers/).

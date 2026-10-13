@@ -1,265 +1,602 @@
 ---
 title: Upgrading to 1.0
-description: Move from @nicolopadovan/analytics-consent-manager to consentlayer 1.0.
+description: Upgrade from @nicolopadovan/analytics-consent-manager to ConsentLayer 1.0, with the breaking changes and the code to replace for each.
 ---
 
-consentlayer 1.0 replaces `@nicolopadovan/analytics-consent-manager`. The
-setup shrinks to one `createAnalytics()` call and one `<AnalyticsProvider>`,
-event names follow GA4, and providers and plugins get shorter names. This page
-walks through each change by topic.
+import { Tabs, TabItem } from '@astrojs/starlight/components'
+
+ConsentLayer 1.0 replaces `@nicolopadovan/analytics-consent-manager`, which
+was published to GitHub Packages as 0.1.0, 1.0.0-rc.0 and 1.0.0-rc.1. This
+guide covers the upgrade from any of those versions. The module-level
+singletons, the separate consent engine and analytics manager, and the four
+React components are replaced by one instance created with
+`createAnalytics()` and one `<AnalyticsProvider>`. Event names follow GA4, the
+bundled consent UI is removed, and browser-to-server forwarding uses a new
+route handler.
+
+## Summary of breaking changes
+
+| Change | What to do |
+|---|---|
+| The package is renamed and published to npmjs.com | [Install `consentlayer`](#install-the-new-package) and update every import |
+| The engine, manager, default runtime and React components are replaced | [Create one instance](#replace-the-setup-with-one-instance) with `createAnalytics()` |
+| Storage keys, DOM events and globals use the `consentlayer` prefix | [Opt in to the legacy names](#keep-stored-consent) or visitors see the banner again |
+| Auto-tracking events are renamed from `acm.*` to `consentlayer.*` | [Update dashboards](#rename-auto-tracking-events) or set `names.prefix` |
+| Provider factories are renamed; GA4 and Meta no longer load before consent | [Rename the providers](#rename-the-providers) |
+| The `track*` e-commerce helpers are removed; events use GA4 names | [Replace the helpers](#replace-the-e-commerce-helpers) with `track()` and the param builders |
+| `track()` no longer requires analytics consent | [Check what each provider receives](#review-what-each-provider-receives) |
+| `consentlayer/ui` and its stylesheet are removed | [Build your own banner](#build-your-own-consent-banner) from the recipe |
+| "Reject non-essential" and "Save" store `preferences: false` | [Review consent behaviour](#consent-behaviour) |
+| `setConsent()` rejects non-boolean values | [Validate consent you read yourself](#consent-behaviour) |
+| `meta({ serverEndpoint })` and the `/server` helpers are removed | [Replace your server routes](#replace-your-server-routes) |
+| The validators and `renderMetaPixelNoscriptHtml` are removed | [Other removed exports](#other-removed-exports) |
+| The plugin contract is renamed and its lifecycle changes | [Update custom plugins](#update-custom-plugins) |
 
 ## Install the new package
 
-```bash
-pnpm remove @nicolopadovan/analytics-consent-manager
-pnpm add consentlayer
+Remove the old package and install ConsentLayer:
+
+<Tabs syncKey="pkg">
+  <TabItem label="pnpm">
+    ```bash
+    pnpm remove @nicolopadovan/analytics-consent-manager
+    pnpm add consentlayer
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```bash
+    npm uninstall @nicolopadovan/analytics-consent-manager
+    npm install consentlayer
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn remove @nicolopadovan/analytics-consent-manager
+    yarn add consentlayer
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash
+    bun remove @nicolopadovan/analytics-consent-manager
+    bun add consentlayer
+    ```
+  </TabItem>
+</Tabs>
+
+Replace `@nicolopadovan/analytics-consent-manager` with `consentlayer` in every
+import. ConsentLayer is published to the public npm registry, so you can
+remove the `@nicolopadovan:registry=https://npm.pkg.github.com` line and its
+token from `.npmrc` unless another package needs them.
+
+`react` and `react-dom` are now optional peer dependencies, needed only for
+`consentlayer/react`. The new PostHog and Sentry providers declare their SDKs
+as optional peer dependencies too; see
+[Installation](/start/installation/#optional-peer-dependencies).
+
+## Replace the setup with one instance
+
+`createAnalytics()` replaces `createConsentEngine()`, `createAnalyticsManager()`
+and the default runtime that the module-level functions used. It creates the
+consent engine, the local storage for consent and identity, and the manager,
+and returns one object with the whole API. `<AnalyticsProvider>` replaces
+`<ConsentProvider>`, `<ConsentControllerProvider>`, `<AnalyticsManager>` and
+`<AutoTracking>`.
+
+```ts title="lib/analytics.ts"
+import { createAnalytics } from 'consentlayer'
+import { ga4 } from 'consentlayer/providers/ga4'
+
+export const analytics = createAnalytics({
+  providers: [ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID! })],
+  autoTracking: true,
+  names: { legacy: true },
+})
 ```
 
-Replace `@nicolopadovan/analytics-consent-manager` with `consentlayer` in your
-imports, and delete the `@nicolopadovan:registry` line from `.npmrc`.
+```tsx title="app/providers.tsx"
+'use client'
 
-`react` and `react-dom` are now optional peer dependencies. Install
-`posthog-js`, `@sentry/browser` or `@sentry/nextjs` only if you use them (see
-[Installation](/start/installation/#provider-sdks)).
+import { AnalyticsProvider } from 'consentlayer/react'
+import { usePathname } from 'next/navigation'
+import { analytics } from '@/lib/analytics'
 
-## Create one instance
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <AnalyticsProvider analytics={analytics} routeKey={usePathname()}>
+      {children}
+    </AnalyticsProvider>
+  )
+}
+```
 
-The engine, the manager, the module-level defaults and four React components
-become one instance and one provider.
+Create the instance once, at module level, rather than inside a component.
+Code outside React, such as `app/global-error.tsx`, imports the same instance,
+and `createAnalytics()` logs a warning when a second instance on the page uses
+different names.
+
+<details>
+<summary>Full before and after for a Next.js app</summary>
 
 Before:
 
-```tsx
-const consentEngine = createConsentEngine({ storage, adapters, broadcast })
-const identityStorage = createLocalStorageIdentityStorage({ key })
-const manager = createAnalyticsManager({ consentEngine, identityStorage, defaultEventDestinations })
-manager.registerProvider(createGa4Adapter({ measurementId }))
-setDefaultConsentEngine(consentEngine)
-setDefaultIdentityStorage(identityStorage)
-setDefaultRuntimeAnalyticsManager(manager)
+```tsx title="lib/analytics.ts"
+import {
+  createAnalyticsManager,
+  createConsentEngine,
+  createLocalStorageConsentStorage,
+  setDefaultConsentEngine,
+  setDefaultRuntimeAnalyticsManager,
+} from '@nicolopadovan/analytics-consent-manager'
+import { createGa4Adapter } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
+import { createMetaAdapter } from '@nicolopadovan/analytics-consent-manager/providers/meta'
 
-<ConsentProvider engine={consentEngine}>
-  <ConsentControllerProvider>
-    <AnalyticsManager manager={manager} lazy={lazy} routeKey={routeKey} />
-    <AutoTracking manager={manager} routeKey={routeKey} />
-    {children}
-  </ConsentControllerProvider>
-</ConsentProvider>
+export const consentEngine = createConsentEngine({
+  storage: createLocalStorageConsentStorage({ key: 'acm_consent' }),
+})
+
+export const manager = createAnalyticsManager({
+  consentEngine,
+  providers: [
+    createGa4Adapter({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID! }),
+    createMetaAdapter({
+      pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID!,
+      serverEndpoint: '/api/meta',
+    }),
+  ],
+})
+
+setDefaultConsentEngine(consentEngine)
+setDefaultRuntimeAnalyticsManager(manager)
+```
+
+```tsx title="app/providers.tsx"
+'use client'
+
+import {
+  AnalyticsManager,
+  AutoTracking,
+  ConsentControllerProvider,
+  ConsentProvider,
+} from '@nicolopadovan/analytics-consent-manager/react'
+import { CookieBanner, CookieDialog } from '@nicolopadovan/analytics-consent-manager/ui'
+import '@nicolopadovan/analytics-consent-manager/ui/styles.css'
+import { usePathname } from 'next/navigation'
+import { consentEngine, manager } from '@/lib/analytics'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  return (
+    <ConsentProvider engine={consentEngine}>
+      <ConsentControllerProvider>
+        <AnalyticsManager manager={manager} routeKey={pathname} lazy={{ mode: 'idle' }} />
+        <AutoTracking manager={manager} routeKey={pathname} />
+        {children}
+        <CookieBanner />
+        <CookieDialog />
+      </ConsentControllerProvider>
+    </ConsentProvider>
+  )
+}
 ```
 
 After:
 
-```tsx
-// lib/analytics.ts
-export const analytics = createAnalytics({
-  providers: [ga4({ measurementId })],
-  consent: { adapters },          // e.g. createShopifyCustomerPrivacyAdapter()
-  autoTracking: true,             // or an AutoTrackingConfig
-})
+```ts title="lib/analytics.ts"
+import { createAnalytics } from 'consentlayer'
+import { ga4 } from 'consentlayer/providers/ga4'
+import { meta } from 'consentlayer/providers/meta'
 
-<AnalyticsProvider analytics={analytics} boot={lazy} routeKey={routeKey}>
-  {children}
-</AnalyticsProvider>
+export const analytics = createAnalytics({
+  providers: [
+    ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID! }),
+    meta({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID! }),
+  ],
+  server: { endpoint: '/api/analytics' },
+  autoTracking: true,
+  names: { legacy: true },
+})
 ```
 
-Create the instance at module level, not inside a component:
-`app/global-error.tsx` and code outside React import it. Storage keys and the
-broadcast channel default to the configured [names](/guides/names/), so most
-apps can drop their `storage` and `broadcast` options.
+```tsx title="app/providers.tsx"
+'use client'
 
-Without React, call `analytics.consent.bootstrap()` once at startup to load
-the stored consent, then `analytics.boot()`. `AnalyticsProvider` does both.
+import { AnalyticsProvider } from 'consentlayer/react'
+import { usePathname } from 'next/navigation'
+import { ConsentBanner } from '@/components/consent-banner'
+import { analytics } from '@/lib/analytics'
 
-| Removed | Use instead |
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <AnalyticsProvider analytics={analytics} routeKey={usePathname()} boot={{ mode: 'idle' }}>
+      {children}
+      <ConsentBanner />
+    </AnalyticsProvider>
+  )
+}
+```
+
+`ConsentBanner` is the [Consent UI recipe](/guides/consent-ui/), and
+`/api/analytics` is the route described in
+[Replace your server routes](#replace-your-server-routes).
+
+</details>
+
+### Removed APIs and their replacements
+
+| Removed | Replacement |
 |---|---|
-| `createAnalyticsManager`, `createConsentEngine` | `createAnalytics()` |
-| `registerProvider(adapter)` (module function) | `providers: [...]`, or `analytics.registerProvider()` |
-| `setDefault*`, `getDefault*`, `useDefaultIdentityStorage` | the instance |
-| `defaultEventDestinations`, `sendTo` | every provider by default; `only: [...]` per event, or `autoTracking: { only: [...] }` for automatic events |
-| `<ConsentProvider>`, `<ConsentControllerProvider>`, `<AnalyticsManager>`, `<AutoTracking>` | `<AnalyticsProvider>` |
-| `<AnalyticsManager lazy>` | `<AnalyticsProvider boot>` |
-| `useTracker()` | `useAnalytics()` |
-| `updateConsent(consent)` | `analytics.consent.update(partial)` or `useConsent().update` |
-| `trackEvent(name, params)`, `trackPage()` | `analytics.track(name, params)`, `analytics.page()` |
-| `enableAutoTracking()`, `newPageSession()` | the `autoTracking` option; `AnalyticsProvider` handles route changes |
-| `saveIdentity({ email, external_id })`, `getIdentity()` | `analytics.identify(userId, { email, phone, ...traits })`; `analytics.reset()` on logout |
-| `configureNames()` | `createAnalytics({ names })` |
-| `analytics.consent.destroy()` | `analytics.destroy()` |
-| `defaultRuntimePreset`, `legacyNames` | `getNames()` |
+| `createConsentEngine(options)` | `createAnalytics({ consent: { storage, adapters, initialConsent, broadcast } })` |
+| `createAnalyticsManager(options)` | `createAnalytics({ providers, identityStorage, enabled, debug, onError })` |
+| `setDefaultConsentEngine`, `getDefaultConsentEngine`, `setDefaultRuntimeAnalyticsManager`, `getDefaultRuntimeAnalyticsManager` | Import the instance |
+| `setDefaultIdentityStorage`, `getDefaultIdentityStorage`, `useDefaultIdentityStorage` | `createAnalytics({ identityStorage })`; the default is local storage |
+| `registerProvider(adapter)` | `providers: [...]`, or `analytics.registerProvider(plugin)` |
+| `updateConsent(consent)` | `analytics.consent.setConsent(consent)`, or `analytics.consent.update(partial)` to change some categories |
+| `trackEvent(name, params, options)` | `analytics.track(name, params, options)` |
+| `trackPage(payload)` | `analytics.page(payload)` |
+| `enableAutoTracking(config)` | `createAnalytics({ autoTracking: config })` |
+| `newPageSession()` | `analytics.newPageSession()`; `<AnalyticsProvider>` calls it when `routeKey` changes |
+| `saveIdentity({ email, phone, external_id })` | `analytics.identify(external_id, { email, phone })` |
+| `getIdentity()` | No replacement; the identity is passed to plugins as `ctx.identity` |
+| `defaultEventDestinations` | Events go to every provider; limit one event with `{ only: [...] }` and automatic events with `autoTracking: { only: [...] }` |
+| `defaultRuntimePreset` | `getNames()`, which returns the configured names |
+| `<ConsentProvider>`, `<ConsentControllerProvider>`, `<AnalyticsManager>`, `<AutoTracking>` | `<AnalyticsProvider analytics={analytics}>` |
+| `<AnalyticsManager lazy={...}>` | `<AnalyticsProvider boot={...}>`, with the same `mode` and `timeoutMs` |
+| `useTracker()` | `useAnalytics()`, which returns `track`, `page` and `newPageSession` |
 
-`useConsent()` and `useConsentController()` still exist.
-`useConsentController()` needs `<AnalyticsProvider>` above it; `useAnalytics()`
-and `useConsent()` fall back to the instance `createAnalytics()` created. The
-root entry no longer exports the validators or the engine and manager types.
+The `routeKey` and `page` props move to `<AnalyticsProvider>` unchanged.
+`<AnalyticsProvider>` reads stored consent, boots the instance and sends a page
+view for each `routeKey`. Outside React, make the same calls once at startup:
 
-## Keep the stored consent
+```ts
+await analytics.consent.bootstrap()
+await analytics.boot()
+```
 
-The old package stored everything under `acm_*` names. They are off by
-default, so pass `legacy: true` to carry over the consent and identity your
-visitors already gave:
+`useConsent()` and `useConsentController()` keep their names.
+`useConsent()` now also returns `update(partial)`. Both `useAnalytics()` and
+`useConsent()` work outside `<AnalyticsProvider>`, where they use the instance
+`createAnalytics()` created. `useConsentController()` still needs a provider
+above it, and now throws
+`useConsentController must be used within AnalyticsProvider` without one.
+
+Calls made before boot are no longer lost. `track`, `page`, `identify` and
+`group` are held, up to 100 calls, and delivered in order once `boot()` has
+run.
+
+## Keep stored consent
+
+The old package stored consent and identity under `acm_consent` and
+`acm_user_identity`, and announced changes through the `acm:consent` DOM event
+and the `ACM_CONSENT` global. ConsentLayer uses the `consentlayer` prefix and
+does not read the old names by default, so every returning visitor would see
+the banner again. Choose one of two options.
+
+**Migrate to the new names.** Pass `legacy: true` to read the old keys:
 
 ```ts
 createAnalytics({ providers, names: { legacy: true } })
 ```
 
-Stored `acm_*` values then move to `consentlayer_*` the first time they are
-read, and the old globals and DOM events keep working. See
-[Names](/guides/names/#migrating-from-acm_).
+On first read, a value stored under `acm_consent` or `acm_user_identity` is
+moved to `consentlayer_consent` or `consentlayer_user_identity` and the old key
+is removed. While `legacy` is on, ConsentLayer also dispatches `acm:consent`,
+sets `ACM_CONSENT` and `ACM_openConsent`, and reads and writes the `__acm*`
+window flags, so scripts that listen for the old names keep working.
 
-Automatic events are renamed either way: they are now `consentlayer.*`, and
-GA4 receives them as `consentlayer_page_session_start`,
-`consentlayer_scroll_depth`, `consentlayer_time_on_page` and
-`consentlayer_ui_click`, because GA4 rejects dots in event names. Update
-dashboards that filter on `acm.*`.
+**Keep the old names.** If the key is published, for example in your cookie
+policy, set the prefix instead. Every name, including the auto-tracking
+events, is then derived from `acm` exactly as before:
+
+```ts
+createAnalytics({ providers, names: { prefix: 'acm' } })
+```
+
+| Name | `acm` (before) | `consentlayer` (default) |
+|---|---|---|
+| Consent storage key | `acm_consent` | `consentlayer_consent` |
+| Identity storage key | `acm_user_identity` | `consentlayer_user_identity` |
+| DOM event | `acm:consent` | `consentlayer:consent` |
+| Consent global | `ACM_CONSENT` | `CONSENTLAYER_CONSENT` |
+| Open-settings global | `ACM_openConsent` | `CONSENTLAYER_openConsent` |
+
+If you passed your own storage key to `createLocalStorageConsentStorage()`,
+pass it as `names: { consentStorageKey: 'your_key' }`, or pass the storage
+itself as `createAnalytics({ consent: { storage } })`. See
+[Names](/guides/names/) for every option.
+
+## Rename auto-tracking events
+
+Automatic events are renamed whether or not `legacy` is on:
+
+| Before | After | Name GA4 receives |
+|---|---|---|
+| `acm.page_session_start` | `consentlayer.page_session_start` | `consentlayer_page_session_start` |
+| `acm.scroll_depth` | `consentlayer.scroll_depth` | `consentlayer_scroll_depth` |
+| `acm.time_on_page` | `consentlayer.time_on_page` | `consentlayer_time_on_page` |
+| `acm.ui_click` | `consentlayer.ui_click` | `consentlayer_ui_click` |
+
+The GA4 provider now replaces every character other than a letter, digit or
+underscore with `_`, because GA4 rejects such names. Update reports and
+dashboards that filter on `acm.*`, or keep the old names with
+`names: { prefix: 'acm' }`.
+
+Auto-tracking is configured with the `autoTracking` option instead of the
+`<AutoTracking config>` prop. It accepts the same `AutoTrackingConfig`, or
+`true` for the defaults, and still starts only once analytics consent is
+granted.
 
 ## Rename the providers
 
 | Before | After |
 |---|---|
-| `createGa4Adapter(options)` | `ga4(options)` |
-| `createMetaAdapter(options)` | `meta(options)` |
-| `createHotjarAdapter(options)` | `hotjar(options)` |
+| `createGa4Adapter({ measurementId })` | `ga4({ measurementId })` |
+| `createMetaAdapter({ pixelId, locale, serverEndpoint, fetchImpl })` | `meta({ pixelId, locale })`; see [server routes](#replace-your-server-routes) |
+| `createHotjarAdapter({ siteId, version })` | `hotjar({ siteId, version })` |
 | `createTikTokConsentAdapter()` | `tiktok()` |
-| `createVercelAdapter(options)` | `vercel(options)` |
-| `createShopifyAnalyticsAdapter(options)` | removed: it queued events that nothing read, so Shopify never received them |
+| `createVercelAdapter({ trackEvent })` | `vercel({ trackEvent })` |
+| `createShopifyAnalyticsAdapter(options)` | Removed. Its events went to a queue that no Shopify script reads. |
+| `createShopifyCustomerPrivacyAdapter(options)` | Unchanged; pass it as `createAnalytics({ consent: { adapters: [...] } })` |
 
-Each is imported from `consentlayer/providers/<name>`. The options are
-unchanged, with these differences in behaviour:
+Each factory is still imported from `consentlayer/providers/<name>`. Three
+providers behave differently:
 
-- `ga4()` and `meta()` no longer load before consent. To keep Consent Mode
-  pings while consent is denied, pass `loadBeforeConsent: true`.
-- `vercel()` now runs without consent, because Vercel Analytics sets no
-  cookies. To keep the old gate, pass
-  `{ ...vercel(options), requiredConsent: 'analytics' }`.
-- `MetaPixelNoscript` is imported from `consentlayer/react`.
+- **GA4 and Meta load after consent.** The old adapters injected `gtag.js` and
+  `fbevents.js` at boot, before the visitor chose. They now load nothing until
+  analytics (GA4) or marketing (Meta) consent is granted. Pass
+  `loadBeforeConsent: true` to download the script at boot again. GA4 still
+  sends nothing before analytics consent: its `config` call runs only after
+  consent, so no Consent Mode pings are sent while consent is denied. The Meta
+  Pixel loads with consent revoked.
+- **Vercel runs without consent.** Vercel Analytics sets no cookies, so
+  `vercel()` sets `requiredConsent: 'none'`. To keep the old analytics gate,
+  override it: `{ ...vercel({ trackEvent }), requiredConsent: 'analytics' }`.
+- **Hotjar is deprecated.** Hotjar accounts are moving to Contentsquare; use
+  `contentsquare({ tagId })` from `consentlayer/providers/contentsquare` once
+  yours has moved. On analytics withdrawal, `hotjar()` now deletes Hotjar's
+  cookies and storage, and `reloadOnRevoke: true` reloads the page to stop
+  recording.
+
+`MetaPixelNoscript` moved from `consentlayer/providers/meta` to
+`consentlayer/react`, so the Meta provider no longer imports React. Its props
+are unchanged.
 
 PostHog and Sentry are new built-in providers. If you wrote your own PostHog
-plugin, you can replace it with `posthog({ apiKey })`. See
-[Providers](/guides/providers/#posthog-and-sentry).
+plugin, compare it with `posthog({ apiKey })` in
+[Providers](/guides/providers/).
 
-## Update your events
+## Replace the e-commerce helpers
 
-Event names now follow GA4, and each provider translates them, so stop using
-Meta's names. See [Events and identity](/guides/events/).
+The `track*` helpers sent Meta's event names to every provider. They are
+removed. Call `track()` with a GA4 event name instead; each provider
+translates it, so Meta still receives `ViewContent`, `AddToCart` and the other
+standard events. The param builders come from `consentlayer/ecommerce`.
 
 | Before | After |
 |---|---|
 | `trackViewContent(product)` | `track('view_item', productParams(product))` |
 | `trackAddToCart(item)` | `track('add_to_cart', productParams(item))` |
 | `trackAddToWishlist(item)` | `track('add_to_wishlist', productParams(item))` |
-| `trackInitiateCheckout(cart)` | `track('begin_checkout', cartParams(cart))` |
+| `trackInitiateCheckout(cart)` | `track('begin_checkout', cartParams(cart))`; see the cart mapping below |
 | `trackInitiateCheckout(product)` (buy now) | `track('begin_checkout', cartParams({ lines: [product] }))` |
 | `trackAddPaymentInfo({ value, currency })` | `track('add_payment_info', { value, currency })` |
 | `trackPurchase(order)` | `track('purchase', orderParams(order))` |
-| `trackLead(params)` | `track('lead', params)` |
-| `trackSearch(query)` | `track('search', { search_term: query })` |
+| `trackLead(params)` | `track('lead', params)`; GA4 receives `generate_lead` |
+| `trackSearch(query, results)` | `track('search', { search_term: query })` |
 | `trackContact(method)` | `track('contact', { method })` |
-| `trackSubscribe(email)` | `identify(undefined, { email })`, then `track('subscription_started')` or a custom event such as `track('newsletter_signup')` |
+| `trackSubscribe(email)` | `identify(undefined, { email })`, then `track('subscription_started')` |
 | `trackCustomizeProduct(product)` | `track('customize_product', productParams(product))` |
-| `trackEvent('ViewContent', …)` and other Meta names | the standard name; Meta still receives `ViewContent` |
+| `trackEvent('ViewContent', params)` or another Meta name | The GA4 name, such as `track('view_item', params)` |
 
-`productParams`, `cartParams` and `orderParams` come from
-`consentlayer/ecommerce`. `cartParams` reads `lines` as products
-(`{ id, variantId, title, price, quantity }`), so map the `merchandise` of
-Shopify cart lines to that shape.
+`productParams()` and `orderParams()` accept the same product and order shapes
+as before: `id`, `variantId`, `title`, `price: { amount, currencyCode }`,
+`quantity` and `category`, and for orders `orderId`, `value`, `currency`,
+`tax`, `shipping`, `coupon` and `lines`. `handle` and `affiliation` are no
+longer read. `cartParams()` reads `lines` as products, so map a Shopify cart's
+`merchandise` first.
 
-What reaches each provider changes too:
+<details>
+<summary>Mapping a Shopify cart to `cartParams()`</summary>
 
-- **GA4** receives ecommerce events under GA4's names with `items[]`, instead
-  of `ViewContent` with `product_id`. Rebuild reports that used the old names.
-- **Meta** receives the same standard events as before, with `content_ids` and
-  `contents` (the variant ID when there is one, otherwise the product ID)
-  instead of `product_id` and `variant_id`. A Meta standard name passed as it
-  is, such as `track('Schedule')`, is still sent as a standard event.
-- `track` no longer requires analytics consent on top of each provider's own
-  category, so Meta now receives events with marketing consent alone. Pass
-  `requireAnalyticsConsent: true` to keep the old behaviour.
-- Every event gets an event ID, passed to every provider.
+```ts
+import { cartParams } from 'consentlayer/ecommerce'
 
-## Build your own banner
+analytics.track(
+  'begin_checkout',
+  cartParams({
+    subtotal: cart.subtotal,
+    lines: cart.lines.map((line) => ({
+      id: line.merchandise.product.id,
+      variantId: line.merchandise.id,
+      title: line.merchandise.product.title,
+      price: line.merchandise.price,
+      quantity: line.quantity,
+    })),
+  }),
+)
+```
 
-`consentlayer/ui` and its stylesheet are gone, along with the `locale`,
-`messages` and `privacyPolicyUrl` props, `createAnalytics({ locale })` and
-`names.classPrefix`. Copy the [Consent UI recipe](/guides/consent-ui/) into
-your app and restyle it. If you copied the `.acm-*` markup or themed the
-`--acm-*` variables, move those styles onto your component.
+When `subtotal` is omitted, `value` is the sum of price times quantity over the
+lines.
 
-Two consent behaviours changed:
+</details>
 
-- "Reject non-essential" stores `preferences: false` instead of `true`. If your
-  app reads `consent.preferences`, for example for a language or theme cookie,
-  visitors who reject now have it off. The dialog has a Preferences toggle to
-  grant it.
-- `consent.setConsent()` rejects with a `TypeError` unless every category is a
-  boolean. Convert values read from your own cookie or form (`'true'`, `1`)
-  first; previously, `'false'` granted consent.
+## Review what each provider receives
 
-## Report errors
+The event payloads change, so reports built on the old names or params need
+updating:
 
-Window errors and unhandled promise rejections now go to every provider that
-handles errors, such as Sentry and PostHog. Turn that off with
-`createAnalytics({ errors: { globalHandlers: false } })`.
+- **GA4** receives GA4's own event names with an `items[]` array, for example
+  `view_item` instead of `ViewContent` with `product_id` and `variant_id`.
+- **Meta** receives the same standard events as before, with `content_ids`,
+  `contents`, `content_type` and `num_items` derived from `items[]`, instead of
+  `product_id` and `variant_id`. Content IDs are the variant ID when there is
+  one, otherwise the product ID. `search_term` is sent as `search_string`. A
+  Meta standard name passed as it is, such as `track('Schedule')`, is still
+  sent as a standard event.
+- **Every provider** receives an event ID (`event.id`), generated unless you
+  pass `{ eventId }`. Meta uses it as `eventID` to deduplicate pixel and
+  Conversions API events, including page views.
 
-`withSentry` from `consentlayer/sentry/next` is now `withSentryConfig`. For
-`ErrorBoundary` and `app/global-error.tsx`, see the
-[Next.js guide](/start/nextjs/#5-report-errors).
+`track()` used to drop every event unless analytics consent was granted, on
+top of each provider's own requirement. It no longer does: each provider's
+`requiredConsent` alone decides, so Meta now receives events with marketing
+consent and no analytics consent. To restore the old rule for one event, pass
+`{ requireAnalyticsConsent: true }`. `page()`, `identify()` and `group()` also
+check each provider's consent now.
+
+Identity changes too. `identify()` stores email and phone only once marketing
+consent is granted, and keeps them in memory until then. Without marketing
+consent, only the user ID is stored and shared with providers.
+
+## Build your own consent banner
+
+`consentlayer/ui` is removed, with `CookieBanner`, `CookieDialog`,
+`ManageConsentTrigger` and `styles.css`. Copy the
+[Consent UI recipe](/guides/consent-ui/) into your app; it is built on the same
+`useConsentController()` hook the old components used. If you copied the
+`.acm-*` markup or themed the `--acm-*` custom properties, move those styles
+onto the new component.
+
+To open the settings from outside React, call `window.CONSENTLAYER_openConsent()`,
+or keep `window.ACM_openConsent()` with `names: { legacy: true }` or
+`names: { prefix: 'acm' }`.
+
+### Consent behaviour
+
+Three behaviours of `useConsentController()` and the consent API changed:
+
+- **"Reject non-essential" denies preferences.** `rejectNonEssential()` stores
+  `preferences: false`; it used to store `true`. If your app reads
+  `consent.preferences`, for example to set a language or theme cookie,
+  visitors who reject now have it off.
+- **"Save" stores the preferences toggle.** `prefs` now includes
+  `preferences`, and `savePreferences()` stores its value instead of always
+  storing `true`. It starts as `false` until the visitor turns it on.
+- **`setConsent()` validates its input.** It rejects with a `TypeError` unless
+  `preferences`, `analytics` and `marketing` are booleans. Previously a string
+  such as `'false'` counted as granted. Convert values read from your own
+  cookie or form before passing them.
+
+```text
+TypeError: [consentlayer] consent must have boolean preferences, analytics and marketing, received {"preferences":true,"analytics":"false","marketing":false}.
+```
 
 ## Replace your server routes
 
-One route replaces the hand-written Meta and GA4 routes:
+The Meta adapter used to post each pixel event to `serverEndpoint` in its own
+format, which your route converted with `createMetaEventPayload()` and sent
+with `sendMetaCapiEvent()`. Both sides are replaced:
 
-```ts
-// app/api/analytics/route.ts
+```ts title="lib/analytics.ts"
+createAnalytics({
+  providers: [meta({ pixelId })],
+  server: { endpoint: '/api/analytics' },
+})
+```
+
+```ts title="app/api/analytics/route.ts"
 import { createAnalyticsHandler } from 'consentlayer/server'
 import { metaCapi } from 'consentlayer/server/meta'
 
 export const POST = createAnalyticsHandler({
-  destinations: [metaCapi({ pixelId, accessToken: process.env.META_TOKEN! })],
+  destinations: [
+    metaCapi({
+      pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID!,
+      accessToken: process.env.META_TOKEN!,
+    }),
+  ],
 })
 ```
 
 | Before | After |
 |---|---|
-| `meta({ pixelId, serverEndpoint, fetchImpl })` | `meta({ pixelId })` and `createAnalytics({ server: { endpoint: '/api/analytics' } })` |
-| A route calling `createMetaEventPayload` and `sendMetaCapiEvent` | `createAnalyticsHandler({ destinations: [metaCapi(…)] })` |
-| A route forwarding browser events to GA4 with `sendGa4MeasurementEvent` | delete it: gtag already sends them. Use `sendServerEvent` with `ga4Server(…)` for webhook events only |
+| `createMetaAdapter({ serverEndpoint, fetchImpl })` | `createAnalytics({ server: { endpoint } })` |
+| A route that calls `createMetaEventPayload()` and `sendMetaCapiEvent()` | `createAnalyticsHandler({ destinations: [metaCapi(...)] })` |
+| A route that forwards browser events with `sendGa4MeasurementEvent()` | Delete it; `gtag.js` already sends them. Use `sendServerEvent()` with `ga4Server(...)` for server-only events such as webhooks |
+| `apiVersion` defaulting to `v18.0` | `metaCapi({ apiVersion })`, defaulting to `v26.0` |
 
 The browser now posts `{ id, name, params, consent, identity, url, only,
-providers }`, which an old route won't understand. Forwarding now covers page
-views and every destination, not only Meta's `track` calls. The low-level
-helpers are still exported. See
+providers }`, which a route written for the old body rejects or misreads.
+Forwarding now covers page views, which reach the Conversions API as
+`PageView`, and every `track()` call, not only the Meta adapter's. The browser
+forwards only while analytics or marketing consent is granted, and
+`metaCapi()` sends only events whose `consent.marketing` is `true`.
+
+`consentlayer/server` no longer exports the low-level helpers:
+`createMetaEventPayload`, `sendMetaCapiEvent`, `createMetaGraphUrl`,
+`extractMetaCookies`, `sanitizeMetaCustomData`, `sha256`, `assertSameOrigin`,
+`parseJsonWithLimit`, `parseCookieHeader`, `ANALYTICS_MAX_BODY`,
+`createGa4MeasurementPayload`, `createGa4CollectUrl` and
+`sendGa4MeasurementEvent`. The handler performs the same-origin check, the
+body limit, the cookie parsing and the hashing itself. Hashing uses Web
+Crypto, so the server entry points run on the Edge runtime. See
 [Server-side tracking](/guides/server-side-tracking/).
 
-## Update plugins you wrote
+## Other removed exports
 
-Wrap the object in `definePlugin()` from the package root, and rename the
-types and hooks:
+| Removed | Replacement |
+|---|---|
+| `isValidGa4MeasurementId`, `assertValidGa4MeasurementId` | None. `ga4()` throws for an invalid ID |
+| `isValidMetaPixelId`, `assertValidMetaPixelId` | None. `meta()` throws for an invalid ID |
+| `isHttpsOrRelativeUrl`, `assertHttpsOrRelativeUrl` | None. `createAnalytics()` throws for an invalid `server.endpoint` |
+| `isValidEmail`, `isValidPhoneE164` | None. `identify()` drops invalid emails and phone numbers |
+| `renderMetaPixelNoscriptHtml(pixelId)` | `<MetaPixelNoscript pixelId={pixelId} enabled />` from `consentlayer/react` |
+| `ConsentEngine`, `ConsentEngineOptions`, `AnalyticsManager`, `AnalyticsManagerOptions` types | `Analytics`, `ConsentApi` and `AnalyticsOptions` |
+| `ProviderAdapter`, `AnalyticsProviderContext` types | `AnalyticsPlugin`, `PluginContext` |
+
+The storage factories (`createLocalStorageConsentStorage`,
+`createLocalStorageIdentityStorage` and the memory variants) and
+`createEnvConfig` are still exported from the package root.
+
+## Update custom plugins
+
+A provider you wrote yourself is now a plugin. Wrap it in `definePlugin()` from
+`consentlayer` for type checking, and rename its hooks:
 
 | Before | After |
 |---|---|
-| `ProviderAdapter`, `AnalyticsProviderContext` | `AnalyticsPlugin`, `PluginContext` |
-| `init(ctx)` | `load(ctx)`: inject scripts here; it runs once |
+| `ProviderAdapter` | `AnalyticsPlugin` |
+| `AnalyticsProviderContext` | `PluginContext` |
+| `init(ctx)` | `load(ctx)`. Inject scripts here. It runs once, the first time consent allows it |
 | `onConsentChange(ctx)` | `consent(ctx)` |
-| `trackPage(payload, ctx)` | `page(page, ctx)`; `page.id` is the page view's event ID |
+| `trackPage(payload, ctx)` | `page(page, ctx)`. `page.id` is the page view's event ID |
 | `trackEvent(event, ctx)` | `track(event, ctx)` |
-| `enabled(ctx)`, `consentLatch()` | `loadBeforeConsent: false` (the default for plugins) |
-| `ctx.isBooted` | removed: hooks run only after boot |
-| `event.options.eventId ?? createEventId()`, `metaEventIdFrom()` | `event.id` |
-| `event.options.sendTo` | `event.options.only`; `providers[yourId]` holds extras meant for your plugin |
-| `ctx.identity.external_id` | `ctx.identity.userId`, next to `email` and `phone`; identities stored under `external_id` are read as `userId` |
+| `enabled(ctx)` | Removed. Leave the plugin out of `providers`, or express the condition as a `requiredConsent` function |
+| `ctx.isBooted` | Removed. Hooks run only after boot |
+| `event.options.eventId ?? createEventId()`, `metaEventIdFrom(event)` | `event.id` |
+| `event.options.sendTo` | `event.options.only`. `event.options.providers[yourId]` holds params meant only for your plugin |
+| `ctx.identity.external_id` | `ctx.identity.userId`. Identities stored under `external_id` are read as `userId` |
 
-Other changes:
+The lifecycle changes in three ways:
 
-- New optional hooks: `identify(identity, traits, ctx)`, `reset(ctx)` and
-  `group(id, traits, ctx)`.
-- `setup` must not touch the network or cookies, because it runs at boot,
-  before consent.
-- Without `requiredConsent`, a plugin now runs with no consent at all
-  (`'none'`).
-- Error scopes are renamed to match: `provider-load`, `provider-consent`,
-  `provider-page` and `provider-track`.
+- `setup` runs at boot, before consent, for every plugin. It must not load
+  scripts, send requests or set cookies. Move that work to `load`.
+- `load` runs once. The old `init` ran each time the provider became active
+  again after a withdrawal.
+- A plugin without `requiredConsent` was already active before consent, but
+  its `trackEvent` waited for analytics consent. Its `track` now runs without
+  consent, so set `requiredConsent` explicitly.
 
-Check a plugin in a DOM test:
+New optional hooks are `identify(identity, traits, ctx)`, `reset(ctx)`,
+`group(groupId, traits, ctx)` and `error(error, context, ctx)`. A plugin can
+also set `loadBeforeConsent` and `defer`.
+
+Errors from plugin hooks reach `onError` under new scopes:
+
+| Before | After |
+|---|---|
+| `provider-init` | `provider-load` |
+| `provider-consent-change` | `provider-consent` |
+| `provider-track-page` | `provider-page` |
+| `provider-track-event` | `provider-track` |
+| `identity-validation` | Removed |
+
+`provider-setup`, `provider-teardown` and `provider-script-load` keep their
+names. The full list is in [Troubleshooting](/guides/troubleshooting/#error-scopes).
+
+`checkPlugin()` from `consentlayer/testing` runs a plugin through the manager
+in a DOM test environment, such as jsdom or happy-dom, and returns the contract
+violations it finds:
 
 ```ts
 import { checkPlugin } from 'consentlayer/testing'

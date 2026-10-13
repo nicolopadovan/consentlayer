@@ -1,80 +1,133 @@
 ---
 title: Consent UI
-description: Build your consent banner on useConsentController, starting from a copy-paste recipe.
+description: Build a consent banner and settings dialog on useConsentController, starting from a copy-paste recipe, and add custom consent categories.
 ---
 
 import { Code } from '@astrojs/starlight/components'
 import banner from '../../../components/ConsentBanner.tsx?raw'
 import css from '../../../components/consent-banner.css?raw'
 
-consentlayer doesn't ship a banner, so its design, wording and languages stay
-yours. `useConsentController()` from `consentlayer/react` provides the state
-and actions; the recipe below is a working banner to copy into your app and
-restyle. It is the same banner the [Playground](/playground/) runs.
+ConsentLayer does not ship a consent banner, so its design, wording and
+languages remain yours. This page documents `useConsentController()`, the hook
+that provides a banner's state and actions, gives a complete banner and
+settings dialog to copy into your app, and explains how to add consent
+categories of your own. The recipe is the banner the
+[Playground](/playground/) runs.
 
 ## `useConsentController()`
 
-Call it inside `<AnalyticsProvider>`, which holds the banner's state.
+`useConsentController()` is exported from `consentlayer/react`. Its state is
+held by `<AnalyticsProvider>`, so it must be called in a descendant of the
+provider; elsewhere it throws
+`useConsentController must be used within AnalyticsProvider`. Unlike
+`useAnalytics()` and `useConsent()`, it has no fallback to the most recent
+instance.
 
-| Field | What it is |
-|---|---|
-| `ready` | `true` once stored consent has been read. Render nothing before it, so returning visitors don't see the banner flash |
-| `bannerVisible` | `true` until the visitor chooses (with `<AnalyticsProvider autoShowBanner>`, the default) |
-| `dialogVisible` | the settings dialog is open |
-| `prefs`, `setPrefs` | the dialog's draft choices, one per category, saved only by `savePreferences` |
-| `acceptAll()` | grants every category and closes both |
-| `rejectNonEssential()` | denies every category and closes both |
-| `savePreferences()` | saves `prefs` and closes both |
-| `openDialog()`, `closeDialog()`, `showBanner()`, `hideBanner()` | visibility |
-| `error` | why reading stored consent failed, if it did |
+| Field | Type | Behaviour |
+|---|---|---|
+| `ready` | `boolean` | `false` until `analytics.consent.bootstrap()` has settled. Render nothing while it is `false`, so that returning visitors don't see the banner flash. |
+| `error` | `string \| null` | The rejection reason, converted to a string, if `bootstrap()` rejected. The banner is then shown as if no consent were stored. |
+| `bannerVisible` | `boolean` | After bootstrap, `true` when no consent is stored and the provider's `autoShowBanner` prop is `true` (the default). |
+| `dialogVisible` | `boolean` | Whether the settings dialog is open. Initially `false`. |
+| `prefs` | `Record<ConsentCategory, boolean>` | The dialog's draft, one entry per category in `analytics.consent.categories`. Initialised from the stored consent, all `false` when there is none. |
+| `setPrefs(next)` | `(next) => void` | Replaces the draft without saving it. |
+| `acceptAll()` | `() => Promise<void>` | Grants every category, then hides the banner and the dialog. |
+| `rejectNonEssential()` | `() => Promise<void>` | Denies every category, then hides both. |
+| `savePreferences()` | `() => Promise<void>` | Saves `prefs`, then hides both. |
+| `openDialog()`, `closeDialog()` | `() => void` | Show or hide the dialog. |
+| `showBanner()`, `hideBanner()` | `() => void` | Show or hide the banner. |
+
+The three saving actions call `analytics.consent.setConsent()` and hide the
+banner and dialog only once it resolves, which is after the consent adapters
+and the `server.consentEndpoint` request have finished.
+
+<details>
+<summary>Edge cases</summary>
+
+- `prefs` is overwritten whenever the consent state changes, including
+  changes made in another tab, by a consent adapter or by
+  `analytics.consent.update()`. A draft the visitor has not saved is lost when
+  that happens.
+- The saving actions write only the toggleable categories. Because
+  `setConsent()` replaces the whole state, a `sale_of_data` value set
+  elsewhere is not kept.
+- With `autoShowBanner={false}`, `bannerVisible` stays `false` until you call
+  `showBanner()`, even for visitors who have not chosen.
+
+</details>
 
 ### Reopening the settings
 
 Visitors must be able to change their choice later. Inside React, call
 `openDialog()`, as the recipe's "Cookie settings" button does below. Outside
-React, for example in a footer rendered by your CMS, call
-`window.CONSENTLAYER_openConsent()`. The global's name follows
-[`names.prefix`](/guides/names/).
+React, for example in a footer rendered by a CMS, call the open-settings
+global, which `<AnalyticsProvider>` defines when it mounts:
+
+```html
+<button type="button" onclick="window.CONSENTLAYER_openConsent?.()">Cookie settings</button>
+```
+
+The global's name follows [`names.prefix`](/guides/names/). With
+`names.legacy`, `ACM_openConsent` is defined as well. The
+`openConsentGlobalKey` prop of `<AnalyticsProvider>` replaces both with the
+name you pass.
 
 ## Recipe
 
-Copy both files, then change the wording and the styles. The dialog shows a
-toggle for every category, so `categories` needs a label for each one.
-Necessary cookies are always on, so the dialog shows them checked and
-disabled. `functional` is the Playground's [custom category](#custom-categories);
-delete it unless you declare it.
+Copy both files, then adapt the wording and the styles. The `categories`
+object needs a label and description for every category in
+`ConsentCategory`, and TypeScript rejects it if one is missing or undeclared.
+`functional` is the Playground's [custom category](#custom-categories); delete
+its entry unless you declare it. The "Necessary" row is not a category, since
+necessary cookies need no consent, so the dialog renders it checked and
+disabled.
 
 <Code code={banner} lang="tsx" title="components/consent-banner.tsx" />
 
 <Code code={css} lang="css" title="components/consent-banner.css" />
 
-Render it once inside the provider, and add a way back to the settings:
+Render the banner once inside the provider, and give visitors a way back to
+the settings:
 
-```tsx
+```tsx title="components/analytics-shell.tsx"
+'use client'
+
 import { AnalyticsProvider, useConsentController } from 'consentlayer/react'
+import type { ReactNode } from 'react'
+import { analytics } from '../lib/analytics'
 import { ConsentBanner } from './consent-banner'
 
 function CookieSettingsButton() {
   const { openDialog } = useConsentController()
-  return <button onClick={openDialog}>Cookie settings</button>
+  return (
+    <button type="button" onClick={openDialog}>
+      Cookie settings
+    </button>
+  )
 }
 
-<AnalyticsProvider analytics={analytics}>
-  {children}
-  <ConsentBanner privacyPolicyUrl="/privacy" />
-  <CookieSettingsButton />
-</AnalyticsProvider>
+export function AnalyticsShell({ children }: { children: ReactNode }) {
+  return (
+    <AnalyticsProvider analytics={analytics}>
+      {children}
+      <ConsentBanner privacyPolicyUrl="/privacy" />
+      <CookieSettingsButton />
+    </AnalyticsProvider>
+  )
+}
 ```
 
-The text is plain strings in your component, so translate it with the i18n
-your app already uses.
+In a Next.js app, also pass `routeKey` so page views follow navigation, as
+shown in [Next.js](/start/nextjs/). The banner's text is plain strings in your
+component, so translate it with the i18n library your app already uses.
 
 ## Custom categories
 
 `preferences`, `analytics` and `marketing` are built in. To add your own,
-declare it for TypeScript and pass it to `createAnalytics`:
+declare it in the `ConsentCategories` interface and pass it to
+`createAnalytics()`:
 
-```ts
+```ts title="lib/analytics.ts"
 import { createAnalytics, definePlugin, loadScript } from 'consentlayer'
 
 declare module 'consentlayer' {
@@ -95,11 +148,18 @@ export const analytics = createAnalytics({
 })
 ```
 
-A custom category works like a built-in one. It is stored, broadcast and sent
-to your server; it is denied until granted; "Accept all" grants it and
-"Reject non-essential" denies it. Any plugin can require it with
-`requiredConsent`, and `analytics.consent.categories` lists every category.
+A custom category behaves like a built-in one. It is denied until granted,
+stored, broadcast and posted to the `server.consentEndpoint`. "Accept all"
+grants it and "Reject non-essential" denies it. `analytics.consent.categories`
+lists it after the built-in categories, in the order of the `categories` option, and the
+recipe's dialog shows a toggle for it in that order. Any plugin can require it
+with `requiredConsent`.
 
 Both steps are needed. Without the declaration, `categories: ['functional']`
 and `requiredConsent: 'functional'` don't compile. Without the `categories`
-option, the choice is never stored.
+option, the category is dropped whenever consent is normalised, so it is never
+stored and a plugin that requires it never loads.
+
+If you record consent on the server, pass the same list to
+`createConsentHandler({ categories })`. The handler otherwise drops the custom
+categories from the record. See [Consent records](/guides/consent-records/).

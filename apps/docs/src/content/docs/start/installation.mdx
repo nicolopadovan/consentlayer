@@ -1,0 +1,132 @@
+---
+title: Installation
+description: Install ConsentLayer, its optional provider SDKs, and configure TypeScript and your Content Security Policy.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components'
+
+Install ConsentLayer and the SDKs of the providers you use, then configure
+TypeScript and your Content Security Policy.
+
+## Install the package
+
+<Tabs syncKey="pkg">
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add consentlayer
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```bash
+    npm install consentlayer
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add consentlayer
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash
+    bun add consentlayer
+    ```
+  </TabItem>
+</Tabs>
+
+ConsentLayer has no runtime dependencies.
+
+## System requirements
+
+| Environment | Requirement |
+|---|---|
+| Node.js | 20 or later. The server entry points use the global `fetch` and Web Crypto (`crypto.subtle`, `crypto.randomUUID`) APIs. |
+| Edge runtimes | Any runtime with `fetch` and Web Crypto, such as the Next.js Edge runtime. |
+| Browsers | The package is compiled to ES2022. Your bundler transpiles it if you target older browsers. |
+| React | 18.3 or 19, only for `consentlayer/react`. |
+| TypeScript | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`. |
+
+## Optional peer dependencies
+
+Providers built on a vendor's npm SDK declare it as an optional peer
+dependency. Install it only if you use that provider. Every other provider
+loads the vendor's script from the vendor's CDN at runtime, after consent is
+granted. The Vercel provider takes `track` from `@vercel/analytics`, which you
+install and import yourself.
+
+| Import | Peer dependency |
+|---|---|
+| `consentlayer/react` | `react`, `react-dom` |
+| `consentlayer/providers/posthog` | `posthog-js` |
+| `consentlayer/providers/sentry` | `@sentry/browser` |
+| `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs` |
+
+## Module format
+
+ConsentLayer is published as ES modules only, with type declarations and
+source maps. Each feature is a separate entry point declared in the
+package's `exports` field, and the package is marked `"sideEffects": false`,
+so bundlers include only the entry points you import. Provider SDKs and
+heavier features, such as Sentry Session Replay, are split into chunks that
+are loaded with dynamic `import()` when they are first needed.
+
+| Entry point | Exports |
+|---|---|
+| `consentlayer` | `createAnalytics`, `definePlugin`, storage helpers and core types |
+| `consentlayer/react` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript` |
+| `consentlayer/providers/<name>` | One provider factory: `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, `shopify` |
+| `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
+| `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, consent stores |
+| `consentlayer/server/meta`, `consentlayer/server/ga4` | `metaCapi`, `ga4Server` |
+| `consentlayer/sentry/server`, `consentlayer/sentry/next` | Sentry configuration for Next.js |
+| `consentlayer/testing` | `checkPlugin` |
+
+`consentlayer/react` starts with a `'use client'` directive, so you can import
+it from a React Server Component without adding your own client boundary.
+
+The full list of exports is in the [API reference](/reference/api/).
+
+## TypeScript
+
+Because the entry points are resolved through the `exports` field,
+TypeScript needs a module resolution mode that reads it. Projects created with
+`create-next-app` already use `bundler`.
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+With `"moduleResolution": "node"` (also called `node10`), imports such as
+`consentlayer/react` fail with error TS2307, "Cannot find module".
+
+## Content Security Policy
+
+If your site sends a Content Security Policy, allow the origins of the scripts
+that ConsentLayer injects for the providers you use:
+
+| Provider | `script-src` |
+|---|---|
+| GA4 | `https://www.googletagmanager.com` |
+| Meta Pixel | `https://connect.facebook.net` |
+| Contentsquare | `https://t.contentsquare.net` |
+| Hotjar | `https://static.hotjar.com` |
+| Shopify Customer Privacy | `https://cdn.shopify.com` |
+
+Once loaded, each vendor's script sends data to its own endpoints. Add those to
+`connect-src` and `img-src` as described in the vendor's CSP documentation.
+PostHog, Sentry and Vercel Analytics are bundled from npm and need only their
+ingestion hosts in `connect-src`, or none if you route them through
+[a reverse proxy](/guides/providers/#reverse-proxies).
+
+## Next steps
+
+- [Next.js](/start/nextjs/): create the instance, add a consent banner and
+  track page views in the App Router.
+- [Providers](/guides/providers/): the options and consent category of each
+  provider.
+- Outside React, create the instance with `createAnalytics()` and call
+  `analytics.consent.bootstrap()` followed by `analytics.boot()` once at
+  startup. `<AnalyticsProvider>` makes both calls for you.
