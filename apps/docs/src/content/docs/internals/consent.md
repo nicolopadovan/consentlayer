@@ -73,9 +73,11 @@ the value is copied to the current key, the legacy key is removed, and the
 value is used. The same migration applies to the identity key
 (`acm_user_identity`).
 
-Errors thrown by an adapter's `bootstrap()` are not caught by the engine, so
-they reject `bootstrap()`. `useConsentController()` reports the rejection as
-`error` and shows the banner (see [`ready` and the banner](#ready-and-the-banner)).
+An adapter whose `bootstrap()` throws or rejects is reported to `onError`
+with scope `consent-adapter`, its `providerId`, and the message
+`Consent adapter "<id>" failed to read consent`; the engine then asks the next
+adapter, so one failing integration cannot block the others or leave
+`bootstrap()` rejected.
 
 </details>
 
@@ -200,8 +202,8 @@ keeps Shopify's consent state and ConsentLayer's in step. Its adapter ID is
 
 | Part | Behaviour |
 |---|---|
-| `bootstrap` | Returns `null` if `canBootstrap()` returns false. Unless `loadFeature: false`, awaits `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`. Reads `Shopify.customerPrivacy.currentVisitorConsent()` and returns `null` if it is missing or every value is empty, which means the visitor has not chosen. Otherwise maps the values as below. |
-| `apply` | Loads the feature in the same way, then calls `setTrackingConsent({ preferences, analytics, marketing, sale_of_data? })`. With `headlessStorefront.storefrontAccessToken` set, it adds `headlessStorefront: true` and your `checkoutRootDomain`, `storefrontRootDomain` and `storefrontAccessToken`, which Shopify requires outside its hosted themes. It does not wait for Shopify's callback. |
+| `bootstrap` | Returns `null` if `canBootstrap()` returns false. Unless `loadFeature: false`, first loads Shopify's Customer Privacy script when `headlessStorefront.storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing, then awaits `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`. Reads `Shopify.customerPrivacy.currentVisitorConsent()` and returns `null` if it is missing or every value is empty, which means the visitor has not chosen. Otherwise maps the values as below. |
+| `apply` | Loads the feature in the same way, then calls `setTrackingConsent({ preferences, analytics, marketing, sale_of_data? })`. With `headlessStorefront.storefrontAccessToken` set, it adds `headlessStorefront: true` and your `checkoutRootDomain`, `storefrontRootDomain` and `storefrontAccessToken`, which Shopify requires outside its hosted themes. It resolves when Shopify calls back, or immediately when `setTrackingConsent` is missing. |
 | `subscribe` | Listens for Shopify's `visitorConsentCollected` DOM event and maps `preferencesAllowed`, `analyticsAllowed`, `marketingAllowed` and `saleOfDataAllowed` to the matching categories. |
 
 | Shopify value | Becomes |

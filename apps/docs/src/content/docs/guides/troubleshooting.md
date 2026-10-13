@@ -64,7 +64,7 @@ so an invalid value fails at import time rather than silently sending nothing.
 |---|---|
 | `[consentlayer] Invalid GA4 measurement ID: expected format "G-XXXXXXXX", received ...` | `ga4({ measurementId })` must be `G-` followed by 4 to 16 uppercase letters or digits. A missing or empty value does not throw: the provider is turned off, and `debug: true` logs `ga4 is off: measurementId is not set.` |
 | `[consentlayer] Invalid Meta Pixel ID: expected 8-20 digit numeric string, received ...` | `meta({ pixelId })` must be the numeric pixel ID, not the dataset name |
-| `[consentlayer] server.endpoint must be an HTTPS URL or a relative path starting with "/", received ...` | Use a relative path such as `/api/analytics`, or an `https://` URL |
+| `[consentlayer] server.endpoint must be an HTTPS URL or a relative path starting with "/", received ...` | Use a relative path such as `/api/analytics`, or an `https://` URL. `undefined` or `''` does not throw: forwarding is off. |
 | `[consentlayer] server.consentEndpoint must be an HTTPS URL or a relative path starting with "/", received ...` | The same rule applies to the consent records endpoint |
 
 In Next.js, only variables prefixed with `NEXT_PUBLIC_` reach the browser
@@ -275,14 +275,19 @@ missing may have been merged with its pixel event.
 ## Consent records fail
 
 ```text
+[consentlayer] the consent secret is not set
 [consentlayer] the consent secret needs at least 32 characters
 ```
 
-`createConsentHandler()` and `createAnalyticsHandler({ consentCookie })` pass
-this to `onError` and answer 500 when the secret is missing or shorter than 32
-characters. The check runs at the start of each request, before anything is
-stored, so check that `CONSENT_SECRET` is set in the runtime environment, not
-only at build time. The secret signs the consent cookie with
+`createConsentHandler()` passes one of these to `onError` and answers 500 when
+the secret is unset or shorter than 32 characters;
+`createAnalyticsHandler({ consentCookie })` does the same for a short secret.
+The check runs at the start of each request, before anything is stored, so
+check that `CONSENT_SECRET` is set in the runtime environment, not only at
+build time. With the secret unset, `createAnalyticsHandler({ consentCookie })`
+instead logs
+`[consentlayer] consentCookie.secret is not set: every event is treated as denied.`
+when created and forwards nothing. The secret signs the consent cookie with
 HMAC-SHA-256. Generate one with `openssl rand -base64 32`.
 
 A 400 from the consent endpoint means the browser sent consent without boolean

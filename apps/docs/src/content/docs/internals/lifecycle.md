@@ -19,8 +19,8 @@ loads nothing. It performs these steps in order:
 
 1. Applies `names` with `configureNames()`, which sets every storage key,
    window global and DOM event name used afterwards (see [Names](/guides/names/)).
-2. Validates `server.consentEndpoint`, if set, and throws if it is neither an
-   `https:` URL nor a path starting with a single `/`.
+2. Validates `server.consentEndpoint`, if set and not empty, and throws if it
+   is neither an `https:` URL nor a path starting with a single `/`.
 3. Creates the consent engine with localStorage storage under
    `<prefix>_consent`, your `consent` options, your `categories`, and the
    consent adapters. If `server.consentEndpoint` is set, a built-in adapter
@@ -356,7 +356,7 @@ passes them to `onError` as an `AnalyticsError`
 | `provider-identify` | `identify`, `reset` or `group` threw or rejected. |
 | `provider-script-load` | A provider reported a failed script through `emitError`. |
 | `server-forward` | The request to `server.endpoint` failed. |
-| `consent-adapter` | A consent adapter's `apply` threw or rejected. |
+| `consent-adapter` | A consent adapter's `bootstrap` or `apply` threw or rejected. |
 | `queue-full` | 100 calls were already waiting for boot or for a deferred `load`. |
 
 If `onError` itself throws inside the manager, the exception is swallowed and

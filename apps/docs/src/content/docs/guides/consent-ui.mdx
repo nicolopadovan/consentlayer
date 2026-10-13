@@ -29,6 +29,7 @@ instance.
 | `error` | `string \| null` | The rejection reason, converted to a string, if `bootstrap()` rejected. The banner is then shown as if no consent were stored. |
 | `bannerVisible` | `boolean` | After bootstrap, `true` when no consent is stored and the provider's `autoShowBanner` prop is `true` (the default). |
 | `dialogVisible` | `boolean` | Whether the settings dialog is open. Initially `false`. |
+| `categories` | `readonly ConsentCategory[]` | The categories the dialog shows, from `analytics.consent.categories`: the built-in ones, then your custom ones. |
 | `prefs` | `Record<ConsentCategory, boolean>` | The dialog's draft, one entry per category in `analytics.consent.categories`. Initialised from the stored consent, all `false` when there is none. |
 | `setPrefs(next)` | `(next) => void` | Replaces the draft without saving it. |
 | `acceptAll()` | `() => Promise<void>` | Grants every category, then hides the banner and the dialog. |

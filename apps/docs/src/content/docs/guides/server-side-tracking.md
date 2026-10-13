@@ -43,8 +43,8 @@ skips `undefined` destinations, so the same route works in environments
 without the token: it validates each event and answers `204` without sending.
 
 Point the instance at the route. `server.endpoint` must be an HTTPS URL or a
-path starting with `/`; any other value throws when `createAnalytics` is
-called.
+path starting with `/`; `undefined` or `''` turns forwarding off, and any
+other value throws when `createAnalytics` is called.
 
 ```ts
 createAnalytics({ providers, server: { endpoint: '/api/analytics' } })
@@ -113,7 +113,7 @@ or later.
 | Option | Type | Description |
 |---|---|---|
 | `destinations` | `(ServerDestination<true> \| undefined)[]` | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, any destination with `forwardBrowserEvents: false` is skipped at runtime, and `undefined` entries are ignored. |
-| `consentCookie` | `{ secret: string; cookie?: string }` | Takes consent from the signed cookie set by `createConsentHandler`. A missing secret, or one shorter than 32 characters, makes every request answer `500`. See [Consent records](/guides/consent-records/). |
+| `consentCookie` | `{ secret: string \| undefined; cookie?: string }` | Takes consent from the signed cookie set by `createConsentHandler`. With `secret` unset, every event is treated as denied and the handler logs a `console.warn` once when created; a secret shorter than 32 characters makes every request answer `500`. See [Consent records](/guides/consent-records/). |
 | `onError` | `(error: unknown) => void` | Receives destination failures and unexpected errors. |
 
 An event is valid when:
@@ -245,7 +245,8 @@ and `sendServerEvent`. Its `id` is `meta`.
 | `apiVersion` | `string` | `'v26.0'` | The Graph API version. |
 | `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
 
-While `pixelId` or `accessToken` is `undefined` or empty, `metaCapi()` returns
+Both values are trimmed. While `pixelId` or `accessToken` is `undefined`, empty
+or only whitespace, `metaCapi()` returns
 `undefined` and the destination is off. When only one of them is set, it also
 logs a `console.warn` once, since that is usually a missing variable.
 
@@ -287,7 +288,8 @@ Its `id` is `ga4`.
 | `apiSecret` | `string \| undefined` | Required | A Measurement Protocol API secret. Server only. |
 | `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
 
-While either is `undefined` or empty, `ga4Server()` returns `undefined` and the
+Both values are trimmed. While either is `undefined`, empty or only whitespace,
+`ga4Server()` returns `undefined` and the
 destination is off, with a `console.warn` once when only one of them is set.
 
 GA4 always receives the user ID, when there is one. The hashed email and

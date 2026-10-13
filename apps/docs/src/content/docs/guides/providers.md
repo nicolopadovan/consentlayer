@@ -33,8 +33,10 @@ Each provider is a named export of its own entry point,
 The ID options of GA4, Meta, PostHog, Sentry, Contentsquare and Hotjar may be
 `undefined` or empty: the provider is then turned off, and with `debug: true`
 it logs `[consentlayer] <id> is off: <option> is not set.` at boot. Pass
-`process.env` values directly instead of guarding each provider. A value that
-is set but malformed still throws.
+`process.env` values directly instead of guarding each provider. String IDs
+are trimmed first, so a trailing newline in an environment variable is
+harmless and a whitespace-only value counts as unset. A value that is set but
+malformed still throws.
 
 A provider whose required consent is `'none'` loads at boot and receives
 calls regardless of the visitor's choice. Every other provider loads only once
@@ -168,12 +170,13 @@ pixel yourself; on every consent change, if `window.ttq` is a function,
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `siteId` | `number \| string \| undefined` | Required | The Hotjar site ID, a number or numeric string. |
-| `version` | `number \| string \| undefined` | Required | The snippet version, `hjsv`, a number or numeric string. |
+| `siteId` | `number \| string \| undefined` | Required | The Hotjar site ID, as a number or a string of digits. |
+| `version` | `number \| string \| undefined` | Required | The snippet version, `hjsv`, as a number or a string of digits. |
 | `reloadOnRevoke` | `boolean` | `false` | Reloads the page when analytics consent is withdrawn. |
 
-An unset or empty `siteId` or `version` turns the provider off. Any other value
-that is not a positive integer throws `[consentlayer] Invalid Hotjar siteId or
+An unset, empty or whitespace-only `siteId` or `version` turns the provider
+off. Surrounding whitespace is trimmed. Any other value that is not a positive
+integer written in digits, such as `'1e3'` or `'12.0'`, throws `[consentlayer] Invalid Hotjar siteId or
 version: expected positive integers, …`.
 
 Hotjar accounts are moving to Contentsquare; switch to `contentsquare()` once
@@ -303,7 +306,7 @@ ignored; on a headless storefront it is set and the headless options apply.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `loadFeature` | `boolean` | `true` | Calls `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`, when available, before reading or writing consent. |
+| `loadFeature` | `boolean` | `true` | Before reading or writing consent, loads Shopify's Customer Privacy script on a headless storefront (when `storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing), then calls `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])` when available. `false` skips both. |
 | `headlessStorefront` | `{ checkoutRootDomain?, storefrontRootDomain?, storefrontAccessToken? }` | None | Required off Shopify-hosted themes. Applies only once `storefrontAccessToken` is set, so you can pass the environment variable directly; then passed to `setTrackingConsent` with `headlessStorefront: true`. |
 | `canBootstrap` | `() => boolean` | None | Returning `false` skips reading Shopify's existing choice at bootstrap. |
 | `document` | `Document` | The global `document` | The document to listen on. |
@@ -314,8 +317,10 @@ Shopify reports consent as strings. `granted`, `allow`, `accepted`, `yes` and
 Shopify reports no value for any category, the visitor is treated as not
 having chosen yet.
 
-Headless storefronts load Shopify's script themselves; its URL is returned by
-`getShopifyCustomerPrivacyScriptUrl()`, exported from the same entry point.
+On a headless storefront the adapter loads Shopify's script from
+`cdn.shopify.com` itself. Its URL is also returned by
+`getShopifyCustomerPrivacyScriptUrl()`, exported from the same entry point,
+for a Content Security Policy or a preload hint.
 
 </details>
 

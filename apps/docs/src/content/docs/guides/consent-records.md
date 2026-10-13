@@ -49,7 +49,7 @@ import { auth } from '@/lib/auth'
 
 export const POST = createConsentHandler({
   store: postgresStore(sql),
-  secret: process.env.CONSENT_SECRET!,
+  secret: process.env.CONSENT_SECRET,
   policyVersion: '2026-10-01',
   userId: async () => (await auth())?.user.id,
   // categories: ['functional'], if you declared custom categories
@@ -70,12 +70,13 @@ export const POST = createAnalyticsHandler({
   destinations: [
     metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN }),
   ],
-  consentCookie: { secret: process.env.CONSENT_SECRET! },
+  consentCookie: { secret: process.env.CONSENT_SECRET },
 })
 ```
 
-`server.consentEndpoint` must be an HTTPS URL or a path starting with `/`; any
-other value throws when `createAnalytics` is called. Each recorded choice is
+`server.consentEndpoint` must be an HTTPS URL or a path starting with `/`;
+`undefined` or `''` turns recording off, and any other value throws when
+`createAnalytics` is called. Each recorded choice is
 posted as `{ "consent": { … } }` with `fetch`. A network failure or non-2xx
 response is reported to `onError` with scope `consent-adapter` and provider ID
 `consent-endpoint`; the choice still applies in the browser.
@@ -86,7 +87,7 @@ response is reported to `onError` with scope `consent-adapter` and provider ID
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `store` | `ConsentStore` | Required | Where records are appended. |
-| `secret` | `string` | Required | The HMAC key, at least 32 characters. |
+| `secret` | `string \| undefined` | Required | The HMAC key, at least 32 characters. |
 | `policyVersion` | `string` | Required | Written to every record and to the cookie. |
 | `categories` | `string[]` | `[]` | Your custom categories, as passed to `createAnalytics({ categories })`. Categories not listed are dropped from the record. |
 | `userId` | `(request: Request) => string \| undefined \| Promise<string \| undefined>` | None | Returns the signed-in user from your session. The request body is never used for it. |
@@ -119,8 +120,12 @@ to `onError`, the response is 500 and no cookie is set.
 ### The consent cookie
 
 ```http
-Set-Cookie: consentlayer_proof=<payload>.<signature>; Path=/; Max-Age=34560000; HttpOnly; Secure; SameSite=Lax
+Set-Cookie: consentlayer_proof=<payload>.<signature>; Path=/; Max-Age=34560000; HttpOnly; SameSite=Lax; Secure
 ```
+
+`Secure` is left out when the request's host is `localhost`, `127.0.0.1` or
+`[::1]`, because Safari does not store `Secure` cookies on
+`http://localhost`.
 
 `Max-Age` is 400 days, the longest lifetime browsers allow. The payload is the
 base64url-encoded JSON of `{ consentId, consent, policyVersion }`; the
@@ -144,11 +149,14 @@ resolves to `{ consentId, consent, policyVersion }` or `null`.
   from the stored one. Submitting an identical choice posts nothing.
 - **Secret rotation.** Changing the secret invalidates every existing cookie,
   with the same effect as a lost cookie.
-- **Missing or short secret.** With no secret or one under 32 characters,
-  `createConsentHandler()` and `createAnalyticsHandler({ consentCookie })`
-  answer every request with 500 and pass
-  `[consentlayer] the consent secret needs at least 32 characters` to `onError`. The
-  check runs before the body is read, so no record is stored.
+- **Missing or short secret.** `createConsentHandler()` answers every request
+  with 500 and passes `[consentlayer] the consent secret is not set` or
+  `[consentlayer] the consent secret needs at least 32 characters` to
+  `onError`. The check runs before the body is read, so no record is stored.
+  `createAnalyticsHandler({ consentCookie })` answers 500 for a short secret;
+  with the secret unset it logs a `console.warn` once when created and treats
+  every event as denied, so environments without `CONSENT_SECRET` send
+  nothing.
 - **Policy version.** The cookie is not checked against the current
   `policyVersion`; a cookie signed under an earlier version still verifies.
 

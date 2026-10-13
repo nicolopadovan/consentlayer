@@ -15,8 +15,8 @@ in `src/core/analytics-manager.ts` and the server side in `src/server/`.
 
 With `createAnalytics({ server: { endpoint: '/api/analytics' } })`, every
 `page()` and `track()` call is also sent to that endpoint. The endpoint must
-be an `https:` URL or a path starting with a single `/`; anything else throws
-when the instance is created.
+be an `https:` URL or a path starting with a single `/`; `undefined` or `''`
+turns forwarding off, and anything else throws when the instance is created.
 
 An event is posted when all of the following hold at delivery time:
 
@@ -75,8 +75,11 @@ instead.
 `createAnalyticsHandler({ destinations, consentCookie?, onError? })` from
 `consentlayer/server` returns a web-standard
 `(request: Request) => Promise<Response>`. For each request, it runs these
-steps in order and stops at the first failure. With `consentCookie`, a missing
-secret or one under 32 characters fails before step 1 with a `500`:
+steps in order and stops at the first failure. With `consentCookie`, a secret
+under 32 characters fails before step 1 with a `500`. An unset secret does
+not fail: the handler logs
+`[consentlayer] consentCookie.secret is not set: every event is treated as denied.`
+once when created, and every event counts as denied, so nothing is sent:
 
 1. **Origin check.** Takes the `Origin` header, or the origin of the
    `Referer` header when `Origin` is absent, and requires it to equal the

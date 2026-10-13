@@ -50,9 +50,9 @@ use in `only` and the `providerId` in `onError`.
 ## GA4
 
 `ga4({ measurementId, loadBeforeConsent? })` from `consentlayer/providers/ga4`.
-An `undefined` or empty `measurementId` returns a stand-in plugin with only a
-`setup` hook that logs the skip in debug mode. Any other value that does not
-match `G-` followed by 4 to 16 uppercase letters or digits throws.
+The value is trimmed. An `undefined`, empty or whitespace-only
+`measurementId` returns a stand-in plugin with only a `setup` hook that logs
+the skip in debug mode. Any other value that does not match `G-` followed by 4 to 16 uppercase letters or digits throws.
 
 | Hook | Behaviour |
 |---|---|
@@ -88,8 +88,9 @@ needed, and gtag hashes both itself.
 ## Meta Pixel
 
 `meta({ pixelId, locale?, loadBeforeConsent? })` from
-`consentlayer/providers/meta`. The factory throws if `pixelId` is not an 8 to
-20 digit string.
+`consentlayer/providers/meta`. The value is trimmed; an `undefined`, empty or
+whitespace-only `pixelId` turns the provider off, and the factory throws if
+it is not an 8 to 20 digit string.
 
 | Hook | Behaviour |
 |---|---|
@@ -255,7 +256,7 @@ moved; `hotjar` will be removed in the next major version.
 
 | Hook | Behaviour |
 |---|---|
-| Options | `siteId` and `version` accept numbers or numeric strings. Either one `undefined` or `''` turns the provider off; any other value that is not a positive safe integer throws when `hotjar()` is called. |
+| Options | `siteId` and `version` accept positive integers, as numbers or as strings of digits; surrounding whitespace is trimmed. Either one `undefined`, `''` or whitespace turns the provider off; any other value, such as `'1e3'` or `'12.0'`, throws when `hotjar()` is called. |
 | Script | `https://static.hotjar.com/c/hotjar-<siteId>.js?sv=<version>` |
 | `load` | Skipped if Hotjar was already initialised on the page. Otherwise defines a queueing `window.hj` and `window._hjSettings = { hjid, hjsv }` and injects the script. Script failures are ignored. |
 | `page` | Not implemented; Hotjar tracks page views itself. |

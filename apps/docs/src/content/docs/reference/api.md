@@ -143,7 +143,8 @@ Their names are listed in [Names](/guides/names/).
 | `server.endpoint` | `string` | Also posts every `track` and `page` call, as a [`ServerEvent`](#serverevent), to this route while analytics or marketing consent is granted. Uses `fetch` with `keepalive`, or `navigator.sendBeacon` where `fetch` is missing. Failures are reported with scope `server-forward`. See [`createAnalyticsHandler`](#createanalyticshandleroptions). |
 | `server.consentEndpoint` | `string` | Posts `{ consent }` to this route on every consent change, except a choice read back from storage. Failures are reported with scope `consent-adapter` and provider ID `consent-endpoint`. See [`createConsentHandler`](#createconsenthandleroptions). |
 
-Both must be `https:` URLs or paths starting with `/`.
+Both must be `https:` URLs or paths starting with `/`. `undefined` or `''`
+turns the option off.
 
 ### The analytics instance
 
@@ -339,7 +340,7 @@ interface IdentityStorageAdapter {
 
 interface ConsentIntegrationAdapter {
   id: string
-  /** Called by bootstrap() when nothing is stored. */
+  /** Called by bootstrap() when nothing is stored. Errors go to onError with scope 'consent-adapter'. */
   bootstrap?(): Promise<ConsentState | null> | ConsentState | null
   /** Called on every change not made by this adapter. Errors go to onError with scope 'consent-adapter'. */
   apply?(consent: ConsentState): Promise<void> | void
@@ -597,7 +598,7 @@ type AnalyticsErrorHandler = (error: AnalyticsError) => void
 | `provider-identify` | The `identify`, `reset` or `group` hook throws. |
 | `provider-script-load` | A provider's vendor script fails to load. |
 | `server-forward` | Posting to `server.endpoint` fails or returns a non-2xx status. |
-| `consent-adapter` | An adapter's `apply` throws, including the `server.consentEndpoint` recorder. |
+| `consent-adapter` | An adapter's `bootstrap` or `apply` throws, including the `server.consentEndpoint` recorder. After a failed `bootstrap`, the next adapter is asked. |
 | `queue-full` | 100 calls are already waiting for boot or for a deferred `load`. |
 
 <details>
@@ -684,6 +685,7 @@ State and actions for building a consent banner and settings dialog. See
 | `showBanner`, `hideBanner` | `() => void` | Set `bannerVisible`. |
 | `dialogVisible` | `boolean` | Whether the settings dialog should render. |
 | `openDialog`, `closeDialog` | `() => void` | Set `dialogVisible`. |
+| `categories` | `readonly ConsentCategory[]` | The categories the dialog shows, from `analytics.consent.categories`. |
 | `prefs` | `Record<ConsentCategory, boolean>` | The dialog's toggles, one per category; kept in sync with the current consent. |
 | `setPrefs` | `(next: Record<ConsentCategory, boolean>) => void` | Changes the toggles without saving them. |
 | `acceptAll` | `() => Promise<void>` | Grants every category. |
@@ -891,13 +893,14 @@ The options type is exported as `ContentsquareOptions`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `siteId` | `number \| string \| undefined` | | **Required.** A number or numeric string. |
-| `version` | `number \| string \| undefined` | | **Required.** The Hotjar snippet version, a number or numeric string. |
+| `siteId` | `number \| string \| undefined` | | **Required.** A positive integer, as a number or a string of digits. |
+| `version` | `number \| string \| undefined` | | **Required.** The Hotjar snippet version, a positive integer as a number or a string of digits. |
 | `reloadOnRevoke` | `boolean` | `false` | Hotjar cannot be stopped once loaded. On withdrawal its cookies and storage are always deleted; `true` also reloads the page so recording stops. |
 
-While `siteId` or `version` is `undefined` or `''`, the provider is off and,
-with `debug`, logs `hotjar is off: siteId is not set.` (or `version`). Any
-other value that is not a positive safe integer throws
+While `siteId` or `version` is `undefined`, `''` or whitespace, the provider is
+off and, with `debug`, logs `hotjar is off: siteId is not set.` (or `version`).
+Strings are trimmed. Any other value that is not a positive safe integer, or a
+string that is not only digits (such as `'1e3'` or `'12.0'`), throws
 `[consentlayer] Invalid Hotjar siteId or version: expected positive integers, received … and ….`
 
 The options type is exported as `HotjarOptions`.
@@ -929,7 +932,7 @@ Privacy API. Pass it to `createAnalytics({ consent: { adapters } })`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `loadFeature` | `boolean` | `true` | Loads Shopify's `consent-tracking-api` feature through `Shopify.loadFeatures` when available. |
+| `loadFeature` | `boolean` | `true` | Before reading or writing consent, loads Shopify's Customer Privacy script when `headlessStorefront.storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing, then the `consent-tracking-api` feature through `Shopify.loadFeatures` when available. |
 | `canBootstrap` | `() => boolean` | | Return `false` to skip reading Shopify's consent during bootstrap. |
 | `headlessStorefront` | `{ storefrontAccessToken?: string; checkoutRootDomain?: string; storefrontRootDomain?: string }` | | Required off Shopify-hosted themes. Applies only once `storefrontAccessToken` is set; then passed to `setTrackingConsent` with `headlessStorefront: true`. |
 | `document` | `Document` | `document` | The document that receives `visitorConsentCollected` events. |
@@ -940,7 +943,8 @@ The options type is exported as `ShopifyCustomerPrivacyAdapterOptions`.
 ### `getShopifyCustomerPrivacyScriptUrl()`
 
 From `consentlayer/providers/shopify`. Returns the URL of Shopify's Customer
-Privacy script, for headless storefronts that load it themselves.
+Privacy script, which the adapter loads on headless storefronts. Use it for a
+Content Security Policy or a preload hint.
 
 ```ts
 function getShopifyCustomerPrivacyScriptUrl(): string
@@ -1024,7 +1028,7 @@ function createAnalyticsHandler(options: {
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `destinations` | `(ServerDestination<true> \| undefined)[]` | | **Required.** Destinations that accept browser events, such as `metaCapi()`. `ga4Server()` is rejected by the type. `undefined` entries, such as a `metaCapi()` without its token, are skipped. |
-| `consentCookie` | `ConsentCookieOptions` | | Takes consent from the cookie signed by `createConsentHandler`, ignoring the body's; without a valid cookie, every category is denied. A missing `secret`, or one shorter than 32 characters, makes every request answer `500` before the body is read. |
+| `consentCookie` | `ConsentCookieOptions` | | Takes consent from the cookie signed by `createConsentHandler`, ignoring the body's; without a valid cookie, every category is denied. With `secret` unset, every event is denied and a `console.warn` is logged once when the handler is created; a `secret` shorter than 32 characters makes every request answer `500` before the body is read. |
 | `onError` | `(error: unknown) => void` | | Receives each destination failure and any unexpected error. |
 
 | Status | When |
@@ -1083,7 +1087,7 @@ responds with a signed cookie. See [Consent records](/guides/consent-records/).
 
 ```ts
 function createConsentHandler(options: {
-  secret: string
+  secret: string | undefined
   cookie?: string
   store: ConsentStore
   policyVersion: string
@@ -1095,7 +1099,7 @@ function createConsentHandler(options: {
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `secret` | `string` | | **Required.** The HMAC-SHA-256 key that signs the cookie. At least 32 characters. A missing or shorter one makes every request answer `500`, with `[consentlayer] the consent secret needs at least 32 characters` passed to `onError`, before the body is read or anything is stored. |
+| `secret` | `string \| undefined` | | **Required.** The HMAC-SHA-256 key that signs the cookie. At least 32 characters. An unset or shorter one makes every request answer `500`, with `[consentlayer] the consent secret is not set` or `[consentlayer] the consent secret needs at least 32 characters` passed to `onError`, before the body is read or anything is stored. |
 | `store` | `ConsentStore` | | **Required.** Where records are appended. |
 | `policyVersion` | `string` | | **Required.** The privacy policy version the visitor saw, such as `'2026-10-01'`. |
 | `categories` | `(keyof ConsentCategories)[]` | `[]` | The custom categories passed to `createAnalytics({ categories })`. Each must be a boolean in the request. |
@@ -1105,7 +1109,9 @@ function createConsentHandler(options: {
 
 The record's `consentId` is taken from a valid existing cookie, else generated
 with `crypto.randomUUID()`. The cookie is set with
-`Path=/; Max-Age=34560000; HttpOnly; Secure; SameSite=Lax` (400 days).
+`Path=/; Max-Age=34560000; HttpOnly; SameSite=Lax; Secure` (400 days).
+`Secure` is left out when the request's host is `localhost`, `127.0.0.1` or
+`[::1]`, because Safari does not store `Secure` cookies on `http://localhost`.
 
 | Status | When |
 |---|---|
@@ -1114,7 +1120,7 @@ with `crypto.randomUUID()`. The cookie is set with
 | `403` | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's. |
 | `413` | The body exceeds 4 KiB. |
 | `415` | The `Content-Type` is not `application/json`. |
-| `500` | `secret` is missing or shorter than 32 characters (checked first, so no record is stored), the store threw, or another error occurred; `onError` is called. |
+| `500` | `secret` is unset or shorter than 32 characters (checked first, so no record is stored), the store threw, or another error occurred; `onError` is called. |
 
 ### `readConsentCookie(request, options)`
 
@@ -1126,11 +1132,12 @@ function readConsentCookie(request: Request, options: ConsentCookieOptions): Pro
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `secret` | `string` | | **Required.** The secret given to `createConsentHandler`. |
+| `secret` | `string \| undefined` | | **Required.** The secret given to `createConsentHandler`. |
 | `cookie` | `string` | `'consentlayer_proof'` | The cookie name. |
 
 **Returns** `{ consentId, consent, policyVersion }`, or `null` when the cookie
-is missing, malformed or its signature does not match. Never throws.
+is missing, malformed or its signature does not match, or when `secret` is
+unset or shorter than 32 characters. Never throws.
 
 ### Consent stores
 
@@ -1200,7 +1207,7 @@ type ConsentProof = {
 }
 
 type ConsentCookieOptions = {
-  secret: string
+  secret: string | undefined
   cookie?: string
 }
 ```
@@ -1264,7 +1271,8 @@ function metaCapi(options: {
 | `apiVersion` | `string` | `'v26.0'` | The Graph API version. |
 | `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
 
-**Returns** `undefined` while `pixelId` or `accessToken` is unset or empty, so
+**Returns** `undefined` while `pixelId` or `accessToken` is unset, empty or
+only whitespace (both are trimmed), so
 the destination is off. When exactly one of the two is set, which usually means
 a missing variable, it also calls `console.warn` once; with both unset it is
 silent. Otherwise it returns a destination with `id` `'meta'` and `requiredConsent`
@@ -1294,7 +1302,7 @@ function ga4Server(options: {
 | `apiSecret` | `string \| undefined` | | **Required.** A Measurement Protocol API secret. |
 | `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
 
-**Returns** `undefined` while `measurementId` or `apiSecret` is unset or
+**Returns** `undefined` while `measurementId` or `apiSecret`, both trimmed, is unset or
 empty, and calls `console.warn` once when exactly one of the two is set.
 Otherwise it returns a destination with `id` `'ga4'` and `requiredConsent`
 `'analytics'`. Hashed email and phone are sent only with marketing consent.

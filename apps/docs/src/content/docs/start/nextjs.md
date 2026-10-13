@@ -38,10 +38,11 @@ Read each `NEXT_PUBLIC_*` variable by its full, literal name, as above. Next.js
 inlines only literal `process.env.NEXT_PUBLIC_X` reads into browser code, so a
 destructured or dynamically indexed read is `undefined` in the browser.
 
-A provider whose ID is `undefined` or empty is turned off, so the same code
-runs in environments where a variable is not set; with `debug: true` it logs
+A provider whose ID is `undefined`, empty or only whitespace is turned off, so
+the same code runs in environments where a variable is not set; with `debug: true` it logs
 `[consentlayer] ga4 is off: measurementId is not set.` at boot. A value that is
-set but malformed throws when the factory is called, for example
+set but malformed throws when the factory is called; surrounding whitespace,
+such as a trailing newline in a `.env` file, is trimmed first. For example
 `[consentlayer] Invalid GA4 measurement ID: expected format "G-XXXXXXXX", received "UA-12345".`
 A GA4 measurement ID must match `G-` followed by 4 to 16 uppercase letters or
 digits; a Meta Pixel ID must be a string of 8 to 20 digits.
@@ -218,16 +219,13 @@ nothing unless you pass `enabled`, and nothing while `pixelId` is `undefined`
 or empty, so you can pass the environment variable directly. The example app
 enables it with `NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT=true`.
 
-The Shopify Customer Privacy adapter needs Shopify's consent script on the
-page. `getShopifyCustomerPrivacyScriptUrl()` from
-`consentlayer/providers/shopify` returns its URL, which you load with
-`next/script`:
+On a headless Shopify storefront, the Shopify Customer Privacy adapter loads
+Shopify's consent script itself once `storefrontAccessToken` is set, so the
+layout needs no `<Script>` for it:
 
 ```tsx
 // app/layout.tsx
 import { MetaPixelNoscript } from 'consentlayer/react'
-import { getShopifyCustomerPrivacyScriptUrl } from 'consentlayer/providers/shopify'
-import Script from 'next/script'
 import type { ReactNode } from 'react'
 import { AnalyticsShell } from '../components/analytics-shell'
 
@@ -235,7 +233,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Script src={getShopifyCustomerPrivacyScriptUrl()} strategy="lazyOnload" />
         <MetaPixelNoscript
           enabled={process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT === 'true'}
           pixelId={process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}
@@ -426,7 +423,8 @@ the handler skips `undefined` destinations, so the route answers `204` and
 sends nothing in environments without the token.
 
 `server.endpoint` must be an HTTPS URL or a path starting with `/`;
-`createAnalytics()` throws otherwise. The browser posts each page view and
+`createAnalytics()` throws otherwise, while `undefined` or `''` turns
+forwarding off. The browser posts each page view and
 event to it, with the same event ID it gives the providers, only while
 `analytics` or `marketing` is granted. The handler sends an event to Meta only
 when its consent grants `marketing`, and answers `204` once the destinations
