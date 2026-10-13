@@ -43,7 +43,7 @@ ConsentLayer has no runtime dependencies.
 | Edge runtimes | Any runtime with `fetch` and Web Crypto, such as the Next.js Edge runtime. |
 | Browsers | The package is compiled to ES2022. Your bundler transpiles it if you target older browsers. |
 | React | 18.3 or 19, only for `consentlayer/react` and `consentlayer/next`. |
-| Next.js | 15 or 16, only for `consentlayer/next`, which supports the App Router only. |
+| Next.js | 15 or 16, only for `consentlayer/next`, in the App Router or the Pages Router. |
 | TypeScript | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`. |
 
 ## Optional peer dependencies
@@ -75,7 +75,7 @@ are loaded with dynamic `import()` when they are first needed.
 |---|---|
 | `consentlayer` | `createAnalytics`, `definePlugin`, storage helpers and core types |
 | `consentlayer/react` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript` |
-| `consentlayer/next` | `AnalyticsProvider` for the App Router, which tracks navigation itself |
+| `consentlayer/next` | `AnalyticsProvider` for Next.js, which tracks navigation itself |
 | `consentlayer/providers/<name>` | One provider factory: `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, `shopify` |
 | `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
 | `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores |

@@ -74,6 +74,8 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `consentlayer/next` works in the Pages Router: render its `<AnalyticsProvider>`
+  in `pages/_app.tsx`. Page views wait for `router.isReady`.
 - `consentlayer/next`: an `AnalyticsProvider` for the App Router that sends a
   page view on every navigation, query changes included. It replaces the
   `usePathname()` / `useSearchParams()` shell, whose `<Suspense>` around the

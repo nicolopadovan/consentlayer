@@ -12,7 +12,7 @@ return value and the errors it throws. Options are optional unless marked
 |---|---|
 | [`consentlayer`](#consentlayer) | `createAnalytics`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types |
 | [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript` |
-| [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for the App Router |
+| [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for Next.js |
 | [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify consent adapter |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
@@ -756,18 +756,18 @@ consent. Render it only where that is lawful.
 
 ## `consentlayer/next`
 
-Requires `next` 15 or 16, an optional peer dependency, and works only in the
-App Router: it reads the route from `next/navigation`. In the Pages Router,
-use `<AnalyticsProvider>` from `consentlayer/react` with
-`routeKey={router.asPath}`. The entry point starts with a `'use client'`
-directive.
+Requires `next` 15 or 16, an optional peer dependency, and works in the App
+Router and the Pages Router: it reads the route from `next/navigation` and,
+in the Pages Router, waits for `router.isReady` from `next/compat/router`. The
+entry point starts with a `'use client'` directive.
 
 ### `<AnalyticsProvider>` for Next.js
 
 The [`<AnalyticsProvider>`](#analyticsprovider) from `consentlayer/react`, with
-`routeKey` taken from the App Router: the pathname and the query string from
+`routeKey` taken from the Next.js router: the pathname and the query string from
 `usePathname()` and `useSearchParams()`. A change to either sends a page view
-and starts a new page session.
+and starts a new page session. In the Pages Router, `routeKey` stays `null`
+until `router.isReady`, so the first page view carries the real query string.
 
 It accepts every prop of the React provider except `routeKey`; the props type
 is exported as `NextAnalyticsProviderProps`.

@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import { AnalyticsProvider } from '../src/next'
 
-const route = vi.hoisted(() => ({ pathname: '/a', search: '' }))
+const route = vi.hoisted(() => ({ pathname: '/a', search: '', pages: null as { isReady: boolean } | null }))
+vi.mock('next/compat/router.js', () => ({ useRouter: () => route.pages }))
 vi.mock('next/navigation.js', () => ({
   usePathname: () => route.pathname,
   useSearchParams: () => new URLSearchParams(route.search),
@@ -36,6 +37,33 @@ describe('consentlayer/next', () => {
     rerender(app())
     await act(() => Promise.resolve())
     expect(ga4.page).toHaveBeenCalledTimes(3)
+    analytics.destroy()
+  })
+
+  it('waits for the Pages Router to be ready', async () => {
+    route.pathname = '/p'
+    route.search = ''
+    route.pages = { isReady: false }
+    const ga4 = { id: 'ga4', requiredConsent: 'analytics' as const, page: vi.fn() }
+    const analytics = createAnalytics({ providers: [ga4] })
+    const app = () => (
+      <AnalyticsProvider analytics={analytics}>
+        <p>page</p>
+      </AnalyticsProvider>
+    )
+    const { rerender } = render(app())
+    await act(() => analytics.consent.update({ analytics: true }))
+    expect(ga4.page).not.toHaveBeenCalled()
+
+    route.pages = { isReady: true }
+    route.search = 'q=1'
+    rerender(app())
+    await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(1))
+    route.pathname = '/q'
+    route.search = ''
+    rerender(app())
+    await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(2))
+    route.pages = null
     analytics.destroy()
   })
 

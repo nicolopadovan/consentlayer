@@ -14,13 +14,6 @@ records what each release actually ships.
 
 Ordered from the smallest change to the largest.
 
-### Pages Router support
-
-`consentlayer/next` supports the App Router only: it reads the route from
-`next/navigation`. In the Pages Router, you pass the route yourself, using
-`<AnalyticsProvider>` from `consentlayer/react` with `routeKey={router.asPath}`.
-The planned change makes `consentlayer/next` work in the Pages Router too.
-
 ### Consent expiry
 
 A stored choice never expires: it stays in `localStorage` until the visitor

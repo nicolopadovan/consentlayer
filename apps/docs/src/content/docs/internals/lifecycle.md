@@ -275,7 +275,7 @@ current page, and providers that already counted it do not receive a
 duplicate. Pass a new `routeKey` on every navigation. The provider from
 `consentlayer/next` passes the pathname plus the query string, and `null`
 until its route listener, which renders inside its own `<Suspense>` boundary,
-has mounted.
+has mounted and, in the Pages Router, until `router.isReady`.
 
 `page()` builds the event from `location.href` (`url`), the pathname plus
 search (`path`) and `document.title` (`title`), overlays your payload, and

@@ -181,10 +181,13 @@ own `<Suspense>` boundary, so only that component waits for the client and
 your pages are prerendered as usual. Page views are held until it reports the
 first route, so the first page is not counted twice.
 
-`consentlayer/next` supports the App Router only. In the Pages Router and in
-other frameworks, use `<AnalyticsProvider>` from `consentlayer/react` and
-pass `routeKey` yourself: any string that changes on navigation, or `null`
-while the route is not yet known. See the [API reference](/reference/api/#analyticsprovider).
+`consentlayer/next` also works in the Pages Router: render the same
+`<AnalyticsProvider>` in `pages/_app.tsx`. There, page views are held until
+`router.isReady`, so a statically optimized page that hydrates without its
+query string is counted once, with the full URL. In other frameworks, use
+`<AnalyticsProvider>` from `consentlayer/react` and pass `routeKey` yourself:
+any string that changes on navigation, or `null` while the route is not yet
+known. See the [API reference](/reference/api/#analyticsprovider).
 
 </details>
 
