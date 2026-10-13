@@ -10,7 +10,8 @@ description: Options for every provider, deferred loading and loading before con
 | GA4 | `ga4` | `analytics` | `measurementId` | Initializes Google Consent Mode with denied defaults, then updates on consent changes |
 | Meta Pixel | `meta` | `marketing` | `pixelId` | Browser pixel; add CAPI with `metaCapi` on the server ([server-side tracking](/guides/server-side-tracking/)) |
 | Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter` | consent source | optional headless storefront config | Bootstraps and syncs consent state |
-| Hotjar | `hotjar` | `analytics` | `siteId`, `version`, `reloadOnRevoke` | Loads only after analytics consent; on withdrawal its cookies and storage are deleted, but its script keeps running and recreates them until the page reloads; set `reloadOnRevoke` to reload and stop it |
+| Contentsquare | `contentsquare` (`/providers/contentsquare`) | `analytics` | `tagId` | Loads only after analytics consent; sends single-page-app page views, events, purchases and the user ID; on withdrawal it opts the visitor out |
+| Hotjar (deprecated) | `hotjar` | `analytics` | `siteId`, `version`, `reloadOnRevoke` | Hotjar accounts are moving to Contentsquare: switch to `contentsquare` once yours has. Loads only after analytics consent; on withdrawal its cookies and storage are deleted, but its script keeps running and recreates them until the page reloads; set `reloadOnRevoke` to reload and stop it |
 | TikTok consent bridge | `tiktok` | `marketing` | `ttq` loaded by consumer | Consent sync only; no SDK bootstrap in package |
 | PostHog | `posthog` (`/providers/posthog`) | none (cookieless) | `apiKey` | Counts without cookies until analytics is granted, then uses cookies; needs cookieless mode on in the PostHog project. `cookieless: false` loads only after consent |
 | Sentry | `sentry` (`/providers/sentry`) | none | `dsn` | Errors without personal data whatever the consent; Replay, tracing and the user ID after analytics consent |
@@ -35,6 +36,7 @@ Everything heavy is off by default and loads only when turned on:
 posthog({
   apiKey,
   apiHost,             // default https://us.i.posthog.com
+  uiHost,              // set with a proxy apiHost, e.g. https://us.posthog.com
   cookieless: true,    // false: load nothing until analytics consent
   autocapture: false,
   recording: false,    // session recording, after analytics consent
@@ -49,6 +51,7 @@ sentry({
   release,
   replay: false,       // true or { sessionSampleRate, onErrorSampleRate }
   tracing: false,      // true or { sampleRate }
+  tunnel,              // see "Reverse Proxies"
   defer: 'interaction',
 })
 ```
@@ -61,6 +64,47 @@ Sentry sends errors without IP, cookies, headers, bodies or query strings.
 Analytics consent adds the user ID (and email, with marketing consent), Replay
 and tracing; withdrawing it stops Replay and drops transactions. The manager
 installs the window error handlers, so Sentry's own are removed.
+
+## Reverse Proxies
+
+Ad blockers drop requests to `posthog.com` and `sentry.io`. Serving them from
+your own domain gets them through. GA4 and Meta are better covered by
+[server-side tracking](/guides/server-side-tracking/).
+
+**PostHog** ([docs](https://posthog.com/docs/advanced/proxy/nextjs)): add the
+rewrites, then point `apiHost` at them. Use `eu` instead of `us` for an EU project.
+
+```js
+// next.config.js
+export default {
+  skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return [
+      { source: '/ingest/static/:path*', destination: 'https://us-assets.i.posthog.com/static/:path*' },
+      { source: '/ingest/array/:path*', destination: 'https://us-assets.i.posthog.com/array/:path*' },
+      { source: '/ingest/:path*', destination: 'https://us.i.posthog.com/:path*' },
+    ]
+  },
+}
+```
+
+```ts
+posthog({ apiKey, apiHost: '/ingest', uiHost: 'https://us.posthog.com' })
+```
+
+**Sentry** ([docs](https://docs.sentry.io/platforms/javascript/troubleshooting/)):
+`withSentryConfig(config, { tunnelRoute: '/monitoring' })` adds the route on a
+Next.js server. It only sets the tunnel for `@sentry/nextjs`'s own client, so
+pass it to `sentry()` yourself, with the org and project IDs from your DSN
+(`https://<key>@o<orgId>.ingest.sentry.io/<projectId>`, plus `&r=<region>` for
+a `o<orgId>.ingest.<region>.sentry.io` host):
+
+```ts
+sentry({ dsn, tunnel: '/monitoring?o=<orgId>&p=<projectId>' })
+```
+
+The route works only with sentry.io (not self-hosted) and not with a static
+export. Keep middleware off it.
 
 ## Errors
 

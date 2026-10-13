@@ -7,6 +7,7 @@ export default [
   ['ui', 'dist/ui/index.js', '2.5 kB'],
   ['providers/ga4', 'dist/providers/ga4.js', '1.5 kB'],
   ['providers/meta', 'dist/providers/meta.js', '2.5 kB'],
+  ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.2 kB'],
   ['providers/posthog', 'dist/providers/posthog.js', '1.2 kB'],
   ['providers/sentry', 'dist/providers/sentry.js', '1.2 kB'],
   ['server', 'dist/server/index.js', '1.5 kB'],

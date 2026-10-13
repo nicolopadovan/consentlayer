@@ -1,4 +1,5 @@
 import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
+import { expireCookies } from '../core/utils'
 
 declare global {
   interface Window {
@@ -19,14 +20,7 @@ export type HotjarOptions = {
 }
 
 function clearHotjarStorage(): void {
-  const hosts = location.hostname.split('.').map((_, i, parts) => parts.slice(i).join('.'))
-  for (const cookie of document.cookie.split(';')) {
-    const name = cookie.split('=')[0]?.trim()
-    if (!name?.startsWith('_hj')) continue
-    for (const domain of ['', ...hosts.map((host) => `; domain=${host}`)]) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domain}`
-    }
-  }
+  expireCookies((name) => name.startsWith('_hj'))
   for (const storage of [localStorage, sessionStorage]) {
     for (const key of Object.keys(storage)) {
       if (/^_?hj/.test(key)) storage.removeItem(key)
@@ -51,7 +45,10 @@ function ensureHotjar(options: HotjarOptions): void {
   setFlag('HotjarInitialized', true)
 }
 
-/** Hotjar, after analytics consent. */
+/**
+ * Hotjar, after analytics consent.
+ * @deprecated Hotjar accounts are moving to Contentsquare; use `contentsquare()` once yours has.
+ */
 export function hotjar(options: HotjarOptions) {
   return definePlugin({
     id: 'hotjar',

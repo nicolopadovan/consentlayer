@@ -66,6 +66,18 @@ export function createEventId(): string {
   }
 }
 
+/** Expires matching cookies on this host and every parent domain, wherever the vendor set them. */
+export function expireCookies(match: (name: string) => boolean): void {
+  const hosts = location.hostname.split('.').map((_, i, parts) => parts.slice(i).join('.'))
+  for (const cookie of document.cookie.split(';')) {
+    const name = cookie.split('=')[0]?.trim()
+    if (!name || !match(name)) continue
+    for (const domain of ['', ...hosts.map((host) => `; domain=${host}`)]) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domain}`
+    }
+  }
+}
+
 export function getWindowLocation(): { url?: string; path?: string; title?: string } {
   if (!isBrowser()) return {}
   return {

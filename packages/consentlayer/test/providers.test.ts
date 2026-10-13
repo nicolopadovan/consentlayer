@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
 import { loadScript } from '../src/core/plugin'
+import { contentsquare } from '../src/providers/contentsquare'
 import { ga4 } from '../src/providers/ga4'
 import { meta } from '../src/providers/meta'
 
@@ -113,5 +114,37 @@ describe('loadScript', () => {
     await expect(failed).rejects.toThrow('Failed to load /broken.js')
     void loadScript('/broken.js')
     expect(document.querySelectorAll('script[src$="/broken.js"]')).toHaveLength(1)
+  })
+})
+
+describe('contentsquare', () => {
+  it('sends SPA pageviews, events, purchases and identity, and opts out on withdrawal', async () => {
+    const granted = { preferences: false, analytics: true, marketing: false }
+    const manager = createAnalyticsManager({ providers: [contentsquare({ tagId: 'abc123def4567' })], consent: granted })
+    await manager.boot()
+    expect(document.querySelector('script[src="https://t.contentsquare.net/uxa/abc123def4567.js"]')).not.toBeNull()
+
+    await manager.page()
+    history.pushState({}, '', '/products/mug?ref=x')
+    await manager.page()
+    await manager.track('sign_up')
+    await manager.track('purchase', { transaction_id: 'o1', value: 10, currency: 'EUR' })
+    await manager.identify('u_42')
+    expect(window._uxa).toEqual([
+      ['trackPageview', '/products/mug'],
+      ['trackPageEvent', 'sign_up'],
+      ['ec:transaction:create', { id: 'o1', revenue: 10, currency: 'EUR' }],
+      ['ec:transaction:send'],
+      ['identify', 'u_42'],
+    ])
+
+    await manager.updateConsent({ ...granted, analytics: false })
+    expect(window._uxa?.at(-1)).toEqual(['optout'])
+
+    document.cookie = '_cs_optout=1; path=/'
+    await manager.updateConsent(granted)
+    expect(document.cookie).not.toContain('_cs_optout')
+    manager.destroy()
+    history.pushState({}, '', '/')
   })
 })

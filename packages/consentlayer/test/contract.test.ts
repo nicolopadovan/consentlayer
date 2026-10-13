@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { AnalyticsPlugin } from '../src/core/types'
+import { contentsquare } from '../src/providers/contentsquare'
 import { ga4 } from '../src/providers/ga4'
 import { hotjar } from '../src/providers/hotjar'
 import { meta } from '../src/providers/meta'
@@ -12,6 +13,7 @@ const plugins: Record<string, () => AnalyticsPlugin> = {
   'ga4 with loadBeforeConsent': () => ga4({ measurementId: 'G-ABC123', loadBeforeConsent: true }),
   meta: () => meta({ pixelId: '123456789012345' }),
   'meta with loadBeforeConsent': () => meta({ pixelId: '123456789012345', loadBeforeConsent: true }),
+  contentsquare: () => contentsquare({ tagId: 'abc123def4567' }),
   hotjar: () => hotjar({ siteId: 1, version: 6 }),
   tiktok: () => tiktok(),
   vercel: () => vercel({ trackEvent: () => undefined }),
@@ -21,7 +23,7 @@ describe('plugin contract', () => {
   beforeEach(() => {
     document.head.innerHTML = ''
     for (const key of Object.keys(window)) {
-      if (/^(__consentlayer|__acm|fbq|_fbq|gtag|dataLayer|hj|_hjSettings)/.test(key)) {
+      if (/^(__consentlayer|__acm|fbq|_fbq|gtag|dataLayer|hj|_hjSettings|_uxa)/.test(key)) {
         delete (window as unknown as Record<string, unknown>)[key]
       }
     }

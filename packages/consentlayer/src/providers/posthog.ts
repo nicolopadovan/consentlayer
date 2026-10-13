@@ -7,6 +7,8 @@ export type PostHogOptions = {
   apiKey: string
   /** Defaults to `https://us.i.posthog.com`. */
   apiHost?: string
+  /** PostHog's app URL, for toolbar links when `apiHost` is a reverse proxy, e.g. `https://us.posthog.com`. */
+  uiHost?: string
   /**
    * Counts visitors without cookies or storage until analytics is granted, then
    * switches to cookies. Needs cookieless mode on in the PostHog project settings.
@@ -58,6 +60,7 @@ export function posthog(options: PostHogOptions) {
       ready = import('posthog-js').then(({ default: client }) => {
         client.init(options.apiKey, {
           api_host: options.apiHost ?? 'https://us.i.posthog.com',
+          ui_host: options.uiHost,
           cookieless_mode: cookieless ? 'on_reject' : undefined,
           opt_out_capturing_by_default: true,
           opt_out_persistence_by_default: true,

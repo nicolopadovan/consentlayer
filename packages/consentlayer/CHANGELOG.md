@@ -68,6 +68,8 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `contentsquare()` provider (`consentlayer/providers/contentsquare`).
+- `tunnel` on `sentry()` and `uiHost` on `posthog()`, for reverse proxies.
 - `onError` reports a second provider with an `id` already in use (scope
   `provider-setup`), and the first call dropped by a full 100-call queue (scope
   `queue-full`).
@@ -128,6 +130,9 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `defer` on any plugin: load when idle, on the first interaction or after a delay.
 - `posthog-js`, `@sentry/browser`, `@sentry/nextjs`, `react` and `react-dom` are
   optional peer dependencies; each feature's SDK code is a separate chunk loaded on use.
+
+### Deprecated
+- `hotjar()`: Hotjar accounts are moving to Contentsquare; use `contentsquare()`.
 
 ### Fixed
 - `ConsentEngine.bootstrap()` runs once even when called from several places.

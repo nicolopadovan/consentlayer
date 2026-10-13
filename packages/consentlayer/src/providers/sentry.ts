@@ -13,6 +13,8 @@ export type SentryOptions = {
   replay?: boolean | { sessionSampleRate?: number; onErrorSampleRate?: number }
   /** Performance tracing, after analytics consent. Defaults to `false`. */
   tracing?: boolean | { sampleRate?: number }
+  /** Sends events to this URL instead of the DSN's host, so ad blockers don't drop them. */
+  tunnel?: string
   defer?: LoadTiming
 }
 
@@ -59,6 +61,7 @@ export function sentry(options: SentryOptions) {
           dsn: options.dsn,
           environment: options.environment,
           release: options.release,
+          tunnel: options.tunnel,
           dataCollection: {
             userInfo: false,
             cookies: false,

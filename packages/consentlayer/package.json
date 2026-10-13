@@ -60,6 +60,10 @@
       "types": "./dist/providers/shopify.d.ts",
       "import": "./dist/providers/shopify.js"
     },
+    "./providers/contentsquare": {
+      "types": "./dist/providers/contentsquare.d.ts",
+      "import": "./dist/providers/contentsquare.js"
+    },
     "./providers/hotjar": {
       "types": "./dist/providers/hotjar.d.ts",
       "import": "./dist/providers/hotjar.js"

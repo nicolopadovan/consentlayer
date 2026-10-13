@@ -170,7 +170,35 @@ errors; full session recording resumes on the next page load.
 
 **Personal data.** User ID with analytics; email with analytics and marketing.
 
+## Contentsquare
+
+`contentsquare({ tagId })` from `consentlayer/providers/contentsquare`.
+
+| | |
+|---|---|
+| Required category | `analytics` |
+| Script | `https://t.contentsquare.net/uxa/<tagId>.js` |
+| Loads | on analytics consent (no `loadBeforeConsent`) |
+| On load | defines the `window._uxa` command queue; the tag sends the first page view itself |
+| `page` | `['trackPageview', path]` without query or hash, skipping the page the tag loaded on |
+| `track` | `['trackPageEvent', name]`; params are not sent. `purchase` becomes `['ec:transaction:create', { id: transaction_id, revenue: value, currency }]` and `['ec:transaction:send']` |
+| `identify` | `['identify', userId]` when there is a user ID |
+| `reset` | `['resetIdentity']` |
+| Teardown on analytics withdrawal | `['optout']`: Contentsquare stops collecting, removes its cookies and sets `_cs_optout` |
+
+Contentsquare has no web command to opt back in. When analytics is granted
+again, `_cs_optout` is deleted, so collection resumes on the next page load.
+See [Contentsquare's consent docs](https://docs.contentsquare.com/en/web/send-the-users-decisions-about-data-collection/).
+
+**Personal data.** User ID with analytics. Email is never sent: Contentsquare
+advises against identifying by email.
+
 ## Hotjar
+
+Deprecated: Hotjar accounts are moving to Contentsquare, after which the
+Hotjar account stops collecting. Switch to [`contentsquare`](#contentsquare)
+once yours has moved; `hotjar` is removed in the next major.
+
 
 `hotjar({ siteId, version, reloadOnRevoke? })` from `consentlayer/providers/hotjar`.
 

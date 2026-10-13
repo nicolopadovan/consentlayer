@@ -43,7 +43,7 @@ analytics.track('purchase', orderParams(order))
 
 ## How Providers Receive Them
 
-| Standard | GA4 | Meta | Hotjar, Shopify, Vercel |
+| Standard | GA4 | Meta | Contentsquare, Hotjar, Shopify, Vercel |
 |---|---|---|---|
 | `view_item` | `view_item` | `ViewContent` | as is |
 | `add_to_cart` | `add_to_cart` | `AddToCart` | as is |
@@ -64,8 +64,8 @@ Meta also receives `items[]` as `content_ids`, `contents`, `content_type` and
 `num_items` (IDs are `item_variant`, else `item_id`), and `search_term` as
 `search_string`.
 
-An event reaches each provider whose own consent category is granted: GA4 and
-Hotjar need analytics, Meta needs marketing.
+An event reaches each provider whose own consent category is granted: GA4,
+Contentsquare and Hotjar need analytics, Meta needs marketing.
 
 ## Per-Event Options
 
@@ -100,10 +100,12 @@ await analytics.reset() // on logout
 |---|---|---|
 | GA4 | `user_id` | `user_data` ([user-provided data collection](https://support.google.com/analytics/answer/14077171) must be on in GA4 admin) |
 | Meta | `external_id` | browser pixel advanced matching only if known when the pixel starts (Meta accepts it only then, so usually not on a first visit), and on every event sent to CAPI. If the pixel started with an email or phone and marketing is withdrawn, the browser pixel stays off until the next page load |
+| Contentsquare | identify | — (not sent) |
 | Hotjar | identify | email as an attribute, when there is a user ID |
 | Vercel, Shopify | — | — (no API for it) |
 - `reset()` clears the stored identity and tells each provider that has loaded
-  (GA4 clears `user_id` and `user_data`, Hotjar identifies as anonymous). The
+  (GA4 clears `user_id` and `user_data`, Contentsquare resets its identity,
+  Hotjar identifies as anonymous). The
   Meta pixel keeps its advanced-matching data until the next page load.
   Hotjar has no API to remove the email attribute or to log out: it keeps
   the email it received and links this browser to the last user ID until
