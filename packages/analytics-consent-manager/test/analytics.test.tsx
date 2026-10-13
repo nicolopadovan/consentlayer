@@ -210,6 +210,7 @@ describe('createAnalytics', () => {
     expect(ga4.trackEvent).not.toHaveBeenCalled()
 
     await analytics.boot()
+    expect(ga4.identify).toHaveBeenCalledOnce()
     expect(ga4.identify).toHaveBeenCalledWith({ userId: 'u1' }, { plan: 'pro' }, expect.anything())
     expect(ga4.trackEvent).toHaveBeenCalledTimes(1)
     analytics.destroy()

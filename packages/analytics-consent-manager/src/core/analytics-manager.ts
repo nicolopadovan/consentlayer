@@ -119,6 +119,7 @@ export function createAnalyticsManager(
   const pending: Array<() => Promise<void>> = []
   let booted = false
   let ready = false
+  let identifyQueued = false
   let destroyed = false
   let lifecycleQueue = Promise.resolve()
   let unsubscribeConsent: (() => void) | undefined
@@ -261,7 +262,7 @@ export function createAnalyticsManager(
       )
       state.active = true
       const shared = sharedIdentity()
-      if (Object.keys(shared).length) {
+      if (Object.keys(shared).length && !identifyQueued) {
         await safeCall(`${state.adapter.id}.identify`, () =>
           state.adapter.identify?.(shared, {}, context(state.adapter.id)),
         )
@@ -424,6 +425,7 @@ export function createAnalyticsManager(
       await queueLifecycle()
       for (let run = pending.shift(); run; run = pending.shift()) await run()
       ready = true
+      identifyQueued = false
     },
     registerProvider(provider) {
       const state = ensureProviderState(provider)
@@ -503,6 +505,7 @@ export function createAnalyticsManager(
         ...normalizeIdentity({ userId, email: traits.email, phone: traits.phone }),
       }
       persistIdentity()
+      if (!ready) identifyQueued = true
       await identifyProviders(
         Object.fromEntries(
           Object.entries(traits).filter(([key]) => key !== 'email' && key !== 'phone'),
