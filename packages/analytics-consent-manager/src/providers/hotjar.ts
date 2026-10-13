@@ -29,7 +29,7 @@ function clearHotjarStorage(): void {
   }
   for (const storage of [localStorage, sessionStorage]) {
     for (const key of Object.keys(storage)) {
-      if (key.startsWith('_hj') || key === 'hjViewportId') storage.removeItem(key)
+      if (/^_?hj/.test(key)) storage.removeItem(key)
     }
   }
 }

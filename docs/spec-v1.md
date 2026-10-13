@@ -235,7 +235,7 @@ Each stage ships as its own release candidate with a migration-guide section.
 |---|---|
 | `createAnalyticsManager` + `registerProvider` / module singletons | `createAnalytics({ providers })` |
 | `createGa4Adapter`, `createMetaAdapter`, … | `ga4()`, `meta()`, … |
-| `trackEvent('ViewContent', …)`, `trackViewContent()` | `track('view_item', …)`, `trackViewItem()` from `/ecommerce` |
+| `trackEvent('ViewContent', …)`, `trackViewContent()` | `track('view_item', productParams(product))` with `/ecommerce` |
 | `saveIdentity({ email })` | `identify(userId?, { email })` |
 | `sendMetaCapiEvent`, `sendGa4MeasurementEvent` + a hand-written route | `createAnalyticsHandler({ destinations })` |
 | Custom `ProviderAdapter` (PostHog in Scriptie / Bruciami) | `definePlugin()` or the built-in `posthog()` |

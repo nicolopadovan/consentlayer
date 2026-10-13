@@ -100,6 +100,9 @@ await analytics.reset() // on logout
 - `reset()` clears the stored identity and tells each provider that has loaded
   (GA4 clears `user_id` and `user_data`, Hotjar identifies as anonymous). The
   Meta pixel keeps its advanced-matching data until the next page load.
+  Hotjar has no logout API: it keeps linking this browser to the last user ID
+  until its cookies are cleared, which happens when analytics consent is
+  withdrawn.
 - `group(id, traits)` is passed to providers that support groups.
 
 ## Consent

@@ -311,6 +311,7 @@ describe('provider identity', () => {
     document.cookie = 'keep=1; path=/'
     localStorage.setItem('_hjUserAttributes', 'x')
     sessionStorage.setItem('hjViewportId', 'x')
+    localStorage.setItem('hjActiveViewportIds', 'x')
     const hotjar = createHotjarAdapter({ siteId: 1, version: 6 })
     const ctx = { identity: {}, debug: false, isBooted: true, emitError: () => undefined }
     await hotjar.teardown?.({ ...ctx, consent: { preferences: false, analytics: true, marketing: false } })
@@ -320,5 +321,6 @@ describe('provider identity', () => {
     expect(document.cookie).toContain('keep=1')
     expect(localStorage.getItem('_hjUserAttributes')).toBeNull()
     expect(sessionStorage.getItem('hjViewportId')).toBeNull()
+    expect(localStorage.getItem('hjActiveViewportIds')).toBeNull()
   })
 })
