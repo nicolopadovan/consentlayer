@@ -62,8 +62,8 @@ describe('normalizeIdentity', () => {
       normalizeIdentity({ email: 'not-an-email', phone: 'abc' }),
     ).toEqual({})
 
-    expect(normalizeIdentity({ external_id: 'user-1' })).toEqual({
-      external_id: 'user-1',
+    expect(normalizeIdentity({ userId: 'user-1' })).toEqual({
+      userId: 'user-1',
     })
   })
 })

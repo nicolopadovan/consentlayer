@@ -1,6 +1,3 @@
-import { act, render } from '@testing-library/react'
-import { createElement } from 'react'
-import { ConsentProvider, useConsent } from '../src/react'
 import { describe, expect, it, vi } from 'vitest'
 import { createConsentEngine } from '../src/core/consent-engine'
 import { createMemoryConsentStorage } from '../src/core/storage'
@@ -116,43 +113,6 @@ describe('consent engine', () => {
       analytics: false,
       marketing: true,
       sale_of_data: false,
-    })
-  })
-
-  it('does not destroy an externally provided engine on provider unmount', async () => {
-    const engine = createConsentEngine({
-      storage: createMemoryConsentStorage(),
-    })
-
-    function Reader() {
-      const { consent } = useConsent()
-      return createElement('pre', undefined, JSON.stringify(consent))
-    }
-
-    const { unmount } = render(
-      createElement(
-        ConsentProvider,
-        {
-          engine,
-          children: createElement(Reader),
-        },
-      ),
-    )
-
-    unmount()
-
-    await act(async () => {
-      await engine.setConsent({
-        preferences: true,
-        analytics: true,
-        marketing: true,
-      })
-    })
-
-    expect(engine.getConsent()).toEqual({
-      preferences: true,
-      analytics: true,
-      marketing: true,
     })
   })
 })

@@ -63,6 +63,15 @@ function ensureGtag(
   })
 }
 
+const GA4_EVENT_NAMES: Record<string, string> = {
+  lead: 'generate_lead',
+}
+
+/** GA4 event names allow only letters, digits and underscores. */
+export function ga4EventName(name: string): string {
+  return GA4_EVENT_NAMES[name] ?? name.replace(/[^A-Za-z0-9_]/g, '_')
+}
+
 export function createGa4Adapter(options: Ga4AdapterOptions): ProviderAdapter {
   const measurementId = assertValidGa4MeasurementId(options.measurementId)
   return {
@@ -110,7 +119,18 @@ export function createGa4Adapter(options: Ga4AdapterOptions): ProviderAdapter {
     },
     trackEvent(event) {
       if (typeof window === 'undefined') return
-      window.gtag?.('event', event.name, event.params)
+      window.gtag?.('event', ga4EventName(event.name), {
+        ...event.params,
+        ...event.options.providers?.ga4,
+      })
+    },
+    identify(identity) {
+      if (typeof window === 'undefined' || !identity.userId) return
+      window.gtag?.('set', { user_id: identity.userId })
+    },
+    reset() {
+      if (typeof window === 'undefined') return
+      window.gtag?.('set', { user_id: null })
     },
   }
 }

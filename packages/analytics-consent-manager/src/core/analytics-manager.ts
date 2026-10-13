@@ -8,15 +8,12 @@ import type {
   AutoTrackingConfig,
   ProviderAdapter,
 } from './types'
-import { getDefaultIdentityStorage } from './identity'
-import {
-  createMemoryIdentityStorage,
-  createMemoryConsentStorage,
-} from './storage'
+import { createMemoryIdentityStorage } from './storage'
 import {
   defaultRuntimePreset,
 } from './presets'
 import {
+  createEventId,
   debugLog,
   getWindowLocation,
   hasRequiredConsent,
@@ -102,8 +99,7 @@ export function createAnalyticsManager(
 ): AnalyticsManager {
   const listeners = new Set<(snapshot: AnalyticsManagerStateSnapshot) => void>()
   const providerStates = new Map<string, ProviderState>()
-  const identityStorage = options.identityStorage ?? getDefaultIdentityStorage()
-  const defaultEventDestinations = options.defaultEventDestinations ?? []
+  const identityStorage = options.identityStorage ?? createMemoryIdentityStorage()
   let consent = options.consent ?? options.consentEngine?.getConsent() ?? null
   let booted = false
   let destroyed = false
@@ -173,6 +169,7 @@ export function createAnalyticsManager(
     if (label.endsWith('.onConsentChange')) return 'provider-consent-change'
     if (label.endsWith('.trackEvent')) return 'provider-track-event'
     if (label.endsWith('.trackPage')) return 'provider-track-page'
+    if (/\.(identify|reset|group)$/.test(label)) return 'provider-identify'
     return 'provider-setup'
   }
 
@@ -234,6 +231,12 @@ export function createAnalyticsManager(
         state.adapter.init?.(context(state.adapter.id)),
       )
       state.active = true
+      const identity = identityStorage.read()
+      if (identity.userId) {
+        await safeCall(`${state.adapter.id}.identify`, () =>
+          state.adapter.identify?.(identity, {}, context(state.adapter.id)),
+        )
+      }
       return
     }
 
@@ -249,6 +252,11 @@ export function createAnalyticsManager(
     for (const state of providerStates.values()) {
       await evaluateProvider(state)
     }
+    if (options.autoTracking && booted && consent?.analytics) {
+      api.enableAutoTracking(
+        options.autoTracking === true ? undefined : options.autoTracking,
+      )
+    }
     notify()
   }
 
@@ -258,13 +266,13 @@ export function createAnalyticsManager(
   }
 
   const trackAgainstProviders = async (
-    selectedProviderIds: string[],
+    selectedProviderIds: string[] | undefined,
     callback: (state: ProviderState) => Promise<void>,
   ) => {
     if (!booted || !runtimeEnabled()) return
     for (const state of providerStates.values()) {
       if (!state.active) continue
-      if (selectedProviderIds.length > 0 && !selectedProviderIds.includes(state.adapter.id)) {
+      if (selectedProviderIds && !selectedProviderIds.includes(state.adapter.id)) {
         continue
       }
       await callback(state)
@@ -285,7 +293,7 @@ export function createAnalyticsManager(
     const sessionId = pageSessionIdCounter
 
     if (autoTracking.pageViews) {
-      void api.trackEvent(
+      void api.track(
         defaultRuntimePreset.autoTrackingEvents.pageSessionStart,
         { session_id: sessionId },
       )
@@ -304,7 +312,7 @@ export function createAnalyticsManager(
       const emitDepth = (threshold: number) => {
         if (emitted.has(threshold)) return
         emitted.add(threshold)
-        void api.trackEvent(
+        void api.track(
           defaultRuntimePreset.autoTrackingEvents.scrollDepth,
           { depth: threshold, session_id: sessionId },
         )
@@ -336,7 +344,7 @@ export function createAnalyticsManager(
         if (!Number.isFinite(seconds) || seconds <= 0) continue
         const handle = window.setTimeout(() => {
           if (sessionId !== pageSessionIdCounter) return
-          void api.trackEvent(
+          void api.track(
             defaultRuntimePreset.autoTrackingEvents.timeOnPage,
             { seconds, session_id: sessionId },
           )
@@ -388,37 +396,57 @@ export function createAnalyticsManager(
     getConsent() {
       return consent
     },
-    async trackPage(payload = {}) {
+    async page(payload = {}) {
       const page = { ...getWindowLocation(), ...payload }
-      await trackAgainstProviders([], async (state) => {
+      await trackAgainstProviders(undefined, async (state) => {
         await safeCall(`${state.adapter.id}.trackPage`, () =>
           state.adapter.trackPage?.(page, context(state.adapter.id)),
         )
       })
     },
-    async trackEvent(name, params = {}, optionsInput = {}) {
+    async track(name, params, optionsInput = {}) {
       const event: AnalyticsEventPayload = {
+        id: optionsInput.eventId ?? createEventId(),
         name,
-        params,
+        params: params ?? {},
         options: optionsInput,
       }
       const requireAnalyticsConsent =
         optionsInput.requireAnalyticsConsent ?? true
       const requireMarketingConsent =
         optionsInput.requireMarketingConsent ?? false
-      const destinations =
-        optionsInput.sendTo ??
-        (defaultEventDestinations.length
-          ? defaultEventDestinations
-          : [...providerStates.keys()])
 
       if (requireAnalyticsConsent && !consent?.analytics) return
       if (requireMarketingConsent && !consent?.marketing) return
 
-      await trackAgainstProviders(destinations, async (state) => {
+      await trackAgainstProviders(optionsInput.only, async (state) => {
         if (!hasRequiredConsent(consent, state.adapter.requiredConsent)) return
         await safeCall(`${state.adapter.id}.trackEvent`, () =>
           state.adapter.trackEvent?.(event, context(state.adapter.id)),
+        )
+      })
+    },
+    async identify(userId, traits = {}) {
+      identityStorage.write({ userId, email: traits.email, phone: traits.phone })
+      const identity = identityStorage.read()
+      await trackAgainstProviders(undefined, async (state) => {
+        await safeCall(`${state.adapter.id}.identify`, () =>
+          state.adapter.identify?.(identity, traits, context(state.adapter.id)),
+        )
+      })
+    },
+    async reset() {
+      identityStorage.clear?.()
+      await trackAgainstProviders(undefined, async (state) => {
+        await safeCall(`${state.adapter.id}.reset`, () =>
+          state.adapter.reset?.(context(state.adapter.id)),
+        )
+      })
+    },
+    async group(groupId, traits = {}) {
+      await trackAgainstProviders(undefined, async (state) => {
+        await safeCall(`${state.adapter.id}.group`, () =>
+          state.adapter.group?.(groupId, traits, context(state.adapter.id)),
         )
       })
     },
@@ -448,7 +476,7 @@ export function createAnalyticsManager(
             element.getAttribute('name') ||
             element.textContent?.trim()?.slice(0, 80) ||
             'unknown'
-          void api.trackEvent(defaultRuntimePreset.autoTrackingEvents.uiClick, {
+          void api.track(defaultRuntimePreset.autoTrackingEvents.uiClick, {
             ui_target: name,
             ui_element: element.tagName.toLowerCase(),
             ui_id: element.id || undefined,
@@ -463,7 +491,7 @@ export function createAnalyticsManager(
       startPageSession()
     },
     newPageSession() {
-      startPageSession()
+      if (autoBound) startPageSession()
     },
     getSnapshot() {
       return currentSnapshot
@@ -495,21 +523,4 @@ export function createAnalyticsManager(
   }
 
   return api
-}
-
-let defaultAnalyticsManager: AnalyticsManager | null = null
-
-export function getDefaultAnalyticsManager(): AnalyticsManager {
-  if (!defaultAnalyticsManager) {
-    const fallbackIdentity = getDefaultIdentityStorage()
-    defaultAnalyticsManager = createAnalyticsManager({
-      identityStorage: fallbackIdentity ?? createMemoryIdentityStorage(),
-      consent: createMemoryConsentStorage().read(),
-    })
-  }
-  return defaultAnalyticsManager
-}
-
-export function setDefaultAnalyticsManager(manager: AnalyticsManager): void {
-  defaultAnalyticsManager = manager
 }

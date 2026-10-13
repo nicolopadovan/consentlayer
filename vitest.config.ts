@@ -13,6 +13,13 @@ export default defineConfig({
         ),
       },
       {
+        find: '@nicolopadovan/analytics-consent-manager/ecommerce',
+        replacement: path.resolve(
+          import.meta.dirname,
+          'packages/analytics-consent-manager/src/ecommerce.ts',
+        ),
+      },
+      {
         find: '@nicolopadovan/analytics-consent-manager/ui',
         replacement: path.resolve(
           import.meta.dirname,

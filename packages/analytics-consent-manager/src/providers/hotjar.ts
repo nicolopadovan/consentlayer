@@ -44,5 +44,11 @@ export function createHotjarAdapter(
     trackEvent(event) {
       window.hj?.('event', event.name)
     },
+    identify(identity, traits) {
+      const attributes = Object.fromEntries(
+        Object.entries(traits).filter(([key]) => key !== 'email' && key !== 'phone'),
+      )
+      window.hj?.('identify', identity.userId ?? null, attributes)
+    },
   }
 }

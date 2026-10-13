@@ -6,6 +6,8 @@ This repo uses GitHub-rendered Markdown as the primary documentation surface.
 
 - [Installation and access](./installation-and-access.md)
 - [Next.js integration](./nextjs-integration.md)
+- [Events and identity](./events.md)
+- [Migrating to v1](./migrating-to-v1.md)
 - [Provider configuration](./provider-configuration.md)
 - [Server-side tracking](./server-side-tracking.md)
 - [Publishing and releases](./publishing-and-releases.md)
@@ -17,8 +19,9 @@ If you are consuming the package:
 
 1. [Installation and access](./installation-and-access.md)
 2. [Next.js integration](./nextjs-integration.md)
-3. [Provider configuration](./provider-configuration.md)
-4. [Server-side tracking](./server-side-tracking.md)
+3. [Events and identity](./events.md)
+4. [Provider configuration](./provider-configuration.md)
+5. [Server-side tracking](./server-side-tracking.md)
 
 If you are maintaining the package:
 

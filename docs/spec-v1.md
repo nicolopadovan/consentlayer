@@ -1,6 +1,6 @@
 # Spec: v1 architecture
 
-Status: draft for review · 2026-10-13
+Status: stage 1 implemented · 2026-10-13
 
 ## Goal
 
@@ -64,10 +64,12 @@ that aren't theirs:
 
 ```ts
 analytics.track('purchase', params, {
-  providers: { meta: { customData: { … } }, ga4: { userProperties: { … } } },
-  only: ['ga4'],                            // optional destination filter
+  providers: { meta: { content_category: 'shoes' } }, // merged into Meta's params
+  only: ['ga4', 'meta'],                    // optional destination filter
 })
 ```
+
+Each provider merges `providers[itsId]` into the params it sends.
 
 ## Events
 
@@ -79,11 +81,14 @@ custom event, or dropped if the provider has no custom events.
 |---|---|
 | Core | `page_view`, `sign_up`, `login`, `search`, `lead`, `share`, `contact` |
 | Ecommerce (`/ecommerce`) | `view_item`, `view_item_list`, `add_to_cart`, `remove_from_cart`, `add_to_wishlist`, `begin_checkout`, `add_payment_info`, `add_shipping_info`, `purchase`, `refund` |
-| SaaS (`/saas`) | `trial_started`, `subscription_started`, `subscription_cancelled`, plus `group(id, traits)` |
+| SaaS | `trial_started`, `subscription_started`, `subscription_cancelled`, plus `group(id, traits)` |
 
-Ecommerce events carry GA4's `items[]` shape (`item_id`, `item_name`,
-`item_variant`, `price`, `quantity`, `item_category`) plus `value` and
-`currency`. Pack helpers such as `trackPurchase(order)` build them.
+All standard events are typed in core (types cost nothing at runtime), so
+there is no `/saas` subpath. Ecommerce events carry GA4's `items[]` shape
+(`item_id`, `item_name`, `item_variant`, `price`, `quantity`,
+`item_category`) plus `value` and `currency`. `/ecommerce` exports param
+builders rather than `trackX()` functions, so every event goes through
+`analytics.track`: `track('purchase', orderParams(order))`.
 
 Example translations:
 
@@ -101,10 +106,13 @@ providers that dedupe (Meta, GA4) count it once.
 
 ### Identity
 
-`identify(userId, traits)` stores a stable user ID plus traits. Email and
-phone stay in the identity store for Meta's advanced matching. `reset()`
-clears everything and starts a new anonymous ID. Providers receive identity
-through the context; they never read storage themselves.
+`identify(userId, traits)` stores the user ID, email and phone and passes
+traits to providers (traits are not stored). Email and phone stay in the
+identity store for Meta's matching. `reset()` clears it. Providers receive
+identity through the context; they never read storage themselves.
+
+Deferred to stage 2: a package-level anonymous ID. Each provider keeps its
+own until server forwarding needs a shared one.
 
 ## Consent
 
@@ -201,8 +209,9 @@ export const POST = createAnalyticsHandler({
 
 ## Stages
 
-1. **Events and identity**
-   - `createAnalytics` instance.
+1. **Events and identity** (done)
+   - `createAnalytics` instance. Provider factories keep their
+     `createXAdapter` names until stage 2 ports them to `definePlugin`.
    - Standard events and packs; per-provider translation.
    - `identify` / `reset`.
    - Instance-based React provider.

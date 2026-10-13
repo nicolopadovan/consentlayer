@@ -1,24 +1,4 @@
-export { createAnalyticsManager } from './core/analytics-manager'
-export { createConsentEngine } from './core/consent-engine'
-export {
-  enableAutoTracking,
-  getDefaultConsentEngine,
-  getDefaultRuntimeAnalyticsManager,
-  newPageSession,
-  registerProvider,
-  setDefaultConsentEngine,
-  setDefaultRuntimeAnalyticsManager,
-  trackEvent,
-  trackPage,
-  updateConsent,
-} from './core/default-runtime'
-export {
-  getDefaultIdentityStorage,
-  getIdentity,
-  saveIdentity,
-  setDefaultIdentityStorage,
-  useDefaultIdentityStorage,
-} from './core/identity'
+export { createAnalytics, type AnalyticsOptions } from './core/create-analytics'
 export { configureNames, getNames, legacyNames } from './core/names'
 export type { AutoTrackingEventNames, Names, NamesInput } from './core/names'
 export {
@@ -42,6 +22,7 @@ export {
   isValidPhoneE164,
 } from './core/validation'
 export type {
+  Analytics,
   AnalyticsError,
   AnalyticsErrorHandler,
   AnalyticsErrorScope,
@@ -57,31 +38,23 @@ export type {
   AutoTrackingTimeConfig,
   ConsentBroadcastConfig,
   ConsentChangeSource,
+  ConsentApi,
   ConsentEngine,
   ConsentEngineOptions,
   ConsentEngineSnapshot,
   ConsentIntegrationAdapter,
   ConsentState,
   ConsentStorageAdapter,
+  EcommerceItem,
+  EventParams,
   IdentityStorageAdapter,
   LazyBootConfig,
   LazyBootMode,
   PageViewPayload,
   ProviderAdapter,
   ProviderConsentRequirement,
+  StandardEvents,
   TrackEventOptions,
   UserIdentity,
+  UserTraits,
 } from './core/types'
-export {
-  trackAddPaymentInfo,
-  trackAddToCart,
-  trackAddToWishlist,
-  trackContact,
-  trackCustomizeProduct,
-  trackInitiateCheckout,
-  trackLead,
-  trackPurchase,
-  trackSearch,
-  trackSubscribe,
-  trackViewContent,
-} from './ecommerce-events'

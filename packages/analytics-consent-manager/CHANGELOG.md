@@ -6,6 +6,38 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
+
+### Breaking
+- One instance replaces the module singletons: `createAnalytics({ providers, consent, autoTracking, names })`
+  returns `track`, `page`, `identify`, `reset`, `group`, `consent.update` and friends.
+  Removed `createAnalyticsManager`, `createConsentEngine`, the default runtime
+  (`trackEvent`, `trackPage`, `updateConsent`, `registerProvider`, `enableAutoTracking`,
+  `newPageSession`, `setDefault*`, `getDefault*`) and `saveIdentity` / `getIdentity`.
+- React: `<AnalyticsProvider analytics>` replaces `ConsentProvider`,
+  `ConsentControllerProvider`, `AnalyticsManager` and `AutoTracking`;
+  `useAnalytics()` replaces `useTracker()`.
+- Standard events use GA4 names (`view_item`, `add_to_cart`, `purchase`, …) and
+  each provider translates them. The `trackViewContent`-style helpers are replaced
+  by `productParams`, `cartParams` and `orderParams` in `/ecommerce`.
+- `TrackEventOptions.sendTo` → `only`; `defaultEventDestinations` removed.
+- `AnalyticsEventPayload` has a required `id`; `metaEventIdFrom` removed.
+- `UserIdentity.external_id` → `userId`.
+
+### Added
+- Typed `StandardEvents` params; `providers: { [id]: extras }` per-event option.
+- `identify(userId, traits)`, `reset()`, `group(id, traits)` and matching
+  optional provider hooks. GA4 sets `user_id`; Hotjar identifies without email
+  or phone; providers that load later receive the stored user ID.
+- Meta translation (`toMetaEvent`): `items[]` → `content_ids` / `contents`.
+- GA4: `lead` → `generate_lead`; invalid characters in event names become `_`.
+- `consent.update(partial)` merges into the current consent.
+- `autoTracking` option starts auto-tracking once analytics consent is granted.
+
+### Fixed
+- `ConsentEngine.bootstrap()` runs once even when called from several places.
+- `newPageSession()` no longer sends a page-session event before auto-tracking is enabled.
+
 ### Changed
 - Default names use the `npcm` prefix: `npcm_consent`, `npcm_user_identity`,
   `npcm:consent`, `NPCM_CONSENT`, `NPCM_openConsent`, `.npcm-*` classes,

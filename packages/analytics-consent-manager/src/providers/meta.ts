@@ -4,6 +4,7 @@ import {
 } from 'react'
 import type {
   AnalyticsEventPayload,
+  EcommerceItem,
   ProviderAdapter,
   UserIdentity,
 } from '../core/types'
@@ -38,26 +39,50 @@ export type MetaAdapterOptions = {
   loadBeforeConsent?: boolean
 }
 
-const STANDARD_EVENTS = new Set([
-  'AddPaymentInfo',
-  'AddToCart',
-  'AddToWishlist',
-  'CompleteRegistration',
-  'Contact',
-  'CustomizeProduct',
-  'Donate',
-  'FindLocation',
-  'InitiateCheckout',
-  'Lead',
-  'PageView',
-  'Purchase',
-  'Schedule',
-  'Search',
-  'StartTrial',
-  'SubmitApplication',
-  'Subscribe',
-  'ViewContent',
-])
+const META_EVENT_NAMES: Record<string, string> = {
+  view_item: 'ViewContent',
+  add_to_cart: 'AddToCart',
+  add_to_wishlist: 'AddToWishlist',
+  begin_checkout: 'InitiateCheckout',
+  add_payment_info: 'AddPaymentInfo',
+  purchase: 'Purchase',
+  sign_up: 'CompleteRegistration',
+  lead: 'Lead',
+  search: 'Search',
+  contact: 'Contact',
+  trial_started: 'StartTrial',
+  subscription_started: 'Subscribe',
+}
+
+/** Translates a standard event into a Meta standard event, or a custom one. */
+export function toMetaEvent(event: AnalyticsEventPayload): {
+  method: 'track' | 'trackCustom'
+  name: string
+  params: Record<string, unknown>
+} {
+  const standard = META_EVENT_NAMES[event.name]
+  const { items, search_term, ...rest } = event.params as {
+    items?: EcommerceItem[]
+    search_term?: string
+  } & Record<string, unknown>
+  const params: Record<string, unknown> = { ...rest }
+  if (Array.isArray(items) && items.length) {
+    params.content_ids = items.map((item) => item.item_id)
+    params.contents = items.map((item) => ({
+      id: item.item_id,
+      quantity: item.quantity ?? 1,
+      item_price: item.price,
+    }))
+    params.content_type = 'product'
+    params.num_items = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0)
+  }
+  if (search_term !== undefined) params.search_string = search_term
+  return {
+    method: standard ? 'track' : 'trackCustom',
+    name: standard ?? event.name,
+    params: { ...params, ...event.options.providers?.meta },
+  }
+}
 
 export function createMetaAdapter(
   options: MetaAdapterOptions,
@@ -83,7 +108,12 @@ export function createMetaAdapter(
     if (!serverEndpoint) return
     const fetchImpl = options.fetchImpl ?? globalThis.fetch
     if (!fetchImpl) return
-    const hasIdentity = identity.email || identity.phone || identity.external_id
+    const user = {
+      email: identity.email,
+      phone: identity.phone,
+      external_id: identity.userId,
+    }
+    const hasIdentity = user.email || user.phone || user.external_id
     await fetchImpl(serverEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -93,7 +123,7 @@ export function createMetaAdapter(
         event_source_url:
           typeof window !== 'undefined' ? window.location.href : undefined,
         custom_data: customData,
-        user: hasIdentity ? identity : undefined,
+        user: hasIdentity ? user : undefined,
       }),
       keepalive: true,
     }).catch(() => undefined)
@@ -149,10 +179,9 @@ fbq('init', ${JSON.stringify(pixelId)});`
     },
     async trackEvent(event, context) {
       if (!isReady() || !context.consent?.marketing) return
-      const eventId = event.options.eventId ?? createEventId()
-      const method = STANDARD_EVENTS.has(event.name) ? 'track' : 'trackCustom'
-      window.fbq?.(method, event.name, event.params, { eventID: eventId })
-      await mirrorEvent(event.name, eventId, event.params, context.identity)
+      const { method, name, params } = toMetaEvent(event)
+      window.fbq?.(method, name, params, { eventID: event.id })
+      await mirrorEvent(name, event.id, params, context.identity)
     },
   }
 }
@@ -181,8 +210,4 @@ export function MetaPixelNoscript(
       src: renderMetaPixelNoscriptHtml(pixelId),
     }),
   )
-}
-
-export function metaEventIdFrom(event: AnalyticsEventPayload): string {
-  return event.options.eventId ?? createEventId()
 }

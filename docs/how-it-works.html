@@ -106,7 +106,7 @@
       <ul>
         <li><code>boot()</code> — nothing happens to providers before this</li>
         <li>On each consent change: re-evaluates every provider</li>
-        <li><code>trackEvent</code> drops events unless <code>analytics</code> is granted (default)</li>
+        <li><code>track</code> drops events unless <code>analytics</code> is granted (default), and gives each one an id shared by browser and server</li>
         <li>Auto-tracking: clicks, scroll depth, time on page</li>
       </ul>
     </div>
@@ -119,14 +119,14 @@
         <li><code>init</code> — runs once consent for its category is granted</li>
         <li><code>onConsentChange</code> — runs on every change, regardless of consent</li>
         <li><code>teardown</code> — runs when consent is withdrawn</li>
-        <li><code>trackPage</code> / <code>trackEvent</code> — only while active</li>
+        <li><code>trackPage</code> / <code>trackEvent</code> / <code>identify</code> — only while active; each provider translates the standard event (<code>add_to_cart</code> → Meta's <code>AddToCart</code>)</li>
       </ul>
     </div>
   </div>
   <div class="grid side">
     <div class="panel">
       <h3>React layer <span class="tag">/react, /ui</span></h3>
-      <p><code>&lt;ConsentProvider&gt;</code> wraps the engine · <code>&lt;AnalyticsManager&gt;</code> boots the manager (immediately, on idle, or manually) and fires a page view per route · <code>&lt;ConsentControllerProvider&gt;</code> + <code>&lt;CookieBanner&gt;</code>/<code>&lt;CookieDialog&gt;</code> give you Accept all / Reject / Customize. <code>window.NPCM_openConsent()</code> reopens the dialog.</p>
+      <p><code>&lt;AnalyticsProvider analytics={…}&gt;</code> takes the <code>createAnalytics()</code> instance, boots it (immediately, on idle, or manually) and fires a page view per route · <code>&lt;CookieBanner&gt;</code>/<code>&lt;CookieDialog&gt;</code> give you Accept all / Reject / Customize; <code>useAnalytics()</code> / <code>useConsent()</code> for your own UI. <code>window.NPCM_openConsent()</code> reopens the dialog.</p>
     </div>
     <div class="panel">
       <h3>Server helpers <span class="tag">/server</span></h3>
@@ -156,7 +156,7 @@
       </div>
       <div class="group">
         <h3>Visitor actions</h3>
-        <button id="trackEvent">Fire <code>trackEvent("AddToCart")</code></button>
+        <button id="trackEvent">Fire <code>track("add_to_cart")</code></button>
         <button id="reopen">Reopen dialog (<code>NPCM_openConsent</code>)</button>
       </div>
       <div class="group">
@@ -226,7 +226,7 @@ const PROVIDERS = [
     setup: (s) => { s.call("fbq('init', PIXEL_ID)"); s.net('connect.facebook.net/en_US/fbevents.js') },
     change: (s, c) => s.call(`fbq('consent','${c?.marketing ? 'grant' : 'revoke'}')`),
     page: (s, c) => c?.marketing && s.evt("fbq('track','PageView')"),
-    track: (s, e, c) => c?.marketing && s.evt(`fbq('track','${e}')`),
+    track: (s, e, c) => c?.marketing && s.evt(`fbq('track','${e === 'add_to_cart' ? 'AddToCart' : e}')`),
     note: 'Pixel script + init at boot; consent revoke sent after.' },
   { id: 'hotjar', label: 'Hotjar', req: 'analytics',
     init: (s) => { if (!s.flags.hotjar) { s.net('static.hotjar.com/c/hotjar-123.js'); s.flags.hotjar = true } },
@@ -392,10 +392,10 @@ $('save').onclick = () => {
 }
 $('reopen').onclick = () => { sim.dialog = true; syncCheckboxes(); render() }
 $('trackEvent').onclick = () => {
-  log('sys', 'trackEvent("AddToCart")')
+  log('sys', 'track("add_to_cart")')
   if (!sim.booted) return log('sys', '  dropped: manager not booted')
   if (!sim.consent?.analytics) return log('sys', '  dropped: analytics consent required by default')
-  for (const s of sim.states.values()) if (s.active) s.def.track?.(ctx(s.def), 'AddToCart', sim.consent)
+  for (const s of sim.states.values()) if (s.active) s.def.track?.(ctx(s.def), 'add_to_cart', sim.consent)
 }
 $('wrap').onchange = () => fresh(true)
 $('phOn').onchange = () => fresh(true)

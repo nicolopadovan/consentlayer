@@ -7,6 +7,8 @@ Private monorepo for `@nicolopadovan/analytics-consent-manager` and its example 
 - [Docs index](./docs/README.md)
 - [Installation and access](./docs/installation-and-access.md)
 - [Next.js integration](./docs/nextjs-integration.md)
+- [Events and identity](./docs/events.md)
+- [Migrating to v1](./docs/migrating-to-v1.md)
 - [Provider configuration](./docs/provider-configuration.md)
 - [Server-side tracking](./docs/server-side-tracking.md)
 - [Publishing and releases](./docs/publishing-and-releases.md)
@@ -126,17 +128,18 @@ prefix comes from one place. Defaults use the `npcm` prefix:
 | auto-tracking events | `npcm.page_session_start`, `npcm.scroll_depth`, `npcm.time_on_page`, `npcm.ui_click` |
 | UI class prefix | `npcm-` |
 
-Change them before the first consent read, e.g. at the top of the module that
-sets up analytics:
+Change them with `createAnalytics({ names })` (or `configureNames()` before
+the first consent read):
 
 ```ts
-import { configureNames } from '@nicolopadovan/analytics-consent-manager'
-
-configureNames({
-  prefix: 'shop',                       // shop_consent, shop:consent, SHOP_CONSENT, …
-  consentStorageKey: 'my_consent',      // any single name can be overridden
-  classPrefix: 'shop',                  // .shop-banner, .shop-dialog, …
-  legacy: false,                        // drop the acm_* compatibility below
+createAnalytics({
+  providers,
+  names: {
+    prefix: 'shop',                     // shop_consent, shop:consent, SHOP_CONSENT, …
+    consentStorageKey: 'my_consent',    // any single name can be overridden
+    classPrefix: 'shop',                // .shop-banner, .shop-dialog, …
+    legacy: false,                      // drop the acm_* compatibility below
+  },
 })
 ```
 

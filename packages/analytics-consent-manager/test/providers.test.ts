@@ -23,9 +23,10 @@ describe('providers', () => {
 
     await adapter.trackEvent?.(
       {
-        name: 'Purchase',
+        id: 'dedupe-123',
+        name: 'purchase',
         params: { value: 10 },
-        options: { eventId: 'dedupe-123' },
+        options: {},
       },
       {
         consent: {

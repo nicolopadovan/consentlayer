@@ -11,6 +11,10 @@
 | Hotjar | `createHotjarAdapter` | `analytics` | `siteId`, `version` | Loads only after analytics consent |
 | TikTok consent bridge | `createTikTokConsentAdapter` | `marketing` | `ttq` loaded by consumer | Consent sync only; no SDK bootstrap in package |
 
+Pass browser providers to `createAnalytics({ providers: [...] })` and consent
+sources such as Shopify Customer Privacy to
+`createAnalytics({ consent: { adapters: [...] } })`.
+
 ## Environment Variables Used By The Example App
 
 - `NEXT_PUBLIC_ENABLE_ANALYTICS`

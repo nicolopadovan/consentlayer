@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { updateConsent } from '../src/core/default-runtime'
+import { createAnalytics } from '../src/core/create-analytics'
 import { configureNames, getFlag, setFlag, ui } from '../src/core/names'
 import { defaultRuntimePreset } from '../src/core/presets'
 import { createLocalStorageConsentStorage } from '../src/core/storage'
@@ -50,7 +50,7 @@ describe('names', () => {
     const seen: string[] = []
     document.addEventListener('npcm:consent', () => seen.push('npcm'))
     document.addEventListener('acm:consent', () => seen.push('acm'))
-    await updateConsent(granted)
+    await createAnalytics().consent.update(granted)
     expect(seen).toEqual(['npcm', 'acm'])
     expect(win.NPCM_CONSENT).toEqual(granted)
     expect(win.ACM_CONSENT).toEqual(granted)

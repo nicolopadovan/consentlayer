@@ -75,7 +75,6 @@ describe('analytics manager', () => {
         },
       ],
       identityStorage: createMemoryIdentityStorage(),
-      defaultEventDestinations: ['ga4', 'meta'],
     })
 
     await manager.boot()
@@ -84,7 +83,7 @@ describe('analytics manager', () => {
       analytics: true,
       marketing: false,
     })
-    await manager.trackEvent('ProductViewed', {}, { sendTo: ['meta', 'ga4'] })
+    await manager.track('ProductViewed', {}, { only: ['meta', 'ga4'] })
 
     expect(analyticsTrack).toHaveBeenCalledTimes(1)
     expect(metaTrack).not.toHaveBeenCalled()

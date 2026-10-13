@@ -22,6 +22,7 @@ export function createConsentEngine(
   const adapters = options.adapters ?? []
   const storage = options.storage
   let destroyed = false
+  let bootstrapping: Promise<ConsentState | null> | undefined
 
   const notify = () => {
     const snapshot = { consent: current }
@@ -82,8 +83,7 @@ export function createConsentEngine(
     }
   }
 
-  return {
-    async bootstrap() {
+  const runBootstrap = async () => {
       const stored = normalizeConsent(storage?.read() ?? null)
       if (stored) {
         await commit(stored, 'bootstrap', {
@@ -107,6 +107,12 @@ export function createConsentEngine(
 
       notify()
       return current
+  }
+
+  return {
+    bootstrap() {
+      bootstrapping ??= runBootstrap()
+      return bootstrapping
     },
     getConsent() {
       return current

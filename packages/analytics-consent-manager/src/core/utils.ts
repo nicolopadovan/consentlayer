@@ -54,7 +54,7 @@ export function normalizeIdentity(identity: Partial<UserIdentity>): UserIdentity
     const candidate = identity.phone.replace(/[\s\-().]/g, '')
     if (isValidPhoneE164(candidate)) output.phone = candidate
   }
-  if (identity.external_id) output.external_id = String(identity.external_id)
+  if (identity.userId) output.userId = String(identity.userId)
   return output
 }
 

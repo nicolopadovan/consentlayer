@@ -11,7 +11,7 @@ import {
 } from 'react'
 import { withLegacy } from '../core/names'
 import type { ConsentState } from '../core/types'
-import { useConsent } from './consent-provider'
+import { useConsent } from './analytics-provider'
 
 type ConsentControllerValue = {
   ready: boolean
