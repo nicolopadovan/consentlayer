@@ -62,8 +62,10 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     subscribe: manager.subscribe,
     consent: {
       ...engine,
-      update: (partial) =>
-        engine.setConsent({ ...DENIED, ...engine.getConsent(), ...partial }),
+      async update(partial) {
+        await engine.bootstrap()
+        await engine.setConsent({ ...DENIED, ...engine.getConsent(), ...partial })
+      },
     },
     destroy() {
       manager.destroy()

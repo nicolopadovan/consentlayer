@@ -54,10 +54,15 @@ analytics.track('purchase', orderParams(order))
 | `contact` | `contact` | `Contact` | as is |
 | `trial_started` | `trial_started` | `StartTrial` | as is |
 | `subscription_started` | `subscription_started` | `Subscribe` | as is |
-| anything else | as is, with characters other than letters, digits and `_` replaced by `_` | custom event | as is |
+| `customize_product`, `schedule`, `submit_application`, `find_location`, `donate` | as is | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`, `Donate` | as is |
+| anything else | as is, with characters other than letters, digits and `_` replaced by `_` | standard if it is a Meta standard name, else custom | as is |
 
 Meta also receives `items[]` as `content_ids`, `contents`, `content_type` and
-`num_items`, and `search_term` as `search_string`.
+`num_items` (IDs are `item_variant`, else `item_id`), and `search_term` as
+`search_string`.
+
+An event reaches each provider whose own consent category is granted: GA4 and
+Hotjar need analytics, Meta needs marketing.
 
 ## Per-Event Options
 
@@ -65,8 +70,8 @@ Meta also receives `items[]` as `content_ids`, `contents`, `content_type` and
 analytics.track('purchase', params, {
   eventId: order.id,                        // shared with the server for dedupe; generated if omitted
   only: ['ga4', 'meta'],                    // send to these providers only
-  providers: { meta: { content_category: 'shoes' } }, // merged into what one provider sends
-  requireMarketingConsent: true,            // drop unless marketing is granted
+  providers: { meta: { content_category: 'shoes' } }, // merged into GA4's or Meta's params
+  requireMarketingConsent: true,            // drop unless marketing is granted (also requireAnalyticsConsent)
 })
 ```
 
@@ -78,12 +83,13 @@ await analytics.reset() // on logout
 ```
 
 - The user ID, email and phone are stored locally (`npcm_user_identity`) and
-  passed to providers. A provider that loads later receives the user ID when
-  it starts.
+  passed to providers. Identifying a different user replaces what was stored.
+  A provider that loads later receives the user ID when it starts.
 - GA4 gets `user_id` only. Hotjar gets the user ID and traits without email
   or phone. Meta's server mirror uses email, phone and the user ID (hashed on
   the server) for matching.
-- `reset()` clears the stored identity and tells each provider.
+- `reset()` clears the stored identity and tells each provider that has loaded
+  (GA4 clears `user_id`, Hotjar identifies as anonymous).
 - `group(id, traits)` is passed to providers that support groups.
 
 ## Consent

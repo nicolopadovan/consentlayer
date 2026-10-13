@@ -104,6 +104,8 @@ export type AutoTrackingConfig = {
   scroll?: boolean | AutoTrackingScrollConfig
   timeOnPage?: boolean | AutoTrackingTimeConfig
   pageViews?: boolean
+  /** Send auto-tracked events only to these provider ids. Defaults to all. */
+  only?: string[]
 }
 
 export type PageViewPayload = {

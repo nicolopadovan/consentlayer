@@ -111,6 +111,9 @@ export function createAnalyticsManager(
   let activeClickHandler: ((event: Event) => void) | null = null
   let pageSessionIdCounter = 0
   let timeouts: number[] = []
+  let autoOnly: string[] | undefined
+  const autoTrack = (name: string, params: Record<string, unknown>) =>
+    api.track(name, params, { only: autoOnly })
 
   const snapshot = (): AnalyticsManagerStateSnapshot => ({
     booted,
@@ -249,10 +252,11 @@ export function createAnalyticsManager(
   }
 
   const runLifecycle = async () => {
+    const evaluated = consent
     for (const state of providerStates.values()) {
       await evaluateProvider(state)
     }
-    if (options.autoTracking && booted && consent?.analytics) {
+    if (options.autoTracking && booted && evaluated?.analytics) {
       api.enableAutoTracking(
         options.autoTracking === true ? undefined : options.autoTracking,
       )
@@ -272,6 +276,7 @@ export function createAnalyticsManager(
     if (!booted || !runtimeEnabled()) return
     for (const state of providerStates.values()) {
       if (!state.active) continue
+      if (!hasRequiredConsent(consent, state.adapter.requiredConsent)) continue
       if (selectedProviderIds && !selectedProviderIds.includes(state.adapter.id)) {
         continue
       }
@@ -293,7 +298,7 @@ export function createAnalyticsManager(
     const sessionId = pageSessionIdCounter
 
     if (autoTracking.pageViews) {
-      void api.track(
+      void autoTrack(
         defaultRuntimePreset.autoTrackingEvents.pageSessionStart,
         { session_id: sessionId },
       )
@@ -312,7 +317,7 @@ export function createAnalyticsManager(
       const emitDepth = (threshold: number) => {
         if (emitted.has(threshold)) return
         emitted.add(threshold)
-        void api.track(
+        void autoTrack(
           defaultRuntimePreset.autoTrackingEvents.scrollDepth,
           { depth: threshold, session_id: sessionId },
         )
@@ -344,7 +349,7 @@ export function createAnalyticsManager(
         if (!Number.isFinite(seconds) || seconds <= 0) continue
         const handle = window.setTimeout(() => {
           if (sessionId !== pageSessionIdCounter) return
-          void api.track(
+          void autoTrack(
             defaultRuntimePreset.autoTrackingEvents.timeOnPage,
             { seconds, session_id: sessionId },
           )
@@ -411,22 +416,17 @@ export function createAnalyticsManager(
         params: params ?? {},
         options: optionsInput,
       }
-      const requireAnalyticsConsent =
-        optionsInput.requireAnalyticsConsent ?? true
-      const requireMarketingConsent =
-        optionsInput.requireMarketingConsent ?? false
-
-      if (requireAnalyticsConsent && !consent?.analytics) return
-      if (requireMarketingConsent && !consent?.marketing) return
+      if (optionsInput.requireAnalyticsConsent && !consent?.analytics) return
+      if (optionsInput.requireMarketingConsent && !consent?.marketing) return
 
       await trackAgainstProviders(optionsInput.only, async (state) => {
-        if (!hasRequiredConsent(consent, state.adapter.requiredConsent)) return
         await safeCall(`${state.adapter.id}.trackEvent`, () =>
           state.adapter.trackEvent?.(event, context(state.adapter.id)),
         )
       })
     },
     async identify(userId, traits = {}) {
+      if (userId && userId !== identityStorage.read().userId) identityStorage.clear?.()
       identityStorage.write({ userId, email: traits.email, phone: traits.phone })
       const identity = identityStorage.read()
       await trackAgainstProviders(undefined, async (state) => {
@@ -437,11 +437,12 @@ export function createAnalyticsManager(
     },
     async reset() {
       identityStorage.clear?.()
-      await trackAgainstProviders(undefined, async (state) => {
+      for (const state of providerStates.values()) {
+        if (!state.setup) continue
         await safeCall(`${state.adapter.id}.reset`, () =>
           state.adapter.reset?.(context(state.adapter.id)),
         )
-      })
+      }
     },
     async group(groupId, traits = {}) {
       await trackAgainstProviders(undefined, async (state) => {
@@ -454,6 +455,7 @@ export function createAnalyticsManager(
       if (!isBrowser() || autoBound) return
       autoBound = true
       autoTracking = resolveAutoTracking(config)
+      autoOnly = config?.only
 
       const clicks = autoTracking.clicks
       if (clicks.enabled) {
@@ -476,7 +478,7 @@ export function createAnalyticsManager(
             element.getAttribute('name') ||
             element.textContent?.trim()?.slice(0, 80) ||
             'unknown'
-          void api.track(defaultRuntimePreset.autoTrackingEvents.uiClick, {
+          void autoTrack(defaultRuntimePreset.autoTrackingEvents.uiClick, {
             ui_target: name,
             ui_element: element.tagName.toLowerCase(),
             ui_id: element.id || undefined,

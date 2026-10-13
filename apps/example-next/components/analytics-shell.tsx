@@ -19,7 +19,7 @@ import {
   createShopifyCustomerPrivacyAdapter,
 } from '@nicolopadovan/analytics-consent-manager/providers/shopify'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 type AnalyticsShellEnv = ReturnType<typeof createEnvConfig>
 
@@ -81,8 +81,6 @@ export function AnalyticsShell({ children, env }: AnalyticsShellProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [analytics] = useState(() => createShellAnalytics(env))
-
-  useEffect(() => () => analytics.destroy(), [analytics])
 
   return (
     <AnalyticsProvider

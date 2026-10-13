@@ -22,7 +22,9 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
   by `productParams`, `cartParams` and `orderParams` in `/ecommerce`.
 - `TrackEventOptions.sendTo` → `only`; `defaultEventDestinations` removed.
 - `AnalyticsEventPayload` has a required `id`; `metaEventIdFrom` removed.
-- `UserIdentity.external_id` → `userId`.
+- `UserIdentity.external_id` → `userId` (stored `external_id` values are still read).
+- `track` no longer requires analytics consent by default; each provider's own
+  consent category decides. `page`, `identify` and `group` now check it too.
 
 ### Added
 - Typed `StandardEvents` params; `providers: { [id]: extras }` per-event option.
@@ -32,11 +34,17 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
 - Meta translation (`toMetaEvent`): `items[]` → `content_ids` / `contents`.
 - GA4: `lead` → `generate_lead`; invalid characters in event names become `_`.
 - `consent.update(partial)` merges into the current consent.
-- `autoTracking` option starts auto-tracking once analytics consent is granted.
+- `autoTracking` option starts auto-tracking once analytics consent is granted;
+  `autoTracking.only` limits which providers receive auto-tracked events.
+- Meta: `customize_product`, `schedule`, `submit_application`, `find_location`,
+  `donate`; Meta standard names passed as is stay standard; content IDs use the
+  variant ID when present.
+- Hotjar `reset()`.
 
 ### Fixed
 - `ConsentEngine.bootstrap()` runs once even when called from several places.
 - `newPageSession()` no longer sends a page-session event before auto-tracking is enabled.
+- Auto-tracking could start before providers were active and lose the first page-session event.
 
 ### Changed
 - Default names use the `npcm` prefix: `npcm_consent`, `npcm_user_identity`,

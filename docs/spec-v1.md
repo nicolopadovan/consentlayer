@@ -102,7 +102,7 @@ Example translations:
 | `search` | `search` | `Search` | `search` |
 
 Every event gets an `eventId`. The browser and the server use the same ID so
-providers that dedupe (Meta, GA4) count it once.
+providers that dedupe (Meta) count it once.
 
 ### Identity
 

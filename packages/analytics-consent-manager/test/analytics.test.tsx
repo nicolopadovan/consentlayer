@@ -83,12 +83,45 @@ describe('createAnalytics', () => {
     analytics.destroy()
   })
 
+  it('drops the previous user\'s email when a different user is identified', async () => {
+    const analytics = createAnalytics()
+    await analytics.identify('alice', { email: 'alice@example.com' })
+    await analytics.identify('bob', { plan: 'pro' })
+    expect(JSON.parse(localStorage.getItem('npcm_user_identity') ?? '{}')).toEqual({ userId: 'bob' })
+    analytics.destroy()
+  })
+
+  it('merges an update made before bootstrap into stored consent', async () => {
+    localStorage.setItem(
+      'npcm_consent',
+      JSON.stringify(granted),
+    )
+    const analytics = createAnalytics()
+    await analytics.consent.update({ preferences: false })
+    expect(analytics.consent.getConsent()).toEqual({ ...granted, preferences: false })
+    analytics.destroy()
+  })
+
+  it('sends events to a marketing provider without analytics consent', async () => {
+    const meta = spyProvider('meta', 'marketing')
+    const ga4 = spyProvider('ga4')
+    const analytics = createAnalytics({ providers: [meta, ga4] })
+    await analytics.consent.update({ marketing: true })
+    await analytics.boot()
+    await analytics.track('purchase', { transaction_id: 'o1' })
+    expect(meta.trackEvent).toHaveBeenCalledTimes(1)
+    expect(ga4.trackEvent).not.toHaveBeenCalled()
+    analytics.destroy()
+  })
+
   it('starts auto-tracking once analytics consent is granted', async () => {
     const ga4 = spyProvider('ga4')
     const analytics = createAnalytics({
       providers: [ga4],
-      autoTracking: { clicks: false, scroll: false, timeOnPage: false },
+      autoTracking: { clicks: false, scroll: false, timeOnPage: false, only: ['ga4'] },
     })
+    const hotjar = spyProvider('hotjar')
+    analytics.registerProvider(hotjar)
     await analytics.boot()
     expect(ga4.trackEvent).not.toHaveBeenCalled()
 
@@ -98,6 +131,7 @@ describe('createAnalytics', () => {
         'npcm.page_session_start',
       ),
     )
+    expect(hotjar.trackEvent).not.toHaveBeenCalled()
     analytics.destroy()
   })
 })
@@ -131,6 +165,12 @@ describe('event translation', () => {
     expect(toMetaEvent(event('search', { search_term: 'boots' })).params).toEqual({
       search_string: 'boots',
     })
+    expect(
+      toMetaEvent(event('view_item', productParams({ id: 'p1', variantId: 'v1' }))).params
+        .content_ids,
+    ).toEqual(['v1'])
+    expect(toMetaEvent(event('schedule', {})).name).toBe('Schedule')
+    expect(toMetaEvent(event('Donate', {})).method).toBe('track')
     expect(toMetaEvent(event('npcm.ui_click', { ui_target: 'Buy' }))).toEqual({
       method: 'trackCustom',
       name: 'npcm.ui_click',

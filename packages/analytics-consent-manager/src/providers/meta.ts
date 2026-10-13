@@ -52,7 +52,13 @@ const META_EVENT_NAMES: Record<string, string> = {
   contact: 'Contact',
   trial_started: 'StartTrial',
   subscription_started: 'Subscribe',
+  customize_product: 'CustomizeProduct',
+  schedule: 'Schedule',
+  submit_application: 'SubmitApplication',
+  find_location: 'FindLocation',
+  donate: 'Donate',
 }
+const META_STANDARD = new Set([...Object.values(META_EVENT_NAMES), 'PageView'])
 
 /** Translates a standard event into a Meta standard event, or a custom one. */
 export function toMetaEvent(event: AnalyticsEventPayload): {
@@ -60,16 +66,18 @@ export function toMetaEvent(event: AnalyticsEventPayload): {
   name: string
   params: Record<string, unknown>
 } {
-  const standard = META_EVENT_NAMES[event.name]
+  const standard =
+    META_EVENT_NAMES[event.name] ?? (META_STANDARD.has(event.name) ? event.name : undefined)
   const { items, search_term, ...rest } = event.params as {
     items?: EcommerceItem[]
     search_term?: string
   } & Record<string, unknown>
   const params: Record<string, unknown> = { ...rest }
   if (Array.isArray(items) && items.length) {
-    params.content_ids = items.map((item) => item.item_id)
+    const id = (item: EcommerceItem) => item.item_variant ?? item.item_id
+    params.content_ids = items.map(id)
     params.contents = items.map((item) => ({
-      id: item.item_id,
+      id: id(item),
       quantity: item.quantity ?? 1,
       item_price: item.price,
     }))

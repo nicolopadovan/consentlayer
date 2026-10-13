@@ -50,5 +50,8 @@ export function createHotjarAdapter(
       )
       window.hj?.('identify', identity.userId ?? null, attributes)
     },
+    reset() {
+      window.hj?.('identify', null, {})
+    },
   }
 }

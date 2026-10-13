@@ -59,7 +59,7 @@ drop their `storage` and `broadcast` options.
 | `createAnalyticsManager`, `createConsentEngine` | `createAnalytics()` |
 | `registerProvider(adapter)` (module function) | `providers: [...]`, or `analytics.registerProvider()` |
 | `setDefault*` / `getDefault*`, `useDefaultIdentityStorage` | the instance |
-| `defaultEventDestinations`, `sendTo` | every provider by default; `only: [...]` per event |
+| `defaultEventDestinations`, `sendTo` | every provider by default; `only: [...]` per event, `autoTracking: { only: [...] }` for auto-tracked events |
 | `<ConsentProvider>`, `<ConsentControllerProvider>`, `<AnalyticsManager>`, `<AutoTracking>` | `<AnalyticsProvider>` |
 | `<AnalyticsManager lazy>` | `<AnalyticsProvider boot>` |
 | `useTracker()` | `useAnalytics()` |
@@ -89,7 +89,7 @@ Meta names. See [events and identity](./events.md).
 | `trackSearch(query)` | `track('search', { search_term: query })` |
 | `trackContact(method)` | `track('contact', { method })` |
 | `trackSubscribe(email)` | `identify(undefined, { email })` then `track('subscription_started')` or a custom `track('newsletter_signup')` |
-| `trackCustomizeProduct(product)` | `track('customize_product', productParams(product))` (custom event) |
+| `trackCustomizeProduct(product)` | `track('customize_product', productParams(product))` |
 | `trackEvent('ViewContent', …)` etc. | the standard name: Meta still receives `ViewContent` |
 
 `productParams`, `cartParams` and `orderParams` come from
@@ -102,7 +102,12 @@ What reaches each provider:
 - **GA4** now gets ecommerce events under GA4's names with `items[]`, instead
   of `ViewContent` with `product_id`. Rebuild reports that used the old names.
 - **Meta** gets the same standard events as before, with `content_ids` /
-  `contents` instead of `product_id` / `variant_id`.
+  `contents` (the variant ID when there is one, else the product ID) instead
+  of `product_id` / `variant_id`. A Meta standard name passed as is
+  (`track('Schedule')`) is still sent as a standard event.
+- `track` no longer requires analytics consent on top of each provider's own
+  consent: Meta now receives events with marketing consent alone. Pass
+  `requireAnalyticsConsent: true` to keep the old gate.
 - `eventId` is generated for every event and passed to every provider.
 
 ### Provider adapters you wrote
@@ -111,4 +116,10 @@ What reaches each provider:
   `metaEventIdFrom()` is removed.
 - `event.options.sendTo` is now `only`; `providers[yourId]` holds extras meant for you.
 - New optional hooks: `identify(identity, traits, ctx)`, `reset(ctx)`, `group(id, traits, ctx)`.
-- `ctx.identity` is `{ userId?, email?, phone? }` (was `external_id`).
+- `ctx.identity` is `{ userId?, email?, phone? }` (was `external_id`). Identities
+  stored under `external_id` are read as `userId`.
+
+### Without React
+
+Call `analytics.consent.bootstrap()` once at startup to load stored consent,
+then `analytics.boot()`. `AnalyticsProvider` does both.
