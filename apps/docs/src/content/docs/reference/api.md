@@ -101,7 +101,7 @@ type AnalyticsOptions = {
 | `initialConsent` | `ConsentState \| null` | `null` | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one. |
 | `broadcast` | `ConsentBroadcastConfig` | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set. |
 | `maxAgeDays` | `number` | None | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`. |
-| `policyVersion` | `string` | None | A stored choice made under another version, or under none, is stale. Surrounding whitespace is trimmed; `''` counts as unset. Change it only when visitors must agree again; it can differ from the version passed to [`createConsentHandler()`](#createconsenthandleroptions), which records the policy text in force. |
+| `policyVersion` | `string` | None | A stored choice made under another major version, the part before the first `.`, or under none, is stale: `'3.1'` to `'3.2'` keeps choices, `'3.2'` to `'4.0'` asks again. Surrounding whitespace is trimmed; `''` counts as unset. Pass the same value as to [`createConsentHandler()`](#createconsenthandleroptions). |
 | `onStale` | `'discard' \| 'keep'` | `'discard'` | What a stale choice means until the visitor chooses again. `'discard'` treats it as no choice: consent is `null` and only `'none'` providers run. `'keep'` keeps it in force. Either way the banner is shown. See [Asking again](/guides/consent-ui/#asking-again). |
 
 Custom categories and the error callback are set with the top-level
@@ -206,7 +206,7 @@ provider's `identify` hook.
 | `categories` | `readonly ConsentCategory[]` | Every category: `preferences`, `analytics`, `marketing`, then the custom ones. |
 | `bootstrap` | `() => Promise<ConsentState \| null>` | Reads the stored choice, else asks each adapter's `bootstrap` in order and stores the first answer. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you. |
 | `getConsent` | `() => ConsentState \| null` | The current choice, or `null` before the visitor has made one. |
-| `isStale` | `() => boolean` | Whether `bootstrap()` found a stored choice that is too old or was made under another `policyVersion`. `false` again once the visitor chooses. |
+| `isStale` | `() => boolean` | Whether `bootstrap()` found a stored choice that is too old or was made under another major `policyVersion`. `false` again once the visitor chooses. |
 | `setConsent` | `(consent: ConsentState, source?: ConsentChangeSource) => Promise<void>` | Replaces the whole choice, stores it, broadcasts it and applies it to every adapter. `source` defaults to `'imperative'`. An identical choice is ignored, unless the stored one is stale: then it is stored again with the current date and `policyVersion`, and applied to every adapter, so `server.consentEndpoint` records it. |
 | `update` | `(partial: Partial<ConsentState>) => Promise<void>` | Awaits `bootstrap()`, then merges `partial` over the current choice. Categories that have never been set are denied. |
 | `subscribe` | `(listener: (snapshot: { consent: ConsentState \| null }) => void) => () => void` | Calls `listener` on every change. Returns an unsubscribe function. |
@@ -1115,7 +1115,7 @@ function createConsentHandler(options: {
 |---|---|---|---|
 | `secret` | `string \| undefined` | | **Required.** The HMAC-SHA-256 key that signs the cookie. At least 32 characters. An unset or shorter one makes every request answer `500`, with `[consentlayer] the consent secret is not set` or `[consentlayer] the consent secret needs at least 32 characters` passed to `onError`, before the body is read or anything is stored. |
 | `store` | `ConsentStore` | | **Required.** Where records are appended. |
-| `policyVersion` | `string` | | **Required.** The privacy policy version the visitor saw, such as `'2026-10-01'`. |
+| `policyVersion` | `string` | | **Required.** The privacy policy version the visitor saw, such as `'3.2'`. |
 | `categories` | `(keyof ConsentCategories)[]` | `[]` | The custom categories passed to `createAnalytics({ categories })`. Each must be a boolean in the request. |
 | `userId` | `(request: Request) => string \| undefined \| Promise<string \| undefined>` | | The signed-in user, from your session. Never read from the request body. |
 | `cookie` | `string` | `'consentlayer_proof'` | The cookie name. |

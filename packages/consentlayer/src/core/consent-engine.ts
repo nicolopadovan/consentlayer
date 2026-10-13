@@ -34,8 +34,9 @@ export function createConsentEngine(
   if (maxAgeDays !== undefined && !(maxAgeDays > 0 && Number.isFinite(maxAgeDays))) {
     throw new Error(`[consentlayer] consent.maxAgeDays must be a positive number, received ${maxAgeDays}`)
   }
+  const major = (version: string | undefined) => version?.split('.')[0]
   const isStaleRecord = (record: StoredConsent) =>
-    (policyVersion !== undefined && record.policyVersion !== policyVersion) ||
+    (policyVersion !== undefined && major(record.policyVersion) !== major(policyVersion)) ||
     (maxAgeDays !== undefined &&
       !(typeof record.updatedAt === 'number' && Date.now() - record.updatedAt <= maxAgeDays * 86_400_000))
   let stale = false

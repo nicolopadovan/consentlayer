@@ -89,7 +89,7 @@ export type ConsentEngineOptions = {
   broadcast?: ConsentBroadcastConfig
   /** A stored choice older than this many days is stale. Unset, never. */
   maxAgeDays?: number
-  /** A stored choice made under another version, or none, is stale. Unset, never. */
+  /** A stored choice made under another major version (the part before the first `.`), or none, is stale. Unset, never. */
   policyVersion?: string
   /** `'discard'` treats a stale choice as no choice; `'keep'` keeps it in force until the visitor chooses again. Either way the banner shows. */
   onStale?: 'discard' | 'keep'

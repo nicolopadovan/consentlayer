@@ -63,11 +63,12 @@ check it at the start of each request rather than when they are created, so
 import { createConsentHandler, postgresStore } from 'consentlayer/server'
 import { sql } from '@/lib/db'
 import { auth } from '@/lib/auth'
+import { POLICY_VERSION } from '@/lib/policy'
 
 export const POST = createConsentHandler({
   store: postgresStore(sql),
   secret: process.env.CONSENT_SECRET,
-  policyVersion: '2026-10-01',
+  policyVersion: POLICY_VERSION,
   userId: async () => (await auth())?.user.id,
   // categories: ['functional'], if you declared custom categories
 })
@@ -105,7 +106,7 @@ response is reported to `onError` with scope `consent-adapter` and provider ID
 |---|---|---|---|
 | `store` | `ConsentStore` | Required | Where records are appended. |
 | `secret` | `string \| undefined` | Required | The HMAC key, at least 32 characters. |
-| `policyVersion` | `string` | Required | Written to every record and to the cookie. Update it on every policy change. Asking visitors again is set separately, with `createAnalytics({ consent: { policyVersion } })`, which changes only when visitors must agree again; see [Asking again](/guides/consent-ui/#asking-again). |
+| `policyVersion` | `string` | Required | Written to every record and to the cookie. Pass the same value to `createAnalytics({ consent: { policyVersion } })`; a new major version asks visitors again. See [Asking again](/guides/consent-ui/#asking-again). |
 | `categories` | `string[]` | `[]` | Your custom categories, as passed to `createAnalytics({ categories })`. Categories not listed are dropped from the record. |
 | `userId` | `(request: Request) => string \| undefined \| Promise<string \| undefined>` | None | Returns the signed-in user from your session. The request body is never used for it. |
 | `cookie` | `string` | `'consentlayer_proof'` | The cookie name. |

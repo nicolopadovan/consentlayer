@@ -81,8 +81,8 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 ### Added
 - `createAnalytics({ consent: { maxAgeDays, policyVersion, onStale } })` asks
   the visitor again when the stored choice is older than `maxAgeDays` or was
-  made under another `policyVersion`. `onStale: 'discard'` (default) treats it
-  as no choice; `'keep'` keeps it in force while the banner is shown.
+  made under another major `policyVersion` (`'3.x'` to `'4.0'`).
+  `onStale: 'discard'` (default) treats it as no choice; `'keep'` keeps it in force while the banner is shown.
   `analytics.consent.isStale()` reports it.
 - `consentlayer/next` works in the Pages Router: render its `<AnalyticsProvider>`
   in `pages/_app.tsx`. Page views wait for `router.isReady`.

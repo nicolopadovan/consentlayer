@@ -91,7 +91,7 @@ export async function readConsentCookie(
 export function createConsentHandler(
   options: ConsentCookieOptions & {
     store: ConsentStore
-    /** The privacy policy the visitor saw, e.g. `'2026-10-01'`. */
+    /** The privacy policy the visitor saw, e.g. `'3.2'`. */
     policyVersion: string
     /** Your own categories, as passed to `createAnalytics({ categories })`. */
     categories?: (keyof ConsentCategories)[]

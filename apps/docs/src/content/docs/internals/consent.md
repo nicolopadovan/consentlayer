@@ -87,7 +87,8 @@ The storage adapter holds a `StoredConsent` record: the choice, `updatedAt`
 (milliseconds since the epoch) and the `policyVersion` it was made under. In
 step 1 the record is stale when `consent.maxAgeDays` is set and `updatedAt` is
 missing or older than that, or when `consent.policyVersion` is set and the
-record's version differs or is missing. A stale record is skipped in step 1
+record's version is missing or has another major version, the part before
+the first `.`. A stale record is skipped in step 1
 with `onStale: 'discard'`, so the adapters are asked next, and used as usual
 with `onStale: 'keep'`. Either way `isStale()` returns `true` until the next
 choice is written, and with `debug` the engine logs `stored consent is

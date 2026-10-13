@@ -81,18 +81,37 @@ A stored choice does not expire by default. Two options of
 - **`maxAgeDays`** makes a choice stale once it is older than that many days.
   The CNIL, for example, recommends asking again after six months.
 - **`policyVersion`** makes a choice stale when it was made under another
-  version. It is the version visitors must have agreed to, not necessarily the
-  current version of your privacy policy: change it only when the policy
-  changes in a way visitors must agree to again, such as a new purpose or a new
-  recipient of their data. Edits that need no new consent, such as a new
-  contact address, leave it unchanged.
+  major version of your privacy policy: the part before the first `.`.
 
 ```ts title="lib/analytics.ts"
 export const analytics = createAnalytics({
   providers,
-  consent: { maxAgeDays: 180, policyVersion: '2026-10-01' },
+  consent: { maxAgeDays: 180, policyVersion: POLICY_VERSION },
 })
 ```
+
+Version your privacy policy as `major.minor` and keep the version in one
+constant that the browser and the [consent route](/guides/consent-records/#the-consent-route)
+both import:
+
+```ts title="lib/policy.ts"
+export const POLICY_VERSION = '3.2'
+```
+
+Raise the major version when the policy changes in a way visitors must agree
+to again, such as a new purpose or a new recipient of their data. Raise the
+minor version for edits that need no new consent, such as a new contact
+address:
+
+| Change | Visitors asked again | New records cite |
+|---|---|---|
+| `'3.1'` to `'3.2'` | No | `'3.2'` |
+| `'3.2'` to `'4.0'` | Yes | `'4.0'` |
+
+A choice made under `'3.1'` stays valid under `'3.2'`, and its record keeps
+citing `'3.1'`, the version the visitor agreed to. A version without a `.`,
+such as a date like `'2026-10-01'`, is entirely the major version, so any
+change asks again.
 
 Each choice is stored with the date it was made and the `policyVersion` in
 effect. When `bootstrap()` finds a stale choice, `bannerVisible` becomes
@@ -118,27 +137,6 @@ set, so turning on `maxAgeDays` or `policyVersion` asks every returning
 visitor once. Choices supplied by a consent adapter, such as Shopify Customer
 Privacy, are stored with the current date and version, since the adapter is
 their source.
-
-</details>
-
-<details>
-<summary>The browser's and the server's policy versions</summary>
-
-[`createConsentHandler({ policyVersion })`](/guides/consent-records/#the-consent-route)
-records which policy text was in force when each choice was recorded, so
-update it on every policy change. `createAnalytics({ consent: { policyVersion } })`
-decides who is asked again, so update it only for changes that need consent
-again. The two values are independent and often differ:
-
-```ts
-// Minor edit on 2026-11-15: new records cite the new text, nobody is asked again.
-createConsentHandler({ store, secret, policyVersion: '2026-11-15' })
-createAnalytics({ consent: { policyVersion: '2026-10-01' } })
-```
-
-A visitor who chose under `'2026-10-01'` keeps the record made then. That
-record remains the proof of their consent, because the policy they agreed to
-did not change in a way that needs it again.
 
 </details>
 
