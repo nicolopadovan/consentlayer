@@ -204,6 +204,21 @@ export function createAnalyticsManager(
     }
   }
 
+  // ponytail: fixed cap so a runaway caller can't grow memory; overflow is reported once per queue
+  const overflowed = new WeakSet<unknown[]>()
+  const enqueue = (queue: Array<() => Promise<void>>, run: () => Promise<void>, providerId?: string) => {
+    if (queue.length < 100) {
+      queue.push(run)
+    } else if (!overflowed.has(queue)) {
+      overflowed.add(queue)
+      emitError({
+        scope: 'queue-full',
+        providerId,
+        message: `100 calls are already waiting ${providerId ? `for ${providerId} to load` : 'for boot'}; later ones are dropped`,
+      })
+    }
+  }
+
   const providerEmitError =
     (providerId: string) => (error: AnalyticsError) =>
       emitError({ ...error, providerId: error.providerId ?? providerId })
@@ -258,8 +273,7 @@ export function createAnalyticsManager(
     if (destroyed) return
     const { plugin } = state
     if (state.backlog && !LIFECYCLE_HOOKS.has(hook)) {
-      // ponytail: fixed cap; calls past it are dropped until load
-      if (state.backlog.length < 100) state.backlog.push(() => call(state, hook, run))
+      enqueue(state.backlog, () => call(state, hook, run), plugin.id)
       return
     }
     try {
@@ -276,7 +290,16 @@ export function createAnalyticsManager(
 
   const ensureProviderState = (plugin: AnalyticsPlugin): ProviderState => {
     const existing = providerStates.get(plugin.id)
-    if (existing) return existing
+    if (existing) {
+      if (existing.plugin !== plugin) {
+        emitError({
+          scope: 'provider-setup',
+          providerId: plugin.id,
+          message: `Another provider already uses the id "${plugin.id}"; this one is ignored`,
+        })
+      }
+      return existing
+    }
     const created: ProviderState = { plugin, setup: false, loaded: false, active: false }
     providerStates.set(plugin.id, created)
     return created
@@ -351,10 +374,7 @@ export function createAnalyticsManager(
   ) => {
     if (destroyed || !runtimeEnabled()) return
     if (!ready) {
-      // ponytail: fixed cap; calls past it are dropped until boot
-      if (pending.length < 100) {
-        pending.push(() => deliver(selectedProviderIds, callback, serverEvent))
-      }
+      enqueue(pending, () => deliver(selectedProviderIds, callback, serverEvent))
       return
     }
     await deliver(selectedProviderIds, callback, serverEvent)

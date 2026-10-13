@@ -135,14 +135,20 @@ describe('server destinations', () => {
     })
 
     await sendServerEvent(
-      { name: 'purchase', consent: granted, clientId: 'c.1', identity: { email: ' A@B.co', phone: '39 333' } },
+      { name: 'purchase', consent: granted, clientId: 'c.1', identity: { email: ' A@B.co', phone: '39 333 123 4567' } },
       { destinations: [ga] },
     )
     expect(sentBody(fetchImpl, 1)).toMatchObject({
       client_id: 'c.1',
-      user_data: { sha256_email_address: sha256('a@b.co'), sha256_phone_number: sha256('+39333') },
+      user_data: { sha256_email_address: sha256('a@b.co'), sha256_phone_number: sha256('+393331234567') },
       consent: { ad_user_data: 'GRANTED' },
     })
+
+    await sendServerEvent(
+      { name: 'purchase', consent: granted, clientId: 'c.1', identity: { email: 'nope', phone: '12' } },
+      { destinations: [ga] },
+    )
+    expect(sentBody(fetchImpl, 2)).not.toHaveProperty('user_data')
   })
 
   it('fails GA4 without a client id and honours only', async () => {

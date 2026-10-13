@@ -1,5 +1,6 @@
 import { ga4EventName } from '../providers/ga4'
 import type { ServerDestination } from './handler'
+import { isValidEmail, isValidPhoneE164 } from '../core/validation'
 import { sha256 } from './http'
 
 const collectUrl = (measurementId: string, apiSecret: string) =>
@@ -32,12 +33,12 @@ export function ga4Server(options: {
       if (!clientId) throw new Error('ga4Server needs event.clientId or the _ga cookie')
       const marketing = event.consent.marketing
       const email = event.identity?.email?.trim().toLowerCase()
-      const phone = event.identity?.phone?.replace(/[^\d+]/g, '')
+      const phone = event.identity?.phone && `+${event.identity.phone.replace(/\D/g, '')}`
       const userData = marketing
         ? Object.fromEntries(
             Object.entries({
-              sha256_email_address: await sha256(email),
-              sha256_phone_number: await sha256(phone && (phone.startsWith('+') ? phone : `+${phone}`)),
+              sha256_email_address: email && isValidEmail(email) ? await sha256(email) : undefined,
+              sha256_phone_number: phone && isValidPhoneE164(phone) ? await sha256(phone) : undefined,
             }).filter(([, value]) => value),
           )
         : {}

@@ -21,7 +21,9 @@ call `boot()` and when to send page views.
 3. creates the manager, with identity stored in `localStorage`.
 
 No provider runs yet. Each provider in `providers` gets an internal record
-`{ setup: false, loaded: false, active: false }`, and that is all.
+`{ setup: false, loaded: false, active: false }`, and that is all. A second
+provider with an `id` already in use is ignored and reported to `onError`
+(scope `provider-setup`).
 
 ## Boot
 
@@ -122,12 +124,14 @@ When the timing fires, a job goes onto `lifecycleQueue`:
 - Otherwise `load` runs, then the backlog replays in order, stopping if the
   provider stops being active.
 
-The backlog holds at most 100 calls; later ones are dropped until `load` runs.
+The backlog holds at most 100 calls; later ones are dropped until `load` runs,
+and the first drop is reported to `onError` with scope `queue-full`.
 
 ## Before boot
 
 Calls to `page`, `track`, `identify`, `group` and `captureError` before
-`boot()` has finished go into a `pending` queue (at most 100 entries), which
+`boot()` has finished go into a `pending` queue (at most 100 entries; the first
+call past that is reported with scope `queue-full`), which
 `boot()` drains in order after its first pass. That pass sees real consent,
 so pending events reach exactly the providers that turned out to be allowed.
 
@@ -230,6 +234,7 @@ scope:
 | `provider-script-load` | a provider reported a failed script via `emitError` |
 | `server-forward` | the POST to `server.endpoint` failed |
 | `consent-adapter` | a CMP adapter failed to apply consent |
+| `queue-full` | 100 calls were already waiting for boot or for a deferred `load`; later ones are dropped |
 
 If `onError` itself throws, that is swallowed and logged in debug mode.
 

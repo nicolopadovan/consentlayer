@@ -9,6 +9,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating-to-v1/).
 
 ### Breaking
+- `consent.setConsent()` rejects with a `TypeError` unless `preferences`,
+  `analytics` and `marketing` are booleans; `null` used to be ignored and
+  strings such as `'false'` counted as granted.
 - "Reject non-essential" now stores `preferences: false`; it used to grant
   preferences. `CookieDialog` gains a Preferences toggle, and Save stores it.
 - `names.legacy` defaults to `false`: the `acm_*` names are no longer read or
@@ -65,6 +68,9 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `onError` reports a second provider with an `id` already in use (scope
+  `provider-setup`), and the first call dropped by a full 100-call queue (scope
+  `queue-full`).
 - Consent UI localization: English and Italian built in, picked from
   `<AnalyticsProvider locale>`, then `createAnalytics({ locale })` (fed by
   `NEXT_PUBLIC_ANALYTICS_LOCALE` through `createEnvConfig`), then `<html lang>`.
@@ -131,6 +137,8 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `loadScript` added a relative `src` again on every call, and a call made while
   the script was loading resolved before it ran.
 - Shopify bootstrap stored an undecided `sale_of_data` as `false`.
+- `ga4Server` hashed invalid emails and phone numbers; it now applies the same
+  checks as `metaCapi` and leaves them out.
 
 ### Changed
 - `IdentityStorageAdapter.write` replaces the stored identity instead of

@@ -179,7 +179,7 @@ of the JSON. A non-2xx answer throws `Meta CAPI <status>: <response body>`.
 |---|---|
 | `client_id` | `event.clientId`, else the `_ga` cookie: `GA1.1.111.222` → `111.222` |
 | `user_id` | `identity.userId`, not hashed |
-| `user_data` | only with marketing: email trimmed and lowercased; phone keeping digits and `+`, with `+` added if missing; each hashed; left out when empty |
+| `user_data` | only with marketing: email trimmed and lowercased; phone reduced to digits with a leading `+`; each sent only if valid (the same checks as Meta) and hashed with the `+`, as Google asks; left out when empty |
 | `consent` | both `GRANTED` with marketing, else `DENIED` |
 | `events[0].name` | `ga4EventName` (same rule as gtag: `lead` → `generate_lead`, other characters → `_`) |
 | `events[0].params` | `params`, then `providers.ga4` merged in |

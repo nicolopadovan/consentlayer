@@ -29,8 +29,10 @@ Every value is coerced to a boolean on the way in (`normalizeConsent`).
 `null` means **the visitor hasn't chosen yet**. It is not the same as "all
 denied": with `null` the banner shows, and only providers whose required
 category is `'none'` run. Once a choice is made, consent is never `null` again
-in that page: the engine ignores `null` when committing, so `setConsent(null)`
-does nothing. To forget a choice, remove the storage key and reload.
+in that page: `setConsent` rejects with a `TypeError` unless `preferences`,
+`analytics` and `marketing` are booleans (and `sale_of_data`, if present), so
+`null` or `'false'` never slip through. To forget a choice, remove the storage
+key and reload.
 
 ## Bootstrap: where consent comes from
 
@@ -54,7 +56,7 @@ the new key is missing, the old value is copied over and the old key deleted.
 
 | Call | What it commits |
 |---|---|
-| `consent.setConsent(state)` | `state` exactly, after normalising |
+| `consent.setConsent(state)` | `state` exactly; rejects with a `TypeError` if it isn't a valid consent object |
 | `consent.update(partial)` | waits for `bootstrap()`, then commits `{ preferences: false, analytics: false, marketing: false, ...current, ...partial }` |
 
 So `update({ analytics: true })` on a first visit gives

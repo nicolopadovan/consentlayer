@@ -296,4 +296,30 @@ describe('analytics manager', () => {
     a.destroy()
     b.destroy()
   })
+
+  it('reports a second provider with the same id and ignores it', async () => {
+    const onError = vi.fn()
+    const first = { id: 'ga4', requiredConsent: 'none' as const, track: vi.fn() }
+    const second = { id: 'ga4', requiredConsent: 'none' as const, track: vi.fn() }
+    const manager = createAnalyticsManager({ providers: [first, second, first], onError })
+    await manager.boot()
+    await manager.track('a')
+
+    expect(onError).toHaveBeenCalledTimes(1)
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'provider-setup', providerId: 'ga4' }))
+    expect(first.track).toHaveBeenCalledTimes(1)
+    expect(second.track).not.toHaveBeenCalled()
+  })
+
+  it('reports once when calls before boot pass the queue limit', async () => {
+    const onError = vi.fn()
+    const provider = { id: 'p', requiredConsent: 'none' as const, track: vi.fn() }
+    const manager = createAnalyticsManager({ providers: [provider], onError })
+    for (let index = 0; index < 102; index += 1) void manager.track(`e${index}`)
+    await manager.boot()
+
+    expect(onError).toHaveBeenCalledTimes(1)
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'queue-full' }))
+    expect(provider.track).toHaveBeenCalledTimes(100)
+  })
 })

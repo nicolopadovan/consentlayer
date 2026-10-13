@@ -56,6 +56,20 @@ export function isValidPhoneE164(value: unknown): value is string {
   return typeof value === 'string' && PHONE_E164.test(value)
 }
 
+export function assertValidConsent(value: unknown): void {
+  const consent = value as Record<string, unknown> | null
+  const valid =
+    typeof consent === 'object' &&
+    consent !== null &&
+    ['preferences', 'analytics', 'marketing'].every((key) => typeof consent[key] === 'boolean') &&
+    (consent.sale_of_data === undefined || typeof consent.sale_of_data === 'boolean')
+  if (!valid) {
+    throw new TypeError(
+      `[consentlayer] consent must have boolean preferences, analytics and marketing, received ${JSON.stringify(value) ?? 'undefined'}.`,
+    )
+  }
+}
+
 function describe(value: unknown): string {
   if (value === null) return 'null'
   if (value === undefined) return 'undefined'

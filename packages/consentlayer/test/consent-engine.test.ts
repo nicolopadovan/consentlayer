@@ -138,6 +138,17 @@ describe('consent engine', () => {
   })
 })
 
+describe('setConsent', () => {
+  it('rejects anything but boolean categories', async () => {
+    const engine = createConsentEngine({ storage: createMemoryConsentStorage() })
+    await expect(engine.setConsent(null as never)).rejects.toThrow(TypeError)
+    await expect(
+      engine.setConsent({ preferences: false, analytics: 'false', marketing: false } as never),
+    ).rejects.toThrow(/boolean preferences, analytics and marketing/)
+    expect(engine.getConsent()).toBeNull()
+  })
+})
+
 describe('Shopify Customer Privacy sync', () => {
   it('pushes our consent to Shopify and takes consent collected by Shopify', async () => {
     const setTrackingConsent = vi.fn((_args: unknown, done?: () => void) => done?.())

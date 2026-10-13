@@ -12,6 +12,7 @@ import {
   equalConsent,
   normalizeConsent,
 } from './utils'
+import { assertValidConsent } from './validation'
 
 export function createConsentEngine(
   options: ConsentEngineOptions = {},
@@ -129,6 +130,7 @@ export function createConsentEngine(
       return current
     },
     async setConsent(consent, source = 'imperative') {
+      assertValidConsent(consent)
       await commit(normalizeConsent(consent), source, {
         persist: true,
         applyAdapters: true,

@@ -156,6 +156,9 @@ Nothing is renamed. New:
 - "Reject non-essential" stores `preferences: false` instead of `true`. If your
   app reads `consent.preferences` (for a language or theme cookie), visitors who
   reject now have it off; the dialog has a Preferences toggle to grant it.
+- `consent.setConsent()` rejects with a `TypeError` unless `preferences`,
+  `analytics` and `marketing` are booleans. Values read from your own cookie or
+  form (`'true'`, `1`) need converting first; `'false'` used to grant.
 - The consent UI follows `<html lang>` and ships English and Italian. To keep
   English on an Italian page, pass `<AnalyticsProvider locale="en">`.
 - The `acm_*` names are off by default. Upgrading from rc.1 or earlier, pass
