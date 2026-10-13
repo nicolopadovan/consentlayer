@@ -821,10 +821,35 @@ marketing consent.
 |---|---|---|---|
 | `measurementId` | `string \| undefined` | | **Required.** Must match `G-` followed by 4 to 16 upper-case letters or digits; `undefined` or `''` turns the provider off. |
 | `loadBeforeConsent` | `boolean` | `false` | `true` loads gtag.js at boot with Consent Mode set to denied. |
+| `consentMode` | `Ga4ConsentMode` | `{ mode: 'basic' }` | See below and [Google Consent Mode](/guides/providers/#google-consent-mode). |
 
-**Throws** an `Error` when `measurementId` is invalid.
+```ts
+type Ga4ConsentMode = {
+  /** 'advanced' loads and configures the tag at boot, for cookieless pings. */
+  mode?: 'basic' | 'advanced'
+  /** Advanced mode only. */
+  regions?: Ga4RegionDefault[]
+  /** Milliseconds, as `wait_for_update`. */
+  waitForUpdate?: number
+  urlPassthrough?: boolean
+  adsDataRedaction?: boolean
+}
 
-The entry point also exports the options type `Ga4Options` and two helpers:
+/** ISO 3166-2 codes, such as 'US' or 'US-CA', and the categories granted there before a choice. */
+type Ga4RegionDefault = {
+  region: string[]
+  preferences?: boolean
+  analytics?: boolean
+  marketing?: boolean
+}
+```
+
+**Throws** an `Error` when `measurementId` is invalid, when `regions` is set
+without `mode: 'advanced'` or holds a code that is not ISO 3166-2, or when
+`waitForUpdate` is not a whole number of `0` or more.
+
+The entry point also exports the types `Ga4Options`, `Ga4ConsentMode` and
+`Ga4RegionDefault`, and two helpers:
 
 | Export | Signature | Description |
 |---|---|---|

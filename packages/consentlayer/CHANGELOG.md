@@ -84,6 +84,11 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   made under another major `policyVersion` (`'3.x'` to `'4.0'`).
   `onStale: 'discard'` (default) treats it as no choice; `'keep'` keeps it in force while the banner is shown.
   `analytics.consent.isStale()` reports it.
+- `ga4({ consentMode })`: `mode: 'advanced'` configures the tag at boot so
+  Google receives cookieless pings while consent is denied; `regions` sets
+  defaults per ISO 3166-2 region in ConsentLayer categories; `waitForUpdate`,
+  `urlPassthrough` and `adsDataRedaction` map to Google's settings. The
+  Consent Mode update is no longer sent before the visitor's first choice.
 - A lost consent cookie is restored: `createAnalyticsHandler({ consentCookie })`
   answers `consentlayer-consent: missing` when the cookie is missing or
   invalid, and the browser posts its stored choice to `server.consentEndpoint`

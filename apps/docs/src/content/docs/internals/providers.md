@@ -35,7 +35,7 @@ Providers receive `userId` under any consent they run with, and `email` and
 
 | Provider | `id` | `requiredConsent` | `loadBeforeConsent` | `defer` | `teardown` |
 |---|---|---|---|---|---|
-| GA4 | `ga4` | `analytics` | option | — | — |
+| GA4 | `ga4` | `analytics`, or `none` in advanced mode | option, `true` in advanced mode | — | — |
 | Meta Pixel | `meta` | `marketing` | option | — | — |
 | PostHog | `posthog` | `none` (cookieless) or `analytics` | — | option | — |
 | Sentry | `sentry` | `none` | — | option | — |
@@ -49,7 +49,7 @@ use in `only` and the `providerId` in `onError`.
 
 ## GA4
 
-`ga4({ measurementId, loadBeforeConsent? })` from `consentlayer/providers/ga4`.
+`ga4({ measurementId, loadBeforeConsent?, consentMode? })` from `consentlayer/providers/ga4`.
 The value is trimmed. An `undefined`, empty or whitespace-only
 `measurementId` returns a stand-in plugin with only a `setup` hook that logs
 the skip in debug mode. Any other value that does not match `G-` followed by 4 to 16 uppercase letters or digits throws.
@@ -57,12 +57,12 @@ the skip in debug mode. Any other value that does not match `G-` followed by 4 t
 | Hook | Behaviour |
 |---|---|
 | Script | `https://www.googletagmanager.com/gtag/js?id=<measurementId>` |
-| `setup` | Creates `window.dataLayer` and `window.gtag` if absent, then calls `gtag('consent', 'default', …)` with every key denied except `security_storage`, then `gtag('js', new Date())`. |
-| `consent` | `gtag('consent', 'update', …)` mapped as below. On the first pass with analytics granted, also `gtag('config', measurementId, { send_page_view: false })`, once per measurement ID per page. |
+| `setup` | Creates `window.dataLayer` and `window.gtag` if absent, then calls `gtag('consent', 'default', …)` with every key denied except `security_storage`, then one `default` with `region` per entry of `consentMode.regions`, each with `wait_for_update` when `waitForUpdate` is set. Then `gtag('set', 'url_passthrough', true)` and `gtag('set', 'ads_data_redaction', true)` when enabled, and `gtag('js', new Date())`. In advanced mode, also `config`. |
+| `consent` | `gtag('consent', 'update', …)` mapped as below, skipped while the visitor has never chosen so the defaults stay in force. In basic mode, on the first pass with analytics granted, also `gtag('config', measurementId, { send_page_view: false })`, once per measurement ID per page. In advanced mode, sets `user_id` and `user_data` from the identity while analytics is granted and clears them otherwise. |
 | `load` | Injects gtag.js. A failed load is reported with scope `provider-script-load`. |
 | `page` | `gtag('event', 'page_view', { page_location, page_path, page_title })` |
 | `track` | `gtag('event', ga4EventName(name), { ...params, ...providers.ga4 })` |
-| `identify` | `gtag('set', { user_id })` when there is a user ID, then `gtag('set', 'user_data', { email, phone_number })` with whichever fields are present. |
+| `identify` | `gtag('set', { user_id })` when there is a user ID, then `gtag('set', 'user_data', { email, phone_number })` with whichever fields are present. In advanced mode, only while analytics is granted. |
 | `reset` | `gtag('set', { user_id: null })` and `gtag('set', 'user_data', {})` |
 | Withdrawal | The `consent` hook sends the denied Consent Mode update; the manager stops sending events. |
 
@@ -73,9 +73,12 @@ the skip in debug mode. Any other value that does not match `G-` followed by 4 t
 | `functionality_storage` | preferences |
 | `security_storage` | always `granted` |
 
-`config` waits for analytics consent on purpose. With `loadBeforeConsent`,
-gtag.js is on the page from boot but has no `config`, so it sends no
-cookieless pings before the visitor agrees.
+In basic mode `config` waits for analytics consent on purpose. With
+`loadBeforeConsent`, gtag.js is on the page from boot but has no `config`, so
+it sends no cookieless pings before the visitor agrees. Advanced mode
+configures the tag in `setup` and runs with `requiredConsent: 'none'`, so
+`page` and `track` reach gtag before consent and Google sends cookieless
+pings while `analytics_storage` is denied.
 
 **Names.** `lead` becomes `generate_lead`. Any character other than a letter,
 digit or `_` becomes `_`, so `consentlayer.scroll_depth` is sent as

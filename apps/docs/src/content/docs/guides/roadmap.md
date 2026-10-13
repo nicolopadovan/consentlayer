@@ -29,20 +29,6 @@ pixel once `marketing` is granted and sends page views and events, like
 the TikTok Events API under `marketing` consent, sharing each event's ID with
 the [TikTok pixel](#tiktok-pixel) so TikTok can deduplicate the two.
 
-### Google Consent Mode extensions
-
-`ga4()` implements Consent Mode v2 in what Google calls basic mode: the
-defaults are `denied`, each consent change sends an update, and the GA4 tag is
-configured only after `analytics` is granted, so no cookieless pings are sent
-before consent. The planned additions are:
-
-- **Advanced mode**, an option to configure the tag at boot so Google receives
-  cookieless pings while consent is denied and can model the visitors who
-  decline.
-- **Region-specific defaults**, for example `denied` in the EEA and `granted`
-  elsewhere.
-- **`wait_for_update`**, **`url_passthrough`** and **`ads_data_redaction`**.
-
 ### Vue, Svelte and other frameworks
 
 The core runs in any browser code, but React is the only binding. Today, in
@@ -84,19 +70,3 @@ tags.
 
 </details>
 
-<details>
-<summary>The browser decides on its own whether to forward events</summary>
-
-Until the [server endpoint handshake](#server-endpoint-handshake) exists, the
-browser cannot know whether the route has a destination, since secrets such as
-the Meta access token are visible only on the server. Set `server` only when
-the route is configured, for example from a public environment variable:
-
-```ts title="lib/analytics.ts"
-export const analytics = createAnalytics({
-  providers,
-  server: process.env.NEXT_PUBLIC_SERVER_TRACKING === 'true' ? { endpoint: '/api/analytics' } : undefined,
-})
-```
-
-</details>

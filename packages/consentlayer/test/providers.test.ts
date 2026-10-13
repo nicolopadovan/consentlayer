@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
 import { loadScript } from '../src/core/plugin'
 import { contentsquare } from '../src/providers/contentsquare'
@@ -181,6 +181,64 @@ describe('providers', () => {
     expect(document.querySelector('script[src*="gtag/js?id=G-ABC123"]')).toBeTruthy()
     expect(commands().filter((command) => command === 'config')).toHaveLength(1)
     manager.destroy()
+  })
+})
+
+describe('ga4 consent mode', () => {
+  const entries = () =>
+    (window.dataLayer ?? []).map((entry) => Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date)))
+  beforeEach(() => {
+    const win = window as unknown as Record<string, unknown>
+    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured']) delete win[key]
+  })
+
+  it('configures the tag at boot in advanced mode and keeps region defaults until a choice', async () => {
+    const manager = createAnalyticsManager({
+      providers: [
+        ga4({
+          measurementId: 'G-ADV123',
+          consentMode: {
+            mode: 'advanced',
+            regions: [{ region: ['US', 'US-CA'], analytics: true }],
+            waitForUpdate: 500,
+            urlPassthrough: true,
+            adsDataRedaction: true,
+          },
+        }),
+      ],
+    })
+    await manager.boot()
+    await manager.identify('u1')
+    await manager.page({ path: '/a', url: 'https://example.com/a', title: 'A' })
+    const denied = { ad_user_data: 'denied', ad_personalization: 'denied', ad_storage: 'denied', analytics_storage: 'denied', functionality_storage: 'denied', security_storage: 'granted' }
+    expect(entries()).toEqual([
+      ['consent', 'default', { ...denied, wait_for_update: 500 }],
+      ['consent', 'default', { ...denied, analytics_storage: 'granted', wait_for_update: 500, region: ['US', 'US-CA'] }],
+      ['set', 'url_passthrough', true],
+      ['set', 'ads_data_redaction', true],
+      ['js'],
+      ['config', 'G-ADV123', { send_page_view: false }],
+      ['set', { user_id: null }],
+      ['set', 'user_data', {}],
+      ['event', 'page_view', { page_location: 'https://example.com/a', page_path: '/a', page_title: 'A' }],
+    ])
+    expect(document.querySelector('script[src*="gtag/js?id=G-ADV123"]')).toBeTruthy()
+
+    window.dataLayer = []
+    await manager.updateConsent({ preferences: false, analytics: true, marketing: false })
+    expect(entries()).toEqual([
+      ['consent', 'update', { ...denied, analytics_storage: 'granted' }],
+      ['set', { user_id: 'u1' }],
+      ['set', 'user_data', {}],
+    ])
+    manager.destroy()
+  })
+
+  it('rejects region defaults outside advanced mode and invalid values', () => {
+    // @ts-expect-error regions need mode: 'advanced'
+    expect(() => ga4({ measurementId: 'G-ABC123', consentMode: { regions: [{ region: ['US'] }] } })).toThrow("needs mode: 'advanced'")
+    expect(() => ga4({ measurementId: 'G-ABC123', consentMode: { mode: 'advanced', regions: [{ region: ['usa'] }] } })).toThrow('ISO 3166-2')
+    expect(() => ga4({ measurementId: 'G-ABC123', consentMode: { waitForUpdate: -1 } })).toThrow('whole number')
   })
 })
 
