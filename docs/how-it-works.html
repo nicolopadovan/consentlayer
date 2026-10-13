@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How @nicolopadovan/analytics-consent-manager works</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --line: #2a2f3a; --text: #e6e8ee; --dim: #8b93a7;
+    --green: #3ecf8e; --amber: #f5b13d; --red: #ef5b5b; --blue: #5aa9ff; --violet: #a98bff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+  main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 48px 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  h3 { font-size: 15px; margin: 0 0 8px; }
+  p { margin: 6px 0; }
+  code { font: 13px ui-monospace, Menlo, monospace; background: #222733; padding: 1px 5px; border-radius: 4px; }
+  .dim { color: var(--dim); }
+  .grid { display: grid; gap: 14px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+
+  /* architecture */
+  .arch { grid-template-columns: 1fr 40px 1fr 40px 1.3fr; align-items: stretch; }
+  .arrow { display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 22px; }
+  .layer h3 { display: flex; gap: 8px; align-items: center; }
+  .tag { font: 11px ui-monospace, monospace; padding: 1px 6px; border-radius: 4px; background: #222733; color: var(--dim); }
+  .layer ul { margin: 6px 0 0; padding-left: 18px; }
+  .layer li { margin: 2px 0; }
+  .side { grid-template-columns: 1fr 1fr; margin-top: 14px; }
+
+  /* simulator */
+  .sim { grid-template-columns: 300px 1fr; align-items: start; }
+  .controls button, .controls label { display: block; width: 100%; }
+  button { font: inherit; background: #262b36; color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; cursor: pointer; text-align: left; }
+  button:hover:not(:disabled) { border-color: var(--blue); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: #1d3b5f; border-color: #2c5a8f; }
+  .controls .group { margin-bottom: 16px; }
+  .controls .group > * + * { margin-top: 6px; }
+  .controls label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+  .banner { border: 1px dashed var(--amber); border-radius: 8px; padding: 10px; }
+  .banner[hidden] { display: none; }
+  .storage { font: 12px ui-monospace, monospace; white-space: pre-wrap; color: var(--dim); }
+
+  .providers { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+  .prov { border-left: 4px solid var(--line); transition: border-color .2s, background .2s; }
+  .prov.setup { border-left-color: var(--amber); }
+  .prov.active { border-left-color: var(--green); }
+  .prov.leak { background: #2a1d1d; }
+  .prov .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
+  .prov .row h3 { margin: 0; }
+  .pill { font: 11px/1.6 ui-monospace, monospace; padding: 1px 7px; border-radius: 99px; background: #222733; color: var(--dim); white-space: nowrap; }
+  .pill.on { background: #173a2b; color: var(--green); }
+  .pill.warn { background: #3a2c12; color: var(--amber); }
+  .pill.bad { background: #3a1717; color: var(--red); }
+  .prov .note { font-size: 12px; color: var(--dim); margin-top: 6px; }
+
+  .log { font: 12px/1.6 ui-monospace, Menlo, monospace; max-height: 340px; overflow: auto; background: #0b0d11; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .log div { white-space: pre-wrap; }
+  .log .net { color: var(--red); }
+  .log .net.ok { color: var(--green); }
+  .log .call { color: var(--blue); }
+  .log .evt { color: var(--violet); }
+  .log .sys { color: var(--dim); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--dim); margin: 6px 0; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: var(--c); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--dim); font-weight: 500; }
+  .yes { color: var(--red); font-weight: 600; }
+  .no { color: var(--green); font-weight: 600; }
+
+  .timeline { grid-template-columns: repeat(5, 1fr); counter-reset: step; }
+  .timeline .panel { position: relative; padding-top: 30px; }
+  .timeline .panel::before { counter-increment: step; content: counter(step); position: absolute; top: 8px; left: 14px; font: 600 12px ui-monospace, monospace; color: var(--blue); }
+  @media (max-width: 900px) {
+    .arch, .sim, .timeline, .side { grid-template-columns: 1fr; }
+    .arrow { transform: rotate(90deg); height: 30px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>@nicolopadovan/analytics-consent-manager</h1>
+  <p class="dim">How the package decides what loads, when, and why. Based on <code>1.0.0-rc.1</code> source (<code>packages/analytics-consent-manager/src</code>).</p>
+
+  <h2>1. The three layers</h2>
+  <div class="grid arch">
+    <div class="panel layer">
+      <h3>Consent engine <span class="tag">core/consent-engine.ts</span></h3>
+      <p>Holds the visitor's choice. Nothing else.</p>
+      <ul>
+        <li><code>{ preferences, analytics, marketing }</code> or <code>null</code> (= not asked yet)</li>
+        <li>Reads/writes a <b>storage</b> adapter (default: <code>localStorage["npcm_consent"]</code>, migrated from the old <code>acm_consent</code>; Scriptie uses a cookie)</li>
+        <li>Syncs with <b>integration adapters</b> (e.g. Shopify Customer Privacy API)</li>
+        <li>Broadcasts <code>npcm:consent</code> DOM event + <code>window.NPCM_CONSENT</code> (plus the old <code>acm:</code>/<code>ACM_</code> names)</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="panel layer">
+      <h3>Analytics manager <span class="tag">core/analytics-manager.ts</span></h3>
+      <p>Subscribes to the engine and drives every provider through a lifecycle.</p>
+      <ul>
+        <li><code>boot()</code> — nothing happens to providers before this</li>
+        <li>On each consent change: re-evaluates every provider</li>
+        <li><code>trackEvent</code> drops events unless <code>analytics</code> is granted (default)</li>
+        <li>Auto-tracking: clicks, scroll depth, time on page</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="panel layer">
+      <h3>Providers <span class="tag">providers/*.ts</span></h3>
+      <p>Small adapters, each with a <code>requiredConsent</code> category and optional hooks:</p>
+      <ul>
+        <li><code>setup</code> — <b>runs after boot, regardless of consent</b></li>
+        <li><code>init</code> — runs once consent for its category is granted</li>
+        <li><code>onConsentChange</code> — runs on every change, regardless of consent</li>
+        <li><code>teardown</code> — runs when consent is withdrawn</li>
+        <li><code>trackPage</code> / <code>trackEvent</code> — only while active</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid side">
+    <div class="panel">
+      <h3>React layer <span class="tag">/react, /ui</span></h3>
+      <p><code>&lt;ConsentProvider&gt;</code> wraps the engine · <code>&lt;AnalyticsManager&gt;</code> boots the manager (immediately, on idle, or manually) and fires a page view per route · <code>&lt;ConsentControllerProvider&gt;</code> + <code>&lt;CookieBanner&gt;</code>/<code>&lt;CookieDialog&gt;</code> give you Accept all / Reject / Customize. <code>window.NPCM_openConsent()</code> reopens the dialog.</p>
+    </div>
+    <div class="panel">
+      <h3>Server helpers <span class="tag">/server</span></h3>
+      <p>For your own API routes: GA4 Measurement Protocol, Meta Conversions API (hashing, <code>_fbp</code>/<code>_fbc</code> extraction), same-origin checks, body size limits. These run on your server; consent checks there are up to the app.</p>
+    </div>
+  </div>
+
+  <h2>2. Simulator</h2>
+  <p>This replays the manager's real rules (<code>evaluateProvider</code>) in the browser. Nothing is loaded for real; red lines are what <em>would</em> hit a third-party server.</p>
+
+  <div class="grid sim">
+    <div class="panel controls">
+      <div class="group">
+        <h3>Page</h3>
+        <button id="reload">↻ Reload page (fresh visitor)</button>
+        <button id="reloadKeep">↻ Reload page (keep stored consent)</button>
+        <button id="boot" class="primary">▶ Boot manager</button>
+      </div>
+      <div class="group banner" id="banner">
+        <h3>Cookie banner</h3>
+        <button id="acceptAll" class="primary">Accept all</button>
+        <button id="reject">Reject non-essential</button>
+        <label><input type="checkbox" id="cPref"> preferences</label>
+        <label><input type="checkbox" id="cAna"> analytics</label>
+        <label><input type="checkbox" id="cMkt"> marketing</label>
+        <button id="save">Save preferences</button>
+      </div>
+      <div class="group">
+        <h3>Visitor actions</h3>
+        <button id="trackEvent">Fire <code>trackEvent("AddToCart")</code></button>
+        <button id="reopen">Reopen dialog (<code>NPCM_openConsent</code>)</button>
+      </div>
+      <div class="group">
+        <h3>Options</h3>
+        <label><input type="checkbox" id="wrap"> <span><code>loadBeforeConsent: false</code> on GA4 &amp; Meta: load nothing until the visitor consents</span></label>
+        <label><input type="checkbox" id="phOn" checked> <span>Register app-side PostHog adapter</span></label>
+      </div>
+      <div class="group">
+        <h3>Storage</h3>
+        <div class="storage" id="storage"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="legend">
+        <span style="--c: var(--line)">not set up</span>
+        <span style="--c: var(--amber)">set up (consent not granted)</span>
+        <span style="--c: var(--green)">active</span>
+        <span style="--c: #5a2a2a">third-party code loaded without consent</span>
+      </div>
+      <div class="grid providers" id="providers"></div>
+      <h3 style="margin-top:16px">Log</h3>
+      <div class="legend">
+        <span style="--c: var(--red)">network request before consent</span>
+        <span style="--c: var(--green)">network request with consent</span>
+        <span style="--c: var(--blue)">SDK call</span>
+        <span style="--c: var(--violet)">tracked event</span>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <h2>3. A page load, step by step</h2>
+  <div class="grid timeline">
+    <div class="panel"><b>Engine bootstraps</b><p class="dim">Reads storage. If empty, asks integration adapters (Shopify). Still nothing → consent is <code>null</code>.</p></div>
+    <div class="panel"><b>Banner shows</b><p class="dim">The controller sees <code>null</code> and shows the banner. Providers are untouched so far.</p></div>
+    <div class="panel"><b>Manager boots</b><p class="dim">Every enabled provider gets <code>setup()</code> and <code>onConsentChange()</code>, <em>with consent still <code>null</code></em>.</p></div>
+    <div class="panel"><b>Visitor chooses</b><p class="dim">Engine saves it, notifies the manager. Providers whose category is now granted get <code>init()</code> and become active.</p></div>
+    <div class="panel"><b>Tracking flows</b><p class="dim">Page views and events go only to active providers. Withdrawing consent calls <code>teardown()</code>.</p></div>
+  </div>
+
+  <h2>4. What loads before consent</h2>
+  <table>
+    <thead><tr><th>Provider</th><th>Category</th><th>Third-party code before consent?</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>GA4</td><td>analytics</td><td class="yes">Yes</td><td><code>setup()</code> injects <code>gtag.js</code> from googletagmanager.com and sets Consent Mode defaults to <em>denied</em>. Google receives the script request; <code>config</code> only runs after consent.</td></tr>
+      <tr><td>Meta Pixel</td><td>marketing</td><td class="yes">Yes</td><td><code>setup()</code> injects <code>fbevents.js</code> and calls <code>fbq('init')</code>; <code>fbq('consent','revoke')</code> is sent only afterwards.</td></tr>
+      <tr><td>Hotjar</td><td>analytics</td><td class="no">No</td><td>Script injected in <code>init()</code>. No <code>teardown</code>: stays loaded after withdrawal until reload.</td></tr>
+      <tr><td>Shopify Web Pixels</td><td>analytics</td><td class="no">No</td><td><code>setup()</code> only creates a local queue; the CDN script loads in <code>init()</code>.</td></tr>
+      <tr><td>Vercel / TikTok</td><td>analytics / marketing</td><td class="no">No</td><td>Don't load scripts; they forward events or consent to an SDK the app loaded.</td></tr>
+      <tr><td>PostHog</td><td>analytics</td><td class="no">No (in Scriptie &amp; Bruciami)</td><td>Not part of the package. Both apps write their own adapter that calls <code>posthog.init()</code> in <code>init()</code>. Bruciami even <code>import()</code>s the SDK there.</td></tr>
+    </tbody>
+  </table>
+  <p class="dim">Pass <code>loadBeforeConsent: false</code> to <code>createGa4Adapter</code> / <code>createMetaAdapter</code>: <code>enabled()</code> returns false until the category is granted, so <code>setup()</code> never runs before consent. Bruciami does the same by hand in <code>apps/web/src/lib/consent/consent-runtime.ts</code>. Toggle it in the simulator above.</p>
+</main>
+
+<script>
+const PROVIDERS = [
+  { id: 'ga4', label: 'GA4', req: 'analytics', wrappable: true,
+    setup: (s) => { s.net('googletagmanager.com/gtag/js?id=G-XXXX'); s.call("gtag('consent','default', all denied)") },
+    init: (s) => s.call("gtag('config', G-XXXX)"),
+    change: (s, c) => s.call(`gtag('consent','update', analytics_storage: ${c?.analytics ? 'granted' : 'denied'})`),
+    page: (s) => s.evt("gtag('event','page_view')"),
+    track: (s, e) => s.evt(`gtag('event','${e}')`),
+    note: 'Script loads at boot in Consent Mode "denied".' },
+  { id: 'meta', label: 'Meta Pixel', req: 'marketing', wrappable: true,
+    setup: (s) => { s.call("fbq('init', PIXEL_ID)"); s.net('connect.facebook.net/en_US/fbevents.js') },
+    change: (s, c) => s.call(`fbq('consent','${c?.marketing ? 'grant' : 'revoke'}')`),
+    page: (s, c) => c?.marketing && s.evt("fbq('track','PageView')"),
+    track: (s, e, c) => c?.marketing && s.evt(`fbq('track','${e}')`),
+    note: 'Pixel script + init at boot; consent revoke sent after.' },
+  { id: 'hotjar', label: 'Hotjar', req: 'analytics',
+    init: (s) => { if (!s.flags.hotjar) { s.net('static.hotjar.com/c/hotjar-123.js'); s.flags.hotjar = true } },
+    track: (s, e) => s.evt(`hj('event','${e}')`),
+    note: 'No teardown — stays loaded after withdrawal until reload.' },
+  { id: 'shopify', label: 'Shopify Web Pixels', req: 'analytics',
+    setup: (s) => s.call('create local Shopify.analytics queue'),
+    init: (s) => { if (!s.flags.shopify) { s.net('cdn.shopify.com/.../web-pixels-manager.js'); s.flags.shopify = true } },
+    page: (s) => s.evt("Shopify.analytics.publish('page_viewed')"),
+    track: (s, e) => s.evt(`Shopify.analytics.publish('${e}')`),
+    note: 'Setup is local only; CDN script waits for init.' },
+  { id: 'posthog', label: 'PostHog (app adapter)', req: 'analytics', app: true,
+    init: (s) => { if (!s.flags.posthog) { s.net('eu.i.posthog.com /decide + /e (posthog.init)'); s.flags.posthog = true } else s.call('posthog.opt_in_capturing()') },
+    teardown: (s) => s.call('posthog.reset(); posthog.opt_out_capturing()'),
+    track: (s, e) => s.evt(`posthog.capture('${e}')`),
+    note: 'Defined in Scriptie/Bruciami, not the package. Inits only after analytics consent. Page views come from PostHog itself, not the manager.' },
+]
+
+const $ = (id) => document.getElementById(id)
+const CATS = ['preferences', 'analytics', 'marketing']
+let stored = null
+let sim
+
+function fresh(keepStored) {
+  if (!keepStored) stored = null
+  sim = {
+    booted: false,
+    consent: null,
+    flags: {},
+    loadedBeforeConsent: new Set(),
+    states: new Map(),
+  }
+  $('log').innerHTML = ''
+  log('sys', `— page load —  storage: ${stored ? JSON.stringify(stored) : 'empty'}`)
+  // engine.bootstrap()
+  sim.consent = stored ? { ...stored } : null
+  log('sys', `engine.bootstrap() → consent = ${JSON.stringify(sim.consent)}`)
+  for (const p of activeDefs()) sim.states.set(p.id, { def: p, setup: false, active: false, granted: false })
+  syncCheckboxes()
+  render()
+}
+
+function activeDefs() {
+  return PROVIDERS.filter((p) => p.id !== 'posthog' || $('phOn').checked)
+}
+
+function ctx(p) {
+  return {
+    flags: sim.flags,
+    net: (url) => {
+      const allowed = sim.consent?.[p.req]
+      log(allowed ? 'net ok' : 'net', `[${p.id}] GET ${url}`)
+      if (!allowed) sim.loadedBeforeConsent.add(p.id)
+    },
+    call: (text) => log('call', `[${p.id}] ${text}`),
+    evt: (text) => log('evt', `[${p.id}] ${text}`),
+  }
+}
+
+function enabled(state) {
+  const p = state.def
+  if (p.wrappable && $('wrap').checked) {
+    state.granted ||= sim.consent?.[p.req] === true
+    return state.granted
+  }
+  return true
+}
+
+// Mirrors evaluateProvider() in core/analytics-manager.ts
+function evaluate(state) {
+  const p = state.def
+  const on = enabled(state)
+  const allowed = !!sim.consent?.[p.req]
+  if (sim.booted && on) {
+    if (!state.setup) {
+      log('sys', `${p.id}.setup()`)
+      p.setup?.(ctx(p))
+      state.setup = true
+    }
+    p.change?.(ctx(p), sim.consent)
+  }
+  if (sim.booted && on && allowed && !state.active) {
+    log('sys', `${p.id}.init()`)
+    p.init?.(ctx(p))
+    state.active = true
+  } else if ((!sim.booted || !on || !allowed) && state.active) {
+    log('sys', `${p.id}.teardown()`)
+    p.teardown?.(ctx(p))
+    state.active = false
+  }
+}
+
+function lifecycle() {
+  for (const s of sim.states.values()) evaluate(s)
+  render()
+}
+
+function trackPage() {
+  if (!sim.booted) return
+  const active = [...sim.states.values()].filter((s) => s.active)
+  if (!active.length) return
+  for (const s of active) s.def.page?.(ctx(s.def), sim.consent)
+}
+
+function setConsent(next) {
+  sim.consent = next
+  stored = { ...next }
+  log('sys', `engine.setConsent(${JSON.stringify(next)}) → saved, manager notified`)
+  const hadActive = [...sim.states.values()].some((s) => s.active)
+  lifecycle()
+  if (!hadActive) trackPage()
+}
+
+function log(cls, text) {
+  const div = document.createElement('div')
+  div.className = cls
+  div.textContent = text
+  $('log').appendChild(div)
+  $('log').scrollTop = $('log').scrollHeight
+}
+
+function syncCheckboxes() {
+  $('cPref').checked = !!sim.consent?.preferences
+  $('cAna').checked = !!sim.consent?.analytics
+  $('cMkt').checked = !!sim.consent?.marketing
+}
+
+function render() {
+  $('banner').hidden = sim.consent !== null && !sim.dialog
+  $('boot').disabled = sim.booted
+  $('storage').textContent = `localStorage["npcm_consent"]\n= ${stored ? JSON.stringify(stored, null, 1) : 'null'}\n\nmanager.booted = ${sim.booted}`
+  const grid = $('providers')
+  grid.innerHTML = ''
+  for (const s of sim.states.values()) {
+    const p = s.def
+    const leak = sim.loadedBeforeConsent.has(p.id)
+    const el = document.createElement('div')
+    el.className = `panel prov ${s.active ? 'active' : s.setup ? 'setup' : ''} ${leak ? 'leak' : ''}`
+    const status = s.active ? '<span class="pill on">active</span>' : s.setup ? '<span class="pill warn">set up</span>' : '<span class="pill">idle</span>'
+    el.innerHTML = `
+      <div class="row"><h3>${p.label}</h3>${status}</div>
+      <div class="row"><span class="dim">requires</span><code>${p.req}</code></div>
+      <div class="row"><span class="dim">granted</span>${sim.consent?.[p.req] ? '<span class="pill on">yes</span>' : '<span class="pill">no</span>'}</div>
+      <div class="row"><span class="dim">loaded before consent</span>${leak ? '<span class="pill bad">yes</span>' : '<span class="pill on">no</span>'}</div>
+      <div class="note">${p.note}${p.wrappable && $('wrap').checked ? ' <b>loadBeforeConsent: false</b> — nothing loads until consent.' : ''}</div>`
+    grid.appendChild(el)
+  }
+}
+
+$('reload').onclick = () => fresh(false)
+$('reloadKeep').onclick = () => fresh(true)
+$('boot').onclick = () => {
+  sim.booted = true
+  log('sys', 'manager.boot()')
+  lifecycle()
+  trackPage()
+}
+$('acceptAll').onclick = () => { sim.dialog = false; setConsent({ preferences: true, analytics: true, marketing: true }) }
+$('reject').onclick = () => { sim.dialog = false; setConsent({ preferences: false, analytics: false, marketing: false }) }
+$('save').onclick = () => {
+  sim.dialog = false
+  setConsent({ preferences: $('cPref').checked, analytics: $('cAna').checked, marketing: $('cMkt').checked })
+}
+$('reopen').onclick = () => { sim.dialog = true; syncCheckboxes(); render() }
+$('trackEvent').onclick = () => {
+  log('sys', 'trackEvent("AddToCart")')
+  if (!sim.booted) return log('sys', '  dropped: manager not booted')
+  if (!sim.consent?.analytics) return log('sys', '  dropped: analytics consent required by default')
+  for (const s of sim.states.values()) if (s.active) s.def.track?.(ctx(s.def), 'AddToCart', sim.consent)
+}
+$('wrap').onchange = () => fresh(true)
+$('phOn').onchange = () => fresh(true)
+
+fresh(false)
+</script>
+</body>
+</html>
