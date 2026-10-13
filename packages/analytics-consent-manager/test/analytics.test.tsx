@@ -5,7 +5,7 @@ import type { AnalyticsEventPayload, ProviderAdapter } from '../src/core/types'
 import { cartParams, orderParams, productParams } from '../src/ecommerce'
 import { ga4EventName, ga4UserData } from '../src/providers/ga4'
 import { createHotjarAdapter } from '../src/providers/hotjar'
-import { metaUserData, toMetaEvent } from '../src/providers/meta'
+import { createMetaAdapter, metaUserData, toMetaEvent } from '../src/providers/meta'
 import { AnalyticsProvider, useAnalytics, useConsent } from '../src/react'
 
 const granted = { preferences: true, analytics: true, marketing: true }
@@ -147,6 +147,58 @@ describe('createAnalytics', () => {
     await analytics.consent.update({ marketing: true })
     expect(localStorage.getItem('npcm_user_identity')).not.toContain('a@example.com')
     analytics.destroy()
+  })
+
+  it('clears email from a provider that stops on withdrawal', async () => {
+    const ga4 = spyProvider('ga4')
+    const analytics = createAnalytics({ providers: [ga4] })
+    await analytics.consent.update(granted)
+    await analytics.boot()
+    await analytics.identify(undefined, { email: 'a@example.com' })
+    await analytics.consent.update({ analytics: false, marketing: false })
+    await waitFor(() => expect(ga4.identify).toHaveBeenLastCalledWith({}, {}, expect.anything()))
+    analytics.destroy()
+  })
+
+  it('discards stored email when stored consent has no marketing', async () => {
+    localStorage.setItem('acm_user_identity', JSON.stringify({ userId: 'u1', email: 'a@example.com' }))
+    localStorage.setItem('npcm_consent', JSON.stringify({ ...granted, marketing: false }))
+    const ga4 = spyProvider('ga4')
+    const analytics = createAnalytics({ providers: [ga4] })
+    await analytics.consent.bootstrap()
+    await analytics.boot()
+    await analytics.consent.update({ marketing: true })
+    await waitFor(() => expect(analytics.consent.getConsent()?.marketing).toBe(true))
+    expect(ga4.identify.mock.calls.flat()).not.toContainEqual(expect.objectContaining({ email: 'a@example.com' }))
+    expect(localStorage.getItem('npcm_user_identity')).not.toContain('a@example.com')
+    expect(localStorage.getItem('acm_user_identity')).toBeNull()
+    analytics.destroy()
+  })
+
+  it('checks requireMarketingConsent when a queued event is delivered', async () => {
+    const ga4 = spyProvider('ga4')
+    const analytics = createAnalytics({ providers: [ga4] })
+    await analytics.consent.update(granted)
+    await analytics.track('sign_up', {}, { requireMarketingConsent: true })
+    await analytics.consent.update({ marketing: false })
+    await analytics.boot()
+    expect(ga4.trackEvent).not.toHaveBeenCalled()
+    analytics.destroy()
+  })
+
+  it('keeps the Meta pixel off after a withdrawal once it holds an email', async () => {
+    const fbq = vi.fn()
+    Object.assign(window, { fbq, __npcmMetaPixelInitialized: undefined, __acmMetaPixelInitialized: undefined })
+    const meta = createMetaAdapter({ pixelId: '123456789012345' })
+    const ctx = { debug: false, isBooted: true, emitError: () => undefined }
+    const on = { ...ctx, consent: granted, identity: { email: 'a@example.com' } }
+    const off = { ...ctx, consent: { ...granted, marketing: false }, identity: {} }
+    await meta.setup?.(on)
+    window.fbq = fbq
+    await meta.onConsentChange?.(off)
+    await meta.onConsentChange?.({ ...on, identity: {} })
+    await meta.trackEvent?.(event('purchase', {}), { ...on, identity: {} })
+    expect(fbq.mock.calls).toEqual([['consent', 'revoke'], ['consent', 'revoke']])
   })
 
   it('delivers calls made before boot once providers are active', async () => {

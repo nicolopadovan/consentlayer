@@ -146,6 +146,10 @@ export function createMetaAdapter(
     }).catch(() => undefined)
   }
 
+  // The pixel keeps init's email/phone, so after a withdrawal it stays off until reload.
+  let matched = false
+  let stale = false
+
   return {
     id: 'meta',
     requiredConsent: 'marketing',
@@ -165,6 +169,8 @@ n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];}(window);
 fbq('consent', ${setupContext.consent?.marketing ? "'grant'" : "'revoke'"});
 fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(setupContext.identity)).replace(/</g, '\\u003c')});`
       document.head.appendChild(bootstrap)
+      bootstrap.remove()
+      matched = Boolean(setupContext.identity.email || setupContext.identity.phone)
 
       const loader = document.createElement('script')
       loader.setAttribute(
@@ -186,18 +192,19 @@ fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(setupConte
     },
     onConsentChange(context) {
       if (!isReady()) return
-      window.fbq?.('consent', context.consent?.marketing ? 'grant' : 'revoke')
+      if (matched && !context.consent?.marketing) stale = true
+      window.fbq?.('consent', context.consent?.marketing && !stale ? 'grant' : 'revoke')
     },
     async trackPage(_, context) {
       if (!isReady() || !context.consent?.marketing) return
       const eventId = createEventId()
-      window.fbq?.('track', 'PageView', {}, { eventID: eventId })
+      if (!stale) window.fbq?.('track', 'PageView', {}, { eventID: eventId })
       await mirrorEvent('PageView', eventId, undefined, context.identity)
     },
     async trackEvent(event, context) {
       if (!isReady() || !context.consent?.marketing) return
       const { method, name, params } = toMetaEvent(event)
-      window.fbq?.(method, name, params, { eventID: event.id })
+      if (!stale) window.fbq?.(method, name, params, { eventID: event.id })
       await mirrorEvent(name, event.id, params, context.identity)
     },
   }

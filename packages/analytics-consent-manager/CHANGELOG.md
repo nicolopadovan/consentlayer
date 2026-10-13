@@ -40,12 +40,17 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
   `donate`; Meta standard names passed as is stay standard; content IDs use the
   variant ID when present.
 - Hotjar `reset()`; on analytics withdrawal Hotjar's cookies and storage are
-  deleted, and `reloadOnRevoke: true` reloads the page so recording stops.
+  deleted (its script recreates them until reload), and `reloadOnRevoke: true`
+  reloads the page so recording stops.
 - Email and phone are kept in memory until marketing consent, then stored and
   shared with GA4 (`user_data`), Meta (pixel advanced matching at start, server
-  mirror) and Hotjar; withdrawing marketing consent deletes them.
+  mirror) and Hotjar; consent without marketing deletes them and clears them
+  from GA4. Stored email or phone from before is used only if the stored
+  consent includes marketing. A Meta pixel started with them stays off after
+  a withdrawal until the next page load.
 - `track`, `page`, `identify` and `group` calls made before boot are held and
-  delivered once providers are active.
+  delivered in order right after it; `requireAnalyticsConsent` /
+  `requireMarketingConsent` are checked at delivery.
 - `page(payload, { only })`. `AnalyticsProvider` sends the current page to a
   provider that starts later on the same route (e.g. Meta after marketing consent).
 
@@ -55,6 +60,8 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
 - Auto-tracking could start before providers were active and lose the first page-session event.
 
 ### Changed
+- `IdentityStorageAdapter.write` replaces the stored identity instead of
+  merging; `clear` also removes the legacy `acm_*` key.
 - Default names use the `npcm` prefix: `npcm_consent`, `npcm_user_identity`,
   `npcm:consent`, `NPCM_CONSENT`, `NPCM_openConsent`, `.npcm-*` classes,
   `--npcm-*` variables and `__npcm*` provider window flags.

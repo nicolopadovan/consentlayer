@@ -63,18 +63,13 @@ export function createLocalStorageIdentityStorage(
     write(identity) {
       const storage = getStorage(options.storage)
       if (!storage) return
-      const next = {
-        ...normalizeIdentity(
-          safeJsonParse<UserIdentity>(readMigrating(storage, options)) ?? {},
-        ),
-        ...normalizeIdentity(identity),
-      }
-      if (!Object.keys(next).length) return
-      storage.setItem(options.key, JSON.stringify(next))
+      storage.setItem(options.key, JSON.stringify(normalizeIdentity(identity)))
     },
     clear() {
       const storage = getStorage(options.storage)
-      storage?.removeItem(options.key)
+      for (const key of [options.key, ...(options.legacyKeys ?? legacyStorageKeysFor(options.key))]) {
+        storage?.removeItem(key)
+      }
     },
   }
 }
@@ -112,7 +107,7 @@ export function createMemoryIdentityStorage(
       return value
     },
     write(identity) {
-      value = { ...value, ...normalizeIdentity(identity) }
+      value = normalizeIdentity(identity)
     },
     clear() {
       value = {}

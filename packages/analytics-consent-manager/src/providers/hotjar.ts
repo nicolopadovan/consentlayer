@@ -71,8 +71,11 @@ export function createHotjarAdapter(
     },
     teardown(context) {
       if (typeof window === 'undefined' || context.consent?.analytics) return
-      clearHotjarStorage()
-      if (options.reloadOnRevoke) location.reload()
+      try {
+        clearHotjarStorage()
+      } finally {
+        if (options.reloadOnRevoke) location.reload()
+      }
     },
     reset() {
       window.hj?.('identify', null, {})

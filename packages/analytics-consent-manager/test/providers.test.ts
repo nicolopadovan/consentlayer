@@ -59,6 +59,7 @@ describe('providers', () => {
     delete win.__npcmMetaPixelInitialized
     delete win.__acmMetaPixelInitialized
     const adapter = createMetaAdapter({ pixelId: '123456789012345' })
+    const append = vi.spyOn(document.head, 'appendChild')
     await adapter.setup?.({
       consent: { preferences: false, analytics: false, marketing: false },
       identity: {},
@@ -66,9 +67,9 @@ describe('providers', () => {
       isBooted: true,
       emitError: () => undefined,
     })
-    const bootstrap = document.head.querySelector(
-      'script[data-analytics-consent-manager="meta-pixel-bootstrap"]',
-    )?.textContent ?? ''
+    const bootstrap = (append.mock.calls[0]?.[0] as HTMLScriptElement).text
+    append.mockRestore()
+    expect(document.head.querySelector('[data-analytics-consent-manager="meta-pixel-bootstrap"]')).toBeNull()
     expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeGreaterThan(-1)
     expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeLessThan(
       bootstrap.indexOf("fbq('init'"),

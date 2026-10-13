@@ -104,9 +104,21 @@ export function createAnalyticsManager(
   const providerStates = new Map<string, ProviderState>()
   const identityStorage = options.identityStorage ?? createMemoryIdentityStorage()
   let consent = options.consent ?? options.consentEngine?.getConsent() ?? null
-  let identity: UserIdentity = identityStorage.read()
+  const stored = identityStorage.read()
+  let identity: UserIdentity = stored.userId ? { userId: stored.userId } : {}
+  let storedContact: UserIdentity | undefined =
+    stored.email || stored.phone ? stored : undefined
+  const settleStoredContact = () => {
+    if (!storedContact || !consent) return
+    if (consent.marketing && identity.userId === storedContact.userId) {
+      identity = { ...storedContact, ...identity }
+    }
+    storedContact = undefined
+  }
+  settleStoredContact()
   const pending: Array<() => Promise<void>> = []
   let booted = false
+  let ready = false
   let destroyed = false
   let lifecycleQueue = Promise.resolve()
   let unsubscribeConsent: (() => void) | undefined
@@ -166,9 +178,9 @@ export function createAnalyticsManager(
     consent?.marketing ? identity : identity.userId ? { userId: identity.userId } : {}
 
   const persistIdentity = () => {
-    identityStorage.clear?.()
     const stored = sharedIdentity()
     if (Object.keys(stored).length) identityStorage.write(stored)
+    else identityStorage.clear?.()
   }
 
   const context = (providerId?: string) => ({
@@ -288,13 +300,21 @@ export function createAnalyticsManager(
     callback: (state: ProviderState) => Promise<void>,
   ) => {
     if (destroyed || !runtimeEnabled()) return
-    if (!booted) {
+    if (!ready) {
       // ponytail: fixed cap; calls past it are dropped until boot
       if (pending.length < 100) {
-        pending.push(() => trackAgainstProviders(selectedProviderIds, callback))
+        pending.push(() => deliver(selectedProviderIds, callback))
       }
       return
     }
+    await deliver(selectedProviderIds, callback)
+  }
+
+  const deliver = async (
+    selectedProviderIds: string[] | undefined,
+    callback: (state: ProviderState) => Promise<void>,
+  ) => {
+    if (destroyed) return
     for (const state of providerStates.values()) {
       if (!state.active) continue
       if (!hasRequiredConsent(consent, state.adapter.requiredConsent)) continue
@@ -402,7 +422,8 @@ export function createAnalyticsManager(
       if (destroyed || booted) return
       booted = true
       await queueLifecycle()
-      for (const run of pending.splice(0)) await run()
+      for (let run = pending.shift(); run; run = pending.shift()) await run()
+      ready = true
     },
     registerProvider(provider) {
       const state = ensureProviderState(provider)
@@ -430,13 +451,22 @@ export function createAnalyticsManager(
         .filter((state) => state.active)
         .map((state) => state.adapter.id)
       consent = nextConsent
-      if (!nextConsent) return queueLifecycle()
-      if (hadMarketing && !nextConsent.marketing) {
+      if (!nextConsent) storedContact = undefined
+      settleStoredContact()
+      if (nextConsent && !nextConsent.marketing) {
         identity = identity.userId ? { userId: identity.userId } : {}
       }
       persistIdentity()
       await queueLifecycle()
-      if (hadContact && hadMarketing !== nextConsent.marketing && wasActive.length) {
+      if (!hadContact || hadMarketing === Boolean(nextConsent?.marketing)) return
+      if (hadMarketing) {
+        for (const state of providerStates.values()) {
+          if (!state.setup) continue
+          await safeCall(`${state.adapter.id}.identify`, () =>
+            state.adapter.identify?.(sharedIdentity(), {}, context(state.adapter.id)),
+          )
+        }
+      } else if (wasActive.length) {
         await identifyProviders({}, wasActive)
       }
     },
@@ -458,10 +488,9 @@ export function createAnalyticsManager(
         params: params ?? {},
         options: optionsInput,
       }
-      if (optionsInput.requireAnalyticsConsent && !consent?.analytics) return
-      if (optionsInput.requireMarketingConsent && !consent?.marketing) return
-
       await trackAgainstProviders(optionsInput.only, async (state) => {
+        if (optionsInput.requireAnalyticsConsent && !consent?.analytics) return
+        if (optionsInput.requireMarketingConsent && !consent?.marketing) return
         await safeCall(`${state.adapter.id}.trackEvent`, () =>
           state.adapter.trackEvent?.(event, context(state.adapter.id)),
         )

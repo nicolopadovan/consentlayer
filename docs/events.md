@@ -87,22 +87,24 @@ await analytics.reset() // on logout
   that loads later receives it when it starts.
 - Email and phone are used only while **marketing** consent is granted. Until
   then they stay in memory; once granted they are stored and sent to every
-  provider that accepts them. Withdrawing marketing consent deletes them.
-- Calls made before providers load are held (up to 100) and delivered when
-  they do, to the providers consent allows at that moment.
+  provider that accepts them. Choosing consent without marketing, or
+  withdrawing it, deletes them and clears them from providers that support it.
+- Calls made before `boot()` are held (up to 100) and delivered right after
+  it, in order, to the providers consent allows at that moment. With no
+  consent yet, no provider is active and they are dropped.
 
 | Provider | User ID | Email and phone (marketing consent) |
 |---|---|---|
 | GA4 | `user_id` | `user_data` ([user-provided data collection](https://support.google.com/analytics/answer/14077171) must be on in GA4 admin) |
-| Meta | `external_id` | browser pixel advanced matching when the pixel starts (Meta accepts it only then), and the server mirror on every event |
+| Meta | `external_id` | browser pixel advanced matching only if known when the pixel starts (Meta accepts it only then, so usually not on a first visit), and the server mirror on every event. If the pixel started with an email or phone and marketing is withdrawn, the browser pixel stays off until the next page load |
 | Hotjar | identify | email as an attribute, when there is a user ID |
 | Vercel, Shopify | — | — (no API for it) |
 - `reset()` clears the stored identity and tells each provider that has loaded
   (GA4 clears `user_id` and `user_data`, Hotjar identifies as anonymous). The
   Meta pixel keeps its advanced-matching data until the next page load.
-  Hotjar has no logout API: it keeps linking this browser to the last user ID
-  until its cookies are cleared, which happens when analytics consent is
-  withdrawn.
+  Hotjar has no API to remove the email attribute or to log out: it keeps
+  the email it received and links this browser to the last user ID until
+  its cookies are cleared, which happens when analytics consent is withdrawn.
 - `group(id, traits)` is passed to providers that support groups.
 
 ## Consent
