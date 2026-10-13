@@ -323,6 +323,7 @@ const unsubscribe = analytics.consent.subscribe(({ consent }) => {
 |---|---|
 | `categories` | Every category the visitor can toggle: `preferences`, `analytics` and `marketing`, followed by your [custom categories](/guides/consent-ui/#custom-categories). |
 | `getConsent()` | The current `ConsentState`, or `null` until the visitor has chosen. |
+| `isStale()` | Whether the stored choice is too old or was made under another policy version, so the visitor is asked again. See [Asking again](/guides/consent-ui/#asking-again). |
 | `update(partial)` | Waits for `bootstrap()`, then merges `partial` into the current state. Categories left out keep their value; unset categories are denied. |
 | `setConsent(consent)` | Replaces the whole state. Throws a `TypeError` (`[consentlayer] consent must have boolean preferences, analytics and marketing, received …`) unless every category is a boolean. |
 | `bootstrap()` | Reads the stored consent, or asks the consent adapters when nothing is stored. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you. |

@@ -559,4 +559,18 @@ describe('useConsentController', () => {
     expect(screen.getByText('preferences,analytics,marketing,functional')).toBeTruthy()
     analytics.destroy()
   })
+
+  it('shows the banner again for a stale choice it keeps', async () => {
+    localStorage.setItem('consentlayer_consent', JSON.stringify({ consent: granted, policyVersion: '1' }))
+    const analytics = createAnalytics({ consent: { policyVersion: '2', onStale: 'keep' } })
+    const Banner = () => <span>{useConsentController().bannerVisible ? 'banner' : 'hidden'}</span>
+    render(
+      <AnalyticsProvider analytics={analytics}>
+        <Banner />
+      </AnalyticsProvider>,
+    )
+    await waitFor(() => expect(screen.getByText('banner')).toBeTruthy())
+    expect(analytics.consent.getConsent()).toEqual(granted)
+    analytics.destroy()
+  })
 })

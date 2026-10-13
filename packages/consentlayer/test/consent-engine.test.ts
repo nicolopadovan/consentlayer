@@ -40,11 +40,7 @@ describe('consent engine', () => {
     const listener = vi.fn()
     engine.subscribe(listener)
 
-    storage.write({
-      preferences: true,
-      analytics: false,
-      marketing: false,
-    })
+    storage.write({ consent: { preferences: true, analytics: false, marketing: false } })
 
     await Promise.resolve()
 
@@ -77,7 +73,7 @@ describe('consent engine', () => {
       marketing: true,
     })
 
-    expect(storage.read()).toEqual({
+    expect(storage.read()?.consent).toEqual({
       preferences: true,
       analytics: true,
       marketing: true,
@@ -261,7 +257,7 @@ describe('custom categories', () => {
     await analytics.track('open_chat')
     expect(chat.load).toHaveBeenCalledTimes(1)
     expect(chat.track).toHaveBeenCalledTimes(1)
-    expect(JSON.parse(localStorage.getItem('consentlayer_consent')!)).toMatchObject({ functional: true })
+    expect((JSON.parse(localStorage.getItem('consentlayer_consent')!) as { consent: object }).consent).toMatchObject({ functional: true })
     expect((broadcast.mock.calls.at(-1)?.[0] as CustomEvent).detail).toMatchObject({ functional: true })
 
     document.removeEventListener('consentlayer:consent', broadcast)
@@ -312,6 +308,70 @@ describe('consent endpoint', () => {
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'consent-adapter', providerId: 'consent-endpoint' }))
 
     vi.unstubAllGlobals()
+    analytics.destroy()
+    localStorage.clear()
+  })
+})
+
+describe('stale choices', () => {
+  const choice = { preferences: false, analytics: true, marketing: false }
+  const day = 86_400_000
+  const stored = (record: object) => {
+    const storage = createMemoryConsentStorage()
+    storage.write(record as never)
+    return storage
+  }
+
+  it('discards a choice older than maxAgeDays and refreshes it when confirmed', async () => {
+    const storage = stored({ consent: choice, updatedAt: Date.now() - 31 * day })
+    const apply = vi.fn()
+    const engine = createConsentEngine({ storage, maxAgeDays: 30, adapters: [{ id: 'record', apply }] })
+    expect(await engine.bootstrap()).toBeNull()
+    expect(engine.isStale()).toBe(true)
+
+    await engine.setConsent(choice)
+    expect(engine.isStale()).toBe(false)
+    expect(storage.read()?.updatedAt).toBeGreaterThan(Date.now() - 1000)
+    expect(apply).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps a stale choice in force with onStale: keep, and records the same choice again', async () => {
+    const storage = stored({ consent: choice, policyVersion: '1' })
+    const apply = vi.fn()
+    const engine = createConsentEngine({ storage, policyVersion: '2', onStale: 'keep', adapters: [{ id: 'record', apply }] })
+    expect(await engine.bootstrap()).toEqual(choice)
+    expect(engine.isStale()).toBe(true)
+
+    await engine.setConsent(choice)
+    expect(engine.isStale()).toBe(false)
+    expect(storage.read()?.policyVersion).toBe('2')
+    expect(apply).toHaveBeenCalledTimes(1)
+  })
+
+  it('treats a choice without a date or policy version as stale only when those options are set', async () => {
+    const legacy = () => stored({ consent: choice })
+    expect(await createConsentEngine({ storage: legacy() }).bootstrap()).toEqual(choice)
+    expect(await createConsentEngine({ storage: legacy(), maxAgeDays: 365 }).bootstrap()).toBeNull()
+    expect(await createConsentEngine({ storage: legacy(), policyVersion: '1' }).bootstrap()).toBeNull()
+    expect(await createConsentEngine({ storage: legacy(), policyVersion: ' ' }).bootstrap()).toEqual(choice)
+    const fresh = stored({ consent: choice, updatedAt: Date.now(), policyVersion: '1' })
+    expect(await createConsentEngine({ storage: fresh, maxAgeDays: 1, policyVersion: '1' }).bootstrap()).toEqual(choice)
+  })
+
+  it('rejects a maxAgeDays that is not a positive number', () => {
+    expect(() => createConsentEngine({ maxAgeDays: 0 })).toThrow('consent.maxAgeDays must be a positive number')
+    expect(() => createConsentEngine({ maxAgeDays: Number.NaN })).toThrow('consent.maxAgeDays')
+  })
+
+  it('reads values stored before 1.0 as a choice without a date', async () => {
+    localStorage.setItem('consentlayer_consent', JSON.stringify(choice))
+    const analytics = createAnalytics()
+    expect(await analytics.consent.bootstrap()).toEqual(choice)
+    await analytics.consent.update({ marketing: true })
+    expect(JSON.parse(localStorage.getItem('consentlayer_consent')!)).toMatchObject({
+      consent: { ...choice, marketing: true },
+      updatedAt: expect.any(Number) as number,
+    })
     analytics.destroy()
     localStorage.clear()
   })

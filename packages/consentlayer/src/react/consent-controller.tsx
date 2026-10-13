@@ -75,10 +75,8 @@ export function ConsentControllerProvider({
         if (cancelled) return
         if (bootstrappedConsent) {
           setPrefs(all((category) => bootstrappedConsent[category]))
-          setBannerVisible(false)
-        } else {
-          setBannerVisible(autoShowBanner)
         }
+        setBannerVisible(bootstrappedConsent && !engine.isStale() ? false : autoShowBanner)
       })
       .catch((nextError) => {
         if (cancelled) return

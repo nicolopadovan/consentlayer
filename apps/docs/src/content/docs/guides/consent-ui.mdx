@@ -27,7 +27,7 @@ instance.
 |---|---|---|
 | `ready` | `boolean` | `false` until `analytics.consent.bootstrap()` has settled. Render nothing while it is `false`, so that returning visitors don't see the banner flash. |
 | `error` | `string \| null` | The rejection reason, converted to a string, if `bootstrap()` rejected. The banner is then shown as if no consent were stored. |
-| `bannerVisible` | `boolean` | After bootstrap, `true` when no consent is stored and the provider's `autoShowBanner` prop is `true` (the default). |
+| `bannerVisible` | `boolean` | After bootstrap, `true` when no consent is stored or the stored choice is [stale](#asking-again), and the provider's `autoShowBanner` prop is `true` (the default). |
 | `dialogVisible` | `boolean` | Whether the settings dialog is open. Initially `false`. |
 | `categories` | `readonly ConsentCategory[]` | The categories the dialog shows, from `analytics.consent.categories`: the built-in ones, then your custom ones. |
 | `prefs` | `Record<ConsentCategory, boolean>` | The dialog's draft, one entry per category in `analytics.consent.categories`. Initialised from the stored consent, all `false` when there is none. |
@@ -72,6 +72,51 @@ The global's name follows [`names.prefix`](/guides/names/). With
 `names.legacy`, `ACM_openConsent` is defined as well. The
 `openConsentGlobalKey` prop of `<AnalyticsProvider>` replaces both with the
 name you pass.
+
+### Asking again
+
+A stored choice does not expire by default. Two options of
+`createAnalytics({ consent })` make ConsentLayer ask the visitor again:
+
+- **`maxAgeDays`** makes a choice stale once it is older than that many days.
+  The CNIL, for example, recommends asking again after six months.
+- **`policyVersion`** makes a choice stale when it was made under another
+  version of your privacy policy. Change the value when the policy changes in
+  a way visitors must agree to again.
+
+```ts title="lib/analytics.ts"
+export const analytics = createAnalytics({
+  providers,
+  consent: { maxAgeDays: 180, policyVersion: '2026-10-01' },
+})
+```
+
+Each choice is stored with the date it was made and the `policyVersion` in
+effect. When `bootstrap()` finds a stale choice, `bannerVisible` becomes
+`true` and `analytics.consent.isStale()` returns `true`. What the stale choice
+means until the visitor answers depends on `onStale`:
+
+| `onStale` | Consent until the visitor chooses | Providers |
+|---|---|---|
+| `'discard'` (default) | `null`, as for a first visit | Only those with `requiredConsent: 'none'` run. |
+| `'keep'` | The stale choice | Unchanged. The banner is shown on top. |
+
+With `'keep'`, `prefs` starts from the stale choice, so a visitor who confirms
+it without changes stores the same choice again. That confirmation counts as a
+new choice: it is stored with the current date and `policyVersion` and, with
+`server.consentEndpoint`, recorded again on the server.
+
+<details>
+<summary>Choices stored without a date or version</summary>
+
+A choice stored before these options existed, or before you first set them,
+carries no date or no `policyVersion`. It counts as stale for each option you
+set, so turning on `maxAgeDays` or `policyVersion` asks every returning
+visitor once. Choices supplied by a consent adapter, such as Shopify Customer
+Privacy, are stored with the current date and version, since the adapter is
+their source.
+
+</details>
 
 ## Recipe
 

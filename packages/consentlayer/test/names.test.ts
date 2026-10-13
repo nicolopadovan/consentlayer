@@ -30,7 +30,7 @@ describe('names', () => {
     configureNames({ legacy: true })
     localStorage.setItem('acm_consent', JSON.stringify(granted))
     const storage = createLocalStorageConsentStorage({ key: 'consentlayer_consent' })
-    expect(storage.read()).toEqual(granted)
+    expect(storage.read()).toEqual({ consent: granted })
     expect(localStorage.getItem('consentlayer_consent')).toBe(JSON.stringify(granted))
     expect(localStorage.getItem('acm_consent')).toBeNull()
   })

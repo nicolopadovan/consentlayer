@@ -79,7 +79,9 @@ type AnalyticsOptions = {
     initialConsent?: ConsentState | null
     categories?: (keyof ConsentCategories)[]
     broadcast?: ConsentBroadcastConfig
-    onError?: AnalyticsErrorHandler
+    maxAgeDays?: number
+    policyVersion?: string
+    onStale?: 'discard' | 'keep'
   }
   categories?: (keyof ConsentCategories)[]
   names?: NamesInput
@@ -98,6 +100,9 @@ type AnalyticsOptions = {
 | `adapters` | `ConsentIntegrationAdapter[]` | `[]` | External consent platforms to sync with, such as [`createShopifyCustomerPrivacyAdapter()`](#createshopifycustomerprivacyadapteroptions). |
 | `initialConsent` | `ConsentState \| null` | `null` | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one. |
 | `broadcast` | `ConsentBroadcastConfig` | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set. |
+| `maxAgeDays` | `number` | None | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`. |
+| `policyVersion` | `string` | None | A stored choice made under another version, or under none, is stale. Surrounding whitespace is trimmed; `''` counts as unset. Use the value you pass to [`createConsentHandler()`](#createconsenthandleroptions). |
+| `onStale` | `'discard' \| 'keep'` | `'discard'` | What a stale choice means until the visitor chooses again. `'discard'` treats it as no choice: consent is `null` and only `'none'` providers run. `'keep'` keeps it in force. Either way the banner is shown. See [Asking again](/guides/consent-ui/#asking-again). |
 
 Custom categories and the error callback are set with the top-level
 `categories` and `onError`; passing them inside `consent` is a type error.
@@ -201,7 +206,8 @@ provider's `identify` hook.
 | `categories` | `readonly ConsentCategory[]` | Every category: `preferences`, `analytics`, `marketing`, then the custom ones. |
 | `bootstrap` | `() => Promise<ConsentState \| null>` | Reads the stored choice, else asks each adapter's `bootstrap` in order and stores the first answer. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you. |
 | `getConsent` | `() => ConsentState \| null` | The current choice, or `null` before the visitor has made one. |
-| `setConsent` | `(consent: ConsentState, source?: ConsentChangeSource) => Promise<void>` | Replaces the whole choice, stores it, broadcasts it and applies it to every adapter. `source` defaults to `'imperative'`. An identical choice is ignored. |
+| `isStale` | `() => boolean` | Whether `bootstrap()` found a stored choice that is too old or was made under another `policyVersion`. `false` again once the visitor chooses. |
+| `setConsent` | `(consent: ConsentState, source?: ConsentChangeSource) => Promise<void>` | Replaces the whole choice, stores it, broadcasts it and applies it to every adapter. `source` defaults to `'imperative'`. An identical choice is ignored, unless the stored one is stale: then it is stored again with the current date and `policyVersion`, and applied to every adapter, so `server.consentEndpoint` records it. |
 | `update` | `(partial: Partial<ConsentState>) => Promise<void>` | Awaits `bootstrap()`, then merges `partial` over the current choice. Categories that have never been set are denied. |
 | `subscribe` | `(listener: (snapshot: { consent: ConsentState \| null }) => void) => () => void` | Calls `listener` on every change. Returns an unsubscribe function. |
 
@@ -306,7 +312,7 @@ function createEnvConfig(env: Record<string, string | undefined>): {
 
 | Function | Returns | Description |
 |---|---|---|
-| `createLocalStorageConsentStorage(options)` | `ConsentStorageAdapter` | Consent as JSON in `localStorage`. `subscribe` listens for `storage` events, so changes in other tabs apply. |
+| `createLocalStorageConsentStorage(options)` | `ConsentStorageAdapter` | The `StoredConsent` record as JSON in `localStorage`. A value stored before 1.0, the bare `ConsentState`, is read as a record without a date. `subscribe` listens for `storage` events, so changes in other tabs apply. |
 | `createLocalStorageIdentityStorage(options)` | `IdentityStorageAdapter` | The identity as JSON in `localStorage`. |
 | `createMemoryConsentStorage(initial?)` | `ConsentStorageAdapter` | Consent in memory. `initial` defaults to `null`. |
 | `createMemoryIdentityStorage(initial?)` | `IdentityStorageAdapter` | The identity in memory. `initial` defaults to `{}`. |
@@ -325,9 +331,17 @@ return `null` (consent) or `{}` (identity) and writes are skipped.
 <summary>Adapter interfaces</summary>
 
 ```ts
+type StoredConsent = {
+  consent: ConsentState
+  /** When the choice was made, in milliseconds since the epoch. */
+  updatedAt?: number
+  /** The `consent.policyVersion` it was made under. */
+  policyVersion?: string
+}
+
 interface ConsentStorageAdapter {
-  read(): ConsentState | null
-  write(consent: ConsentState | null): void
+  read(): StoredConsent | null
+  write(record: StoredConsent | null): void
   subscribe?(listener: () => void): () => void
   clear?(): void
 }
@@ -638,7 +652,7 @@ and provides the state for [`useConsentController()`](#useconsentcontroller).
 | `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | When to call `analytics.boot()`. Read once, on mount. |
 | `boot.mode` | `'immediate' \| 'idle' \| 'manual'` | `'immediate'` | `'idle'` waits for `requestIdleCallback`; `'manual'` leaves the call to you. |
 | `boot.timeoutMs` | `number` | `3000`, or `1500` without `requestIdleCallback` | In `'idle'` mode, the `requestIdleCallback` timeout, or the `setTimeout` delay where it is unavailable. |
-| `autoShowBanner` | `boolean` | `true` | Sets `bannerVisible` when no choice is stored, or when bootstrap fails. |
+| `autoShowBanner` | `boolean` | `true` | Sets `bannerVisible` when no choice is stored, the stored choice is stale, or bootstrap fails. |
 | `openConsentGlobalKey` | `string` | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | A window function with this name opens the settings dialog. |
 
 The props type is exported as `AnalyticsProviderProps`.

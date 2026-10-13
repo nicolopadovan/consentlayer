@@ -14,21 +14,6 @@ records what each release actually ships.
 
 Ordered from the smallest change to the largest.
 
-### Consent expiry
-
-A stored choice never expires: it stays in `localStorage` until the visitor
-changes it. Some regulators recommend asking again after a period. The planned
-change records when each choice was made and shows the banner again once a
-configurable age is exceeded.
-
-### Re-prompting when the policy changes
-
-`createConsentHandler({ policyVersion })` stores the policy version with every
-consent record and in the signed cookie, but the browser does not compare it.
-A visitor who chose under an earlier policy keeps that choice and is not shown
-the banner again. The planned change asks the visitor again when the policy
-version differs from the one their choice was made under.
-
 ### Server endpoint handshake
 
 With `createAnalytics({ server: { endpoint } })`, the browser sends every

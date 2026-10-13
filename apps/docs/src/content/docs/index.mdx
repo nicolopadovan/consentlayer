@@ -54,7 +54,9 @@ stay in your codebase.
 <summary>Where consent is stored and how it is announced</summary>
 
 The visitor's choice is a `ConsentState` object with one boolean per category.
-It is stored in `localStorage` under `consentlayer_consent`. On every change,
+It is stored in `localStorage` under `consentlayer_consent`, with the date it
+was made and, if you set one, your policy version, so ConsentLayer can
+[ask again](/guides/consent-ui/#asking-again) later. On every change,
 ConsentLayer assigns it to `window.CONSENTLAYER_CONSENT` and dispatches a
 `consentlayer:consent` DOM event whose `detail` is the new state, so scripts
 outside ConsentLayer can react to it. All three names derive from
@@ -137,5 +139,5 @@ npm or loaded from the vendor's CDN, are not included in these figures.
 | `consentlayer/server` | 2.5 kB |
 | `consentlayer/server/meta` | 1.5 kB |
 
-The core currently measures 6.2 kB, `consentlayer/react` 2.0 kB and
+The core currently measures 6.5 kB, `consentlayer/react` 2.0 kB and
 `consentlayer/next` 1.6 kB.

@@ -9,6 +9,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating-to-v1/).
 
 ### Breaking
+- The consent storage key holds `{ consent, updatedAt, policyVersion }`
+  instead of the bare `ConsentState`; values stored the old way are still read.
+  `ConsentStorageAdapter.read()` and `write()` take this `StoredConsent` record.
+  `window.CONSENTLAYER_CONSENT` and the `consentlayer:consent` event are
+  unchanged.
 - `consentlayer/ui` (`CookieBanner`, `CookieDialog`, `ManageConsentTrigger`,
   the stylesheet and messages) is removed. Build your banner on
   `useConsentController()`, starting from the copy-paste recipe in the docs.
@@ -74,6 +79,11 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `createAnalytics({ consent: { maxAgeDays, policyVersion, onStale } })` asks
+  the visitor again when the stored choice is older than `maxAgeDays` or was
+  made under another `policyVersion`. `onStale: 'discard'` (default) treats it
+  as no choice; `'keep'` keeps it in force while the banner is shown.
+  `analytics.consent.isStale()` reports it.
 - `consentlayer/next` works in the Pages Router: render its `<AnalyticsProvider>`
   in `pages/_app.tsx`. Page views wait for `router.isReady`.
 - `consentlayer/next`: an `AnalyticsProvider` for the App Router that sends a

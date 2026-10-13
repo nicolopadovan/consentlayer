@@ -5,6 +5,7 @@ import type {
   ConsentEngineSnapshot,
   ConsentIntegrationAdapter,
   ConsentState,
+  StoredConsent,
 } from './types'
 import {
   BUILT_IN_CATEGORIES,
@@ -28,6 +29,16 @@ export function createConsentEngine(
   const storage = options.storage
   let destroyed = false
   let bootstrapping: Promise<ConsentState | null> | undefined
+  const policyVersion = options.policyVersion?.trim() || undefined
+  const { maxAgeDays } = options
+  if (maxAgeDays !== undefined && !(maxAgeDays > 0 && Number.isFinite(maxAgeDays))) {
+    throw new Error(`[consentlayer] consent.maxAgeDays must be a positive number, received ${maxAgeDays}`)
+  }
+  const isStaleRecord = (record: StoredConsent) =>
+    (policyVersion !== undefined && record.policyVersion !== policyVersion) ||
+    (maxAgeDays !== undefined &&
+      !(typeof record.updatedAt === 'number' && Date.now() - record.updatedAt <= maxAgeDays * 86_400_000))
+  let stale = false
 
   const notify = () => {
     const snapshot = { consent: current }
@@ -47,10 +58,11 @@ export function createConsentEngine(
       excludeAdapter?: ConsentIntegrationAdapter
     },
   ) => {
-    if (destroyed || !next || equalConsent(current, next)) return
+    if (destroyed || !next || (equalConsent(current, next) && !(persist && stale))) return
     current = next
     if (persist) {
-      storage?.write(next)
+      stale = false
+      storage?.write({ consent: next, updatedAt: Date.now(), policyVersion })
     }
     broadcastConsent(next, options.broadcast)
     debugLog(options.debug ?? false, 'consent updated', source, next)
@@ -77,8 +89,10 @@ export function createConsentEngine(
   if (storage?.subscribe) {
     cleanup.add(
       storage.subscribe(() => {
-        const next = normalize(storage.read())
-        if (next) {
+        const record = storage.read()
+        const next = normalize(record?.consent)
+        if (next && !isStaleRecord(record!)) {
+          stale = false
           void commit(next, 'storage', { persist: false, applyAdapters: false })
         }
       }),
@@ -100,8 +114,11 @@ export function createConsentEngine(
   }
 
   const runBootstrap = async () => {
-      const stored = normalize(storage?.read() ?? null)
-      if (stored) {
+      const record = storage?.read() ?? null
+      const stored = normalize(record?.consent)
+      stale = stored !== null && isStaleRecord(record!)
+      if (stale) debugLog(options.debug ?? false, 'stored consent is stale', record)
+      if (stored && (!stale || options.onStale === 'keep')) {
         await commit(stored, 'bootstrap', {
           persist: false,
           applyAdapters: false,
@@ -144,6 +161,9 @@ export function createConsentEngine(
     },
     getConsent() {
       return current
+    },
+    isStale() {
+      return stale
     },
     async setConsent(consent, source = 'imperative') {
       assertValidConsent(consent, categories)

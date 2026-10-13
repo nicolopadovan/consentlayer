@@ -186,6 +186,11 @@ prefix, or upgrading from `@nicolopadovan/analytics-consent-manager` without
 sees the banner again. See [Names](/guides/names/) and
 [Upgrading to 1.0](/guides/migrating-to-v1/#keep-stored-consent).
 
+**The policy version changes on every deploy.** With
+`consent: { policyVersion }`, a choice made under another version is stale and
+the banner is shown again. Set it to the version of your privacy policy, not to
+a build ID or a timestamp. See [Asking again](/guides/consent-ui/#asking-again).
+
 **Two instances use different names.** Each call to `createAnalytics()` sets
 the page's names, so the last one wins. When the names differ, it warns:
 

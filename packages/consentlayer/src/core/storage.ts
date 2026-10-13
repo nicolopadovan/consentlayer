@@ -1,6 +1,7 @@
 import type {
   ConsentState,
   ConsentStorageAdapter,
+  StoredConsent,
   IdentityStorageAdapter,
   UserIdentity,
 } from './types'
@@ -23,16 +24,16 @@ export function createLocalStorageConsentStorage(
     read() {
       return withStorage(
         options,
-        (storage) => safeJsonParse<ConsentState>(readMigrating(storage, options)),
+        (storage) => toRecord(safeJsonParse<StoredConsent | ConsentState>(readMigrating(storage, options))),
         null,
       )
     },
-    write(consent) {
+    write(record) {
       withStorage(
         options,
         (storage) =>
-          consent
-            ? storage.setItem(options.key, JSON.stringify(consent))
+          record
+            ? storage.setItem(options.key, JSON.stringify(record))
             : storage.removeItem(options.key),
         undefined,
       )
@@ -90,14 +91,14 @@ export function createLocalStorageIdentityStorage(
 export function createMemoryConsentStorage(
   initial: ConsentState | null = null,
 ): ConsentStorageAdapter {
-  let value = initial
+  let value = toRecord(initial)
   const listeners = new Set<() => void>()
   return {
     read() {
       return value
     },
-    write(consent) {
-      value = consent
+    write(record) {
+      value = record
       listeners.forEach((listener) => listener())
     },
     subscribe(listener) {
@@ -127,6 +128,12 @@ export function createMemoryIdentityStorage(
       value = {}
     },
   }
+}
+
+/** Values written before 1.0 are the bare `ConsentState`. */
+function toRecord(value: StoredConsent | ConsentState | null): StoredConsent | null {
+  if (!value || typeof value !== 'object') return null
+  return 'consent' in value && typeof value.consent === 'object' ? value : { consent: value as ConsentState }
 }
 
 function readMigrating(

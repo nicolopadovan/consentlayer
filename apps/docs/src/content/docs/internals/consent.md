@@ -54,7 +54,7 @@ a value:
 
 | Step | Source | Written to storage | Broadcast | Adapters applied |
 |---|---|---|---|---|
-| 1 | The storage adapter, by default `localStorage["consentlayer_consent"]` | no (already stored) | yes | none |
+| 1 | The storage adapter, by default `localStorage["consentlayer_consent"]`, unless the choice there is [stale](#stale-choices) | no (already stored) | yes | none |
 | 2 | Each adapter's `bootstrap()`, in the order given, awaited one at a time | yes | yes | none |
 | 3 | Nothing found: the engine keeps `initialConsent` (default `null`) | no | no | none |
 
@@ -80,6 +80,22 @@ adapter, so one failing integration cannot block the others or leave
 `bootstrap()` rejected.
 
 </details>
+
+### Stale choices
+
+The storage adapter holds a `StoredConsent` record: the choice, `updatedAt`
+(milliseconds since the epoch) and the `policyVersion` it was made under. In
+step 1 the record is stale when `consent.maxAgeDays` is set and `updatedAt` is
+missing or older than that, or when `consent.policyVersion` is set and the
+record's version differs or is missing. A stale record is skipped in step 1
+with `onStale: 'discard'`, so the adapters are asked next, and used as usual
+with `onStale: 'keep'`. Either way `isStale()` returns `true` until the next
+choice is written, and with `debug` the engine logs `stored consent is
+stale`.
+
+Every write stores the current time and `consent.policyVersion`. While the
+stored choice is stale, a `setConsent()` equal to the current consent is not
+ignored: it is written, broadcast and applied to every adapter like a change.
 
 ## Set vs update
 
@@ -156,11 +172,11 @@ never broadcast.
 
 The default localStorage storage subscribes to the browser's `storage` event
 for its key, which fires only in other tabs. When another tab saves a choice,
-this tab reads the key, normalises the value and commits it with the
+this tab reads the key, normalises the choice and commits it with the
 "Another tab" behaviour from the table above: it broadcasts and notifies the
 manager, so providers load or stop here too, but it neither writes the value
 back nor calls adapters, because the originating tab already did both. A
-removed or unreadable key is ignored.
+removed, unreadable or stale value is ignored.
 
 ## Adapters
 
@@ -283,6 +299,7 @@ When bootstrap settles:
 | Result | Banner | Dialog toggles |
 |---|---|---|
 | A choice was found | hidden | set from the choice |
+| A stale choice was kept (`onStale: 'keep'`) | shown if `autoShowBanner` | set from the choice |
 | No choice | shown if `autoShowBanner` (default `true`) | all `false` |
 | Bootstrap rejected | shown if `autoShowBanner`; `error` holds the message | all `false` |
 
@@ -306,6 +323,6 @@ way.
 
 To keep consent elsewhere, such as in a cookie or your backend, pass
 `consent: { storage }` with your own `ConsentStorageAdapter`: synchronous
-`read()` and `write(consent)`, plus optional `subscribe(listener)` for
+`read()` and `write(record)` of a `StoredConsent`, plus optional `subscribe(listener)` for
 external changes and `clear()`. `createMemoryConsentStorage()` keeps consent
 in memory only.

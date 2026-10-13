@@ -49,9 +49,16 @@ export type ConsentBroadcastConfig = {
 }
 
 /** Where consent is kept. Defaults to localStorage. */
+/** A stored choice: the consent, when it was made (epoch ms) and under which `policyVersion`. */
+export type StoredConsent = {
+  consent: ConsentState
+  updatedAt?: number
+  policyVersion?: string
+}
+
 export interface ConsentStorageAdapter {
-  read(): ConsentState | null
-  write(consent: ConsentState | null): void
+  read(): StoredConsent | null
+  write(record: StoredConsent | null): void
   subscribe?(listener: () => void): () => void
   clear?(): void
 }
@@ -80,6 +87,12 @@ export type ConsentEngineOptions = {
   /** Your own categories, on top of preferences, analytics and marketing. */
   categories?: (keyof ConsentCategories)[]
   broadcast?: ConsentBroadcastConfig
+  /** A stored choice older than this many days is stale. Unset, never. */
+  maxAgeDays?: number
+  /** A stored choice made under another version, or none, is stale. Unset, never. */
+  policyVersion?: string
+  /** `'discard'` treats a stale choice as no choice; `'keep'` keeps it in force until the visitor chooses again. Either way the banner shows. */
+  onStale?: 'discard' | 'keep'
   debug?: boolean
   onError?: AnalyticsErrorHandler
 }
@@ -94,6 +107,8 @@ export interface ConsentEngine {
   categories: readonly ConsentCategory[]
   bootstrap: () => Promise<ConsentState | null>
   getConsent: () => ConsentState | null
+  /** Whether the stored choice is stale and the visitor should be asked again. */
+  isStale: () => boolean
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>
   subscribe: (listener: (snapshot: ConsentEngineSnapshot) => void) => () => void
   destroy: () => void
