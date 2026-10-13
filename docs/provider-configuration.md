@@ -8,7 +8,7 @@
 | Meta Pixel | `createMetaAdapter` | `marketing` | `pixelId` | Browser pixel plus optional CAPI mirror; marketing consent is enforced in core |
 | Shopify analytics | `createShopifyAnalyticsAdapter` | `analytics` | optional script URLs | Queues page/event payloads for Shopify browser analytics |
 | Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter` | consent source | optional headless storefront config | Bootstraps and syncs consent state |
-| Hotjar | `createHotjarAdapter` | `analytics` | `siteId`, `version` | Loads only after analytics consent |
+| Hotjar | `createHotjarAdapter` | `analytics` | `siteId`, `version`, `reloadOnRevoke` | Loads only after analytics consent; on withdrawal its cookies and storage are deleted, and with `reloadOnRevoke` the page reloads so recording stops |
 | TikTok consent bridge | `createTikTokConsentAdapter` | `marketing` | `ttq` loaded by consumer | Consent sync only; no SDK bootstrap in package |
 
 Pass browser providers to `createAnalytics({ providers: [...] })` and consent

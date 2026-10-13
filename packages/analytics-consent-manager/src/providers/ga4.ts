@@ -2,6 +2,7 @@ import type {
   AnalyticsErrorHandler,
   AnalyticsProviderContext,
   ProviderAdapter,
+  UserIdentity,
 } from '../core/types'
 import { getFlag, setFlag } from '../core/names'
 import { consentLatch } from '../core/utils'
@@ -72,6 +73,14 @@ export function ga4EventName(name: string): string {
   return GA4_EVENT_NAMES[name] ?? name.replace(/[^A-Za-z0-9_]/g, '_')
 }
 
+/** User-provided data; empty when there is no email or phone to share. */
+export function ga4UserData(identity: UserIdentity): Record<string, string> {
+  const data: Record<string, string> = {}
+  if (identity.email) data.email = identity.email
+  if (identity.phone) data.phone_number = identity.phone.startsWith('+') ? identity.phone : `+${identity.phone}`
+  return data
+}
+
 export function createGa4Adapter(options: Ga4AdapterOptions): ProviderAdapter {
   const measurementId = assertValidGa4MeasurementId(options.measurementId)
   return {
@@ -125,12 +134,14 @@ export function createGa4Adapter(options: Ga4AdapterOptions): ProviderAdapter {
       })
     },
     identify(identity) {
-      if (typeof window === 'undefined' || !identity.userId) return
-      window.gtag?.('set', { user_id: identity.userId })
+      if (typeof window === 'undefined') return
+      if (identity.userId) window.gtag?.('set', { user_id: identity.userId })
+      window.gtag?.('set', 'user_data', ga4UserData(identity))
     },
     reset() {
       if (typeof window === 'undefined') return
       window.gtag?.('set', { user_id: null })
+      window.gtag?.('set', 'user_data', {})
     },
   }
 }

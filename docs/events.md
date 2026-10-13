@@ -82,14 +82,24 @@ await analytics.identify('user_123', { email: 'ada@example.com', plan: 'pro' })
 await analytics.reset() // on logout
 ```
 
-- The user ID, email and phone are stored locally (`npcm_user_identity`) and
-  passed to providers. Identifying a different user replaces what was stored.
-  A provider that loads later receives the user ID when it starts.
-- GA4 gets `user_id` only. Hotjar gets the user ID and traits without email
-  or phone. Meta's server mirror uses email, phone and the user ID (hashed on
-  the server) for matching.
+- The user ID is stored locally (`npcm_user_identity`) and passed to
+  providers. Identifying a different user replaces what was stored. A provider
+  that loads later receives it when it starts.
+- Email and phone are used only while **marketing** consent is granted. Until
+  then they stay in memory; once granted they are stored and sent to every
+  provider that accepts them. Withdrawing marketing consent deletes them.
+- Calls made before providers load are held (up to 100) and delivered when
+  they do, to the providers consent allows at that moment.
+
+| Provider | User ID | Email and phone (marketing consent) |
+|---|---|---|
+| GA4 | `user_id` | `user_data` ([user-provided data collection](https://support.google.com/analytics/answer/14077171) must be on in GA4 admin) |
+| Meta | `external_id` | browser pixel advanced matching when the pixel starts (Meta accepts it only then), and the server mirror on every event |
+| Hotjar | identify | email as an attribute, when there is a user ID |
+| Vercel, Shopify | — | — (no API for it) |
 - `reset()` clears the stored identity and tells each provider that has loaded
-  (GA4 clears `user_id`, Hotjar identifies as anonymous).
+  (GA4 clears `user_id` and `user_data`, Hotjar identifies as anonymous). The
+  Meta pixel keeps its advanced-matching data until the next page load.
 - `group(id, traits)` is passed to providers that support groups.
 
 ## Consent

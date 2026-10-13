@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import type { AnalyticsEventPayload, ProviderAdapter } from '../src/core/types'
 import { cartParams, orderParams, productParams } from '../src/ecommerce'
-import { ga4EventName } from '../src/providers/ga4'
-import { toMetaEvent } from '../src/providers/meta'
+import { ga4EventName, ga4UserData } from '../src/providers/ga4'
+import { createHotjarAdapter } from '../src/providers/hotjar'
+import { metaUserData, toMetaEvent } from '../src/providers/meta'
 import { AnalyticsProvider, useAnalytics, useConsent } from '../src/react'
 
 const granted = { preferences: true, analytics: true, marketing: true }
@@ -111,6 +112,54 @@ describe('createAnalytics', () => {
     await analytics.track('purchase', { transaction_id: 'o1' })
     expect(meta.trackEvent).toHaveBeenCalledTimes(1)
     expect(ga4.trackEvent).not.toHaveBeenCalled()
+    analytics.destroy()
+  })
+
+  it('keeps email and phone off the device and away from providers without marketing consent', async () => {
+    const ga4 = spyProvider('ga4')
+    const analytics = createAnalytics({ providers: [ga4] })
+    await analytics.consent.update({ analytics: true })
+    await analytics.boot()
+    await analytics.identify('u1', { email: 'a@example.com', plan: 'pro' })
+
+    expect(ga4.identify).toHaveBeenLastCalledWith({ userId: 'u1' }, { plan: 'pro' }, expect.anything())
+    expect(JSON.parse(localStorage.getItem('npcm_user_identity') ?? '{}')).toEqual({ userId: 'u1' })
+
+    await analytics.consent.update({ marketing: true })
+    await waitFor(() =>
+      expect(ga4.identify).toHaveBeenLastCalledWith(
+        { userId: 'u1', email: 'a@example.com' },
+        {},
+        expect.anything(),
+      ),
+    )
+    expect(JSON.parse(localStorage.getItem('npcm_user_identity') ?? '{}')).toEqual({
+      userId: 'u1',
+      email: 'a@example.com',
+    })
+
+    await analytics.consent.update({ marketing: false })
+    await waitFor(() =>
+      expect(ga4.identify).toHaveBeenLastCalledWith({ userId: 'u1' }, {}, expect.anything()),
+    )
+    expect(JSON.parse(localStorage.getItem('npcm_user_identity') ?? '{}')).toEqual({ userId: 'u1' })
+
+    await analytics.consent.update({ marketing: true })
+    expect(localStorage.getItem('npcm_user_identity')).not.toContain('a@example.com')
+    analytics.destroy()
+  })
+
+  it('delivers calls made before boot once providers are active', async () => {
+    const ga4 = spyProvider('ga4')
+    const analytics = createAnalytics({ providers: [ga4] })
+    await analytics.consent.update({ analytics: true })
+    await analytics.identify('u1', { plan: 'pro' })
+    await analytics.track('sign_up')
+    expect(ga4.trackEvent).not.toHaveBeenCalled()
+
+    await analytics.boot()
+    expect(ga4.identify).toHaveBeenCalledWith({ userId: 'u1' }, { plan: 'pro' }, expect.anything())
+    expect(ga4.trackEvent).toHaveBeenCalledTimes(1)
     analytics.destroy()
   })
 
@@ -223,5 +272,53 @@ describe('AnalyticsProvider', () => {
     )
     await waitFor(() => expect(ga4.trackPage).toHaveBeenCalledTimes(2))
     analytics.destroy()
+  })
+
+  it('sends the current page to a provider that starts later on the same route', async () => {
+    const ga4 = spyProvider('ga4')
+    const meta = spyProvider('meta', 'marketing')
+    const analytics = createAnalytics({ providers: [ga4, meta] })
+    render(
+      <AnalyticsProvider analytics={analytics} routeKey="/a">
+        <span />
+      </AnalyticsProvider>,
+    )
+    await act(() => analytics.consent.update({ analytics: true }))
+    await waitFor(() => expect(ga4.trackPage).toHaveBeenCalledTimes(1))
+    await act(() => analytics.consent.update({ marketing: true }))
+    await waitFor(() => expect(meta.trackPage).toHaveBeenCalledTimes(1))
+    expect(ga4.trackPage).toHaveBeenCalledTimes(1)
+    analytics.destroy()
+  })
+})
+
+describe('provider identity', () => {
+  it('formats user data for GA4 and Meta', () => {
+    expect(ga4UserData({ email: 'a@b.co', phone: '+15551234567' })).toEqual({
+      email: 'a@b.co',
+      phone_number: '+15551234567',
+    })
+    expect(ga4UserData({ userId: 'u1' })).toEqual({})
+    expect(metaUserData({ userId: 'u1', email: 'a@b.co', phone: '+15551234567' })).toEqual({
+      em: 'a@b.co',
+      ph: '15551234567',
+      external_id: 'u1',
+    })
+  })
+
+  it('deletes Hotjar cookies and storage when analytics is withdrawn', async () => {
+    document.cookie = '_hjSessionUser_1=x; path=/'
+    document.cookie = 'keep=1; path=/'
+    localStorage.setItem('_hjUserAttributes', 'x')
+    sessionStorage.setItem('hjViewportId', 'x')
+    const hotjar = createHotjarAdapter({ siteId: 1, version: 6 })
+    const ctx = { identity: {}, debug: false, isBooted: true, emitError: () => undefined }
+    await hotjar.teardown?.({ ...ctx, consent: { preferences: false, analytics: true, marketing: false } })
+    expect(document.cookie).toContain('_hjSessionUser_1')
+    await hotjar.teardown?.({ ...ctx, consent: { preferences: false, analytics: false, marketing: false } })
+    expect(document.cookie).not.toContain('_hj')
+    expect(document.cookie).toContain('keep=1')
+    expect(localStorage.getItem('_hjUserAttributes')).toBeNull()
+    expect(sessionStorage.getItem('hjViewportId')).toBeNull()
   })
 })

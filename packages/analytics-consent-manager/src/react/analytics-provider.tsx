@@ -82,7 +82,10 @@ export function AnalyticsProvider({
     () => analytics.getSnapshot(),
   )
   const bootRef = useRef(boot)
-  const trackedRouteKey = useRef<string | null>(null)
+  const paged = useRef<{ routeKey: string | null; providers: Set<string> }>({
+    routeKey: null,
+    providers: new Set(),
+  })
   const sessionRouteKey = useRef(routeKey)
 
   useEffect(() => {
@@ -92,10 +95,14 @@ export function AnalyticsProvider({
   useEffect(() => scheduleBoot(analytics, bootRef.current), [analytics])
 
   useEffect(() => {
-    if (!snapshot.booted || snapshot.activeProviders.length === 0) return
-    if (trackedRouteKey.current === routeKey) return
-    trackedRouteKey.current = routeKey
-    void analytics.page(page)
+    if (!snapshot.booted) return
+    if (paged.current.routeKey !== routeKey) {
+      paged.current = { routeKey, providers: new Set() }
+    }
+    const fresh = snapshot.activeProviders.filter((id) => !paged.current.providers.has(id))
+    if (!fresh.length) return
+    fresh.forEach((id) => paged.current.providers.add(id))
+    void analytics.page(page, { only: fresh })
   }, [analytics, page, routeKey, snapshot])
 
   useEffect(() => {

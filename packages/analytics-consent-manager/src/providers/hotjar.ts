@@ -11,6 +11,27 @@ declare global {
 export type HotjarAdapterOptions = {
   siteId: number
   version: number
+  /**
+   * Hotjar can't be stopped once loaded. On analytics withdrawal its cookies
+   * and storage are always deleted; `true` also reloads the page so recording stops.
+   */
+  reloadOnRevoke?: boolean
+}
+
+function clearHotjarStorage(): void {
+  const hosts = location.hostname.split('.').map((_, i, parts) => parts.slice(i).join('.'))
+  for (const cookie of document.cookie.split(';')) {
+    const name = cookie.split('=')[0]?.trim()
+    if (!name?.startsWith('_hj')) continue
+    for (const domain of ['', ...hosts.map((host) => `; domain=${host}`)]) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${domain}`
+    }
+  }
+  for (const storage of [localStorage, sessionStorage]) {
+    for (const key of Object.keys(storage)) {
+      if (key.startsWith('_hj') || key === 'hjViewportId') storage.removeItem(key)
+    }
+  }
 }
 
 function ensureHotjar(options: HotjarAdapterOptions): void {
@@ -45,10 +66,13 @@ export function createHotjarAdapter(
       window.hj?.('event', event.name)
     },
     identify(identity, traits) {
-      const attributes = Object.fromEntries(
-        Object.entries(traits).filter(([key]) => key !== 'email' && key !== 'phone'),
-      )
+      const attributes = identity.userId && identity.email ? { ...traits, email: identity.email } : traits
       window.hj?.('identify', identity.userId ?? null, attributes)
+    },
+    teardown(context) {
+      if (typeof window === 'undefined' || context.consent?.analytics) return
+      clearHotjarStorage()
+      if (options.reloadOnRevoke) location.reload()
     },
     reset() {
       window.hj?.('identify', null, {})

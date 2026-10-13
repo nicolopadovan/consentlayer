@@ -106,10 +106,13 @@ providers that dedupe (Meta) count it once.
 
 ### Identity
 
-`identify(userId, traits)` stores the user ID, email and phone and passes
-traits to providers (traits are not stored). Email and phone stay in the
-identity store for Meta's matching. `reset()` clears it. Providers receive
-identity through the context; they never read storage themselves.
+`identify(userId, traits)` stores the user ID and passes traits to providers
+(traits are not stored). Email and phone are personal data used for ad
+matching, so they follow marketing consent (GDPR / ePrivacy): kept in memory
+until it is granted, then stored and shared with every provider that accepts
+them; deleted from storage and memory when it is withdrawn. `reset()` clears
+everything. Providers receive identity through the context; they never read
+storage themselves.
 
 Deferred to stage 2: a package-level anonymous ID. Each provider keeps its
 own until server forwarding needs a shared one.

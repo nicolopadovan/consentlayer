@@ -260,7 +260,8 @@ export interface AnalyticsManager {
   registerProvider: (provider: ProviderAdapter) => () => void
   updateConsent: (consent: ConsentState | null) => Promise<void>
   getConsent: () => ConsentState | null
-  page: (payload?: PageViewPayload) => Promise<void>
+  /** `only` limits which providers receive it. */
+  page: (payload?: PageViewPayload, options?: { only?: string[] }) => Promise<void>
   track: <Name extends string>(
     name: Name,
     params?: EventParams<Name>,

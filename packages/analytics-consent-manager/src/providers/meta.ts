@@ -92,6 +92,15 @@ export function toMetaEvent(event: AnalyticsEventPayload): {
   }
 }
 
+/** Advanced matching; Meta accepts it only in `fbq('init')`. */
+export function metaUserData(identity: UserIdentity): Record<string, string> {
+  const data: Record<string, string> = {}
+  if (identity.email) data.em = identity.email
+  if (identity.phone) data.ph = identity.phone.replace(/\D/g, '')
+  if (identity.userId) data.external_id = identity.userId
+  return data
+}
+
 export function createMetaAdapter(
   options: MetaAdapterOptions,
 ): ProviderAdapter {
@@ -154,7 +163,7 @@ export function createMetaAdapter(
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];}(window);
 fbq('consent', ${setupContext.consent?.marketing ? "'grant'" : "'revoke'"});
-fbq('init', ${JSON.stringify(pixelId)});`
+fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(setupContext.identity)).replace(/</g, '\\u003c')});`
       document.head.appendChild(bootstrap)
 
       const loader = document.createElement('script')

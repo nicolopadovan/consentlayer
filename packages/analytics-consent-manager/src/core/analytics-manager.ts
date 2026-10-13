@@ -7,6 +7,8 @@ import type {
   AnalyticsManagerStateSnapshot,
   AutoTrackingConfig,
   ProviderAdapter,
+  UserIdentity,
+  UserTraits,
 } from './types'
 import { createMemoryIdentityStorage } from './storage'
 import {
@@ -18,6 +20,7 @@ import {
   getWindowLocation,
   hasRequiredConsent,
   isBrowser,
+  normalizeIdentity,
 } from './utils'
 
 type ProviderState = {
@@ -101,6 +104,8 @@ export function createAnalyticsManager(
   const providerStates = new Map<string, ProviderState>()
   const identityStorage = options.identityStorage ?? createMemoryIdentityStorage()
   let consent = options.consent ?? options.consentEngine?.getConsent() ?? null
+  let identity: UserIdentity = identityStorage.read()
+  const pending: Array<() => Promise<void>> = []
   let booted = false
   let destroyed = false
   let lifecycleQueue = Promise.resolve()
@@ -157,9 +162,18 @@ export function createAnalyticsManager(
     (providerId: string) => (error: AnalyticsError) =>
       emitError({ ...error, providerId: error.providerId ?? providerId })
 
+  const sharedIdentity = (): UserIdentity =>
+    consent?.marketing ? identity : identity.userId ? { userId: identity.userId } : {}
+
+  const persistIdentity = () => {
+    identityStorage.clear?.()
+    const stored = sharedIdentity()
+    if (Object.keys(stored).length) identityStorage.write(stored)
+  }
+
   const context = (providerId?: string) => ({
     consent,
-    identity: identityStorage.read(),
+    identity: sharedIdentity(),
     debug: options.debug ?? false,
     isBooted: booted,
     emitError: providerId ? providerEmitError(providerId) : emitError,
@@ -234,10 +248,10 @@ export function createAnalyticsManager(
         state.adapter.init?.(context(state.adapter.id)),
       )
       state.active = true
-      const identity = identityStorage.read()
-      if (identity.userId) {
+      const shared = sharedIdentity()
+      if (Object.keys(shared).length) {
         await safeCall(`${state.adapter.id}.identify`, () =>
-          state.adapter.identify?.(identity, {}, context(state.adapter.id)),
+          state.adapter.identify?.(shared, {}, context(state.adapter.id)),
         )
       }
       return
@@ -273,7 +287,14 @@ export function createAnalyticsManager(
     selectedProviderIds: string[] | undefined,
     callback: (state: ProviderState) => Promise<void>,
   ) => {
-    if (!booted || !runtimeEnabled()) return
+    if (destroyed || !runtimeEnabled()) return
+    if (!booted) {
+      // ponytail: fixed cap; calls past it are dropped until boot
+      if (pending.length < 100) {
+        pending.push(() => trackAgainstProviders(selectedProviderIds, callback))
+      }
+      return
+    }
     for (const state of providerStates.values()) {
       if (!state.active) continue
       if (!hasRequiredConsent(consent, state.adapter.requiredConsent)) continue
@@ -283,6 +304,13 @@ export function createAnalyticsManager(
       await callback(state)
     }
   }
+
+  const identifyProviders = (traits: UserTraits, only?: string[]) =>
+    trackAgainstProviders(only, async (state) => {
+      await safeCall(`${state.adapter.id}.identify`, () =>
+        state.adapter.identify?.(sharedIdentity(), traits, context(state.adapter.id)),
+      )
+    })
 
   const clearSessionTimers = () => {
     for (const timer of timeouts) {
@@ -374,6 +402,7 @@ export function createAnalyticsManager(
       if (destroyed || booted) return
       booted = true
       await queueLifecycle()
+      for (const run of pending.splice(0)) await run()
     },
     registerProvider(provider) {
       const state = ensureProviderState(provider)
@@ -395,15 +424,28 @@ export function createAnalyticsManager(
       }
     },
     async updateConsent(nextConsent) {
+      const hadMarketing = Boolean(consent?.marketing)
+      const hadContact = Boolean(identity.email || identity.phone)
+      const wasActive = [...providerStates.values()]
+        .filter((state) => state.active)
+        .map((state) => state.adapter.id)
       consent = nextConsent
+      if (!nextConsent) return queueLifecycle()
+      if (hadMarketing && !nextConsent.marketing) {
+        identity = identity.userId ? { userId: identity.userId } : {}
+      }
+      persistIdentity()
       await queueLifecycle()
+      if (hadContact && hadMarketing !== nextConsent.marketing && wasActive.length) {
+        await identifyProviders({}, wasActive)
+      }
     },
     getConsent() {
       return consent
     },
-    async page(payload = {}) {
+    async page(payload = {}, pageOptions = {}) {
       const page = { ...getWindowLocation(), ...payload }
-      await trackAgainstProviders(undefined, async (state) => {
+      await trackAgainstProviders(pageOptions.only, async (state) => {
         await safeCall(`${state.adapter.id}.trackPage`, () =>
           state.adapter.trackPage?.(page, context(state.adapter.id)),
         )
@@ -426,16 +468,20 @@ export function createAnalyticsManager(
       })
     },
     async identify(userId, traits = {}) {
-      if (userId && userId !== identityStorage.read().userId) identityStorage.clear?.()
-      identityStorage.write({ userId, email: traits.email, phone: traits.phone })
-      const identity = identityStorage.read()
-      await trackAgainstProviders(undefined, async (state) => {
-        await safeCall(`${state.adapter.id}.identify`, () =>
-          state.adapter.identify?.(identity, traits, context(state.adapter.id)),
-        )
-      })
+      if (userId && userId !== identity.userId) identity = {}
+      identity = {
+        ...identity,
+        ...normalizeIdentity({ userId, email: traits.email, phone: traits.phone }),
+      }
+      persistIdentity()
+      await identifyProviders(
+        Object.fromEntries(
+          Object.entries(traits).filter(([key]) => key !== 'email' && key !== 'phone'),
+        ),
+      )
     },
     async reset() {
+      identity = {}
       identityStorage.clear?.()
       for (const state of providerStates.values()) {
         if (!state.setup) continue

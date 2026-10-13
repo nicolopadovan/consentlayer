@@ -39,7 +39,15 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
 - Meta: `customize_product`, `schedule`, `submit_application`, `find_location`,
   `donate`; Meta standard names passed as is stay standard; content IDs use the
   variant ID when present.
-- Hotjar `reset()`.
+- Hotjar `reset()`; on analytics withdrawal Hotjar's cookies and storage are
+  deleted, and `reloadOnRevoke: true` reloads the page so recording stops.
+- Email and phone are kept in memory until marketing consent, then stored and
+  shared with GA4 (`user_data`), Meta (pixel advanced matching at start, server
+  mirror) and Hotjar; withdrawing marketing consent deletes them.
+- `track`, `page`, `identify` and `group` calls made before boot are held and
+  delivered once providers are active.
+- `page(payload, { only })`. `AnalyticsProvider` sends the current page to a
+  provider that starts later on the same route (e.g. Meta after marketing consent).
 
 ### Fixed
 - `ConsentEngine.bootstrap()` runs once even when called from several places.
