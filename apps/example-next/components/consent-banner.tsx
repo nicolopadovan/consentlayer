@@ -24,7 +24,7 @@ export function ConsentBanner({ privacyPolicyUrl }: { privacyPolicyUrl?: string 
             <strong>Necessary</strong> Needed for the site to work, such as remembering this choice. Always on.
           </span>
         </label>
-        {(Object.keys(consent.prefs) as ConsentCategory[]).map((key) => (
+        {consent.categories.map((key) => (
           <label key={key}>
             <input
               type="checkbox"

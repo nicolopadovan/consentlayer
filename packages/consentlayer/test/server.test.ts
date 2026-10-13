@@ -108,6 +108,7 @@ describe('server destinations', () => {
     expect(metaCapi({ pixelId: '123456789012345', accessToken: undefined })).toBeUndefined()
     expect(metaCapi({ pixelId: '', accessToken: 'token' })).toBeUndefined()
     expect(ga4Server({ measurementId: 'G-ABC123', apiSecret: undefined })).toBeUndefined()
+    expect(metaCapi({ pixelId: ' ', accessToken: ' ' })).toBeUndefined()
     expect(warn.mock.calls).toEqual([
       ['[consentlayer] metaCapi is off: set both pixelId and accessToken.'],
       ['[consentlayer] metaCapi is off: set both pixelId and accessToken.'],

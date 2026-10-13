@@ -19,8 +19,8 @@ const pathOf = (path = location.pathname) => path.split(/[?#]/)[0]
 
 /** Contentsquare (Hotjar's successor), after analytics consent. */
 export function contentsquare(options: ContentsquareOptions) {
-  if (!options.tagId) return skippedPlugin('contentsquare', 'tagId')
-  const tagId = options.tagId
+  const tagId = options.tagId?.trim()
+  if (!tagId) return skippedPlugin('contentsquare', 'tagId')
   let loadedPath: string | undefined
   return definePlugin({
     id: 'contentsquare',

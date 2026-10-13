@@ -26,12 +26,14 @@ export type ConsentProof = {
 
 export type ConsentCookieOptions = {
   /** At least 32 characters, e.g. `process.env.CONSENT_SECRET`. */
-  secret: string
+  secret: string | undefined
   /** Default `consentlayer_proof`. */
   cookie?: string
 }
 
 const DEFAULT_COOKIE = 'consentlayer_proof'
+// Safari drops Secure cookies on http://localhost.
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
 // ponytail: browsers cap cookie lifetimes at 400 days
 const MAX_AGE = 400 * 24 * 60 * 60
 
@@ -41,11 +43,12 @@ const toBase64Url = (bytes: Uint8Array) =>
 const fromBase64Url = (value: string) =>
   Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), (char) => char.charCodeAt(0))
 
-export function assertSecret(secret: string): void {
-  if (!secret || secret.length < 32) throw new Error('[consentlayer] the consent secret needs at least 32 characters')
+export function assertSecret(secret: string | undefined): asserts secret is string {
+  if (!secret) throw new Error('[consentlayer] the consent secret is not set')
+  if (secret.length < 32) throw new Error('[consentlayer] the consent secret needs at least 32 characters')
 }
 
-const hmacKey = (secret: string) => {
+const hmacKey = (secret: string | undefined) => {
   assertSecret(secret)
   return crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
     'sign',
@@ -123,7 +126,7 @@ export function createConsentHandler(
       return new Response(null, {
         status: 204,
         headers: {
-          'set-cookie': `${options.cookie ?? DEFAULT_COOKIE}=${cookie}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; Secure; SameSite=Lax`,
+          'set-cookie': `${options.cookie ?? DEFAULT_COOKIE}=${cookie}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${LOCAL_HOSTS.has(new URL(request.url).hostname) ? '' : '; Secure'}`,
         },
       })
     } catch (error) {

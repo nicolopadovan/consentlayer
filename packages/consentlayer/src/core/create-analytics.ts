@@ -38,7 +38,7 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
   configureNames(names)
 
   const consentEndpoint =
-    options.server?.consentEndpoint !== undefined
+    options.server?.consentEndpoint
       ? assertHttpsOrRelativeUrl(options.server.consentEndpoint, 'server.consentEndpoint')
       : undefined
   const recorder: ConsentIntegrationAdapter = {

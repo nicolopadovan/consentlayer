@@ -10,9 +10,9 @@ declare global {
 
 /** Options for `hotjar`. */
 export type HotjarOptions = {
-  /** A number or numeric string; `undefined` or `''` turns the provider off. */
+  /** A positive integer, as a number or a string of digits; `undefined` or `''` turns the provider off. */
   siteId: number | string | undefined
-  /** A number or numeric string; `undefined` or `''` turns the provider off. */
+  /** A positive integer, as a number or a string of digits; `undefined` or `''` turns the provider off. */
   version: number | string | undefined
   /**
    * Hotjar can't be stopped once loaded. On analytics withdrawal its cookies
@@ -47,15 +47,20 @@ function ensureHotjar(options: { siteId: number; version: number }): void {
   setFlag('HotjarInitialized', true)
 }
 
+const toPositiveInteger = (value: number | string) =>
+  typeof value === 'number' ? value : /^\d+$/.test(value) ? Number(value) : Number.NaN
+
 /**
  * Hotjar, after analytics consent.
  * @deprecated Hotjar accounts are moving to Contentsquare; use `contentsquare()` once yours has.
  */
 export function hotjar(options: HotjarOptions) {
-  if (options.siteId === undefined || options.siteId === '') return skippedPlugin('hotjar', 'siteId')
-  if (options.version === undefined || options.version === '') return skippedPlugin('hotjar', 'version')
-  const siteId = Number(options.siteId)
-  const version = Number(options.version)
+  const rawSiteId = typeof options.siteId === 'string' ? options.siteId.trim() : options.siteId
+  const rawVersion = typeof options.version === 'string' ? options.version.trim() : options.version
+  if (rawSiteId === undefined || rawSiteId === '') return skippedPlugin('hotjar', 'siteId')
+  if (rawVersion === undefined || rawVersion === '') return skippedPlugin('hotjar', 'version')
+  const siteId = toPositiveInteger(rawSiteId)
+  const version = toPositiveInteger(rawVersion)
   if (!Number.isSafeInteger(siteId) || siteId <= 0 || !Number.isSafeInteger(version) || version <= 0) {
     throw new Error(
       `[consentlayer] Invalid Hotjar siteId or version: expected positive integers, received ${JSON.stringify(options.siteId)} and ${JSON.stringify(options.version)}.`,

@@ -96,9 +96,12 @@ export function createAnalyticsHandler(options: {
   consentCookie?: ConsentCookieOptions
   onError?: (error: unknown) => void
 }): (request: Request) => Promise<Response> {
+  if (options.consentCookie && !options.consentCookie.secret) {
+    console.warn('[consentlayer] consentCookie.secret is not set: every event is treated as denied.')
+  }
   return async (request) => {
     try {
-      if (options.consentCookie) assertSecret(options.consentCookie.secret)
+      if (options.consentCookie?.secret) assertSecret(options.consentCookie.secret)
       assertSameOrigin(request, { requireHeader: true })
       const event = parseServerEvent(await parseJsonWithLimit(request, ANALYTICS_MAX_BODY))
       if (options.consentCookie) {

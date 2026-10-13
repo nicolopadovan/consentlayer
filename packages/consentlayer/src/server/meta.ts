@@ -18,7 +18,8 @@ export function metaCapi(options: {
   apiVersion?: string
   fetchImpl?: typeof fetch
 }): ServerDestination<true> | undefined {
-  const { pixelId, accessToken } = options
+  const pixelId = options.pixelId?.trim()
+  const accessToken = options.accessToken?.trim()
   if (!pixelId || !accessToken) {
     if (pixelId || accessToken) console.warn('[consentlayer] metaCapi is off: set both pixelId and accessToken.')
     return undefined

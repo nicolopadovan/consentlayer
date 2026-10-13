@@ -111,7 +111,18 @@ export function createConsentEngine(
 
       for (const adapter of adapters) {
         if (!adapter.bootstrap) continue
-        const next = normalize(await Promise.resolve(adapter.bootstrap()))
+        let next: ConsentState | null
+        try {
+          next = normalize(await adapter.bootstrap())
+        } catch (cause) {
+          options.onError?.({
+            scope: 'consent-adapter',
+            providerId: adapter.id,
+            message: `Consent adapter "${adapter.id}" failed to read consent`,
+            cause,
+          })
+          continue
+        }
         if (!next) continue
         await commit(next, 'bootstrap', {
           persist: true,

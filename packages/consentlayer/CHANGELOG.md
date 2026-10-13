@@ -81,11 +81,19 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `ga4()`, `meta()`, `posthog()`, `sentry()`, `contentsquare()` and `hotjar()`
   accept an `undefined` or empty ID and turn the provider off (logged with
   `debug: true`), so `process.env` values can be passed without guards.
-  Malformed IDs still throw. `hotjar()` also accepts numeric strings.
+  Malformed IDs still throw. `hotjar()` also accepts its IDs as strings of digits.
 - `metaCapi()` and `ga4Server()` return `undefined` while an ID or secret is
   unset, warning once when only one of the two is set, and `destinations`
   skips `undefined` entries.
 - `<MetaPixelNoscript>` renders nothing while `pixelId` is unset.
+- Provider IDs and server destination credentials are trimmed, so a trailing
+  newline in an environment variable no longer throws.
+- `server.endpoint` and `server.consentEndpoint` treat `''` as unset.
+- `consentCookie.secret` accepts `undefined`: `createAnalyticsHandler` warns once
+  and treats every event as denied.
+- The Shopify adapter loads Shopify's Customer Privacy script itself on
+  headless storefronts, once `storefrontAccessToken` is set.
+- `useConsentController()` returns `categories`, the categories the dialog shows.
 - The Shopify adapter sends `headlessStorefront` only once
   `storefrontAccessToken` is set.
 - `requestInfo(request)` is exported from `consentlayer/server`, for
@@ -167,6 +175,14 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `createEnvConfig()`: pass `process.env` values to the providers directly.
 
 ### Fixed
+- A consent adapter whose `bootstrap()` failed left `consent.bootstrap()` and
+  every later `consent.update()` rejected; the error now goes to `onError` and
+  the next adapter is asked.
+- The Shopify adapter's `apply` resolved before Shopify's callback.
+- Safari dropped the `Secure` consent cookie on `http://localhost`; it is no
+  longer `Secure` on localhost.
+- A missing consent secret reports `the consent secret is not set` instead of
+  the 32-character message.
 - `createConsentHandler()` stored the record and then answered 500 without a
   cookie when the secret was shorter than 32 characters. It and
   `createAnalyticsHandler({ consentCookie })` now check the secret first on

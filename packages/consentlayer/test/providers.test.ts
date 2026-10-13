@@ -36,7 +36,14 @@ describe('providers', () => {
     expect(() => ga4({ measurementId: 'UA-12345' })).toThrow(/GA4 measurement ID/)
     expect(() => meta({ pixelId: 'pixel-123' })).toThrow(/Meta Pixel ID/)
     expect(() => hotjar({ siteId: 'abc', version: '6' })).toThrow(/Hotjar siteId or version/)
-    expect(hotjar({ siteId: '123', version: '6' }).load).toBeTypeOf('function')
+    expect(hotjar({ siteId: ' 123\n', version: '6' }).load).toBeTypeOf('function')
+    for (const siteId of ['1e3', '0x10', '12.0', '0']) {
+      expect(() => hotjar({ siteId, version: 6 })).toThrow(/Hotjar siteId or version/)
+    }
+    expect(Object.keys(hotjar({ siteId: ' ', version: 6 }))).toEqual(['id', 'setup'])
+    expect(ga4({ measurementId: ' G-ABC123\n' }).load).toBeTypeOf('function')
+    expect(meta({ pixelId: '123456789012345\n' }).load).toBeTypeOf('function')
+    expect(Object.keys(posthog({ apiKey: ' ' }))).toEqual(['id', 'setup'])
   })
 
   it('reuses the same Meta event id for browser and server dedupe', async () => {

@@ -224,7 +224,7 @@ export function createAnalyticsManager(
       emitError({ ...error, providerId: error.providerId ?? providerId })
 
   const serverEndpoint =
-    options.server?.endpoint !== undefined
+    options.server?.endpoint
       ? assertHttpsOrRelativeUrl(options.server.endpoint, 'server.endpoint')
       : undefined
 

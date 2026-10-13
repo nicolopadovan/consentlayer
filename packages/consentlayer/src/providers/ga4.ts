@@ -39,8 +39,8 @@ export function ga4UserData(identity: UserIdentity): Record<string, string> {
 
 /** Google Analytics 4 via gtag.js, with Consent Mode v2. Needs analytics consent; ad signals follow marketing consent. */
 export function ga4(options: Ga4Options) {
-  if (!options.measurementId) return skippedPlugin('ga4', 'measurementId')
-  const measurementId = assertValidGa4MeasurementId(options.measurementId)
+  if (!options.measurementId?.trim()) return skippedPlugin('ga4', 'measurementId')
+  const measurementId = assertValidGa4MeasurementId(options.measurementId.trim())
   const gtag = (...args: unknown[]) => window.gtag?.(...args)
   return definePlugin({
     id: 'ga4',

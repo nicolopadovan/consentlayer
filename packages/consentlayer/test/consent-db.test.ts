@@ -42,7 +42,7 @@ describe('consent handler', () => {
     const { records, handler } = setup()
     const first = await handler(post('/api/consent', { consent: granted }))
     expect(first.status).toBe(204)
-    expect(first.headers.get('set-cookie')).toMatch(/^consentlayer_proof=.+; Path=\/; Max-Age=\d+; HttpOnly; Secure; SameSite=Lax$/)
+    expect(first.headers.get('set-cookie')).toMatch(/^consentlayer_proof=.+; Path=\/; Max-Age=\d+; HttpOnly; SameSite=Lax; Secure$/)
 
     const second = await handler(post('/api/consent', { consent: { ...denied, extra: true } }, cookieOf(first)))
     const { consentId } = records[0]
@@ -58,16 +58,41 @@ describe('consent handler', () => {
   it('rejects a short or missing secret before storing anything', async () => {
     const store = { append: vi.fn() }
     const onError = vi.fn()
-    for (const secret of ['short', undefined as unknown as string]) {
+    for (const secret of ['short', undefined]) {
       const consent = createConsentHandler({ secret, policyVersion: '1', store, onError })
       expect((await consent(post('/api/consent', { consent: granted }))).status).toBe(500)
-      const analytics = createAnalyticsHandler({ destinations: [], consentCookie: { secret }, onError })
-      expect((await analytics(post('/api/analytics', { name: 'x', consent: granted }))).status).toBe(500)
     }
+    const analytics = createAnalyticsHandler({ destinations: [], consentCookie: { secret: 'short' }, onError })
+    expect((await analytics(post('/api/analytics', { name: 'x', consent: granted }))).status).toBe(500)
     expect(store.append).not.toHaveBeenCalled()
-    expect(onError.mock.calls.map(([error]) => String(error))).toEqual(
-      Array(4).fill('Error: [consentlayer] the consent secret needs at least 32 characters'),
-    )
+    expect(onError.mock.calls.map(([error]) => String(error))).toEqual([
+      'Error: [consentlayer] the consent secret needs at least 32 characters',
+      'Error: [consentlayer] the consent secret is not set',
+      'Error: [consentlayer] the consent secret needs at least 32 characters',
+    ])
+  })
+
+  it('treats every event as denied while consentCookie.secret is unset', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const send = vi.fn()
+    const analytics = createAnalyticsHandler({
+      destinations: [{ id: 'meta', requiredConsent: 'marketing', forwardBrowserEvents: true, send }],
+      consentCookie: { secret: undefined },
+    })
+    expect(warn).toHaveBeenCalledWith('[consentlayer] consentCookie.secret is not set: every event is treated as denied.')
+    expect((await analytics(post('/api/analytics', { name: 'x', consent: granted }))).status).toBe(204)
+    expect(send).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('drops Secure from the cookie on localhost only', async () => {
+    const consent = createConsentHandler({ secret, policyVersion: '1', store: { append: vi.fn() } })
+    const local = new Request('http://localhost:3000/api/consent', {
+      method: 'POST',
+      body: JSON.stringify({ consent: granted }),
+      headers: { 'content-type': 'application/json', origin: 'http://localhost:3000' },
+    })
+    expect((await consent(local)).headers.get('set-cookie')).toMatch(/SameSite=Lax$/)
   })
 
   it('exports requestInfo for sendServerEvent', () => {

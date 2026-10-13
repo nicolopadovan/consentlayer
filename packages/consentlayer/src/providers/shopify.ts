@@ -1,3 +1,4 @@
+import { loadScript } from '../core/plugin'
 import type {
   ConsentIntegrationAdapter,
   ConsentState,
@@ -69,8 +70,11 @@ function coerceShopifyConsent(value: unknown, fallback = false): boolean {
 async function ensureCustomerPrivacyFeature(
   win: Window,
   loadFeature: boolean,
+  headless: boolean,
 ): Promise<void> {
-  if (!loadFeature || !win.Shopify?.loadFeatures) return
+  if (!loadFeature) return
+  if (headless && !win.Shopify?.customerPrivacy) await loadScript(getShopifyCustomerPrivacyScriptUrl())
+  if (!win.Shopify?.loadFeatures) return
   await new Promise<void>((resolve) => {
     win.Shopify?.loadFeatures?.(
       [{ name: 'consent-tracking-api', version: '0.1' }],
@@ -85,13 +89,14 @@ export function createShopifyCustomerPrivacyAdapter(
 ): ConsentIntegrationAdapter {
   const doc = options.document ?? (typeof document !== 'undefined' ? document : undefined)
   const win = options.window ?? (typeof window !== 'undefined' ? window : undefined)
+  const headless = Boolean(options.headlessStorefront?.storefrontAccessToken)
 
   return {
     id: 'shopify-customer-privacy',
     async bootstrap() {
       if (!win || !doc) return null
       if (options.canBootstrap && !options.canBootstrap()) return null
-      await ensureCustomerPrivacyFeature(win, options.loadFeature ?? true)
+      await ensureCustomerPrivacyFeature(win, options.loadFeature ?? true, headless)
       const explicit = win.Shopify?.customerPrivacy?.currentVisitorConsent?.()
       if (!explicit) return null
       const hasAnyExplicit = Object.values(explicit).some(
@@ -109,7 +114,7 @@ export function createShopifyCustomerPrivacyAdapter(
     },
     async apply(consent) {
       if (!win) return
-      await ensureCustomerPrivacyFeature(win, options.loadFeature ?? true)
+      await ensureCustomerPrivacyFeature(win, options.loadFeature ?? true, headless)
       const args = {
         preferences: consent.preferences,
         analytics: consent.analytics,
@@ -117,17 +122,15 @@ export function createShopifyCustomerPrivacyAdapter(
         ...(typeof consent.sale_of_data === 'boolean'
           ? { sale_of_data: consent.sale_of_data }
           : {}),
-        ...(options.headlessStorefront?.storefrontAccessToken
+        ...(headless
           ? {
               headlessStorefront: true,
               ...options.headlessStorefront,
             }
           : {}),
       }
-      await new Promise<void>((resolve) => {
-        win.Shopify?.customerPrivacy?.setTrackingConsent?.(args, () => resolve())
-        resolve()
-      })
+      const setTrackingConsent = win.Shopify?.customerPrivacy?.setTrackingConsent
+      if (setTrackingConsent) await new Promise<void>((resolve) => setTrackingConsent(args, resolve))
     },
     subscribe(onConsent) {
       if (!doc) return () => undefined

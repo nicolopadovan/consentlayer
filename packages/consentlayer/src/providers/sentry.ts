@@ -25,8 +25,8 @@ export type SentryOptions = {
  * email, with marketing), Replay and tracing.
  */
 export function sentry(options: SentryOptions) {
-  if (!options.dsn) return skippedPlugin('sentry', 'dsn')
-  const dsn = options.dsn
+  const dsn = options.dsn?.trim()
+  if (!dsn) return skippedPlugin('sentry', 'dsn')
   const replay = options.replay === true ? {} : options.replay
   const tracing = options.tracing === true ? {} : options.tracing
   let ready: Promise<typeof import('./sentry-sdk')> | undefined

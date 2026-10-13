@@ -14,6 +14,7 @@ import {
   MetaPixelNoscript,
   useAnalytics,
   useConsent,
+  useConsentController,
 } from '../src/react'
 
 const granted = { preferences: true, analytics: true, marketing: true }
@@ -542,6 +543,20 @@ describe('routeKey null', () => {
     rerender(app('/b'))
     await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(2))
     expect(newPageSession).toHaveBeenCalledTimes(1)
+    analytics.destroy()
+  })
+})
+
+describe('useConsentController', () => {
+  it('lists the categories the dialog shows', () => {
+    const analytics = createAnalytics({ categories: ['functional'] as never[] })
+    const Categories = () => <span>{useConsentController().categories.join(',')}</span>
+    render(
+      <AnalyticsProvider analytics={analytics}>
+        <Categories />
+      </AnalyticsProvider>,
+    )
+    expect(screen.getByText('preferences,analytics,marketing,functional')).toBeTruthy()
     analytics.destroy()
   })
 })

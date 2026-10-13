@@ -24,7 +24,8 @@ export function ga4Server(options: {
   apiSecret: string | undefined
   fetchImpl?: typeof fetch
 }): ServerDestination<false> | undefined {
-  const { measurementId, apiSecret } = options
+  const measurementId = options.measurementId?.trim()
+  const apiSecret = options.apiSecret?.trim()
   if (!measurementId || !apiSecret) {
     if (measurementId || apiSecret) console.warn('[consentlayer] ga4Server is off: set both measurementId and apiSecret.')
     return undefined

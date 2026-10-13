@@ -30,8 +30,8 @@ export type MetaOptions = {
 
 /** Meta Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Conversions API. */
 export function meta(options: MetaOptions) {
-  if (!options.pixelId) return skippedPlugin('meta', 'pixelId')
-  const pixelId = assertValidMetaPixelId(options.pixelId)
+  if (!options.pixelId?.trim()) return skippedPlugin('meta', 'pixelId')
+  const pixelId = assertValidMetaPixelId(options.pixelId.trim())
   const locale = options.locale ?? 'en_US'
 
   const isReady = () =>

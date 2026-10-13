@@ -18,6 +18,8 @@ type ConsentControllerValue = {
   error: string | null
   bannerVisible: boolean
   dialogVisible: boolean
+  /** The categories the dialog shows, from `analytics.consent.categories`. */
+  categories: readonly ConsentCategory[]
   /** The dialog's toggles, one per category in `analytics.consent.categories`. */
   prefs: Prefs
   setPrefs: (next: Prefs) => void
@@ -120,6 +122,7 @@ export function ConsentControllerProvider({
       error,
       bannerVisible,
       dialogVisible,
+      categories: engine.categories,
       prefs,
       setPrefs,
       showBanner: () => setBannerVisible(true),
@@ -130,7 +133,7 @@ export function ConsentControllerProvider({
       rejectNonEssential: () => applyAndClose(all(false)),
       savePreferences: () => applyAndClose(all((category) => prefs[category])),
     }),
-    [all, applyAndClose, bannerVisible, dialogVisible, error, prefs, ready],
+    [all, applyAndClose, bannerVisible, dialogVisible, engine.categories, error, prefs, ready],
   )
 
   return (

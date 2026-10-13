@@ -29,8 +29,8 @@ export type PostHogOptions = {
 
 /** PostHog product analytics, cookieless until analytics consent. */
 export function posthog(options: PostHogOptions) {
-  if (!options.apiKey) return skippedPlugin('posthog', 'apiKey')
-  const apiKey = options.apiKey
+  const apiKey = options.apiKey?.trim()
+  if (!apiKey) return skippedPlugin('posthog', 'apiKey')
   const cookieless = options.cookieless ?? true
   let ready: Promise<PostHog> | undefined
   let latest: PluginContext | undefined

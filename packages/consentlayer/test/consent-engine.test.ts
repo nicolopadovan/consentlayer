@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import { createConsentEngine } from '../src/core/consent-engine'
 import { createMemoryConsentStorage } from '../src/core/storage'
-import { createShopifyCustomerPrivacyAdapter } from '../src/providers/shopify'
+import { createShopifyCustomerPrivacyAdapter, getShopifyCustomerPrivacyScriptUrl } from '../src/providers/shopify'
 
 describe('consent engine', () => {
   it('prefers stored consent over adapter bootstrap', async () => {
@@ -185,6 +185,27 @@ describe('Shopify Customer Privacy sync', () => {
     analytics.destroy()
   })
 
+  it('waits for Shopify and loads its script on headless storefronts', async () => {
+    let done: (() => void) | undefined
+    const setTrackingConsent = vi.fn((_args: unknown, callback?: () => void) => (done = callback))
+    const win = { Shopify: { customerPrivacy: { setTrackingConsent } } } as unknown as Window
+    const adapter = createShopifyCustomerPrivacyAdapter({ window: win, document })
+    let applied = false
+    const apply = Promise.resolve(adapter.apply?.({ preferences: false, analytics: true, marketing: false })).then(() => (applied = true))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(applied).toBe(false)
+    done?.()
+    await apply
+
+    const headless = createShopifyCustomerPrivacyAdapter({
+      window: {} as Window,
+      document,
+      headlessStorefront: { storefrontAccessToken: 'tok' },
+    })
+    void headless.bootstrap?.()
+    expect([...document.scripts].map((script) => script.src)).toContain(getShopifyCustomerPrivacyScriptUrl())
+  })
+
   it('stays on the hosted-theme call while the storefront token is unset', async () => {
     const setTrackingConsent = vi.fn((_args: unknown, done?: () => void) => done?.())
     const win = { Shopify: { customerPrivacy: { setTrackingConsent } } } as unknown as Window
@@ -199,6 +220,22 @@ describe('Shopify Customer Privacy sync', () => {
       { preferences: false, analytics: true, marketing: false },
       expect.any(Function),
     )
+  })
+})
+
+describe('adapter failures', () => {
+  it('reports a failed bootstrap and asks the next adapter', async () => {
+    const onError = vi.fn()
+    const engine = createConsentEngine({
+      adapters: [
+        { id: 'broken', bootstrap: () => Promise.reject(new Error('boom')) },
+        { id: 'next', bootstrap: () => ({ preferences: false, analytics: true, marketing: false }) },
+      ],
+      onError,
+    })
+    expect(await engine.bootstrap()).toEqual({ preferences: false, analytics: true, marketing: false })
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'consent-adapter', providerId: 'broken' }))
+    engine.destroy()
   })
 })
 
@@ -251,6 +288,10 @@ describe('custom categories', () => {
 })
 
 describe('consent endpoint', () => {
+  it('treats an empty endpoint as unset', () => {
+    expect(() => createAnalytics({ server: { endpoint: '', consentEndpoint: '' } }).destroy()).not.toThrow()
+  })
+
   it('posts each choice, not the restored one, and reports a failed post', async () => {
     localStorage.setItem('consentlayer_consent', JSON.stringify({ preferences: false, analytics: true, marketing: false }))
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))

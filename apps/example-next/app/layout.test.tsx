@@ -27,7 +27,7 @@ describe('RootLayout', () => {
     )
 
     expect(html).toContain('facebook.com/tr?id=123456')
-    expect(html).toContain('consent-tracking-api')
+    expect(html).not.toContain('consent-tracking-api')
     expect(html).toContain('child')
   })
 })
