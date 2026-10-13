@@ -216,8 +216,6 @@ One route replaces the hand-written Meta and GA4 routes:
 // app/api/analytics/route.ts
 import { createAnalyticsHandler } from 'consentlayer/server'
 import { metaCapi } from 'consentlayer/server/meta'
-
-export const runtime = 'nodejs'
 export const POST = createAnalyticsHandler({
   destinations: [metaCapi({ pixelId, accessToken: process.env.META_TOKEN! })],
 })

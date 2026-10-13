@@ -19,8 +19,6 @@ it, so GA4 only receives server-only events.
 import { createAnalyticsHandler } from 'consentlayer/server'
 import { metaCapi } from 'consentlayer/server/meta'
 
-export const runtime = 'nodejs'
-
 export const POST = createAnalyticsHandler({
   destinations: [
     metaCapi({
@@ -49,14 +47,17 @@ The handler:
 2. sends only to destinations whose consent category the event carries, and
    honours `only`;
 3. reads `_fbp` / `_fbc` / `_ga` cookies, the IP (`x-forwarded-for`, then
-   `x-real-ip`) and the user agent;
+   `x-real-ip`) and the user agent. The IP is the first `x-forwarded-for`
+   entry, so it is only trustworthy behind a proxy that overwrites the header
+   (Vercel does). Proxies that append to it (Cloudflare does) leave that entry
+   to the client;
 4. hashes email, phone and user ID;
 5. sends to each destination in parallel and answers 204. Vendor errors go to
    `onError`.
 
 It is a web-standard `(Request) => Promise<Response>`: Next.js App Router,
-Remix, Hono, Cloudflare, Bun and Deno use it as is. Meta hashing uses
-`node:crypto`, so keep the route on a Node runtime.
+Remix, Hono, Cloudflare, Bun and Deno use it as is. It needs only `fetch` and
+WebCrypto, so it runs on Node 20+ and edge runtimes alike.
 
 `ga4Server` can't be passed to the handler (a type error).
 
@@ -111,8 +112,3 @@ const myDestination: ServerDestination<true> = {
   },
 }
 ```
-
-## Runtime
-
-The server entries use only `fetch`, `Request`/`Response` and WebCrypto, so
-they run on Node 20+, the Next.js edge runtime and Workers alike.

@@ -1,8 +1,6 @@
 import { createAnalyticsHandler } from 'consentlayer/server'
 import { metaCapi } from 'consentlayer/server/meta'
 
-export const runtime = 'nodejs'
-
 const pixelId = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID
 const accessToken = process.env.META_TOKEN
 

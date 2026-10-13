@@ -227,6 +227,19 @@ describe('analytics manager', () => {
     manager.destroy()
   })
 
+  it('never loads a deferred provider after destroy', async () => {
+    const load = vi.fn()
+    const manager = createAnalyticsManager({
+      providers: [{ id: 'later', defer: 'interaction', loadBeforeConsent: true, load }],
+      consent: { preferences: false, analytics: false, marketing: false },
+    })
+    await manager.boot()
+    manager.destroy()
+    window.dispatchEvent(new Event('keydown'))
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(load).not.toHaveBeenCalled()
+  })
+
   it('skips a deferred load when consent is withdrawn before it fires', async () => {
     vi.useFakeTimers()
     const load = vi.fn()
