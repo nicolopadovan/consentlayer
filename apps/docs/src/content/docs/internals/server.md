@@ -45,6 +45,12 @@ destination, so the browser stops posting events that would be dropped.
 Events already in flight still complete. `sendBeacon` cannot read the
 response, so without `fetch` the browser keeps posting.
 
+A response carrying `consentlayer-consent: missing` means the route found no
+valid consent cookie. With `server.consentEndpoint` set, the browser posts
+`{ consent, restored: true }` there, once per page load, and the consent route
+answers with a new cookie. A failure is reported with scope `server-forward`
+and the message `Restoring the consent cookie at <consentEndpoint> failed`.
+
 ### The body
 
 For `track('add_to_cart', params, options)`:
@@ -107,7 +113,8 @@ once when created, and every event counts as denied, so nothing is sent:
    - `identity`: an object whose values are all strings if present.
 5. **Consent source.** With `consentCookie`, the body's `consent` is
    replaced by the consent in the signed cookie that `createConsentHandler`
-   set. A missing or invalid cookie means every category is denied.
+   set. A missing or invalid cookie means every category is denied, and the
+   response carries `consentlayer-consent: missing`.
 6. **Destinations.** `undefined` entries, such as a `metaCapi()` called
    without its token, are dropped. Only destinations with
    `forwardBrowserEvents: true` are considered. Of the built-in ones, that is
@@ -296,7 +303,7 @@ send the digest as lowercase hex. Empty values are neither hashed nor sent.
 
 | Status | When |
 |---|---|
-| `204` | Accepted; sent to every destination consent allows. Failures go to `onError`. With `consentlayer-forwarding: off` when there is no destination. |
+| `204` | Accepted; sent to every destination consent allows. Failures go to `onError`. With `consentlayer-forwarding: off` when there is no destination, and `consentlayer-consent: missing` when `consentCookie` is set and no valid cookie was sent. |
 | `400` | No body, invalid JSON, or the event failed validation |
 | `403` | `Origin` or `Referer` from another origin, neither header present, or a malformed `Referer` |
 | `413` | Body larger than 16 KB |

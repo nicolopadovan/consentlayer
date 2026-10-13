@@ -44,12 +44,12 @@ describe('consent handler', () => {
     expect(first.status).toBe(204)
     expect(first.headers.get('set-cookie')).toMatch(/^consentlayer_proof=.+; Path=\/; Max-Age=\d+; HttpOnly; SameSite=Lax; Secure$/)
 
-    const second = await handler(post('/api/consent', { consent: { ...denied, extra: true } }, cookieOf(first)))
+    const second = await handler(post('/api/consent', { consent: { ...denied, extra: true }, restored: true }, cookieOf(first)))
     const { consentId } = records[0]
     expect(consentId).toMatch(/^[\w-]{36}$/)
     expect(records.map(({ createdAt, ...rest }) => [createdAt instanceof Date, rest])).toEqual([
-      [true, { consentId, consent: granted, policyVersion: '2026-10-01', userId: 'user_1' }],
-      [true, { consentId, consent: denied, policyVersion: '2026-10-01', userId: 'user_1' }],
+      [true, { consentId, consent: granted, policyVersion: '2026-10-01', userId: 'user_1', restored: false }],
+      [true, { consentId, consent: denied, policyVersion: '2026-10-01', userId: 'user_1', restored: true }],
     ])
     const proof = await readConsentCookie(post('/x', {}, cookieOf(second)), { secret })
     expect(proof).toEqual({ consentId, consent: denied, policyVersion: '2026-10-01' })
@@ -122,16 +122,18 @@ describe('consent handler', () => {
     const analytics = createAnalyticsHandler({ destinations: [meta], consentCookie: { secret } })
     const event = (consent: object) => ({ name: 'purchase', consent })
 
-    await analytics(post('/api/analytics', event(denied), cookie))
+    const valid = await analytics(post('/api/analytics', event(denied), cookie))
     expect(send).toHaveBeenCalledTimes(1)
+    expect(valid.headers.get('consentlayer-consent')).toBeNull()
 
     const [name, value] = cookie.split('=') as [string, string]
     const [payload, signature] = value.split('.') as [string, string]
     const forged = btoa(JSON.stringify({ consentId: 'x', consent: granted, policyVersion: 'v' }))
     await analytics(post('/api/analytics', event(granted), `${name}=${forged}.${signature}`))
     await analytics(post('/api/analytics', event(granted), `${name}=${payload}.${signature.slice(1)}x`))
-    await analytics(post('/api/analytics', event(granted)))
+    const missing = await analytics(post('/api/analytics', event(granted)))
     expect(send).toHaveBeenCalledTimes(1)
+    expect(missing.headers.get('consentlayer-consent')).toBe('missing')
   })
 })
 
@@ -141,6 +143,7 @@ describe('consent stores', () => {
     createdAt: new Date('2026-10-13T10:00:00Z'),
     consent: granted,
     policyVersion: 'v1',
+    restored: false,
   }
   const row = {
     consent_id: 'c1',
@@ -148,14 +151,15 @@ describe('consent stores', () => {
     consent: granted,
     policy_version: 'v1',
     user_id: null,
+    restored: false,
   }
 
   it('inserts into Postgres through a sql tagged template', async () => {
     const sql = vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => Promise.resolve([strings, values]))
     await postgresStore(sql).append(record)
     const [strings, ...values] = sql.mock.calls[0]
-    expect(strings.join('?')).toMatch(/^insert into consent_records \(consent_id, created_at, consent, policy_version, user_id\)/)
-    expect(values).toEqual(['c1', '2026-10-13T10:00:00.000Z', JSON.stringify(granted), 'v1', null])
+    expect(strings.join('?')).toMatch(/^insert into consent_records \(consent_id, created_at, consent, policy_version, user_id, restored\)/)
+    expect(values).toEqual(['c1', '2026-10-13T10:00:00.000Z', JSON.stringify(granted), 'v1', null, false])
   })
 
   it('pushes to an Upstash list per consent ID', async () => {

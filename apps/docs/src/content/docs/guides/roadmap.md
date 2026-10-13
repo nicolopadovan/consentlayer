@@ -14,16 +14,6 @@ records what each release actually ships.
 
 Ordered from the smallest change to the largest.
 
-### Recovering a lost consent cookie
-
-With `createAnalyticsHandler({ consentCookie })`, the route trusts only the
-signed cookie set by `createConsentHandler`. The browser posts a choice to the
-consent route only when the visitor makes it, never when a stored choice is
-restored. If the cookie is lost, for example because the visitor cleared
-cookies but not `localStorage`, every category is denied on the server until
-the visitor chooses again. The planned change lets the browser obtain a new
-cookie for the stored choice.
-
 ### TikTok pixel
 
 Today `tiktok()` only forwards consent to a `ttq` your application loads

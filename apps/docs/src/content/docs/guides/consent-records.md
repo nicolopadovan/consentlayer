@@ -26,10 +26,13 @@ ConsentLayer.
 | `consent` | `consent` | `ConsentState` | Every category, such as `{ "preferences": false, "analytics": true, "marketing": false }`, plus `sale_of_data` when it is set. |
 | `policyVersion` | `policy_version` | `string` | The privacy policy version, from the route's options. |
 | `userId` | `user_id` | `string`, optional | The signed-in user, when your `userId` option returns one. |
+| `restored` | `restored` | `boolean` | `true` when the browser sent a choice it had already stored, because its consent cookie was missing. The visitor did not choose at `createdAt`; their original choice is an earlier record under another `consentId`. See [Lost cookie](#the-consent-cookie). |
 
 A choice is recorded when it changes the stored consent: through the banner,
 `analytics.consent.update()` or `setConsent()`, or through a consent
 adapter's subscription, such as Shopify's `visitorConsentCollected` event.
+A stored choice is also sent again, as a `restored` record, when its cookie
+is lost.
 Nothing is recorded when a stored choice is restored on a later visit, when a
 choice is read from an adapter at bootstrap, when another tab changes the
 stored choice, or when a submitted choice is identical to the current one.
@@ -129,7 +132,8 @@ response is reported to `onError` with scope `consent-adapter` and provider ID
    Otherwise it answers 400.
 4. Reuses the `consentId` from a valid existing cookie, or generates one with
    `crypto.randomUUID()`.
-5. Calls `userId`, then appends the record to the store.
+5. Calls `userId`, then appends the record to the store, with `restored`
+   set when the body has `restored: true`.
 6. Answers 204 with the signed cookie.
 
 Responses have no body. If the store or `userId` throws, the error is passed
@@ -161,12 +165,17 @@ resolves to `{ consentId, consent, policyVersion }` or `null`.
 
 - **Before the cookie arrives.** Events forwarded between a choice and the
   consent route's response carry no cookie yet, so they count as denied.
-- **Lost cookie.** If the cookie is cleared or expires, or the visitor uses
-  another browser, while the browser still stores the choice, server
-  forwarding counts as denied until the visitor makes a choice that differs
-  from the stored one. Submitting an identical choice posts nothing.
+- **Lost cookie.** The cookie can be cleared or expire while the browser
+  still stores the choice. The tracking route then answers with the header
+  `consentlayer-consent: missing`, and the browser posts the stored choice to
+  `server.consentEndpoint` with `restored: true`, once per page load. The
+  consent route records it with a new `consentId` and sets a new cookie. The
+  event that revealed the loss counts as denied, as do events sent before the
+  new cookie arrives. Without `server.consentEndpoint`, events count as denied
+  until the visitor makes a choice that differs from the stored one.
 - **Secret rotation.** Changing the secret invalidates every existing cookie,
-  with the same effect as a lost cookie.
+  so each browser restores its cookie as for a lost cookie, adding one
+  `restored` record per browser.
 - **Missing or short secret.** `createConsentHandler()` answers every request
   with 500 and passes `[consentlayer] the consent secret is not set` or
   `[consentlayer] the consent secret needs at least 32 characters` to
@@ -192,7 +201,8 @@ create table consent_records (
   created_at timestamptz not null,
   consent jsonb not null,
   policy_version text not null,
-  user_id text
+  user_id text,
+  restored boolean not null default false
 );
 create index on consent_records (consent_id);
 create index on consent_records (user_id);
@@ -236,6 +246,7 @@ model ConsentRecord {
   consent       Json
   policyVersion String   @map("policy_version")
   userId        String?  @map("user_id")
+  restored      Boolean  @default(false)
 
   @@index([consentId])
   @@index([userId])
@@ -253,7 +264,7 @@ setting `userId` to `null` when there is none.
 ### Drizzle
 
 ```ts
-import { bigint, index, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { bigint, boolean, index, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const consentRecords = pgTable(
   'consent_records',
@@ -264,6 +275,7 @@ export const consentRecords = pgTable(
     consent: jsonb('consent').notNull(),
     policyVersion: text('policy_version').notNull(),
     userId: text('user_id'),
+    restored: boolean('restored').notNull().default(false),
   },
   (table) => [index().on(table.consentId), index().on(table.userId)],
 )

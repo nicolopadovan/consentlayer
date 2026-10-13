@@ -84,6 +84,11 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   made under another major `policyVersion` (`'3.x'` to `'4.0'`).
   `onStale: 'discard'` (default) treats it as no choice; `'keep'` keeps it in force while the banner is shown.
   `analytics.consent.isStale()` reports it.
+- A lost consent cookie is restored: `createAnalyticsHandler({ consentCookie })`
+  answers `consentlayer-consent: missing` when the cookie is missing or
+  invalid, and the browser posts its stored choice to `server.consentEndpoint`
+  once per page load. `ConsentRecord` gains `restored`, so SQL tables need a
+  `restored boolean not null default false` column.
 - `createAnalyticsHandler` answers `consentlayer-forwarding: off` when it has
   no destination, for example a `metaCapi()` without its token, and the browser
   stops forwarding `page()` and `track()` to it until the page is reloaded.

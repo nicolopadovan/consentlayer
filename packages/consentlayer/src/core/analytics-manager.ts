@@ -227,6 +227,27 @@ export function createAnalyticsManager(
     options.server?.endpoint
       ? assertHttpsOrRelativeUrl(options.server.endpoint, 'server.endpoint')
       : undefined
+  const consentEndpoint =
+    options.server?.consentEndpoint
+      ? assertHttpsOrRelativeUrl(options.server.consentEndpoint, 'server.consentEndpoint')
+      : undefined
+  let restoring = false
+
+  const restoreConsentCookie = () => {
+    if (!consentEndpoint || restoring) return
+    restoring = true
+    fetch(consentEndpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ consent, restored: true }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      })
+      .catch((cause: unknown) =>
+        emitError({ scope: 'server-forward', message: `Restoring the consent cookie at ${consentEndpoint} failed`, cause }),
+      )
+  }
 
   const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
     if (!serverEndpoint || !(consent?.analytics || consent?.marketing)) return
@@ -248,6 +269,7 @@ export function createAnalyticsManager(
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         if (response.headers.get('consentlayer-forwarding') === 'off') serverEndpoint = undefined
+        if (response.headers.get('consentlayer-consent') === 'missing') restoreConsentCookie()
       })
       .catch(fail)
   }

@@ -106,19 +106,19 @@ export function createAnalyticsHandler(options: {
       assertSameOrigin(request, { requireHeader: true })
       if (!destinations.length) return new Response(null, { status: 204, headers: { 'consentlayer-forwarding': 'off' } })
       const event = parseServerEvent(await parseJsonWithLimit(request, ANALYTICS_MAX_BODY))
+      const proof = options.consentCookie && (await readConsentCookie(request, options.consentCookie))
       if (options.consentCookie) {
-        event.consent = (await readConsentCookie(request, options.consentCookie))?.consent ?? {
-          preferences: false,
-          analytics: false,
-          marketing: false,
-        }
+        event.consent = proof?.consent ?? { preferences: false, analytics: false, marketing: false }
       }
       const results = await sendServerEvent(event, {
         destinations,
         request: requestInfo(request),
       })
       for (const result of results) if (!result.ok) options.onError?.(result.error)
-      return new Response(null, { status: 204 })
+      return new Response(null, {
+        status: 204,
+        headers: options.consentCookie && !proof ? { 'consentlayer-consent': 'missing' } : {},
+      })
     } catch (error) {
       const status = (error as { status?: unknown }).status
       if (typeof status === 'number') return new Response(null, { status })

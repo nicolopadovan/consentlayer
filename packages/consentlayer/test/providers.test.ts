@@ -99,6 +99,33 @@ describe('providers', () => {
     manager.destroy()
   })
 
+  it('posts the choice to the consent route once when the consent cookie is missing', async () => {
+    const fetchMock = vi.fn<typeof fetch>((url) =>
+      Promise.resolve(
+        new Response(null, {
+          status: 204,
+          headers: url === '/api/analytics' ? { 'consentlayer-consent': 'missing' } : {},
+        }),
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const consent = { preferences: false, analytics: true, marketing: false }
+    const manager = createAnalyticsManager({
+      consent,
+      server: { endpoint: '/api/analytics', consentEndpoint: '/api/consent' },
+    })
+    await manager.boot()
+    await manager.page()
+    await manager.track('sign_up')
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3))
+    await new Promise((resolve) => setTimeout(resolve))
+    vi.unstubAllGlobals()
+    const restores = fetchMock.mock.calls.filter(([url]) => url === '/api/consent')
+    expect(restores).toHaveLength(1)
+    expect(JSON.parse(restores[0]?.[1]?.body as string)).toEqual({ consent, restored: true })
+    manager.destroy()
+  })
+
   it('forwards nothing to the server without analytics or marketing consent', async () => {
     const fetchMock = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', fetchMock)

@@ -10,6 +10,8 @@ export type ConsentRecord = {
   consent: ConsentState
   policyVersion: string
   userId?: string
+  /** Sent again by the browser after the consent cookie was lost, not chosen at `createdAt`. */
+  restored: boolean
 }
 
 /** Where `createConsentHandler` appends records. */
@@ -105,7 +107,7 @@ export function createConsentHandler(
     try {
       assertSecret(options.secret)
       assertSameOrigin(request, { requireHeader: true })
-      const body = await parseJsonWithLimit<{ consent?: unknown }>(request, 4 * 1024)
+      const body = await parseJsonWithLimit<{ consent?: unknown; restored?: unknown }>(request, 4 * 1024)
       try {
         assertValidConsent(body?.consent, categories)
       } catch {
@@ -121,6 +123,7 @@ export function createConsentHandler(
         consent,
         policyVersion: options.policyVersion,
         ...(userId ? { userId } : {}),
+        restored: body.restored === true,
       })
       const cookie = await sign({ consentId, consent, policyVersion: options.policyVersion }, options.secret)
       return new Response(null, {
@@ -144,6 +147,7 @@ const row = (record: ConsentRecord) => ({
   consent: record.consent,
   policy_version: record.policyVersion,
   user_id: record.userId ?? null,
+  restored: record.restored,
 })
 
 type SqlTag = (strings: TemplateStringsArray, ...values: unknown[]) => PromiseLike<unknown>
@@ -154,8 +158,8 @@ export function postgresStore(sql: SqlTag): ConsentStore {
     async append(record) {
       const r = row(record)
       // ponytail: fixed table name, since tagged templates can't take identifiers portably
-      await sql`insert into consent_records (consent_id, created_at, consent, policy_version, user_id)
-        values (${r.consent_id}, ${r.created_at}::timestamptz, ${JSON.stringify(r.consent)}::jsonb, ${r.policy_version}, ${r.user_id})`
+      await sql`insert into consent_records (consent_id, created_at, consent, policy_version, user_id, restored)
+        values (${r.consent_id}, ${r.created_at}::timestamptz, ${JSON.stringify(r.consent)}::jsonb, ${r.policy_version}, ${r.user_id}, ${r.restored})`
     },
   }
 }
