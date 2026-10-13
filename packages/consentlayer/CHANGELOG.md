@@ -74,6 +74,9 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `ga4()`, `meta()`, `posthog()`, `sentry()` and `contentsquare()` accept an
+  `undefined` or empty ID and turn the provider off (logged with `debug: true`),
+  so `process.env` values can be passed without guards. Malformed IDs still throw.
 - `useAnalytics()`, `useConsent()` and `ErrorBoundary` work outside
   `<AnalyticsProvider>`, using the instance `createAnalytics()` made.
 - `createAnalytics()` warns when a second instance on the page uses different

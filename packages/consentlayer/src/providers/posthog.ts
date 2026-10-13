@@ -1,10 +1,11 @@
 import type { PostHog } from 'posthog-js'
-import { definePlugin } from '../core/plugin'
+import { definePlugin, skippedPlugin } from '../core/plugin'
 import type { LoadTiming, PluginContext } from '../core/types'
 
 /** Options for `posthog`. */
 export type PostHogOptions = {
-  apiKey: string
+  /** `undefined` or `''` turns the provider off. */
+  apiKey: string | undefined
   /** Defaults to `https://us.i.posthog.com`. */
   apiHost?: string
   /** PostHog's app URL, for toolbar links when `apiHost` is a reverse proxy, e.g. `https://us.posthog.com`. */
@@ -28,6 +29,8 @@ export type PostHogOptions = {
 
 /** PostHog product analytics, cookieless until analytics consent. */
 export function posthog(options: PostHogOptions) {
+  if (!options.apiKey) return skippedPlugin('posthog', 'apiKey')
+  const apiKey = options.apiKey
   const cookieless = options.cookieless ?? true
   let ready: Promise<PostHog> | undefined
   let latest: PluginContext | undefined
@@ -58,7 +61,7 @@ export function posthog(options: PostHogOptions) {
     async load(ctx) {
       latest ??= ctx
       ready = import('posthog-js').then(({ default: client }) => {
-        client.init(options.apiKey, {
+        client.init(apiKey, {
           api_host: options.apiHost ?? 'https://us.i.posthog.com',
           ui_host: options.uiHost,
           cookieless_mode: cookieless ? 'on_reject' : undefined,

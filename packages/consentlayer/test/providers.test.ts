@@ -4,8 +4,37 @@ import { loadScript } from '../src/core/plugin'
 import { contentsquare } from '../src/providers/contentsquare'
 import { ga4 } from '../src/providers/ga4'
 import { meta } from '../src/providers/meta'
+import { posthog } from '../src/providers/posthog'
+import { sentry } from '../src/providers/sentry'
 
 describe('providers', () => {
+  it('turns a provider off when its id is unset, but still rejects a malformed one', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined)
+    const skipped = [
+      ga4({ measurementId: undefined }),
+      meta({ pixelId: '' }),
+      posthog({ apiKey: undefined }),
+      sentry({ dsn: undefined }),
+      contentsquare({ tagId: undefined }),
+    ]
+    expect(skipped.map((plugin) => Object.keys(plugin))).toEqual(skipped.map(() => ['id', 'setup']))
+
+    const manager = createAnalyticsManager({
+      providers: skipped,
+      consent: { preferences: true, analytics: true, marketing: true },
+      debug: true,
+    })
+    await manager.boot()
+    await manager.track('purchase', { transaction_id: 'o1', value: 10 })
+    expect(debug).toHaveBeenCalledWith('[consentlayer]', 'ga4 is off: measurementId is not set.')
+    expect(debug).toHaveBeenCalledWith('[consentlayer]', 'meta is off: pixelId is not set.')
+    manager.destroy()
+    debug.mockRestore()
+
+    expect(() => ga4({ measurementId: 'UA-12345' })).toThrow(/GA4 measurement ID/)
+    expect(() => meta({ pixelId: 'pixel-123' })).toThrow(/Meta Pixel ID/)
+  })
+
   it('reuses the same Meta event id for browser and server dedupe', async () => {
     const fbq = vi.fn()
     ;(window as unknown as { fbq?: typeof fbq }).fbq = fbq
@@ -60,7 +89,7 @@ describe('providers', () => {
     delete win.__acmMetaPixelInitialized
     const adapter = meta({ pixelId: '123456789012345' })
     const append = vi.spyOn(document.head, 'appendChild')
-    adapter.load?.({
+    void adapter.load?.({
       consent: { preferences: false, analytics: false, marketing: false },
       identity: {},
       debug: false,

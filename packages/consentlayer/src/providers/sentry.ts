@@ -1,12 +1,13 @@
 import type { replayIntegration } from '@sentry/browser'
-import { definePlugin } from '../core/plugin'
+import { definePlugin, skippedPlugin } from '../core/plugin'
 import type { LoadTiming, PluginContext } from '../core/types'
 
 type Replay = ReturnType<typeof replayIntegration>
 
 /** Options for `sentry`. */
 export type SentryOptions = {
-  dsn: string
+  /** `undefined` or `''` turns the provider off. */
+  dsn: string | undefined
   environment?: string
   release?: string
   /** Session Replay, after analytics consent. Defaults to `false`. */
@@ -24,6 +25,8 @@ export type SentryOptions = {
  * email, with marketing), Replay and tracing.
  */
 export function sentry(options: SentryOptions) {
+  if (!options.dsn) return skippedPlugin('sentry', 'dsn')
+  const dsn = options.dsn
   const replay = options.replay === true ? {} : options.replay
   const tracing = options.tracing === true ? {} : options.tracing
   let ready: Promise<typeof import('./sentry-sdk')> | undefined
@@ -58,7 +61,7 @@ export function sentry(options: SentryOptions) {
       latest ??= ctx
       ready = import('./sentry-sdk').then((sdk) => {
         sdk.init({
-          dsn: options.dsn,
+          dsn,
           environment: options.environment,
           release: options.release,
           tunnel: options.tunnel,

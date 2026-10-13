@@ -202,11 +202,11 @@ describe('createAnalytics', () => {
     const ctx = { debug: false, emitError: () => undefined }
     const on = { ...ctx, consent: granted, identity: { email: 'a@example.com' } }
     const off = { ...ctx, consent: { ...granted, marketing: false }, identity: {} }
-    pixel.load?.(on)
+    void pixel.load?.(on)
     window.fbq = fbq
-    pixel.consent?.(off)
-    pixel.consent?.({ ...on, identity: {} })
-    pixel.track?.(event('purchase', {}), { ...on, identity: {} })
+    void pixel.consent?.(off)
+    void pixel.consent?.({ ...on, identity: {} })
+    void pixel.track?.(event('purchase', {}), { ...on, identity: {} })
     expect(fbq.mock.calls).toEqual([['consent', 'revoke'], ['consent', 'revoke']])
   })
 

@@ -1,10 +1,16 @@
 import type { AnalyticsPlugin } from './types'
+import { debugLog } from './utils'
 
 export { getFlag, setFlag } from './names'
 
 /** Types a plugin; the manager runs its hooks. */
 export function definePlugin<T extends AnalyticsPlugin>(plugin: T): T {
   return plugin
+}
+
+/** Stands in for a provider whose required option is unset, e.g. an env var missing locally. */
+export function skippedPlugin(id: string, option: string): AnalyticsPlugin {
+  return { id, setup: (context) => debugLog(context.debug, `${id} is off: ${option} is not set.`) }
 }
 
 const loading = new Map<string, Promise<void>>()

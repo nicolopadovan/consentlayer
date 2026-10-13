@@ -18,17 +18,16 @@ const env = createEnvConfig({
   NEXT_PUBLIC_SHOPIFY_STORE_ID: process.env.NEXT_PUBLIC_SHOPIFY_STORE_ID,
   NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN: process.env.NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN,
 })
-const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN
 
-const providers: AnalyticsPlugin[] = []
-if (env.ga4.measurementId) providers.push(ga4({ measurementId: env.ga4.measurementId }))
-if (env.meta.pixelId) providers.push(meta({ pixelId: env.meta.pixelId }))
+const providers: AnalyticsPlugin[] = [
+  ga4({ measurementId: env.ga4.measurementId }),
+  meta({ pixelId: env.meta.pixelId }),
+  posthog({ apiKey: process.env.NEXT_PUBLIC_POSTHOG_KEY, defer: 'idle' }),
+  sentry({ dsn: process.env.NEXT_PUBLIC_SENTRY_DSN }),
+]
 if (env.hotjar.siteId && env.hotjar.version) {
   providers.push(hotjar({ siteId: env.hotjar.siteId, version: env.hotjar.version }))
 }
-if (posthogKey) providers.push(posthog({ apiKey: posthogKey, defer: 'idle' }))
-if (sentryDsn) providers.push(sentry({ dsn: sentryDsn }))
 
 export const analytics = createAnalytics({
   providers,

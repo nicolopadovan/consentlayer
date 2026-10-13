@@ -1,4 +1,4 @@
-import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
+import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 
 declare global {
@@ -10,7 +10,8 @@ declare global {
 /** Options for `contentsquare`. */
 export type ContentsquareOptions = {
   /** The ID in your tag's URL: `t.contentsquare.net/uxa/<tagId>.js`. */
-  tagId: string
+  /** `undefined` or `''` turns the provider off. */
+  tagId: string | undefined
 }
 
 const push = (...command: unknown[]) => (window._uxa = window._uxa ?? []).push(command)
@@ -18,6 +19,8 @@ const pathOf = (path = location.pathname) => path.split(/[?#]/)[0]
 
 /** Contentsquare (Hotjar's successor), after analytics consent. */
 export function contentsquare(options: ContentsquareOptions) {
+  if (!options.tagId) return skippedPlugin('contentsquare', 'tagId')
+  const tagId = options.tagId
   let loadedPath: string | undefined
   return definePlugin({
     id: 'contentsquare',
@@ -30,7 +33,7 @@ export function contentsquare(options: ContentsquareOptions) {
       if (typeof window === 'undefined' || getFlag('ContentsquareInitialized')) return
       window._uxa = window._uxa ?? []
       loadedPath = pathOf()
-      void loadScript(`https://t.contentsquare.net/uxa/${options.tagId}.js`).catch(() => undefined)
+      void loadScript(`https://t.contentsquare.net/uxa/${tagId}.js`).catch(() => undefined)
       setFlag('ContentsquareInitialized', true)
     },
     page(page) {

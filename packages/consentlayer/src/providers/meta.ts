@@ -1,5 +1,5 @@
 import { metaUserData, toMetaEvent } from '../core/meta-events'
-import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
+import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { assertValidMetaPixelId } from '../core/validation'
 
 export { metaUserData, toMetaEvent }
@@ -18,7 +18,8 @@ declare global {
 
 /** Options for `meta`. */
 export type MetaOptions = {
-  pixelId: string
+  /** `undefined` or `''` turns the provider off. */
+  pixelId: string | undefined
   locale?: string
   /**
    * `true`: the pixel script loads at boot and is told consent is revoked.
@@ -29,6 +30,7 @@ export type MetaOptions = {
 
 /** Meta Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Conversions API. */
 export function meta(options: MetaOptions) {
+  if (!options.pixelId) return skippedPlugin('meta', 'pixelId')
   const pixelId = assertValidMetaPixelId(options.pixelId)
   const locale = options.locale ?? 'en_US'
 

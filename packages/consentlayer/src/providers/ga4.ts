@@ -1,5 +1,5 @@
 import type { UserIdentity } from '../core/types'
-import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
+import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { assertValidGa4MeasurementId } from '../core/validation'
 
 declare global {
@@ -11,7 +11,8 @@ declare global {
 
 /** Options for `ga4`. */
 export type Ga4Options = {
-  measurementId: string
+  /** `undefined` or `''` turns the provider off. */
+  measurementId: string | undefined
   /**
    * `true`: gtag.js loads at boot with Consent Mode set to denied.
    * `false` (default): nothing loads until analytics consent is granted.
@@ -38,6 +39,7 @@ export function ga4UserData(identity: UserIdentity): Record<string, string> {
 
 /** Google Analytics 4 via gtag.js, with Consent Mode v2. Needs analytics consent; ad signals follow marketing consent. */
 export function ga4(options: Ga4Options) {
+  if (!options.measurementId) return skippedPlugin('ga4', 'measurementId')
   const measurementId = assertValidGa4MeasurementId(options.measurementId)
   const gtag = (...args: unknown[]) => window.gtag?.(...args)
   return definePlugin({
