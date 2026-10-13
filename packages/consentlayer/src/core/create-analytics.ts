@@ -20,7 +20,7 @@ export type AnalyticsOptions = Omit<
   'consent' | 'consentEngine'
 > & {
   /** Storage, CMP integrations (e.g. Shopify Customer Privacy) and broadcast. Defaults to localStorage. */
-  consent?: Omit<ConsentEngineOptions, 'debug'>
+  consent?: Omit<ConsentEngineOptions, 'debug' | 'categories' | 'onError'>
   /** Your own categories, declared in `ConsentCategories`. Stored, broadcast and sent to the server like the built-in ones. */
   categories?: ConsentEngineOptions['categories']
   /** Renames storage keys, globals and DOM events. */

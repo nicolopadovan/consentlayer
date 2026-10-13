@@ -8,6 +8,7 @@ import {
   postgresStore,
   prismaStore,
   readConsentCookie,
+  requestInfo,
   supabaseStore,
   upstashStore,
   type ConsentRecord,
@@ -52,6 +53,28 @@ describe('consent handler', () => {
     ])
     const proof = await readConsentCookie(post('/x', {}, cookieOf(second)), { secret })
     expect(proof).toEqual({ consentId, consent: denied, policyVersion: '2026-10-01' })
+  })
+
+  it('rejects a short or missing secret before storing anything', async () => {
+    const store = { append: vi.fn() }
+    const onError = vi.fn()
+    for (const secret of ['short', undefined as unknown as string]) {
+      const consent = createConsentHandler({ secret, policyVersion: '1', store, onError })
+      expect((await consent(post('/api/consent', { consent: granted }))).status).toBe(500)
+      const analytics = createAnalyticsHandler({ destinations: [], consentCookie: { secret }, onError })
+      expect((await analytics(post('/api/analytics', { name: 'x', consent: granted }))).status).toBe(500)
+    }
+    expect(store.append).not.toHaveBeenCalled()
+    expect(onError.mock.calls.map(([error]) => String(error))).toEqual(
+      Array(4).fill('Error: [consentlayer] the consent secret needs at least 32 characters'),
+    )
+  })
+
+  it('exports requestInfo for sendServerEvent', () => {
+    const request = new Request('https://shop.example/x', {
+      headers: { 'x-forwarded-for': '1.2.3.4, 5.6.7.8', 'user-agent': 'ua', cookie: '_fbp=fb.1' },
+    })
+    expect(requestInfo(request)).toEqual({ ip: '1.2.3.4', userAgent: 'ua', cookies: { _fbp: 'fb.1' } })
   })
 
   it('rejects invalid choices and cross-origin posts without recording', async () => {

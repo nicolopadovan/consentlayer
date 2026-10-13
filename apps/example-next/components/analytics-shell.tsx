@@ -1,7 +1,7 @@
 'use client'
 
-import { AnalyticsProvider, useConsentController } from 'consentlayer/react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { AnalyticsProvider } from 'consentlayer/next'
+import { useConsentController } from 'consentlayer/react'
 import type { ReactNode } from 'react'
 import { analytics } from '../lib/analytics'
 import { ConsentBanner } from './consent-banner'
@@ -19,15 +19,8 @@ function CookieSettingsButton() {
 }
 
 export function AnalyticsShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
   return (
-    <AnalyticsProvider
-      analytics={analytics}
-      boot={idleBoot}
-      routeKey={`${pathname}?${searchParams.toString()}`}
-    >
+    <AnalyticsProvider analytics={analytics} boot={idleBoot}>
       <ConsentBanner />
       <CookieSettingsButton />
       {children}

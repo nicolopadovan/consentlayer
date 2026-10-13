@@ -24,8 +24,8 @@ export const AnalyticsContext = createContext<Analytics | undefined>(undefined)
 export type AnalyticsProviderProps = {
   analytics: Analytics
   children: ReactNode
-  /** Changes on every navigation; a page view is sent once per key. */
-  routeKey?: string
+  /** Changes on every navigation; a page view is sent once per key. `null` holds page views until the route is known. */
+  routeKey?: string | null
   page?: PageViewPayload
   /** When providers load. Defaults to `{ mode: 'immediate' }`. */
   boot?: LazyBootConfig
@@ -87,7 +87,7 @@ export function AnalyticsProvider({
   useEffect(() => scheduleBoot(analytics, bootRef.current), [analytics])
 
   useEffect(() => {
-    if (!snapshot.booted) return
+    if (!snapshot.booted || routeKey === null) return
     if (paged.current.routeKey !== routeKey) {
       paged.current = { routeKey, providers: new Set() }
     }
@@ -98,9 +98,10 @@ export function AnalyticsProvider({
   }, [analytics, page, routeKey, snapshot])
 
   useEffect(() => {
-    if (sessionRouteKey.current === routeKey) return
+    if (routeKey === null || sessionRouteKey.current === routeKey) return
+    const known = sessionRouteKey.current !== null
     sessionRouteKey.current = routeKey
-    analytics.newPageSession()
+    if (known) analytics.newPageSession()
   }, [analytics, routeKey])
 
   return (

@@ -13,6 +13,7 @@ export {
 } from './consent'
 export {
   createAnalyticsHandler,
+  requestInfo,
   sendServerEvent,
   type ServerDestination,
   type ServerEvent,

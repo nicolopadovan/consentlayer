@@ -1,14 +1,9 @@
-import {
-  createEnvConfig,
-} from 'consentlayer'
 import { MetaPixelNoscript } from 'consentlayer/react'
 import { getShopifyCustomerPrivacyScriptUrl } from 'consentlayer/providers/shopify'
 import Script from 'next/script'
-import { Suspense, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { AnalyticsShell } from '../components/analytics-shell'
 import './globals.css'
-
-const env = createEnvConfig(process.env)
 
 export default function RootLayout({
   children,
@@ -22,15 +17,11 @@ export default function RootLayout({
           src={getShopifyCustomerPrivacyScriptUrl()}
           strategy="lazyOnload"
         />
-        {env.meta.pixelId ? (
-          <MetaPixelNoscript
-            enabled={env.meta.noscriptEnabled}
-            pixelId={env.meta.pixelId}
-          />
-        ) : null}
-        <Suspense fallback={null}>
-          <AnalyticsShell>{children}</AnalyticsShell>
-        </Suspense>
+        <MetaPixelNoscript
+          enabled={process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT === 'true'}
+          pixelId={process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}
+        />
+        <AnalyticsShell>{children}</AnalyticsShell>
       </body>
     </html>
   )

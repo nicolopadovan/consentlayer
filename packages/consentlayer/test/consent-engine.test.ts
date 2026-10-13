@@ -184,6 +184,22 @@ describe('Shopify Customer Privacy sync', () => {
     expect(setTrackingConsent).toHaveBeenCalledTimes(1)
     analytics.destroy()
   })
+
+  it('stays on the hosted-theme call while the storefront token is unset', async () => {
+    const setTrackingConsent = vi.fn((_args: unknown, done?: () => void) => done?.())
+    const win = { Shopify: { customerPrivacy: { setTrackingConsent } } } as unknown as Window
+    const adapter = createShopifyCustomerPrivacyAdapter({
+      loadFeature: false,
+      window: win,
+      document,
+      headlessStorefront: { storefrontAccessToken: undefined },
+    })
+    await adapter.apply?.({ preferences: false, analytics: true, marketing: false })
+    expect(setTrackingConsent).toHaveBeenCalledWith(
+      { preferences: false, analytics: true, marketing: false },
+      expect.any(Function),
+    )
+  })
 })
 
 describe('custom categories', () => {

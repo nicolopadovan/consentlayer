@@ -74,9 +74,23 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
-- `ga4()`, `meta()`, `posthog()`, `sentry()` and `contentsquare()` accept an
-  `undefined` or empty ID and turn the provider off (logged with `debug: true`),
-  so `process.env` values can be passed without guards. Malformed IDs still throw.
+- `consentlayer/next`: an `AnalyticsProvider` for the App Router that sends a
+  page view on every navigation, query changes included. It replaces the
+  `usePathname()` / `useSearchParams()` shell, whose `<Suspense>` around the
+  whole page made Next.js render every page on the client only.
+- `ga4()`, `meta()`, `posthog()`, `sentry()`, `contentsquare()` and `hotjar()`
+  accept an `undefined` or empty ID and turn the provider off (logged with
+  `debug: true`), so `process.env` values can be passed without guards.
+  Malformed IDs still throw. `hotjar()` also accepts numeric strings.
+- `metaCapi()` and `ga4Server()` return `undefined` while an ID or secret is
+  unset, warning once when only one of the two is set, and `destinations`
+  skips `undefined` entries.
+- `<MetaPixelNoscript>` renders nothing while `pixelId` is unset.
+- The Shopify adapter sends `headlessStorefront` only once
+  `storefrontAccessToken` is set.
+- `requestInfo(request)` is exported from `consentlayer/server`, for
+  `sendServerEvent({ request })`.
+- `<AnalyticsProvider routeKey={null}>` holds page views until the route is known.
 - `useAnalytics()`, `useConsent()` and `ErrorBoundary` work outside
   `<AnalyticsProvider>`, using the instance `createAnalytics()` made.
 - `createAnalytics()` warns when a second instance on the page uses different
@@ -140,7 +154,7 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `sentry()` (`/providers/sentry`): errors without consent or personal data;
   the user ID, Replay and tracing (both opt-in) after analytics consent.
   `/sentry/server` (`sentryInstrumentation` for `instrumentation.ts`) and
-  `/sentry/next` (`withSentry`) for Next.js.
+  `/sentry/next` (`withSentryConfig`) for Next.js.
 - `captureError(error, { level, tags, extra })`, the plugin `error` hook and the
   `errors` option; window `error` and `unhandledrejection` are reported by default.
 - React: `ErrorBoundary` and `createGlobalError(analytics)` for `app/global-error.tsx`.
@@ -150,8 +164,15 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 
 ### Deprecated
 - `hotjar()`: Hotjar accounts are moving to Contentsquare; use `contentsquare()`.
+- `createEnvConfig()`: pass `process.env` values to the providers directly.
 
 ### Fixed
+- `createConsentHandler()` stored the record and then answered 500 without a
+  cookie when the secret was shorter than 32 characters. It and
+  `createAnalyticsHandler({ consentCookie })` now check the secret first on
+  each request: a missing or short one answers 500 and stores nothing.
+- `createAnalytics({ consent: { categories, onError } })` was silently replaced
+  by the top-level options; the types now reject both keys inside `consent`.
 - `ConsentEngine.bootstrap()` runs once even when called from several places.
 - `newPageSession()` no longer sends a page-session event before auto-tracking is enabled.
 - Auto-tracking could start before providers were active and lose the first page-session event.

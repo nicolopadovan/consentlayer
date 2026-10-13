@@ -39,7 +39,7 @@ type ShopifyCustomerPrivacy = {
   }
 }
 
-/** Options for `createShopifyCustomerPrivacyAdapter`. `headlessStorefront` is needed off Shopify-hosted themes. */
+/** Options for `createShopifyCustomerPrivacyAdapter`. `headlessStorefront` is needed off Shopify-hosted themes, and applies only once `storefrontAccessToken` is set. */
 export type ShopifyCustomerPrivacyAdapterOptions = {
   canBootstrap?: () => boolean
   headlessStorefront?: {
@@ -117,7 +117,7 @@ export function createShopifyCustomerPrivacyAdapter(
         ...(typeof consent.sale_of_data === 'boolean'
           ? { sale_of_data: consent.sale_of_data }
           : {}),
-        ...(options.headlessStorefront
+        ...(options.headlessStorefront?.storefrontAccessToken
           ? {
               headlessStorefront: true,
               ...options.headlessStorefront,

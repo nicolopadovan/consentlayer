@@ -103,6 +103,28 @@ describe('server destinations', () => {
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 
+  it('leaves out destinations whose id or secret is unset', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    expect(metaCapi({ pixelId: '123456789012345', accessToken: undefined })).toBeUndefined()
+    expect(metaCapi({ pixelId: '', accessToken: 'token' })).toBeUndefined()
+    expect(ga4Server({ measurementId: 'G-ABC123', apiSecret: undefined })).toBeUndefined()
+    expect(warn.mock.calls).toEqual([
+      ['[consentlayer] metaCapi is off: set both pixelId and accessToken.'],
+      ['[consentlayer] metaCapi is off: set both pixelId and accessToken.'],
+      ['[consentlayer] ga4Server is off: set both measurementId and apiSecret.'],
+    ])
+    warn.mockRestore()
+    const fetchImpl = okFetch()
+    const ga = ga4Server({ measurementId: 'G-ABC123', apiSecret: 's', fetchImpl })
+    const results = await sendServerEvent(
+      { name: 'lead', consent: granted, clientId: 'c.1' },
+      { destinations: [ga, metaCapi({ pixelId: undefined, accessToken: undefined })] },
+    )
+    expect(results).toEqual([{ id: 'ga4', ok: true }])
+    const POST = createAnalyticsHandler({ destinations: [metaCapi({ pixelId: undefined, accessToken: 'token' })] })
+    expect((await POST(post({ name: 'x', consent: granted }))).status).toBe(204)
+  })
+
   it('reports vendor failures through onError', async () => {
     const onError = vi.fn()
     const POST = createAnalyticsHandler({

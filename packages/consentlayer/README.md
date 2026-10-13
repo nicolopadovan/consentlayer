@@ -44,9 +44,13 @@ export const analytics = createAnalytics({
 })
 ```
 
+In the Next.js App Router, `AnalyticsProvider` from `consentlayer/next` sends a
+page view on every navigation. Elsewhere, use the one from `consentlayer/react`
+and pass a `routeKey` that changes on navigation.
+
 ```tsx
 'use client'
-import { AnalyticsProvider } from 'consentlayer/react'
+import { AnalyticsProvider } from 'consentlayer/next'
 import { ConsentBanner } from './consent-banner' // the Consent UI recipe in the docs
 import { analytics } from '../lib/analytics'
 

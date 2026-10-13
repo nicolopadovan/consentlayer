@@ -11,6 +11,7 @@ import {
   AnalyticsProvider,
   createGlobalError,
   ErrorBoundary,
+  MetaPixelNoscript,
   useAnalytics,
   useConsent,
 } from '../src/react'
@@ -402,9 +403,9 @@ describe('provider identity', () => {
     localStorage.setItem('hjActiveViewportIds', 'x')
     const plugin = hotjar({ siteId: 1, version: 6 })
     const ctx = { identity: {}, debug: false, emitError: () => undefined }
-    plugin.teardown?.({ ...ctx, consent: { preferences: false, analytics: true, marketing: false } })
+    void plugin.teardown?.({ ...ctx, consent: { preferences: false, analytics: true, marketing: false } })
     expect(document.cookie).toContain('_hjSessionUser_1')
-    plugin.teardown?.({ ...ctx, consent: { preferences: false, analytics: false, marketing: false } })
+    void plugin.teardown?.({ ...ctx, consent: { preferences: false, analytics: false, marketing: false } })
     expect(document.cookie).not.toContain('_hj')
     expect(document.cookie).toContain('keep=1')
     expect(localStorage.getItem('_hjUserAttributes')).toBeNull()
@@ -505,5 +506,42 @@ describe('withdrawal and failure paths', () => {
     await analytics.boot()
     analytics.destroy()
     expect(ga4.teardown).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('MetaPixelNoscript', () => {
+  it('renders the pixel only when enabled and the pixel id is set', () => {
+    const { container, rerender } = render(<MetaPixelNoscript enabled pixelId="123456789012345" />)
+    expect(container.querySelector('noscript')).toBeTruthy()
+    rerender(<MetaPixelNoscript enabled pixelId={undefined} />)
+    expect(container.innerHTML).toBe('')
+    rerender(<MetaPixelNoscript pixelId="123456789012345" />)
+    expect(container.innerHTML).toBe('')
+  })
+})
+
+describe('routeKey null', () => {
+  it('holds page views until the route is known and starts no page session for it', async () => {
+    const ga4 = spyProvider('ga4')
+    const analytics = createAnalytics({ providers: [ga4] })
+    const newPageSession = vi.spyOn(analytics, 'newPageSession')
+    await analytics.consent.update({ analytics: true })
+    await analytics.boot()
+    const app = (routeKey: string | null) => (
+      <AnalyticsProvider analytics={analytics} routeKey={routeKey}>
+        <span />
+      </AnalyticsProvider>
+    )
+    const { rerender } = render(app(null))
+    await act(() => Promise.resolve())
+    expect(ga4.page).not.toHaveBeenCalled()
+    rerender(app('/a'))
+    await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(1))
+    expect(newPageSession).not.toHaveBeenCalled()
+    rerender(app(null))
+    rerender(app('/b'))
+    await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(2))
+    expect(newPageSession).toHaveBeenCalledTimes(1)
+    analytics.destroy()
   })
 })

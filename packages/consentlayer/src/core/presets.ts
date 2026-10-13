@@ -1,6 +1,9 @@
 export type EnvConfigInput = Record<string, string | undefined>
 
-/** Reads the documented `NEXT_PUBLIC_*` and server env vars into one typed object. */
+/**
+ * Reads the documented `NEXT_PUBLIC_*` and server env vars into one typed object.
+ * @deprecated Pass `process.env` values to the providers directly; an unset one turns its provider off.
+ */
 export function createEnvConfig(env: EnvConfigInput) {
   const toNumber = (value: string | undefined) => {
     if (!value) return undefined

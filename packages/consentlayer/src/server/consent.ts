@@ -41,8 +41,12 @@ const toBase64Url = (bytes: Uint8Array) =>
 const fromBase64Url = (value: string) =>
   Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), (char) => char.charCodeAt(0))
 
+export function assertSecret(secret: string): void {
+  if (!secret || secret.length < 32) throw new Error('[consentlayer] the consent secret needs at least 32 characters')
+}
+
 const hmacKey = (secret: string) => {
-  if (secret.length < 32) throw new Error('[consentlayer] the consent secret needs at least 32 characters')
+  assertSecret(secret)
   return crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
     'sign',
     'verify',
@@ -96,6 +100,7 @@ export function createConsentHandler(
   const categories = [...BUILT_IN_CATEGORIES, ...(options.categories ?? [])]
   return async (request) => {
     try {
+      assertSecret(options.secret)
       assertSameOrigin(request, { requireHeader: true })
       const body = await parseJsonWithLimit<{ consent?: unknown }>(request, 4 * 1024)
       try {

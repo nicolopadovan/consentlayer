@@ -1,4 +1,4 @@
-import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
+import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 
 declare global {
@@ -10,8 +10,10 @@ declare global {
 
 /** Options for `hotjar`. */
 export type HotjarOptions = {
-  siteId: number
-  version: number
+  /** A number or numeric string; `undefined` or `''` turns the provider off. */
+  siteId: number | string | undefined
+  /** A number or numeric string; `undefined` or `''` turns the provider off. */
+  version: number | string | undefined
   /**
    * Hotjar can't be stopped once loaded. On analytics withdrawal its cookies
    * and storage are always deleted; `true` also reloads the page so recording stops.
@@ -28,7 +30,7 @@ function clearHotjarStorage(): void {
   }
 }
 
-function ensureHotjar(options: HotjarOptions): void {
+function ensureHotjar(options: { siteId: number; version: number }): void {
   if (typeof window === 'undefined' || getFlag('HotjarInitialized')) return
   window.hj =
     window.hj ??
@@ -50,11 +52,20 @@ function ensureHotjar(options: HotjarOptions): void {
  * @deprecated Hotjar accounts are moving to Contentsquare; use `contentsquare()` once yours has.
  */
 export function hotjar(options: HotjarOptions) {
+  if (options.siteId === undefined || options.siteId === '') return skippedPlugin('hotjar', 'siteId')
+  if (options.version === undefined || options.version === '') return skippedPlugin('hotjar', 'version')
+  const siteId = Number(options.siteId)
+  const version = Number(options.version)
+  if (!Number.isSafeInteger(siteId) || siteId <= 0 || !Number.isSafeInteger(version) || version <= 0) {
+    throw new Error(
+      `[consentlayer] Invalid Hotjar siteId or version: expected positive integers, received ${JSON.stringify(options.siteId)} and ${JSON.stringify(options.version)}.`,
+    )
+  }
   return definePlugin({
     id: 'hotjar',
     requiredConsent: 'analytics',
     load() {
-      ensureHotjar(options)
+      ensureHotjar({ siteId, version })
     },
     track(event) {
       window.hj?.('event', event.name)

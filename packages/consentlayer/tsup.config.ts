@@ -21,6 +21,7 @@ export default defineConfig({
     'server/ga4': 'src/server/ga4.ts',
     'server/meta': 'src/server/meta.ts',
     testing: 'src/testing.ts',
+    next: 'src/next.tsx',
   },
   dts: true,
   format: ['esm'],
@@ -30,7 +31,7 @@ export default defineConfig({
   external: ['react', 'react-dom'],
   async onSuccess() {
     // esbuild drops module directives; prepended on line 1 so the sourcemaps stay aligned.
-    for (const entry of ['dist/react/index.js']) {
+    for (const entry of ['dist/react/index.js', 'dist/next.js']) {
       await writeFile(entry, `'use client';${await readFile(entry, 'utf8')}`)
     }
   },

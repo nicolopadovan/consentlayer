@@ -3,16 +3,17 @@ import { createElement, type ComponentPropsWithoutRef } from 'react'
 /**
  * Meta's `<noscript>` PageView pixel. It fires only for visitors without
  * JavaScript, who never see the consent banner, so it tracks them without
- * consent. Render it only where that is lawful for you.
+ * consent. Render it only where that is lawful for you. Renders nothing without
+ * `enabled` or while `pixelId` is unset.
  */
 export function MetaPixelNoscript(
   props: {
-    pixelId: string
+    pixelId: string | undefined
     enabled?: boolean
   } & ComponentPropsWithoutRef<'img'>,
 ) {
   const { pixelId, enabled, ...imageProps } = props
-  if (!enabled) return null
+  if (!enabled || !pixelId) return null
   return createElement(
     'noscript',
     undefined,

@@ -1,5 +1,5 @@
 import type { ConsentState, ServerEvent } from '../core/types'
-import { readConsentCookie, type ConsentCookieOptions } from './consent'
+import { assertSecret, readConsentCookie, type ConsentCookieOptions } from './consent'
 import { ANALYTICS_MAX_BODY, assertSameOrigin, parseCookieHeader, parseJsonWithLimit } from './http'
 
 export type { ServerEvent }
@@ -23,13 +23,14 @@ export interface ServerDestination<Forward extends boolean = boolean> {
 /** Whether one destination accepted the event. */
 export type ServerSendResult = { id: string; ok: boolean; error?: unknown }
 
-/** Sends to every destination the event's consent and `only` allow, in parallel. */
+/** Sends to every destination the event's consent and `only` allow, in parallel. `undefined` entries are destinations that are off. */
 export async function sendServerEvent(
   event: ServerEvent,
-  options: { destinations: ServerDestination[]; request?: ServerRequestInfo },
+  options: { destinations: (ServerDestination | undefined)[]; request?: ServerRequestInfo },
 ): Promise<ServerSendResult[]> {
   const targets = options.destinations.filter(
-    (destination) =>
+    (destination): destination is ServerDestination =>
+      destination !== undefined &&
       event.consent[destination.requiredConsent] === true &&
       (!event.only || event.only.includes(destination.id)),
   )
@@ -44,6 +45,7 @@ export async function sendServerEvent(
   })
 }
 
+/** IP, user agent and cookies of a request, for `sendServerEvent({ request })`. */
 export function requestInfo(request: Request): ServerRequestInfo {
   const headers = request.headers
   return {
@@ -89,13 +91,14 @@ function parseServerEvent(body: unknown): ServerEvent {
  * Only destinations that accept browser events (e.g. `metaCapi`) can be passed.
  */
 export function createAnalyticsHandler(options: {
-  destinations: ServerDestination<true>[]
+  destinations: (ServerDestination<true> | undefined)[]
   /** Take consent from the cookie `createConsentHandler` signs, ignoring the body's; no valid cookie means denied. */
   consentCookie?: ConsentCookieOptions
   onError?: (error: unknown) => void
 }): (request: Request) => Promise<Response> {
   return async (request) => {
     try {
+      if (options.consentCookie) assertSecret(options.consentCookie.secret)
       assertSameOrigin(request, { requireHeader: true })
       const event = parseServerEvent(await parseJsonWithLimit(request, ANALYTICS_MAX_BODY))
       if (options.consentCookie) {
@@ -106,7 +109,7 @@ export function createAnalyticsHandler(options: {
         }
       }
       const results = await sendServerEvent(event, {
-        destinations: options.destinations.filter((destination) => destination.forwardBrowserEvents),
+        destinations: options.destinations.filter((destination) => destination?.forwardBrowserEvents),
         request: requestInfo(request),
       })
       for (const result of results) if (!result.ok) options.onError?.(result.error)

@@ -3,6 +3,7 @@ import { createAnalyticsManager } from '../src/core/analytics-manager'
 import { loadScript } from '../src/core/plugin'
 import { contentsquare } from '../src/providers/contentsquare'
 import { ga4 } from '../src/providers/ga4'
+import { hotjar } from '../src/providers/hotjar'
 import { meta } from '../src/providers/meta'
 import { posthog } from '../src/providers/posthog'
 import { sentry } from '../src/providers/sentry'
@@ -16,6 +17,7 @@ describe('providers', () => {
       posthog({ apiKey: undefined }),
       sentry({ dsn: undefined }),
       contentsquare({ tagId: undefined }),
+      hotjar({ siteId: '', version: 6 }),
     ]
     expect(skipped.map((plugin) => Object.keys(plugin))).toEqual(skipped.map(() => ['id', 'setup']))
 
@@ -33,6 +35,8 @@ describe('providers', () => {
 
     expect(() => ga4({ measurementId: 'UA-12345' })).toThrow(/GA4 measurement ID/)
     expect(() => meta({ pixelId: 'pixel-123' })).toThrow(/Meta Pixel ID/)
+    expect(() => hotjar({ siteId: 'abc', version: '6' })).toThrow(/Hotjar siteId or version/)
+    expect(hotjar({ siteId: '123', version: '6' }).load).toBeTypeOf('function')
   })
 
   it('reuses the same Meta event id for browser and server dedupe', async () => {

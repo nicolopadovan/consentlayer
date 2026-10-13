@@ -9,15 +9,20 @@ const isPlainValue = (value: unknown) =>
   Array.isArray(value) ||
   (typeof value === 'object' && value.constructor === Object)
 
-/** Meta Conversions API. Receives browser events too; Meta dedupes them by event ID. */
+/** Meta Conversions API. Receives browser events too; Meta dedupes them by event ID. Off (`undefined`) while `pixelId` or `accessToken` is unset. */
 export function metaCapi(options: {
-  pixelId: string
-  accessToken: string
+  pixelId: string | undefined
+  accessToken: string | undefined
   testEventCode?: string
   /** Graph API version. */
   apiVersion?: string
   fetchImpl?: typeof fetch
-}): ServerDestination<true> {
+}): ServerDestination<true> | undefined {
+  const { pixelId, accessToken } = options
+  if (!pixelId || !accessToken) {
+    if (pixelId || accessToken) console.warn('[consentlayer] metaCapi is off: set both pixelId and accessToken.')
+    return undefined
+  }
   const fetchImpl = options.fetchImpl ?? globalThis.fetch
   return {
     id: 'meta',
@@ -33,9 +38,9 @@ export function metaCapi(options: {
       const email = event.identity?.email?.trim().toLowerCase()
       const phone = event.identity?.phone && `+${event.identity.phone.replace(/\D/g, '')}`
       const url = new URL(
-        `https://graph.facebook.com/${options.apiVersion ?? 'v26.0'}/${options.pixelId}/events`,
+        `https://graph.facebook.com/${options.apiVersion ?? 'v26.0'}/${pixelId}/events`,
       )
-      url.searchParams.set('access_token', options.accessToken)
+      url.searchParams.set('access_token', accessToken)
       if (options.testEventCode) url.searchParams.set('test_event_code', options.testEventCode)
       const response = await fetchImpl(url.href, {
         method: 'POST',

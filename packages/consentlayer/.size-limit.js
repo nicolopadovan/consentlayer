@@ -4,6 +4,7 @@ const modifyEsbuildConfig = (config) => ({ ...config, logOverride: { 'ignored-ba
 export default [
   ['core', 'dist/index.js', '7 kB'],
   ['react', 'dist/react/index.js', '2.5 kB'],
+  ['next', 'dist/next.js', '2.5 kB'],
   ['providers/ga4', 'dist/providers/ga4.js', '1.5 kB'],
   ['providers/meta', 'dist/providers/meta.js', '2.5 kB'],
   ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.2 kB'],

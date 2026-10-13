@@ -17,12 +17,18 @@ const consentValue = (granted: boolean) => (granted ? 'GRANTED' : 'DENIED')
 /**
  * GA4 Measurement Protocol, for server-only events (webhooks). It augments
  * gtag rather than replacing it, so `createAnalyticsHandler` doesn't take it.
+ * Off (`undefined`) while `measurementId` or `apiSecret` is unset.
  */
 export function ga4Server(options: {
-  measurementId: string
-  apiSecret: string
+  measurementId: string | undefined
+  apiSecret: string | undefined
   fetchImpl?: typeof fetch
-}): ServerDestination<false> {
+}): ServerDestination<false> | undefined {
+  const { measurementId, apiSecret } = options
+  if (!measurementId || !apiSecret) {
+    if (measurementId || apiSecret) console.warn('[consentlayer] ga4Server is off: set both measurementId and apiSecret.')
+    return undefined
+  }
   const fetchImpl = options.fetchImpl ?? globalThis.fetch
   return {
     id: 'ga4',
@@ -42,7 +48,7 @@ export function ga4Server(options: {
             }).filter(([, value]) => value),
           )
         : {}
-      const response = await fetchImpl(collectUrl(options.measurementId, options.apiSecret), {
+      const response = await fetchImpl(collectUrl(measurementId, apiSecret), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
