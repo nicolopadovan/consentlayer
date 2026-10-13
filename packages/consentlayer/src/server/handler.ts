@@ -99,10 +99,12 @@ export function createAnalyticsHandler(options: {
   if (options.consentCookie && !options.consentCookie.secret) {
     console.warn('[consentlayer] consentCookie.secret is not set: every event is treated as denied.')
   }
+  const destinations = options.destinations.filter((destination) => destination?.forwardBrowserEvents)
   return async (request) => {
     try {
       if (options.consentCookie?.secret) assertSecret(options.consentCookie.secret)
       assertSameOrigin(request, { requireHeader: true })
+      if (!destinations.length) return new Response(null, { status: 204, headers: { 'consentlayer-forwarding': 'off' } })
       const event = parseServerEvent(await parseJsonWithLimit(request, ANALYTICS_MAX_BODY))
       if (options.consentCookie) {
         event.consent = (await readConsentCookie(request, options.consentCookie))?.consent ?? {
@@ -112,7 +114,7 @@ export function createAnalyticsHandler(options: {
         }
       }
       const results = await sendServerEvent(event, {
-        destinations: options.destinations.filter((destination) => destination?.forwardBrowserEvents),
+        destinations,
         request: requestInfo(request),
       })
       for (const result of results) if (!result.ok) options.onError?.(result.error)

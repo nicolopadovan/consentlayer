@@ -14,14 +14,6 @@ records what each release actually ships.
 
 Ordered from the smallest change to the largest.
 
-### Server endpoint handshake
-
-With `createAnalytics({ server: { endpoint } })`, the browser sends every
-`page()` and `track()` call to the endpoint, even when the route handler has no
-active destination, for example because `metaCapi()` returned `undefined`. The
-planned handshake lets the route tell the browser it has nothing to forward, so
-the browser stops sending.
-
 ### Recovering a lost consent cookie
 
 With `createAnalyticsHandler({ consentCookie })`, the route trusts only the

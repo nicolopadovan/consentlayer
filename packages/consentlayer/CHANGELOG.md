@@ -84,6 +84,9 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   made under another major `policyVersion` (`'3.x'` to `'4.0'`).
   `onStale: 'discard'` (default) treats it as no choice; `'keep'` keeps it in force while the banner is shown.
   `analytics.consent.isStale()` reports it.
+- `createAnalyticsHandler` answers `consentlayer-forwarding: off` when it has
+  no destination, for example a `metaCapi()` without its token, and the browser
+  stops forwarding `page()` and `track()` to it until the page is reloaded.
 - `consentlayer/next` works in the Pages Router: render its `<AnalyticsProvider>`
   in `pages/_app.tsx`. Page views wait for `router.isReady`.
 - `consentlayer/next`: an `AnalyticsProvider` for the App Router that sends a

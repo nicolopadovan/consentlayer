@@ -145,7 +145,7 @@ Their names are listed in [Names](/guides/names/).
 
 | Option | Type | Description |
 |---|---|---|
-| `server.endpoint` | `string` | Also posts every `track` and `page` call, as a [`ServerEvent`](#serverevent), to this route while analytics or marketing consent is granted. Uses `fetch` with `keepalive`, or `navigator.sendBeacon` where `fetch` is missing. Failures are reported with scope `server-forward`. See [`createAnalyticsHandler`](#createanalyticshandleroptions). |
+| `server.endpoint` | `string` | Also posts every `track` and `page` call, as a [`ServerEvent`](#serverevent), to this route while analytics or marketing consent is granted. Uses `fetch` with `keepalive`, or `navigator.sendBeacon` where `fetch` is missing. Failures are reported with scope `server-forward`. Stops for the page load when the route answers with `consentlayer-forwarding: off`. See [`createAnalyticsHandler`](#createanalyticshandleroptions). |
 | `server.consentEndpoint` | `string` | Posts `{ consent }` to this route on every consent change, except a choice read back from storage. Failures are reported with scope `consent-adapter` and provider ID `consent-endpoint`. See [`createConsentHandler`](#createconsenthandleroptions). |
 
 Both must be `https:` URLs or paths starting with `/`. `undefined` or `''`
@@ -1047,7 +1047,7 @@ function createAnalyticsHandler(options: {
 
 | Status | When |
 |---|---|
-| `204` | The event was processed, including when a destination failed. |
+| `204` | The event was processed, including when a destination failed. When `destinations` holds none that accepts browser events, the body is not read and the response carries `consentlayer-forwarding: off`, which stops the browser from forwarding until the page is reloaded. |
 | `400` | Empty body, invalid JSON, or an invalid event. `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing`. |
 | `403` | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's. |
 | `413` | The body exceeds 16 KiB. |

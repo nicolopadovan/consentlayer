@@ -123,7 +123,9 @@ describe('server destinations', () => {
     )
     expect(results).toEqual([{ id: 'ga4', ok: true }])
     const POST = createAnalyticsHandler({ destinations: [metaCapi({ pixelId: undefined, accessToken: 'token' })] })
-    expect((await POST(post({ name: 'x', consent: granted }))).status).toBe(204)
+    const response = await POST(post({ name: 'x', consent: granted }))
+    expect(response.status).toBe(204)
+    expect(response.headers.get('consentlayer-forwarding')).toBe('off')
   })
 
   it('reports vendor failures through onError', async () => {

@@ -79,6 +79,26 @@ describe('providers', () => {
     manager.destroy()
   })
 
+  it('stops forwarding once the route reports no destination', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status: 204, headers: { 'consentlayer-forwarding': 'off' } }))
+    vi.stubGlobal('fetch', fetchMock)
+    const manager = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await manager.boot()
+    await manager.page()
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    await Promise.resolve()
+    await manager.track('sign_up')
+    await manager.page()
+    vi.unstubAllGlobals()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    manager.destroy()
+  })
+
   it('forwards nothing to the server without analytics or marketing consent', async () => {
     const fetchMock = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', fetchMock)

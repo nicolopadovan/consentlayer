@@ -223,7 +223,7 @@ export function createAnalyticsManager(
     (providerId: string) => (error: AnalyticsError) =>
       emitError({ ...error, providerId: error.providerId ?? providerId })
 
-  const serverEndpoint =
+  let serverEndpoint =
     options.server?.endpoint
       ? assertHttpsOrRelativeUrl(options.server.endpoint, 'server.endpoint')
       : undefined
@@ -247,6 +247,7 @@ export function createAnalyticsManager(
     })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        if (response.headers.get('consentlayer-forwarding') === 'off') serverEndpoint = undefined
       })
       .catch(fail)
   }

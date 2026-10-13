@@ -39,6 +39,12 @@ network error, a non-2xx response or a refused beacon is reported to
 `onError` with scope `server-forward` and the message
 `Sending <name> to <endpoint> failed`.
 
+A response carrying the header `consentlayer-forwarding: off` stops
+forwarding until the page is reloaded. The route sends it when it has no
+destination, so the browser stops posting events that would be dropped.
+Events already in flight still complete. `sendBeacon` cannot read the
+response, so without `fetch` the browser keeps posting.
+
 ### The body
 
 For `track('add_to_cart', params, options)`:
@@ -85,6 +91,9 @@ once when created, and every event counts as denied, so nothing is sent:
    `Referer` header when `Origin` is absent, and requires it to equal the
    origin of the request URL. A request with neither header is refused, so
    other sites and plain `curl` calls cannot post events.
+   When no destination is left after step 6's filter, the handler answers
+   `204` with `consentlayer-forwarding: off` right after this check, without
+   reading the body.
 2. **Content type.** `content-type` must contain `application/json`.
 3. **Body.** The body is read as a stream and refused as soon as it exceeds
    16 KB, then parsed as JSON.
@@ -287,7 +296,7 @@ send the digest as lowercase hex. Empty values are neither hashed nor sent.
 
 | Status | When |
 |---|---|
-| `204` | Accepted; sent to every destination consent allows. Failures go to `onError`. |
+| `204` | Accepted; sent to every destination consent allows. Failures go to `onError`. With `consentlayer-forwarding: off` when there is no destination. |
 | `400` | No body, invalid JSON, or the event failed validation |
 | `403` | `Origin` or `Referer` from another origin, neither header present, or a malformed `Referer` |
 | `413` | Body larger than 16 KB |

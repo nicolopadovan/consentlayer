@@ -40,7 +40,9 @@ export const POST = createAnalyticsHandler({
 
 `metaCapi()` returns `undefined` while either value is unset, and the handler
 skips `undefined` destinations, so the same route works in environments
-without the token: it validates each event and answers `204` without sending.
+without the token. With no destination left, the route answers the first
+event with the header `consentlayer-forwarding: off`, and the browser stops
+posting events until the page is reloaded.
 
 Point the instance at the route. `server.endpoint` must be an HTTPS URL or a
 path starting with `/`; `undefined` or `''` turns forwarding off, and any
