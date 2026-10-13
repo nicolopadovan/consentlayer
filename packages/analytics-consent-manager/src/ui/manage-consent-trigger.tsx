@@ -1,6 +1,7 @@
 'use client'
 
 import type { ButtonHTMLAttributes } from 'react'
+import { ui } from '../core/names'
 import { useConsentController } from '../react/consent-controller'
 
 function cx(...values: Array<string | undefined>): string {
@@ -16,7 +17,7 @@ export function ManageConsentTrigger(
   return (
     <button
       {...rest}
-      className={cx('acm-manage-trigger', className)}
+      className={cx(ui('manage-trigger'), className)}
       type={rest.type ?? 'button'}
       onClick={() => void openDialog()}
     >

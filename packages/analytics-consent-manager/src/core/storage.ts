@@ -4,10 +4,13 @@ import type {
   IdentityStorageAdapter,
   UserIdentity,
 } from './types'
+import { legacyStorageKeysFor } from './names'
 import { isBrowser, normalizeIdentity, safeJsonParse } from './utils'
 
 export type LocalStorageAdapterOptions = {
   key: string
+  /** Keys to move an existing value from. Defaults to the legacy `acm_*` key when `key` is the configured one. */
+  legacyKeys?: string[]
   storage?: Storage
   window?: Window
 }
@@ -19,7 +22,7 @@ export function createLocalStorageConsentStorage(
     read() {
       const storage = getStorage(options.storage)
       if (!storage) return null
-      return safeJsonParse<ConsentState>(storage.getItem(options.key))
+      return safeJsonParse<ConsentState>(readMigrating(storage, options))
     },
     write(consent) {
       const storage = getStorage(options.storage)
@@ -54,7 +57,7 @@ export function createLocalStorageIdentityStorage(
       const storage = getStorage(options.storage)
       if (!storage) return {}
       return normalizeIdentity(
-        safeJsonParse<UserIdentity>(storage.getItem(options.key)) ?? {},
+        safeJsonParse<UserIdentity>(readMigrating(storage, options)) ?? {},
       )
     },
     write(identity) {
@@ -62,7 +65,7 @@ export function createLocalStorageIdentityStorage(
       if (!storage) return
       const next = {
         ...normalizeIdentity(
-          safeJsonParse<UserIdentity>(storage.getItem(options.key)) ?? {},
+          safeJsonParse<UserIdentity>(readMigrating(storage, options)) ?? {},
         ),
         ...normalizeIdentity(identity),
       }
@@ -115,6 +118,22 @@ export function createMemoryIdentityStorage(
       value = {}
     },
   }
+}
+
+function readMigrating(
+  storage: Storage,
+  { key, legacyKeys = legacyStorageKeysFor(key) }: LocalStorageAdapterOptions,
+): string | null {
+  const value = storage.getItem(key)
+  if (value !== null) return value
+  for (const legacyKey of legacyKeys) {
+    const legacyValue = storage.getItem(legacyKey)
+    if (legacyValue === null) continue
+    storage.setItem(key, legacyValue)
+    storage.removeItem(legacyKey)
+    return legacyValue
+  }
+  return null
 }
 
 function getStorage(storage?: Storage): Storage | undefined {

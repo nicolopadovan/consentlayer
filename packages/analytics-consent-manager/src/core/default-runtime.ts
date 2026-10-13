@@ -5,7 +5,7 @@ import {
   createLocalStorageConsentStorage,
   createLocalStorageIdentityStorage,
 } from './storage'
-import { defaultRuntimePreset } from './presets'
+import { getNames, withLegacy } from './names'
 import type {
   AnalyticsManager,
   ConsentEngine,
@@ -15,18 +15,26 @@ import type {
 } from './types'
 
 const defaultIdentityStorage = createLocalStorageIdentityStorage({
-  key: defaultRuntimePreset.identityStorageKey,
+  get key() {
+    return getNames().identityStorageKey
+  },
 })
 
 setDefaultIdentityStorage(defaultIdentityStorage)
 
 let defaultConsentEngine: ConsentEngine = createConsentEngine({
   storage: createLocalStorageConsentStorage({
-    key: defaultRuntimePreset.consentStorageKey,
+    get key() {
+      return getNames().consentStorageKey
+    },
   }),
   broadcast: {
-    eventName: defaultRuntimePreset.consentEventName,
-    globalKey: defaultRuntimePreset.consentGlobalKey,
+    get eventName() {
+      return withLegacy((names) => names.consentEventName)
+    },
+    get globalKey() {
+      return withLegacy((names) => names.consentGlobalKey)
+    },
   },
 })
 

@@ -1,6 +1,7 @@
 'use client'
 
 import type { ComponentPropsWithoutRef } from 'react'
+import { getNames, ui } from '../core/names'
 import { useConsentController } from '../react/consent-controller'
 
 function cx(...values: Array<string | undefined>): string {
@@ -26,56 +27,56 @@ export function CookieDialog(
   return (
     <section
       {...rest}
-      className={cx('acm-dialog', className)}
+      className={cx(ui('dialog'), className)}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="acm-cookie-dialog-title"
+      aria-labelledby={`${getNames().classPrefix}-cookie-dialog-title`}
     >
-      <h2 id="acm-cookie-dialog-title" className="acm-dialog__title">
+      <h2 id={`${getNames().classPrefix}-cookie-dialog-title`} className={ui('dialog__title')}>
         Cookie settings
       </h2>
-      <label className="acm-dialog__option">
+      <label className={ui('dialog__option')}>
         <input
-          className="acm-dialog__checkbox"
+          className={ui('dialog__checkbox')}
           checked
           disabled
           type="checkbox"
         />
-        <span className="acm-dialog__option-label">Necessary cookies</span>
+        <span className={ui('dialog__option-label')}>Necessary cookies</span>
       </label>
-      <label className="acm-dialog__option">
+      <label className={ui('dialog__option')}>
         <input
-          className="acm-dialog__checkbox"
+          className={ui('dialog__checkbox')}
           checked={prefs.analytics}
           onChange={(event) =>
             setPrefs({ ...prefs, analytics: event.target.checked })
           }
           type="checkbox"
         />
-        <span className="acm-dialog__option-label">Analytics cookies</span>
+        <span className={ui('dialog__option-label')}>Analytics cookies</span>
       </label>
-      <label className="acm-dialog__option">
+      <label className={ui('dialog__option')}>
         <input
-          className="acm-dialog__checkbox"
+          className={ui('dialog__checkbox')}
           checked={prefs.marketing}
           onChange={(event) =>
             setPrefs({ ...prefs, marketing: event.target.checked })
           }
           type="checkbox"
         />
-        <span className="acm-dialog__option-label">Marketing cookies</span>
+        <span className={ui('dialog__option-label')}>Marketing cookies</span>
       </label>
-      <div className="acm-dialog__actions">
+      <div className={ui('dialog__actions')}>
         <button
           type="button"
-          className="acm-dialog__button acm-dialog__button--secondary"
+          className={ui('dialog__button', 'dialog__button--secondary')}
           onClick={() => void closeDialog()}
         >
           Close
         </button>
         <button
           type="button"
-          className="acm-dialog__button acm-dialog__button--primary"
+          className={ui('dialog__button', 'dialog__button--primary')}
           onClick={() => void savePreferences()}
         >
           Save preferences

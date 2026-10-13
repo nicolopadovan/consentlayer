@@ -46,7 +46,7 @@ describe('granular auto-tracking', () => {
     manager.enableAutoTracking({ clicks: false })
     button.click()
 
-    expect(events.find((e) => e.name === 'acm.ui_click')).toBeUndefined()
+    expect(events.find((e) => e.name === 'npcm.ui_click')).toBeUndefined()
   })
 
   it('attribute mode only fires for elements bearing the attribute', async () => {
@@ -66,7 +66,7 @@ describe('granular auto-tracking', () => {
     ignored.click()
     tracked.click()
 
-    const clickEvents = events.filter((e) => e.name === 'acm.ui_click')
+    const clickEvents = events.filter((e) => e.name === 'npcm.ui_click')
     expect(clickEvents).toHaveLength(1)
     expect(clickEvents[0]?.params.ui_target).toBe('checkout')
   })
@@ -85,7 +85,7 @@ describe('granular auto-tracking', () => {
     })
     tracked.click()
 
-    const clickEvents = events.filter((e) => e.name === 'acm.ui_click')
+    const clickEvents = events.filter((e) => e.name === 'npcm.ui_click')
     expect(clickEvents).toHaveLength(1)
     expect(clickEvents[0]?.params.ui_target).toBe('hero-cta')
   })
@@ -112,7 +112,7 @@ describe('granular auto-tracking', () => {
     manager.enableAutoTracking({ scroll: { thresholds: [50] } })
     window.dispatchEvent(new Event('scroll'))
 
-    const scrollEvents = events.filter((e) => e.name === 'acm.scroll_depth')
+    const scrollEvents = events.filter((e) => e.name === 'npcm.scroll_depth')
     expect(scrollEvents).toHaveLength(1)
     expect(scrollEvents[0]?.params.depth).toBe(50)
   })
@@ -128,14 +128,14 @@ describe('granular auto-tracking', () => {
     await vi.advanceTimersByTimeAsync(10000)
     expect(
       events
-        .filter((e) => e.name === 'acm.time_on_page')
+        .filter((e) => e.name === 'npcm.time_on_page')
         .map((e) => e.params.seconds),
     ).toEqual([10])
 
     await vi.advanceTimersByTimeAsync(50000)
     expect(
       events
-        .filter((e) => e.name === 'acm.time_on_page')
+        .filter((e) => e.name === 'npcm.time_on_page')
         .map((e) => e.params.seconds),
     ).toEqual([10, 60])
   })
@@ -148,7 +148,7 @@ describe('granular auto-tracking', () => {
     manager.enableAutoTracking({ pageViews: false })
 
     expect(
-      events.find((e) => e.name === 'acm.page_session_start'),
+      events.find((e) => e.name === 'npcm.page_session_start'),
     ).toBeUndefined()
   })
 
@@ -164,7 +164,7 @@ describe('granular auto-tracking', () => {
     manager.enableAutoTracking()
     button.click()
 
-    expect(events.find((e) => e.name === 'acm.page_session_start')).toBeDefined()
-    expect(events.find((e) => e.name === 'acm.ui_click')).toBeDefined()
+    expect(events.find((e) => e.name === 'npcm.page_session_start')).toBeDefined()
+    expect(events.find((e) => e.name === 'npcm.ui_click')).toBeDefined()
   })
 })

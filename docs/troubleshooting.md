@@ -32,7 +32,7 @@ Check:
 
 - the rendered page content is inside the consent/provider tree
 - the consumer uses the same engine instance for the shell and the UI
-- storage is writing to `acm_consent`
+- storage is writing to `npcm_consent` (or your `configureNames` key)
 
 ## GitHub Publish Workflow Fails
 

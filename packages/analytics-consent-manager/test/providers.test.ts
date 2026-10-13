@@ -52,4 +52,25 @@ describe('providers', () => {
     ) as { event_id: string }
     expect(body.event_id).toBe('dedupe-123')
   })
+
+  it('sets Meta consent before init', async () => {
+    const win = window as unknown as Record<string, unknown>
+    delete win.__npcmMetaPixelInitialized
+    delete win.__acmMetaPixelInitialized
+    const adapter = createMetaAdapter({ pixelId: '123456789012345' })
+    await adapter.setup?.({
+      consent: { preferences: false, analytics: false, marketing: false },
+      identity: {},
+      debug: false,
+      isBooted: true,
+      emitError: () => undefined,
+    })
+    const bootstrap = document.head.querySelector(
+      'script[data-analytics-consent-manager="meta-pixel-bootstrap"]',
+    )?.textContent ?? ''
+    expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeGreaterThan(-1)
+    expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeLessThan(
+      bootstrap.indexOf("fbq('init'"),
+    )
+  })
 })

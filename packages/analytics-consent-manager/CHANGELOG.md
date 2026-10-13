@@ -4,6 +4,30 @@ All notable changes to `@nicolopadovan/analytics-consent-manager` are documented
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Default names use the `npcm` prefix: `npcm_consent`, `npcm_user_identity`,
+  `npcm:consent`, `NPCM_CONSENT`, `NPCM_openConsent`, `.npcm-*` classes,
+  `--npcm-*` variables and `__npcm*` provider window flags.
+- Auto-tracking events are renamed to `npcm.page_session_start`,
+  `npcm.scroll_depth`, `npcm.time_on_page` and `npcm.ui_click`. **Breaking** for
+  dashboards filtering on `acm.*`.
+- `defaultRuntimePreset` now reads the configured names.
+- `ConsentBroadcastConfig.eventName` / `globalKey` accept an array.
+- `:root { --npcm-* }` overrides now apply; previously the component defaults
+  shadowed variables set on ancestors.
+
+### Added
+- `configureNames({ prefix, classPrefix, legacy, ...overrides })` and `getNames()`.
+- Legacy compatibility (on by default, `legacy: false` to disable): stored
+  `acm_*` values move to the new keys on first read; `acm:consent`,
+  `ACM_CONSENT` and `ACM_openConsent` keep being set; `.acm-*` classes and
+  `--acm-*` variables keep working; `__acm*` window flags are read and written.
+- `createLocalStorage*Storage({ legacyKeys })` to migrate from other keys.
+- `loadBeforeConsent` option on `createGa4Adapter` and `createMetaAdapter`
+  (default `true`). `false` loads nothing until the category is granted.
+
 ## [1.0.0-rc.1] — 2026-05-11
 
 ### Added

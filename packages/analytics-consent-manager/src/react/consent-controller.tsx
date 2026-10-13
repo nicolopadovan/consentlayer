@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { defaultRuntimePreset } from '../core/presets'
+import { withLegacy } from '../core/names'
 import type { ConsentState } from '../core/types'
 import { useConsent } from './consent-provider'
 
@@ -38,13 +38,14 @@ const ConsentControllerContext = createContext<
 export type ConsentControllerProviderProps = {
   children: ReactNode
   autoShowBanner?: boolean
+  /** Defaults to the configured name (plus the legacy `ACM_openConsent`). */
   openConsentGlobalKey?: string
 }
 
 export function ConsentControllerProvider({
   children,
   autoShowBanner = true,
-  openConsentGlobalKey = defaultRuntimePreset.openConsentGlobalKey,
+  openConsentGlobalKey,
 }: ConsentControllerProviderProps) {
   const { engine, consent, setConsent } = useConsent()
   const [ready, setReady] = useState(false)
@@ -99,8 +100,13 @@ export function ConsentControllerProvider({
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    ;(window as unknown as Record<string, unknown>)[openConsentGlobalKey] =
-      () => setDialogVisible(true)
+    const keys = openConsentGlobalKey
+      ? [openConsentGlobalKey]
+      : withLegacy((names) => names.openConsentGlobalKey)
+    for (const key of keys) {
+      ;(window as unknown as Record<string, unknown>)[key] = () =>
+        setDialogVisible(true)
+    }
   }, [openConsentGlobalKey])
 
   const applyAndClose = useCallback(async (nextConsent: ConsentState) => {

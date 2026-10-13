@@ -1,16 +1,26 @@
+import { getNames } from './names'
+
+/** Live view of the names set with `configureNames()`. */
 export const defaultRuntimePreset = {
-  consentStorageKey: 'acm_consent',
-  identityStorageKey: 'acm_user_identity',
-  consentEventName: 'acm:consent',
-  consentGlobalKey: 'ACM_CONSENT',
-  openConsentGlobalKey: 'ACM_openConsent',
-  autoTrackingEvents: {
-    pageSessionStart: 'acm.page_session_start',
-    scrollDepth: 'acm.scroll_depth',
-    timeOnPage: 'acm.time_on_page',
-    uiClick: 'acm.ui_click',
+  get consentStorageKey() {
+    return getNames().consentStorageKey
   },
-} as const
+  get identityStorageKey() {
+    return getNames().identityStorageKey
+  },
+  get consentEventName() {
+    return getNames().consentEventName
+  },
+  get consentGlobalKey() {
+    return getNames().consentGlobalKey
+  },
+  get openConsentGlobalKey() {
+    return getNames().openConsentGlobalKey
+  },
+  get autoTrackingEvents() {
+    return getNames().autoTrackingEvents
+  },
+}
 
 export type EnvConfigInput = Record<string, string | undefined>
 

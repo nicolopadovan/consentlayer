@@ -1,10 +1,10 @@
+import { getFlag, setFlag } from '../core/names'
 import type { ProviderAdapter } from '../core/types'
 
 declare global {
   interface Window {
     hj?: (...args: unknown[]) => void
     _hjSettings?: { hjid: number; hjsv: number }
-    __acmHotjarInitialized?: boolean
   }
 }
 
@@ -14,7 +14,7 @@ export type HotjarAdapterOptions = {
 }
 
 function ensureHotjar(options: HotjarAdapterOptions): void {
-  if (typeof window === 'undefined' || window.__acmHotjarInitialized) return
+  if (typeof window === 'undefined' || getFlag('HotjarInitialized')) return
   window.hj =
     window.hj ??
     ((...args: unknown[]) => {
@@ -29,7 +29,7 @@ function ensureHotjar(options: HotjarAdapterOptions): void {
   script.src = `https://static.hotjar.com/c/hotjar-${options.siteId}.js?sv=${options.version}`
   script.dataset.hotjar = String(options.siteId)
   document.head.appendChild(script)
-  window.__acmHotjarInitialized = true
+  setFlag('HotjarInitialized', true)
 }
 
 export function createHotjarAdapter(

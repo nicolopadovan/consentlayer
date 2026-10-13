@@ -23,8 +23,8 @@ export type ConsentChangeSource =
   | 'unknown'
 
 export type ConsentBroadcastConfig = {
-  eventName?: string
-  globalKey?: string
+  eventName?: string | string[]
+  globalKey?: string | string[]
   document?: Document
   window?: Window
 }

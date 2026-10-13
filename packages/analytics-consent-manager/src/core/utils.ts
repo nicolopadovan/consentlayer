@@ -1,4 +1,5 @@
 import type {
+  AnalyticsProviderContext,
   ConsentBroadcastConfig,
   ConsentState,
   ProviderConsentRequirement,
@@ -99,12 +100,27 @@ export function broadcastConsent(
 ): void {
   const doc = config.document ?? (typeof document !== 'undefined' ? document : undefined)
   const win = config.window ?? (typeof window !== 'undefined' ? window : undefined)
-  if (win && config.globalKey) {
-    ;(win as unknown as Record<string, unknown>)[config.globalKey] = consent
+  if (win) {
+    for (const key of [config.globalKey ?? []].flat()) {
+      ;(win as unknown as Record<string, unknown>)[key] = consent
+    }
   }
-  if (doc && config.eventName) {
-    doc.dispatchEvent(new CustomEvent(config.eventName, { detail: consent }))
+  if (doc) {
+    for (const name of [config.eventName ?? []].flat()) {
+      doc.dispatchEvent(new CustomEvent(name, { detail: consent }))
+    }
   }
+}
+
+/**
+ * `enabled()` for a provider that must not run at all before `category` is
+ * granted. Stays true afterwards so a withdrawal still reaches the provider.
+ */
+export function consentLatch(
+  category: keyof ConsentState,
+): (context: AnalyticsProviderContext) => boolean {
+  let granted = false
+  return (context) => (granted ||= context.consent?.[category] === true)
 }
 
 export function debugLog(enabled: boolean, ...parts: unknown[]): void {

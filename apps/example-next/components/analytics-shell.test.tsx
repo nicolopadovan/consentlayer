@@ -75,14 +75,14 @@ describe('AnalyticsShell', () => {
     await waitFor(() =>
       expect(screen.queryByText('Cookie preferences')).toBeNull(),
     )
-    expect(localStorage.getItem('acm_consent')).toContain('"marketing":true')
+    expect(localStorage.getItem('npcm_consent')).toContain('"marketing":true')
     expect(screen.getByText('Manage cookies')).toBeTruthy()
     expect(screen.getByTestId('consent-probe').textContent).toContain(
       '"marketing":true',
     )
     expect(
       document.head.querySelector(
-        'script[data-analytics-consent-manager="meta-pixel"]',
+        'script[data-analytics-consent-manager="meta-pixel-loader"]',
       ),
     ).toBeTruthy()
   })

@@ -7,7 +7,8 @@ import type {
   ProviderAdapter,
   UserIdentity,
 } from '../core/types'
-import { createEventId } from '../core/utils'
+import { getFlag, setFlag } from '../core/names'
+import { consentLatch, createEventId } from '../core/utils'
 import {
   assertHttpsOrRelativeUrl,
   assertValidMetaPixelId,
@@ -22,7 +23,6 @@ declare global {
       options?: { eventID?: string },
     ) => void
     _fbq?: typeof window.fbq
-    __acmMetaPixelInitialized?: boolean
   }
 }
 
@@ -31,6 +31,11 @@ export type MetaAdapterOptions = {
   serverEndpoint?: string
   fetchImpl?: typeof fetch
   locale?: string
+  /**
+   * `true` (default): the pixel script loads at boot and is told consent is revoked.
+   * `false`: nothing loads until marketing consent is granted.
+   */
+  loadBeforeConsent?: boolean
 }
 
 const STANDARD_EVENTS = new Set([
@@ -67,7 +72,7 @@ export function createMetaAdapter(
   const isReady = () =>
     typeof window !== 'undefined' &&
     typeof window.fbq === 'function' &&
-    window.__acmMetaPixelInitialized === true
+    getFlag('MetaPixelInitialized') === true
 
   const mirrorEvent = async (
     eventName: string,
@@ -97,8 +102,10 @@ export function createMetaAdapter(
   return {
     id: 'meta',
     requiredConsent: 'marketing',
+    enabled:
+      options.loadBeforeConsent === false ? consentLatch('marketing') : undefined,
     setup(setupContext) {
-      if (typeof window === 'undefined' || window.__acmMetaPixelInitialized) return
+      if (typeof window === 'undefined' || getFlag('MetaPixelInitialized')) return
 
       const bootstrap = document.createElement('script')
       bootstrap.setAttribute(
@@ -108,6 +115,7 @@ export function createMetaAdapter(
       bootstrap.text = `!function(f,b,e,v,n){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];}(window);
+fbq('consent', ${setupContext.consent?.marketing ? "'grant'" : "'revoke'"});
 fbq('init', ${JSON.stringify(pixelId)});`
       document.head.appendChild(bootstrap)
 
@@ -127,7 +135,7 @@ fbq('init', ${JSON.stringify(pixelId)});`
       }
       document.head.appendChild(loader)
 
-      window.__acmMetaPixelInitialized = true
+      setFlag('MetaPixelInitialized', true)
     },
     onConsentChange(context) {
       if (!isReady()) return

@@ -69,14 +69,14 @@ re-theme without forking the markup:
 
 ```css
 :root {
-  --acm-accent: #3b82f6;       /* primary button background */
-  --acm-accent-fg: #ffffff;    /* primary button text */
-  --acm-bg: #0f172a;           /* surface background */
-  --acm-fg: #e2e8f0;           /* surface text */
-  --acm-border: #1e293b;
-  --acm-radius: 8px;
-  --acm-padding: 16px;
-  --acm-z-index: 9999;
+  --npcm-accent: #3b82f6;       /* primary button background */
+  --npcm-accent-fg: #ffffff;    /* primary button text */
+  --npcm-bg: #0f172a;           /* surface background */
+  --npcm-fg: #e2e8f0;           /* surface text */
+  --npcm-border: #1e293b;
+  --npcm-radius: 8px;
+  --npcm-padding: 16px;
+  --npcm-z-index: 9999;
 }
 ```
 
@@ -84,28 +84,73 @@ Available variables:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `--acm-bg` | `#ffffff` | Surface background (banner & dialog) |
-| `--acm-fg` | `#111827` | Body text colour |
-| `--acm-muted` | `#6b7280` | Secondary text |
-| `--acm-border` | `#e5e7eb` | Borders, hairlines |
-| `--acm-accent` | `#111827` | Primary button background |
-| `--acm-accent-fg` | `#ffffff` | Primary button text |
-| `--acm-danger` | `#b91c1c` | Error message colour |
-| `--acm-radius` | `12px` | Surface corner radius |
-| `--acm-radius-button` | `8px` | Button corner radius |
-| `--acm-padding` | `20px` | Surface inner padding |
-| `--acm-gap` | `12px` | Vertical rhythm between blocks |
-| `--acm-shadow` | (soft drop) | Surface shadow |
-| `--acm-font-family` | system stack | Font family |
-| `--acm-z-index` | `1000` | Banner stacking context |
+| `--npcm-bg` | `#ffffff` | Surface background (banner & dialog) |
+| `--npcm-fg` | `#111827` | Body text colour |
+| `--npcm-muted` | `#6b7280` | Secondary text |
+| `--npcm-border` | `#e5e7eb` | Borders, hairlines |
+| `--npcm-accent` | `#111827` | Primary button background |
+| `--npcm-accent-fg` | `#ffffff` | Primary button text |
+| `--npcm-danger` | `#b91c1c` | Error message colour |
+| `--npcm-radius` | `12px` | Surface corner radius |
+| `--npcm-radius-button` | `8px` | Button corner radius |
+| `--npcm-padding` | `20px` | Surface inner padding |
+| `--npcm-gap` | `12px` | Vertical rhythm between blocks |
+| `--npcm-shadow` | (soft drop) | Surface shadow |
+| `--npcm-font-family` | system stack | Font family |
+| `--npcm-z-index` | `1000` | Banner stacking context |
 
 If you need deeper control, target the classes directly:
 
 | Component | Root class | Notable child classes |
 |---|---|---|
-| `CookieBanner` | `.acm-banner` | `.acm-banner__title`, `.acm-banner__description`, `.acm-banner__error`, `.acm-banner__actions`, `.acm-banner__button`, `.acm-banner__button--primary`, `.acm-banner__button--secondary` |
-| `CookieDialog` | `.acm-dialog` | `.acm-dialog__title`, `.acm-dialog__option`, `.acm-dialog__checkbox`, `.acm-dialog__actions`, `.acm-dialog__button`, `.acm-dialog__button--primary` |
-| `ManageConsentTrigger` | `.acm-manage-trigger` | — |
+| `CookieBanner` | `.npcm-banner` | `.npcm-banner__title`, `.npcm-banner__description`, `.npcm-banner__error`, `.npcm-banner__actions`, `.npcm-banner__button`, `.npcm-banner__button--primary`, `.npcm-banner__button--secondary` |
+| `CookieDialog` | `.npcm-dialog` | `.npcm-dialog__title`, `.npcm-dialog__option`, `.npcm-dialog__checkbox`, `.npcm-dialog__actions`, `.npcm-dialog__button`, `.npcm-dialog__button--primary` |
+| `ManageConsentTrigger` | `.npcm-manage-trigger` | — |
+
+Pre-rc.2 names (`--acm-*` variables, `.acm-*` classes) still work: the
+components emit both classes and the stylesheet matches both. Pass
+`configureNames({ classPrefix })` to change the emitted class prefix.
+
+## Names
+
+Every storage key, global, DOM event, auto-tracking event and CSS class
+prefix comes from one place. Defaults use the `npcm` prefix:
+
+| Name | Default |
+|---|---|
+| consent storage key | `npcm_consent` |
+| identity storage key | `npcm_user_identity` |
+| consent DOM event | `npcm:consent` |
+| consent global | `window.NPCM_CONSENT` |
+| open-dialog global | `window.NPCM_openConsent()` |
+| auto-tracking events | `npcm.page_session_start`, `npcm.scroll_depth`, `npcm.time_on_page`, `npcm.ui_click` |
+| UI class prefix | `npcm-` |
+
+Change them before the first consent read, e.g. at the top of the module that
+sets up analytics:
+
+```ts
+import { configureNames } from '@nicolopadovan/analytics-consent-manager'
+
+configureNames({
+  prefix: 'shop',                       // shop_consent, shop:consent, SHOP_CONSENT, …
+  consentStorageKey: 'my_consent',      // any single name can be overridden
+  classPrefix: 'shop',                  // .shop-banner, .shop-dialog, …
+  legacy: false,                        // drop the acm_* compatibility below
+})
+```
+
+### Migrating from `acm_*`
+
+Until 1.0.0-rc.1 the prefix was `acm`. While `legacy` is on (the default):
+
+- a stored `acm_consent` / `acm_user_identity` value is moved to the new key on first read;
+- `acm:consent` is dispatched and `ACM_CONSENT` / `ACM_openConsent` are set alongside the new names;
+- provider window flags are read and written under both `__npcm*` and `__acm*`;
+- `.acm-*` classes and `--acm-*` variables keep working.
+
+Auto-tracking events are renamed outright (`acm.*` → `npcm.*`), so dashboards
+filtering on the old names need updating.
 
 ## Security & Secrets
 

@@ -3,15 +3,16 @@ import type {
   ConsentState,
   ProviderAdapter,
 } from '../core/types'
+import { getFlag, setFlag } from '../core/names'
+
+type ShopifyAnalyticsQueue = Array<{
+  type: string
+  name?: string
+  params?: Record<string, unknown>
+}>
 
 declare global {
   interface Window {
-    __acmShopifyAnalyticsInitialized?: boolean
-    __acmShopifyAnalyticsQueue?: Array<{
-      type: string
-      name?: string
-      params?: Record<string, unknown>
-    }>
     Shopify?: {
       customerPrivacy?: ShopifyCustomerPrivacy
       loadFeatures?: (
@@ -91,9 +92,11 @@ async function loadScript(src: string): Promise<void> {
   })
 }
 
-function ensureQueue(): void {
-  if (typeof window === 'undefined') return
-  window.__acmShopifyAnalyticsQueue = window.__acmShopifyAnalyticsQueue ?? []
+function ensureQueue(): ShopifyAnalyticsQueue {
+  return setFlag(
+    'ShopifyAnalyticsQueue',
+    getFlag<ShopifyAnalyticsQueue>('ShopifyAnalyticsQueue') ?? [],
+  )
 }
 
 async function ensureCustomerPrivacyFeature(
@@ -119,7 +122,7 @@ export function createShopifyAnalyticsAdapter(
       ensureQueue()
     },
     init() {
-      if (typeof window === 'undefined' || window.__acmShopifyAnalyticsInitialized) return
+      if (typeof window === 'undefined' || getFlag('ShopifyAnalyticsInitialized')) return
       ensureQueue()
       const urls =
         options.scriptUrls ??
@@ -137,12 +140,11 @@ export function createShopifyAnalyticsAdapter(
           }
         }
       })()
-      window.__acmShopifyAnalyticsInitialized = true
+      setFlag('ShopifyAnalyticsInitialized', true)
     },
     trackPage(payload) {
       if (typeof window === 'undefined') return
-      ensureQueue()
-      window.__acmShopifyAnalyticsQueue?.push({
+      ensureQueue().push({
         type: 'page_view',
         params: {
           path: payload.path ?? window.location.pathname,
@@ -152,8 +154,7 @@ export function createShopifyAnalyticsAdapter(
     },
     trackEvent(event) {
       if (typeof window === 'undefined') return
-      ensureQueue()
-      window.__acmShopifyAnalyticsQueue?.push({
+      ensureQueue().push({
         type: 'event',
         name: event.name,
         params: event.params,

@@ -141,13 +141,13 @@ describe('analytics manager', () => {
     manager.newPageSession()
     await vi.runOnlyPendingTimersAsync()
 
-    expect(trackedEvents).toContain('acm.page_session_start')
-    expect(trackedEvents).toContain('acm.ui_click')
-    expect(trackedEvents).toContain('acm.scroll_depth')
-    expect(trackedEvents).toContain('acm.time_on_page')
+    expect(trackedEvents).toContain('npcm.page_session_start')
+    expect(trackedEvents).toContain('npcm.ui_click')
+    expect(trackedEvents).toContain('npcm.scroll_depth')
+    expect(trackedEvents).toContain('npcm.time_on_page')
     expect(
       trackedEvents.filter(
-        (eventName) => eventName === 'acm.page_session_start',
+        (eventName) => eventName === 'npcm.page_session_start',
       )
         .length,
     ).toBeGreaterThan(1)

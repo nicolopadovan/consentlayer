@@ -37,10 +37,23 @@
 
 The package default runtime preset uses:
 
-- `acm_consent`
-- `acm_user_identity`
-- `acm:consent`
-- `ACM_CONSENT`
-- `ACM_openConsent`
+- `npcm_consent`
+- `npcm_user_identity`
+- `npcm:consent`
+- `NPCM_CONSENT`
+- `NPCM_openConsent`
 
-These defaults are neutral and no longer tied to the decommissioned storefront namespace.
+Change them with `configureNames()`; see "Names" in the README. The pre-rc.2
+`acm_*` names are still read, migrated and broadcast unless `legacy: false`.
+
+## Loading Before Consent
+
+GA4 and Meta load their scripts at boot by default, with consent denied
+(Consent Mode / `fbq('consent', 'revoke')`), and only send data once the
+category is granted. Fetching the script still sends the visitor's IP to
+Google or Meta. To load nothing until consent:
+
+```ts
+createGa4Adapter({ measurementId, loadBeforeConsent: false })
+createMetaAdapter({ pixelId, loadBeforeConsent: false })
+```

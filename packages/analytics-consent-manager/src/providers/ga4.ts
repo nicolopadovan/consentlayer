@@ -3,18 +3,24 @@ import type {
   AnalyticsProviderContext,
   ProviderAdapter,
 } from '../core/types'
+import { getFlag, setFlag } from '../core/names'
+import { consentLatch } from '../core/utils'
 import { assertValidGa4MeasurementId } from '../core/validation'
 
 declare global {
   interface Window {
     dataLayer?: Array<Record<string, unknown>>
     gtag?: (...args: unknown[]) => void
-    __acmGa4Configured?: Record<string, boolean>
   }
 }
 
 export type Ga4AdapterOptions = {
   measurementId: string
+  /**
+   * `true` (default): gtag.js loads at boot with Consent Mode set to denied.
+   * `false`: nothing loads until analytics consent is granted.
+   */
+  loadBeforeConsent?: boolean
 }
 
 function ensureGtag(
@@ -62,6 +68,8 @@ export function createGa4Adapter(options: Ga4AdapterOptions): ProviderAdapter {
   return {
     id: 'ga4',
     requiredConsent: 'analytics',
+    enabled:
+      options.loadBeforeConsent === false ? consentLatch('analytics') : undefined,
     setup(context: AnalyticsProviderContext) {
       if (typeof window === 'undefined') return
       ensureGtag(measurementId, context.emitError)
@@ -69,12 +77,15 @@ export function createGa4Adapter(options: Ga4AdapterOptions): ProviderAdapter {
     init(context: AnalyticsProviderContext) {
       if (typeof window === 'undefined') return
       ensureGtag(measurementId, context.emitError)
-      window.__acmGa4Configured = window.__acmGa4Configured ?? {}
-      if (!window.__acmGa4Configured[measurementId]) {
+      const configured = setFlag(
+        'Ga4Configured',
+        getFlag<Record<string, boolean>>('Ga4Configured') ?? {},
+      )
+      if (!configured[measurementId]) {
         window.gtag?.('config', measurementId, {
           send_page_view: false,
         })
-        window.__acmGa4Configured[measurementId] = true
+        configured[measurementId] = true
       }
     },
     onConsentChange(context) {

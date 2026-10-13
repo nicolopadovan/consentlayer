@@ -19,6 +19,8 @@ export {
   setDefaultIdentityStorage,
   useDefaultIdentityStorage,
 } from './core/identity'
+export { configureNames, getNames, legacyNames } from './core/names'
+export type { AutoTrackingEventNames, Names, NamesInput } from './core/names'
 export {
   createEnvConfig,
   defaultRuntimePreset,

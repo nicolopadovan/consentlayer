@@ -1,6 +1,7 @@
 'use client'
 
 import type { ComponentPropsWithoutRef } from 'react'
+import { getNames, ui } from '../core/names'
 import { useConsentController } from '../react/consent-controller'
 
 function cx(...values: Array<string | undefined>): string {
@@ -26,37 +27,37 @@ export function CookieBanner(
   return (
     <section
       {...rest}
-      className={cx('acm-banner', className)}
+      className={cx(ui('banner'), className)}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="acm-cookie-banner-title"
+      aria-labelledby={`${getNames().classPrefix}-cookie-banner-title`}
     >
-      <h2 id="acm-cookie-banner-title" className="acm-banner__title">
+      <h2 id={`${getNames().classPrefix}-cookie-banner-title`} className={ui('banner__title')}>
         Cookie preferences
       </h2>
-      <p className="acm-banner__description">
+      <p className={ui('banner__description')}>
         We use cookies for essential functionality and, with consent, for
         analytics and marketing.
       </p>
-      {error ? <p className="acm-banner__error">{error}</p> : null}
-      <div className="acm-banner__actions">
+      {error ? <p className={ui('banner__error')}>{error}</p> : null}
+      <div className={ui('banner__actions')}>
         <button
           type="button"
-          className="acm-banner__button acm-banner__button--secondary"
+          className={ui('banner__button', 'banner__button--secondary')}
           onClick={() => void rejectNonEssential()}
         >
           Reject non-essential
         </button>
         <button
           type="button"
-          className="acm-banner__button acm-banner__button--secondary"
+          className={ui('banner__button', 'banner__button--secondary')}
           onClick={() => void openDialog()}
         >
           Customize
         </button>
         <button
           type="button"
-          className="acm-banner__button acm-banner__button--primary"
+          className={ui('banner__button', 'banner__button--primary')}
           onClick={() => void acceptAll()}
         >
           Accept all
