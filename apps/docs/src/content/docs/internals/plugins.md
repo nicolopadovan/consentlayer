@@ -21,7 +21,7 @@ type LoadTiming = false | 'idle' | 'interaction' | number
 
 interface AnalyticsPlugin {
   id: string
-  requiredConsent?: 'none' | 'preferences' | 'analytics' | 'marketing'
+  requiredConsent?: 'none' | ConsentCategory // 'preferences', 'analytics', 'marketing' or a custom category
     | ((consent: ConsentState | null) => boolean)
   loadBeforeConsent?: boolean
   defer?: LoadTiming

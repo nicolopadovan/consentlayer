@@ -1,32 +1,42 @@
 ---
 title: Troubleshooting
-description: Fixes for common problems.
+description: Fixes for the most common problems.
 ---
 
-## Meta Pixel Helper Shows No Pixel
+Start with `createAnalytics({ debug: true })`: consentlayer then logs every
+consent change and every error to the console. Errors also always reach
+`createAnalytics({ onError })`.
 
-Check:
+## Meta Pixel Helper shows no pixel
 
-- `NEXT_PUBLIC_FACEBOOK_PIXEL_ID` is set
-- marketing consent has been granted
-- lazy boot has had time to run if the app uses `idle` mode
-- the Meta provider is registered in consumer code
+- Check that `NEXT_PUBLIC_FACEBOOK_PIXEL_ID` is set and that the `meta()`
+  provider is in `providers`.
+- Grant marketing consent. The pixel doesn't load before it, unless you set
+  `loadBeforeConsent: true`.
+- With `boot: { mode: 'idle' }`, providers load only once the browser is idle,
+  up to `timeoutMs` after the page loads.
 
-## Server-Side Meta Or GA4 Events Fail
+## Server-side events don't arrive
 
-Check:
+- **No request at all.** `server.endpoint` isn't set, or neither analytics nor
+  marketing consent is granted.
+- **The route answers 403.** The request is cross-origin, or has no `Origin`
+  or `Referer` header.
+- **The route answers 400.** The body isn't a valid event.
+- **The route answers 204 but the vendor shows nothing.** Check `META_TOKEN`
+  for Meta and `GA4_API_SECRET` for GA4, and read the errors passed to the
+  handler's `onError`.
+- **GA4 fails with "needs event.clientId".** The webhook event has no client
+  ID; save it with the order while the visitor is in the browser (see
+  [Server-side tracking](/guides/server-side-tracking/#send-server-only-events)).
 
-- `onError` on `createAnalytics` (scope `server-forward`) and on `createAnalyticsHandler`
-- `META_TOKEN` for Meta, `GA4_API_SECRET` for GA4
-- the handler answers 403: the request is cross-origin or has no `Origin` / `Referer`
-- the handler answers 400: the body isn't a valid event
-- GA4 fails with "needs event.clientId": the webhook event has no saved client ID
-- no request at all: `server.endpoint` isn't set, or neither analytics nor marketing is granted
+Browser-side forwarding failures reach `createAnalytics({ onError })` with the
+scope `server-forward`.
 
-## Consent Looks Stale In The UI
+## The banner shows stale consent
 
-Check:
-
-- the rendered page content is inside the consent/provider tree
-- the consumer uses the same engine instance for the shell and the UI
-- storage is writing to `consentlayer_consent` (or your `names` key)
+- Check that the banner is rendered inside `<AnalyticsProvider>`.
+- Check that the page creates `createAnalytics()` only once. A second instance
+  has its own consent state; see [Names](/guides/names/).
+- Check that the browser stores the choice under `consentlayer_consent`, or
+  under your custom key if you set `names`.

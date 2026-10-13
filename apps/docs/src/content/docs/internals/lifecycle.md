@@ -78,12 +78,12 @@ So the hook order a provider sees is always `setup`, then `consent`, then
 goes away. `consent` runs before `load` on the first pass, so a provider must
 remember the context it got there and apply it once its SDK exists.
 
-### requiredConsent
+### `requiredConsent`
 
 | Value | `allowed` when |
 | --- | --- |
 | omitted or `'none'` | always, even before the visitor has chosen |
-| `'preferences'`, `'analytics'`, `'marketing'` | that category is `true` |
+| `'preferences'`, `'analytics'`, `'marketing'` or a [custom category](/guides/consent-ui/#custom-categories) | that category is `true` |
 | a function `(consent) => boolean` | it returns `true`; it is only called once consent is known |
 
 With no stored choice, consent is `null`, and every requirement other than
@@ -91,7 +91,7 @@ With no stored choice, consent is `null`, and every requirement other than
 Hotjar use `'analytics'`; Meta Pixel and TikTok use `'marketing'`. See
 [Providers](/guides/providers/).
 
-### loadBeforeConsent
+### `loadBeforeConsent`
 
 `loadBeforeConsent: true` runs `load` before consent is granted, but the
 provider still isn't active: it gets no page views, events or identity until
@@ -158,7 +158,7 @@ An event for a provider that isn't active is dropped, not saved for later.
 Only the `pending` queue (before boot) and a deferred provider's backlog hold
 events.
 
-### Event IDs and only
+### Event IDs and `only`
 
 Every `page` and `track` call gets an ID: `options.eventId` if you pass one,
 otherwise `crypto.randomUUID()` (with a `Math.random` fallback). The same ID

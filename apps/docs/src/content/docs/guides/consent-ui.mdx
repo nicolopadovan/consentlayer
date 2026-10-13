@@ -7,14 +7,14 @@ import { Code } from '@astrojs/starlight/components'
 import banner from '../../../components/ConsentBanner.tsx?raw'
 import css from '../../../components/consent-banner.css?raw'
 
-consentlayer ships no banner: your site's design, copy and languages are
-yours. `useConsentController()` from `consentlayer/react` gives the state and
-actions, and the recipe below is a working starting point to copy into your
-app. It is the banner the [Playground](/playground/) runs.
+consentlayer doesn't ship a banner, so its design, wording and languages stay
+yours. `useConsentController()` from `consentlayer/react` provides the state
+and actions; the recipe below is a working banner to copy into your app and
+restyle. It is the same banner the [Playground](/playground/) runs.
 
 ## `useConsentController()`
 
-Use it inside `<AnalyticsProvider>`.
+Call it inside `<AnalyticsProvider>`, which holds the banner's state.
 
 | Field | What it is |
 |---|---|
@@ -28,17 +28,21 @@ Use it inside `<AnalyticsProvider>`.
 | `openDialog()`, `closeDialog()`, `showBanner()`, `hideBanner()` | visibility |
 | `error` | why reading stored consent failed, if it did |
 
-To reopen the settings from a footer link outside React, call
-`window.CONSENTLAYER_openConsent()` (the name follows
-[`names.prefix`](/guides/names/)).
+### Reopening the settings
+
+Visitors must be able to change their choice later. Inside React, call
+`openDialog()`, as the recipe's "Cookie settings" button does below. Outside
+React, for example in a footer rendered by your CMS, call
+`window.CONSENTLAYER_openConsent()`. The global's name follows
+[`names.prefix`](/guides/names/).
 
 ## Recipe
 
-Copy both files, then change the text and the styles. The dialog shows a toggle
-for every category, so `categories` needs a label for each. Necessary cookies
-are always on, so the dialog shows them checked and disabled. `functional` is
-the Playground's [custom category](#custom-categories); delete it unless you
-declare it.
+Copy both files, then change the wording and the styles. The dialog shows a
+toggle for every category, so `categories` needs a label for each one.
+Necessary cookies are always on, so the dialog shows them checked and
+disabled. `functional` is the Playground's [custom category](#custom-categories);
+delete it unless you declare it.
 
 <Code code={banner} lang="tsx" title="components/consent-banner.tsx" />
 
@@ -62,13 +66,13 @@ function CookieSettingsButton() {
 </AnalyticsProvider>
 ```
 
-Translations are plain strings in your component; use whatever i18n your app
-already has.
+The text is plain strings in your component, so translate it with the i18n
+your app already uses.
 
 ## Custom categories
 
-`preferences`, `analytics` and `marketing` are built in. Declare more by
-name, for TypeScript, and pass them to `createAnalytics`:
+`preferences`, `analytics` and `marketing` are built in. To add your own,
+declare it for TypeScript and pass it to `createAnalytics`:
 
 ```ts
 import { createAnalytics, definePlugin, loadScript } from 'consentlayer'
@@ -91,9 +95,11 @@ export const analytics = createAnalytics({
 })
 ```
 
-They work like the built-in ones: stored, broadcast, sent to your server,
-denied until granted, granted by "Accept all" and denied by "Reject
-non-essential". Any plugin can require one with `requiredConsent`, and
-`analytics.consent.categories` lists them all. Without the declaration,
-`categories: ['functional']` and `requiredConsent: 'functional'` don't compile;
-without the `categories` option, the value is never stored.
+A custom category works like a built-in one. It is stored, broadcast and sent
+to your server; it is denied until granted; "Accept all" grants it and
+"Reject non-essential" denies it. Any plugin can require it with
+`requiredConsent`, and `analytics.consent.categories` lists every category.
+
+Both steps are needed. Without the declaration, `categories: ['functional']`
+and `requiredConsent: 'functional'` don't compile. Without the `categories`
+option, the choice is never stored.

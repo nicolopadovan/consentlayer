@@ -1,13 +1,20 @@
 ---
-title: consentlayer
+title: Consent-first analytics
 description: Consent-first analytics for React, Next.js and the server.
+template: splash
+hero:
+  title: consentlayer
+  tagline: One analytics API for GA4, Meta, PostHog, Sentry and more. Each provider loads only after the visitor consents to it.
+  actions:
+    - text: Get started
+      link: /start/installation/
+      icon: right-arrow
+    - text: Try the playground
+      link: /playground/
+      variant: minimal
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components'
-
-You call one API. consentlayer decides, from the visitor's consent, which
-providers load, what each one receives and when, and translates your events into
-each provider's format.
 
 ```ts
 import { createAnalytics } from 'consentlayer'
@@ -19,32 +26,45 @@ export const analytics = createAnalytics({
 })
 
 analytics.track('purchase', { transaction_id: 'o1', value: 30, currency: 'EUR' })
-// GA4 gets `purchase` once analytics is granted; Meta gets `Purchase` once marketing is.
+// GA4 receives `purchase` once analytics is granted; Meta receives `Purchase` once marketing is.
 ```
+
+## Why consentlayer
 
 <CardGrid>
   <Card title="Consent decides what loads" icon="approve-check">
-    Three categories: preferences, analytics, marketing. Each provider names the
-    one it needs and loads once it is granted (PostHog runs cookieless until
-    then). Withdrawal stops it.
+    Each provider declares the category it needs: preferences, analytics,
+    marketing or one of your own. Nothing loads before that category is
+    granted, and withdrawing it stops the provider.
   </Card>
   <Card title="One event, every provider" icon="random">
-    Standard events like `purchase` or `sign_up` are translated into GA4, Meta,
-    PostHog and Sentry formats, with a shared event ID for server dedupe.
-  </Card>
-  <Card title="Light by default" icon="rocket">
-    The core is about 6 kB (brotli). Each provider, and each heavy feature such as Replay,
-    is a separate chunk loaded only when used.
+    Track `purchase` or `sign_up` once. consentlayer translates it into the
+    format of GA4, Meta, PostHog and the rest, with one event ID for
+    deduplication.
   </Card>
   <Card title="Browser and server" icon="seti:json">
-    One route forwards browser events to the Meta Conversions API; webhooks send
-    server-only events to GA4 and Meta.
+    One route forwards browser events to the Meta Conversions API, and
+    webhooks send server-only events to GA4 and Meta.
+  </Card>
+  <Card title="Proof of consent" icon="document">
+    Record every choice in your own Postgres, Supabase, Prisma, Drizzle or
+    Redis database, and have your server trust only the consent you recorded.
+  </Card>
+  <Card title="Your banner, your design" icon="pencil">
+    No UI ships with the package. Copy the banner recipe and restyle it, or
+    build your own on `useConsentController()`.
+  </Card>
+  <Card title="Small by default" icon="rocket">
+    The core is about 6 kB (brotli). Each provider, and heavy features such as
+    session replay, load as separate chunks only when used.
   </Card>
 </CardGrid>
 
+## Next steps
+
 <CardGrid>
-  <LinkCard title="Install" href="/start/installation/" />
-  <LinkCard title="Next.js quick start" href="/start/nextjs/" />
-  <LinkCard title="Try it in the playground" href="/playground/" />
-  <LinkCard title="How it works" href="/internals/lifecycle/" />
+  <LinkCard title="Installation" description="Add the package and the SDKs you need." href="/start/installation/" />
+  <LinkCard title="Next.js" description="Set up the App Router in five steps." href="/start/nextjs/" />
+  <LinkCard title="API reference" description="Every option, method, hook and route handler." href="/reference/api/" />
+  <LinkCard title="How it works" description="The lifecycle, step by step." href="/internals/lifecycle/" />
 </CardGrid>

@@ -96,15 +96,18 @@ stops at the first failure:
 The IP header is trusted as-is. Hosts like Vercel overwrite `x-forwarded-for`
 themselves; behind a proxy that doesn't, a client could set it.
 
-The consent in the body comes from the browser. The route can't verify it; it
-only makes sure each vendor gets events the visitor's browser says it may.
+By default, the consent in the body comes from the browser, and the route
+can't verify it: it only makes sure each vendor gets the events the visitor's
+browser says it may. With `consentCookie`, the route reads the consent from a
+cookie your server signed when it recorded the choice, and ignores the body's.
+See [Consent records](/guides/consent-records/).
 
 `sendServerEvent(event, { destinations, request })` is steps 5 and 7 on their
 own, for webhooks and other server-only events: you build the event (including
 `consent`) yourself, and it returns `{ id, ok, error? }` per destination
 instead of calling `onError`.
 
-## Shared event IDs and Meta dedupe
+## Shared event IDs and Meta deduplication
 
 The browser pixel and the server post use the same `id`:
 

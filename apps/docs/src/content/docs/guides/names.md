@@ -1,23 +1,24 @@
 ---
 title: Names
-description: Storage keys, globals, DOM events and CSS classes, and how to keep the pre-rc.2 acm names.
+description: Rename the storage keys, globals and events consentlayer uses, or keep the old acm names.
 ---
 
-Every storage key, global, DOM event, auto-tracking event and CSS class
-prefix comes from one place. Defaults use the `consentlayer` prefix:
+consentlayer writes to storage, sets window globals and dispatches events
+under names that all derive from one prefix, `consentlayer` by default:
 
 | Name | Default |
 |---|---|
-| consent storage key | `consentlayer_consent` |
-| identity storage key | `consentlayer_user_identity` |
-| consent DOM event | `consentlayer:consent` |
-| consent global | `window.CONSENTLAYER_CONSENT` |
-| open-dialog global | `window.CONSENTLAYER_openConsent()` |
-| auto-tracking events | `consentlayer.page_session_start`, `consentlayer.scroll_depth`, `consentlayer.time_on_page`, `consentlayer.ui_click` |
+| Consent storage key | `consentlayer_consent` |
+| Identity storage key | `consentlayer_user_identity` |
+| Consent DOM event | `consentlayer:consent` |
+| Consent global | `window.CONSENTLAYER_CONSENT` |
+| Open-settings global | `window.CONSENTLAYER_openConsent()` |
+| Auto-tracking events | `consentlayer.page_session_start`, `consentlayer.scroll_depth`, `consentlayer.time_on_page`, `consentlayer.ui_click` |
 
-Change them with `createAnalytics({ names })`. Names belong to the page, not
-the instance, so create one instance per page: a second `createAnalytics()`
-with different names logs a warning, and the last one's names win.
+Change them with `createAnalytics({ names })`. Names apply to the whole page,
+not to one instance, so create one instance per page. A second
+`createAnalytics()` call with different names logs a warning, and its names
+replace the first ones.
 
 ```ts
 createAnalytics({
@@ -32,13 +33,16 @@ createAnalytics({
 
 ## Migrating from `acm_*`
 
-Until 1.0.0-rc.1 the prefix was `acm`. With `legacy: true`:
+`@nicolopadovan/analytics-consent-manager` used the prefix `acm`. With
+`legacy: true`:
 
-- a stored `acm_consent` / `acm_user_identity` value is moved to the new key on first read;
-- `acm:consent` is dispatched and `ACM_CONSENT` / `ACM_openConsent` are set alongside the new names;
-- provider window flags are read and written under both `__consentlayer*` and `__acm*`;
-- `.acm-*` classes and `--acm-*` variables keep working.
+- A stored `acm_consent` or `acm_user_identity` value moves to the new key the
+  first time it is read.
+- `acm:consent` is dispatched, and `ACM_CONSENT` and `ACM_openConsent` are set,
+  alongside the new names.
+- Provider window flags are read and written under both `__consentlayer*` and
+  `__acm*`.
 
-Auto-tracking events are renamed outright (`acm.*` → `consentlayer.*`), so dashboards
-filtering on the old names need updating.
+Auto-tracking events are renamed without a fallback (`acm.*` becomes
+`consentlayer.*`), so update dashboards that filter on the old names.
 

@@ -40,7 +40,7 @@ key and reload.
 ## Bootstrap: where consent comes from
 
 `analytics.consent.bootstrap()` runs once per engine; later calls get the same
-promise back. `<ConsentProvider>` calls it on mount. It tries, in order:
+promise back. `<AnalyticsProvider>` calls it on mount. It tries, in order:
 
 | Step | Source | Saved to storage? | Adapters told? |
 |---|---|---|---|
@@ -215,22 +215,22 @@ On withdrawal:
 
 ## Reject non-essential
 
-The banner's buttons all go through `setConsent`, then hide the banner and
-dialog:
+`useConsentController()`'s actions all go through `setConsent`, then hide the
+banner and the dialog:
 
-| Button | Commits |
+| Action | Commits |
 |---|---|
-| Accept all | every category `true` |
-| Reject non-essential | every category `false` |
-| Save (dialog) | the toggles as set |
+| `acceptAll()` | every category `true` |
+| `rejectNonEssential()` | every category `false` |
+| `savePreferences()` | the dialog's toggles as set |
 
 "Reject" is a real choice: it is stored, so the banner doesn't come back, and
 only providers that need no consent keep running. `sale_of_data` is not set by
-the banner; set it yourself with `update({ sale_of_data: false })` if you need it.
+these actions; set it yourself with `update({ sale_of_data: false })` if you need it.
 
 ## `ready` and the banner
 
-`useConsent()` exposes `ready`. It is `false` until bootstrap has finished,
+`useConsentController()` exposes `ready`. It is `false` until bootstrap has finished,
 then `true` whether bootstrap found a choice, found nothing, or failed. Use it
 to avoid flashing UI that depends on consent.
 

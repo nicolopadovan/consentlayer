@@ -1,5 +1,5 @@
 ---
-title: Consent Records
+title: Consent records
 description: Keep proof of each consent choice in your own database, and let the server trust only recorded consent.
 ---
 

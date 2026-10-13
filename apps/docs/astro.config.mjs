@@ -17,8 +17,9 @@ export default defineConfig({
       editLink: {
         baseUrl: 'https://github.com/nicolopadovan/analytics-consent-manager-npm/edit/main/apps/docs/',
       },
+      customCss: ['./src/styles/custom.css'],
       sidebar: [
-        { label: 'Start', items: ['index', 'start/installation', 'start/nextjs', 'playground'] },
+        { label: 'Start', items: ['start/installation', 'start/nextjs', 'playground'] },
         {
           label: 'Guides',
           items: [
@@ -28,11 +29,11 @@ export default defineConfig({
             'guides/server-side-tracking',
             'guides/consent-records',
             'guides/names',
-            'guides/migrating-to-v1',
-            'guides/troubleshooting',
           ],
         },
+        { label: 'Reference', items: ['reference/api'] },
         { label: 'How it works', items: [{ autogenerate: { directory: 'internals' } }] },
+        { label: 'Help', items: ['guides/migrating-to-v1', 'guides/troubleshooting'] },
       ],
     }),
   ],
