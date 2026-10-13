@@ -29,13 +29,35 @@ pixel once `marketing` is granted and sends page views and events, like
 the TikTok Events API under `marketing` consent, sharing each event's ID with
 the [TikTok pixel](#tiktok-pixel) so TikTok can deduplicate the two.
 
-### Vue, Svelte and other frameworks
+### Script-tag build
+
+The package ships ES modules only, so it needs a bundler. The planned build is
+a single file you load with a `<script>` tag from a CDN, configured on the page
+without a build step. It is what the [website builder and CMS
+ports](#website-builders-and-cms) build on.
+
+### Vue, Svelte, Solid and Angular
 
 The core runs in any browser code, but React is the only binding. Today, in
 other frameworks, use `createAnalytics()` and `analytics.consent` directly and
 build the banner state yourself. The planned bindings provide the equivalent of
-`<AnalyticsProvider>`, `useConsent()` and `useConsentController()` for Vue and
-Svelte.
+`<AnalyticsProvider>`, `useConsent()` and `useConsentController()` for Vue 3,
+Svelte 5, SolidJS and Angular, and send a page view on every navigation with
+Nuxt, SvelteKit, SolidStart and the Angular Router, like `consentlayer/next`
+does for Next.js.
+
+### Website builders and CMS
+
+Sites built without a JavaScript build step can't install an npm package. The
+planned ports set ConsentLayer up where those sites add code:
+
+| Platform | Planned port |
+|---|---|
+| WordPress | A plugin that loads the script-tag build and takes the configuration in the WordPress admin. |
+| Webflow | A snippet for the site's custom code settings. |
+| Framer, Squarespace and Wix | A snippet for each platform's custom code settings. |
+| Shopify themes | A theme app extension. In a headless storefront, `createShopifyCustomerPrivacyAdapter()` already keeps Shopify's consent in sync. |
+| Google Tag Manager | A community template that loads the script-tag build from a GTM container. |
 
 ## Under consideration
 

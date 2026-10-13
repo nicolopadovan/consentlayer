@@ -271,7 +271,7 @@ grant. `captureError` calls reach Sentry with their `level`, `extra` and
 
 For Next.js server and edge code, `sentryInstrumentation` from
 `consentlayer/sentry/server` configures `@sentry/nextjs` with the same data
-collection settings; see the [Next.js guide](/start/nextjs/#5-report-errors).
+collection settings; see [Server errors](/start/nextjs/#server-errors).
 
 </details>
 
@@ -496,9 +496,10 @@ and `unhandledrejection` events. Like every other call, errors captured before
 | `errors: { globalHandlers: false }` | `captureError` only. |
 | `errors: false` | No error reporting; `captureError` does nothing. |
 
-In React, wrap the tree in `ErrorBoundary` and export
-`createGlobalError(analytics)` from `app/global-error.tsx`, both from
-`consentlayer/react`; see the [Next.js guide](/start/nextjs/#5-report-errors).
+In React, wrap the tree in `ErrorBoundary` from `consentlayer/react`; see
+[Report errors](/start/react/#4-report-errors). In Next.js, also export
+`createGlobalError(analytics)` from `app/global-error.tsx`; see [Global
+errors](/start/nextjs/#global-errors).
 
 ## Writing your own
 
