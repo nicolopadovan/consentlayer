@@ -114,7 +114,7 @@ export function broadcastConsent(
 
 export function debugLog(enabled: boolean, ...parts: unknown[]): void {
   if (enabled) {
-    console.debug('[analytics-consent-manager]', ...parts)
+    console.debug('[consentlayer]', ...parts)
   }
 }
 

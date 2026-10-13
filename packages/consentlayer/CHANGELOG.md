@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@nicolopadovan/analytics-consent-manager` are documented here.
+All notable changes to `consentlayer` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -9,6 +9,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
 
 ### Breaking
+- Renamed from `@nicolopadovan/analytics-consent-manager` (GitHub Packages) to
+  `consentlayer` on npmjs.com. Default names use `consentlayer` (`consentlayer_consent`,
+  `consentlayer:consent`, `CONSENTLAYER_CONSENT`, `consentlayer.*` auto-tracking
+  events) and `cl` for CSS (`.cl-*`, `--cl-*`); the `acm` names are still read.
 - One instance replaces the module singletons: `createAnalytics({ providers, consent, autoTracking, names })`
   returns `track`, `page`, `identify`, `reset`, `group`, `consent.update` and friends.
   Removed `createAnalyticsManager`, `createConsentEngine`, the default runtime
@@ -98,15 +102,15 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
 ### Changed
 - `IdentityStorageAdapter.write` replaces the stored identity instead of
   merging; `clear` also removes the legacy `acm_*` key.
-- Default names use the `npcm` prefix: `npcm_consent`, `npcm_user_identity`,
-  `npcm:consent`, `NPCM_CONSENT`, `NPCM_openConsent`, `.npcm-*` classes,
-  `--npcm-*` variables and `__npcm*` provider window flags.
-- Auto-tracking events are renamed to `npcm.page_session_start`,
-  `npcm.scroll_depth`, `npcm.time_on_page` and `npcm.ui_click`. **Breaking** for
+- Default names use the `consentlayer` prefix: `consentlayer_consent`, `consentlayer_user_identity`,
+  `consentlayer:consent`, `CONSENTLAYER_CONSENT`, `CONSENTLAYER_openConsent`, `.cl-*` classes,
+  `--cl-*` variables and `__consentlayer*` provider window flags.
+- Auto-tracking events are renamed to `consentlayer.page_session_start`,
+  `consentlayer.scroll_depth`, `consentlayer.time_on_page` and `consentlayer.ui_click`. **Breaking** for
   dashboards filtering on `acm.*`.
 - `defaultRuntimePreset` now reads the configured names.
 - `ConsentBroadcastConfig.eventName` / `globalKey` accept an array.
-- `:root { --npcm-* }` overrides now apply; previously the component defaults
+- `:root { --cl-* }` overrides now apply; previously the component defaults
   shadowed variables set on ancestors.
 
 ### Added

@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@nicolopadovan/analytics-consent-manager": "workspace:*",
+    "consentlayer": "workspace:*",
     "@sentry/browser": "^11.7.0",
     "@sentry/nextjs": "^11.7.0",
     "next": "16.1.4",

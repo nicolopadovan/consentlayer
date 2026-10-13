@@ -62,15 +62,15 @@ importers:
 
   apps/example-next:
     dependencies:
-      '@nicolopadovan/analytics-consent-manager':
-        specifier: workspace:*
-        version: link:../../packages/analytics-consent-manager
       '@sentry/browser':
         specifier: ^11.7.0
         version: 11.7.0
       '@sentry/nextjs':
         specifier: ^11.7.0
         version: 11.7.0(next@16.1.4(@opentelemetry/api@1.9.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
+      consentlayer:
+        specifier: workspace:*
+        version: link:../../packages/consentlayer
       next:
         specifier: 16.1.4
         version: 16.1.4(@opentelemetry/api@1.9.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -84,7 +84,7 @@ importers:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
 
-  packages/analytics-consent-manager:
+  packages/consentlayer:
     devDependencies:
       '@sentry/browser':
         specifier: ^11.7.0

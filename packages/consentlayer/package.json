@@ -1,17 +1,33 @@
 {
-  "name": "@nicolopadovan/analytics-consent-manager",
+  "name": "consentlayer",
   "version": "1.0.0-rc.1",
+  "description": "Consent-first analytics for the browser and server: one API in front of GA4, Meta, PostHog, Sentry and more, gated by the visitor's consent.",
+  "keywords": [
+    "consent",
+    "cookie-consent",
+    "gdpr",
+    "analytics",
+    "ga4",
+    "meta-pixel",
+    "conversions-api",
+    "posthog",
+    "sentry",
+    "nextjs",
+    "react"
+  ],
   "type": "module",
   "license": "MIT",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
+  "author": "nicolopadovan",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nicolopadovan/analytics-consent-manager-npm.git",
-    "directory": "packages/analytics-consent-manager"
+    "directory": "packages/consentlayer"
   },
-  "homepage": "https://github.com/nicolopadovan/analytics-consent-manager-npm",
+  "homepage": "https://consentlayer.vercel.app",
+  "bugs": "https://github.com/nicolopadovan/analytics-consent-manager-npm/issues",
+  "publishConfig": {
+    "access": "public"
+  },
   "files": ["dist"],
   "sideEffects": false,
   "main": "./dist/index.js",

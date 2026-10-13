@@ -5,15 +5,27 @@ section per stage. The design is in [spec-v1.md](./spec-v1.md).
 
 ## 1.0.0-rc.2: names, one instance, standard events
 
-### Names (`acm` → `npcm`)
+### Package
+
+The package is now `consentlayer` on npmjs.com:
+
+```bash
+pnpm remove @nicolopadovan/analytics-consent-manager
+pnpm add consentlayer
+```
+
+Replace `@nicolopadovan/analytics-consent-manager` with `consentlayer` in
+imports and delete the `@nicolopadovan:registry` line from `.npmrc`.
+
+### Names (`acm` → `consentlayer`)
 
 Nothing to do unless you read the names yourself. Stored `acm_*` values move
-to `npcm_*` on first read, and the old globals, DOM events, classes and CSS
-variables keep working. Two things do change:
+to `consentlayer_*` on first read, and the old globals, DOM events, classes and CSS
+variables keep working. New classes and variables use `cl` (`.cl-banner`, `--cl-accent`). Two things do change:
 
-- Auto-tracking events are now `npcm.*`. Update dashboards that filter on `acm.*`.
-- GA4 receives them as `npcm_page_session_start`, `npcm_scroll_depth`,
-  `npcm_time_on_page` and `npcm_ui_click`, because GA4 rejects dots in event names.
+- Auto-tracking events are now `consentlayer.*`. Update dashboards that filter on `acm.*`.
+- GA4 receives them as `consentlayer_page_session_start`, `consentlayer_scroll_depth`,
+  `consentlayer_time_on_page` and `consentlayer_ui_click`, because GA4 rejects dots in event names.
 
 ### Setup: one instance
 
@@ -93,7 +105,7 @@ Meta names. See [events and identity](./events.md).
 | `trackEvent('ViewContent', …)` etc. | the standard name: Meta still receives `ViewContent` |
 
 `productParams`, `cartParams` and `orderParams` come from
-`@nicolopadovan/analytics-consent-manager/ecommerce`. `cartParams` reads
+`consentlayer/ecommerce`. `cartParams` reads
 `lines` as products (`{ id, variantId, title, price, quantity }`); map Shopify
 cart lines' `merchandise` to that shape.
 
@@ -177,7 +189,7 @@ consent. Without `requiredConsent` a plugin now runs with no consent at all
 Check a plugin in a DOM test:
 
 ```ts
-import { checkPlugin } from '@nicolopadovan/analytics-consent-manager/testing'
+import { checkPlugin } from 'consentlayer/testing'
 
 expect(await checkPlugin(posthog({ apiKey }))).toEqual([])
 ```
@@ -188,8 +200,8 @@ One route replaces the hand-written Meta and GA4 routes:
 
 ```ts
 // app/api/analytics/route.ts
-import { createAnalyticsHandler } from '@nicolopadovan/analytics-consent-manager/server'
-import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
+import { createAnalyticsHandler } from 'consentlayer/server'
+import { metaCapi } from 'consentlayer/server/meta'
 
 export const runtime = 'nodejs'
 export const POST = createAnalyticsHandler({

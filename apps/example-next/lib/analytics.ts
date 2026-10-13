@@ -1,13 +1,13 @@
-import { createAnalytics, createEnvConfig, type AnalyticsPlugin } from '@nicolopadovan/analytics-consent-manager'
-import { ga4 } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
-import { hotjar } from '@nicolopadovan/analytics-consent-manager/providers/hotjar'
-import { meta } from '@nicolopadovan/analytics-consent-manager/providers/meta'
-import { posthog } from '@nicolopadovan/analytics-consent-manager/providers/posthog'
-import { sentry } from '@nicolopadovan/analytics-consent-manager/providers/sentry'
+import { createAnalytics, createEnvConfig, type AnalyticsPlugin } from 'consentlayer'
+import { ga4 } from 'consentlayer/providers/ga4'
+import { hotjar } from 'consentlayer/providers/hotjar'
+import { meta } from 'consentlayer/providers/meta'
+import { posthog } from 'consentlayer/providers/posthog'
+import { sentry } from 'consentlayer/providers/sentry'
 import {
   createShopifyCustomerPrivacyAdapter,
   shopify,
-} from '@nicolopadovan/analytics-consent-manager/providers/shopify'
+} from 'consentlayer/providers/shopify'
 
 // Next inlines only literal `process.env.NEXT_PUBLIC_*` reads into browser code.
 const env = createEnvConfig({

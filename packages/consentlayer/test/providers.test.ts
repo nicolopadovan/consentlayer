@@ -7,7 +7,7 @@ describe('providers', () => {
   it('reuses the same Meta event id for browser and server dedupe', async () => {
     const fbq = vi.fn()
     ;(window as unknown as { fbq?: typeof fbq }).fbq = fbq
-    ;(window as unknown as { __npcmMetaPixelInitialized?: boolean }).__npcmMetaPixelInitialized = true
+    ;(window as unknown as { __consentlayerMetaPixelInitialized?: boolean }).__consentlayerMetaPixelInitialized = true
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
     vi.stubGlobal('fetch', fetchMock)
 
@@ -54,7 +54,7 @@ describe('providers', () => {
 
   it('sets Meta consent before init', () => {
     const win = window as unknown as Record<string, unknown>
-    delete win.__npcmMetaPixelInitialized
+    delete win.__consentlayerMetaPixelInitialized
     delete win.__acmMetaPixelInitialized
     const adapter = meta({ pixelId: '123456789012345' })
     const append = vi.spyOn(document.head, 'appendChild')
@@ -66,7 +66,7 @@ describe('providers', () => {
     })
     const bootstrap = (append.mock.calls[0]?.[0] as HTMLScriptElement).text
     append.mockRestore()
-    expect(document.head.querySelector('[data-analytics-consent-manager="meta-pixel-bootstrap"]')).toBeNull()
+    expect(document.head.querySelector('[data-consentlayer="meta-pixel-bootstrap"]')).toBeNull()
     expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeGreaterThan(-1)
     expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeLessThan(
       bootstrap.indexOf("fbq('init'"),
@@ -75,7 +75,7 @@ describe('providers', () => {
 
   it('configures GA4 only once analytics is granted', async () => {
     const win = window as unknown as Record<string, unknown>
-    for (const key of ['dataLayer', 'gtag', '__npcmGa4Configured', '__acmGa4Configured']) delete win[key]
+    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured', '__acmGa4Configured']) delete win[key]
     const denied = { preferences: false, analytics: false, marketing: false }
     const manager = createAnalyticsManager({
       providers: [ga4({ measurementId: 'G-ABC123' })],

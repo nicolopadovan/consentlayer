@@ -21,7 +21,8 @@ export type NamesInput = Partial<Omit<Names, 'autoTrackingEvents'>> & {
   autoTrackingEvents?: Partial<AutoTrackingEventNames>
 }
 
-export const DEFAULT_PREFIX = 'npcm'
+export const DEFAULT_PREFIX = 'consentlayer'
+export const DEFAULT_CLASS_PREFIX = 'cl'
 
 function derive(prefix: string, classPrefix: string, legacy: boolean): Names {
   const upper = prefix.toUpperCase()
@@ -46,7 +47,7 @@ function derive(prefix: string, classPrefix: string, legacy: boolean): Names {
 /** Names used before 1.0.0-rc.2. Still read and written while `legacy` is on. */
 export const legacyNames: Names = derive('acm', 'acm', false)
 
-let current = derive(DEFAULT_PREFIX, DEFAULT_PREFIX, true)
+let current = derive(DEFAULT_PREFIX, DEFAULT_CLASS_PREFIX, true)
 
 /**
  * Sets every storage key, global, DOM event, auto-tracking event name and CSS
@@ -57,7 +58,7 @@ let current = derive(DEFAULT_PREFIX, DEFAULT_PREFIX, true)
 export function configureNames(input: NamesInput = {}): Names {
   const base = derive(
     input.prefix ?? DEFAULT_PREFIX,
-    input.classPrefix ?? DEFAULT_PREFIX,
+    input.classPrefix ?? DEFAULT_CLASS_PREFIX,
     input.legacy ?? true,
   )
   const overrides = Object.fromEntries(
@@ -119,7 +120,7 @@ export function setFlag<T>(name: string, value: T): T {
   return value
 }
 
-/** `ui('banner__button')` → `"npcm-banner__button acm-banner__button"`. */
+/** `ui('banner__button')` → `"cl-banner__button acm-banner__button"`. */
 export function ui(...blocks: string[]): string {
   return blocks
     .flatMap((block) =>

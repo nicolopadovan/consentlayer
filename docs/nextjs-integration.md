@@ -25,8 +25,8 @@ The example app in [`apps/example-next`](../apps/example-next) is the reference 
 
 ```ts
 // lib/analytics.ts
-import { createAnalytics } from '@nicolopadovan/analytics-consent-manager'
-import { ga4 } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
+import { createAnalytics } from 'consentlayer'
+import { ga4 } from 'consentlayer/providers/ga4'
 
 export const analytics = createAnalytics({
   providers: [ga4({ measurementId: 'G-XXXXXXX' })],
@@ -37,8 +37,8 @@ export const analytics = createAnalytics({
 ```tsx
 'use client'
 
-import { AnalyticsProvider } from '@nicolopadovan/analytics-consent-manager/react'
-import { CookieBanner, CookieDialog, ManageConsentTrigger } from '@nicolopadovan/analytics-consent-manager/ui'
+import { AnalyticsProvider } from 'consentlayer/react'
+import { CookieBanner, CookieDialog, ManageConsentTrigger } from 'consentlayer/ui'
 import { usePathname, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { analytics } from '../lib/analytics'
@@ -85,7 +85,7 @@ Wrap parts of the tree in `ErrorBoundary`; it reports to `captureError` and
 renders `fallback` (a node, or a function of `{ error, reset }`):
 
 ```tsx
-import { ErrorBoundary } from '@nicolopadovan/analytics-consent-manager/react'
+import { ErrorBoundary } from 'consentlayer/react'
 
 <ErrorBoundary fallback={<p>Could not load the cart.</p>} tags={{ area: 'cart' }}>
   <Cart />
@@ -98,7 +98,7 @@ the instance itself and reports the error with Next's `digest`:
 ```tsx
 'use client'
 
-import { createGlobalError } from '@nicolopadovan/analytics-consent-manager/react'
+import { createGlobalError } from 'consentlayer/react'
 import { analytics } from '../lib/analytics'
 
 export default createGlobalError(analytics)
@@ -112,14 +112,14 @@ Server errors are always sent, without personal data:
 
 ```ts
 // instrumentation.ts
-import { sentryInstrumentation } from '@nicolopadovan/analytics-consent-manager/sentry/server'
+import { sentryInstrumentation } from 'consentlayer/sentry/server'
 
 export const { register, onRequestError } = sentryInstrumentation({ dsn: process.env.SENTRY_DSN })
 ```
 
 ```ts
 // next.config.ts
-import { withSentry } from '@nicolopadovan/analytics-consent-manager/sentry/next'
+import { withSentry } from 'consentlayer/sentry/next'
 
 export default withSentry(nextConfig, { silent: true })
 ```

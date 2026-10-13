@@ -1,8 +1,8 @@
 import {
   createEnvConfig,
-} from '@nicolopadovan/analytics-consent-manager'
-import { MetaPixelNoscript } from '@nicolopadovan/analytics-consent-manager/providers/meta'
-import { getShopifyCustomerPrivacyScriptUrl } from '@nicolopadovan/analytics-consent-manager/providers/shopify'
+} from 'consentlayer'
+import { MetaPixelNoscript } from 'consentlayer/providers/meta'
+import { getShopifyCustomerPrivacyScriptUrl } from 'consentlayer/providers/shopify'
 import Script from 'next/script'
 import { Suspense, type ReactNode } from 'react'
 import { AnalyticsShell } from '../components/analytics-shell'

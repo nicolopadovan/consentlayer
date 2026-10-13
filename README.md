@@ -1,11 +1,11 @@
-# Analytics Consent Manager
+# consentlayer
 
-Private monorepo for `@nicolopadovan/analytics-consent-manager` and its example Next.js consumer.
+Monorepo for the [`consentlayer`](./packages/consentlayer) package and its example Next.js consumer.
 
 ## Quick Links
 
 - [Docs index](./docs/README.md)
-- [Installation and access](./docs/installation-and-access.md)
+- [Installation](./docs/installation-and-access.md)
 - [Next.js integration](./docs/nextjs-integration.md)
 - [Events and identity](./docs/events.md)
 - [Migrating to v1](./docs/migrating-to-v1.md)
@@ -19,37 +19,29 @@ Private monorepo for `@nicolopadovan/analytics-consent-manager` and its example 
 
 ## Package
 
-- Package name: `@nicolopadovan/analytics-consent-manager`
-- Registry: `https://npm.pkg.github.com`
+- Package name: `consentlayer`
+- Registry: [npmjs.com](https://www.npmjs.com/package/consentlayer)
 - Repository: [github.com/nicolopadovan/analytics-consent-manager-npm](https://github.com/nicolopadovan/analytics-consent-manager-npm)
 - Example consumer: [`apps/example-next`](./apps/example-next)
 
 ## Install
 
-GitHub Packages local installs require a classic GitHub PAT with `read:packages`.
-
-```ini
-@nicolopadovan:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_CLASSIC_PAT
-always-auth=true
-```
-
 ```bash
-pnpm add @nicolopadovan/analytics-consent-manager
+pnpm add consentlayer
 ```
 
-See [installation and access](./docs/installation-and-access.md) for the full setup.
+Provider SDKs are optional peer dependencies; see [installation](./docs/installation-and-access.md).
 
 ## Repo Layout
 
-- [`packages/analytics-consent-manager`](./packages/analytics-consent-manager): publishable package
+- [`packages/consentlayer`](./packages/consentlayer): publishable package
 - [`apps/example-next`](./apps/example-next): reference consumer and route examples
-- [`.github/workflows/publish-package.yml`](./.github/workflows/publish-package.yml): private package publish workflow
+- [`.github/workflows/publish-package.yml`](./.github/workflows/publish-package.yml): npm publish workflow
 
 ## Publish Flow
 
-1. Update the version in [`packages/analytics-consent-manager/package.json`](./packages/analytics-consent-manager/package.json).
-2. Push to `main`.
+1. Update the version in [`packages/consentlayer/package.json`](./packages/consentlayer/package.json).
+2. Merge to `main`.
 3. Run the `Publish Package` workflow or publish a GitHub release.
 
 Details live in [publishing and releases](./docs/publishing-and-releases.md).
@@ -58,12 +50,12 @@ Details live in [publishing and releases](./docs/publishing-and-releases.md).
 
 The headless components (`CookieBanner`, `CookieDialog`, `ManageConsentTrigger`)
 ship with stable BEM-style class names. A default theme is published at
-`@nicolopadovan/analytics-consent-manager/ui/styles.css` and is **opt-in** —
+`consentlayer/ui/styles.css` and is **opt-in** —
 import it to get a usable look, skip it to stay fully unstyled.
 
 ```ts
 // app/layout.tsx
-import '@nicolopadovan/analytics-consent-manager/ui/styles.css'
+import 'consentlayer/ui/styles.css'
 ```
 
 The defaults are driven by CSS custom properties. Override at any selector to
@@ -71,14 +63,14 @@ re-theme without forking the markup:
 
 ```css
 :root {
-  --npcm-accent: #3b82f6;       /* primary button background */
-  --npcm-accent-fg: #ffffff;    /* primary button text */
-  --npcm-bg: #0f172a;           /* surface background */
-  --npcm-fg: #e2e8f0;           /* surface text */
-  --npcm-border: #1e293b;
-  --npcm-radius: 8px;
-  --npcm-padding: 16px;
-  --npcm-z-index: 9999;
+  --cl-accent: #3b82f6;       /* primary button background */
+  --cl-accent-fg: #ffffff;    /* primary button text */
+  --cl-bg: #0f172a;           /* surface background */
+  --cl-fg: #e2e8f0;           /* surface text */
+  --cl-border: #1e293b;
+  --cl-radius: 8px;
+  --cl-padding: 16px;
+  --cl-z-index: 9999;
 }
 ```
 
@@ -86,28 +78,28 @@ Available variables:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `--npcm-bg` | `#ffffff` | Surface background (banner & dialog) |
-| `--npcm-fg` | `#111827` | Body text colour |
-| `--npcm-muted` | `#6b7280` | Secondary text |
-| `--npcm-border` | `#e5e7eb` | Borders, hairlines |
-| `--npcm-accent` | `#111827` | Primary button background |
-| `--npcm-accent-fg` | `#ffffff` | Primary button text |
-| `--npcm-danger` | `#b91c1c` | Error message colour |
-| `--npcm-radius` | `12px` | Surface corner radius |
-| `--npcm-radius-button` | `8px` | Button corner radius |
-| `--npcm-padding` | `20px` | Surface inner padding |
-| `--npcm-gap` | `12px` | Vertical rhythm between blocks |
-| `--npcm-shadow` | (soft drop) | Surface shadow |
-| `--npcm-font-family` | system stack | Font family |
-| `--npcm-z-index` | `1000` | Banner stacking context |
+| `--cl-bg` | `#ffffff` | Surface background (banner & dialog) |
+| `--cl-fg` | `#111827` | Body text colour |
+| `--cl-muted` | `#6b7280` | Secondary text |
+| `--cl-border` | `#e5e7eb` | Borders, hairlines |
+| `--cl-accent` | `#111827` | Primary button background |
+| `--cl-accent-fg` | `#ffffff` | Primary button text |
+| `--cl-danger` | `#b91c1c` | Error message colour |
+| `--cl-radius` | `12px` | Surface corner radius |
+| `--cl-radius-button` | `8px` | Button corner radius |
+| `--cl-padding` | `20px` | Surface inner padding |
+| `--cl-gap` | `12px` | Vertical rhythm between blocks |
+| `--cl-shadow` | (soft drop) | Surface shadow |
+| `--cl-font-family` | system stack | Font family |
+| `--cl-z-index` | `1000` | Banner stacking context |
 
 If you need deeper control, target the classes directly:
 
 | Component | Root class | Notable child classes |
 |---|---|---|
-| `CookieBanner` | `.npcm-banner` | `.npcm-banner__title`, `.npcm-banner__description`, `.npcm-banner__error`, `.npcm-banner__actions`, `.npcm-banner__button`, `.npcm-banner__button--primary`, `.npcm-banner__button--secondary` |
-| `CookieDialog` | `.npcm-dialog` | `.npcm-dialog__title`, `.npcm-dialog__option`, `.npcm-dialog__checkbox`, `.npcm-dialog__actions`, `.npcm-dialog__button`, `.npcm-dialog__button--primary` |
-| `ManageConsentTrigger` | `.npcm-manage-trigger` | — |
+| `CookieBanner` | `.cl-banner` | `.cl-banner__title`, `.cl-banner__description`, `.cl-banner__error`, `.cl-banner__actions`, `.cl-banner__button`, `.cl-banner__button--primary`, `.cl-banner__button--secondary` |
+| `CookieDialog` | `.cl-dialog` | `.cl-dialog__title`, `.cl-dialog__option`, `.cl-dialog__checkbox`, `.cl-dialog__actions`, `.cl-dialog__button`, `.cl-dialog__button--primary` |
+| `ManageConsentTrigger` | `.cl-manage-trigger` | — |
 
 Pre-rc.2 names (`--acm-*` variables, `.acm-*` classes) still work: the
 components emit both classes and the stylesheet matches both. Pass
@@ -116,17 +108,17 @@ components emit both classes and the stylesheet matches both. Pass
 ## Names
 
 Every storage key, global, DOM event, auto-tracking event and CSS class
-prefix comes from one place. Defaults use the `npcm` prefix:
+prefix comes from one place. Defaults use the `consentlayer` prefix:
 
 | Name | Default |
 |---|---|
-| consent storage key | `npcm_consent` |
-| identity storage key | `npcm_user_identity` |
-| consent DOM event | `npcm:consent` |
-| consent global | `window.NPCM_CONSENT` |
-| open-dialog global | `window.NPCM_openConsent()` |
-| auto-tracking events | `npcm.page_session_start`, `npcm.scroll_depth`, `npcm.time_on_page`, `npcm.ui_click` |
-| UI class prefix | `npcm-` |
+| consent storage key | `consentlayer_consent` |
+| identity storage key | `consentlayer_user_identity` |
+| consent DOM event | `consentlayer:consent` |
+| consent global | `window.CONSENTLAYER_CONSENT` |
+| open-dialog global | `window.CONSENTLAYER_openConsent()` |
+| auto-tracking events | `consentlayer.page_session_start`, `consentlayer.scroll_depth`, `consentlayer.time_on_page`, `consentlayer.ui_click` |
+| UI class prefix | `cl-` |
 
 Change them with `createAnalytics({ names })` (or `configureNames()` before
 the first consent read):
@@ -149,10 +141,10 @@ Until 1.0.0-rc.1 the prefix was `acm`. While `legacy` is on (the default):
 
 - a stored `acm_consent` / `acm_user_identity` value is moved to the new key on first read;
 - `acm:consent` is dispatched and `ACM_CONSENT` / `ACM_openConsent` are set alongside the new names;
-- provider window flags are read and written under both `__npcm*` and `__acm*`;
+- provider window flags are read and written under both `__consentlayer*` and `__acm*`;
 - `.acm-*` classes and `--acm-*` variables keep working.
 
-Auto-tracking events are renamed outright (`acm.*` → `npcm.*`), so dashboards
+Auto-tracking events are renamed outright (`acm.*` → `consentlayer.*`), so dashboards
 filtering on the old names need updating.
 
 ## Security & Secrets
@@ -169,8 +161,8 @@ reach the browser bundle.
 
 ```ts
 // app/api/analytics/route.ts — server-only
-import { createAnalyticsHandler } from '@nicolopadovan/analytics-consent-manager/server'
-import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
+import { createAnalyticsHandler } from 'consentlayer/server'
+import { metaCapi } from 'consentlayer/server/meta'
 
 export const POST = createAnalyticsHandler({
   destinations: [

@@ -2,7 +2,7 @@
 
 ## Repo Structure
 
-- `packages/analytics-consent-manager`: publishable package source
+- `packages/consentlayer`: publishable package source
 - `apps/example-next`: working consumer app used as the reference integration
 - `docs`: operational and integration documentation rendered by GitHub
 
@@ -32,7 +32,7 @@ pnpm --filter example-next dev
 
 ## Release Process
 
-1. Update the version in `packages/analytics-consent-manager/package.json`.
+1. Update the version in `packages/consentlayer/package.json`.
 2. Verify `pnpm typecheck`, `pnpm test`, `pnpm lint`, and `pnpm build`.
 3. Merge to `main`.
 4. Run the `Publish Package` workflow or publish a GitHub release.

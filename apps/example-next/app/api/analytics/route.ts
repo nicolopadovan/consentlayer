@@ -1,5 +1,5 @@
-import { createAnalyticsHandler } from '@nicolopadovan/analytics-consent-manager/server'
-import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
+import { createAnalyticsHandler } from 'consentlayer/server'
+import { metaCapi } from 'consentlayer/server/meta'
 
 export const runtime = 'nodejs'
 

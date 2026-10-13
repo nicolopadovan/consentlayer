@@ -1,13 +1,5 @@
 # Troubleshooting
 
-## Package Install Fails
-
-Check:
-
-- the user has repository access
-- the PAT has `read:packages`
-- `~/.npmrc` points the `@nicolopadovan` scope to `https://npm.pkg.github.com`
-
 ## Meta Pixel Helper Shows No Pixel
 
 Check:
@@ -34,7 +26,7 @@ Check:
 
 - the rendered page content is inside the consent/provider tree
 - the consumer uses the same engine instance for the shell and the UI
-- storage is writing to `npcm_consent` (or your `configureNames` key)
+- storage is writing to `consentlayer_consent` (or your `configureNames` key)
 
 ## GitHub Publish Workflow Fails
 
@@ -42,5 +34,5 @@ Check:
 
 - the package version was bumped when needed
 - `pnpm-lock.yaml` is committed
-- the workflow still has `packages: write` permission
-- the publish target is still `https://npm.pkg.github.com`
+- the workflow still has `id-token: write` permission
+- npmjs.com lists this repository and `publish-package.yml` as the package's trusted publisher

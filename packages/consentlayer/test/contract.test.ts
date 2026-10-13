@@ -23,7 +23,7 @@ describe('plugin contract', () => {
   beforeEach(() => {
     document.head.innerHTML = ''
     for (const key of Object.keys(window)) {
-      if (/^(__npcm|__acm|fbq|_fbq|gtag|dataLayer|hj|_hjSettings)/.test(key)) {
+      if (/^(__consentlayer|__acm|fbq|_fbq|gtag|dataLayer|hj|_hjSettings)/.test(key)) {
         delete (window as unknown as Record<string, unknown>)[key]
       }
     }

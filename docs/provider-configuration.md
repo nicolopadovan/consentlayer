@@ -103,11 +103,11 @@ and delivered after the SDK loads.
 
 The package default runtime preset uses:
 
-- `npcm_consent`
-- `npcm_user_identity`
-- `npcm:consent`
-- `NPCM_CONSENT`
-- `NPCM_openConsent`
+- `consentlayer_consent`
+- `consentlayer_user_identity`
+- `consentlayer:consent`
+- `CONSENTLAYER_CONSENT`
+- `CONSENTLAYER_openConsent`
 
 Change them with `configureNames()`; see "Names" in the README. The pre-rc.2
 `acm_*` names are still read, migrated and broadcast unless `legacy: false`.

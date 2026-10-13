@@ -1,10 +1,10 @@
 'use client'
 
-import { productParams } from '@nicolopadovan/analytics-consent-manager/ecommerce'
+import { productParams } from 'consentlayer/ecommerce'
 import {
   useAnalytics,
   useConsent,
-} from '@nicolopadovan/analytics-consent-manager/react'
+} from 'consentlayer/react'
 
 export function DemoClient() {
   const analytics = useAnalytics()

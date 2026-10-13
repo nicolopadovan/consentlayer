@@ -1,45 +1,26 @@
-# Installation and Access
-
-## Prerequisites
-
-- access to the private GitHub repository
-- a classic GitHub PAT with `read:packages`
-- `pnpm`, `npm`, or `yarn`
-
-GitHub Packages local installs do not use the repo `GITHUB_TOKEN`. Each teammate needs their own PAT for local installs.
-
-## User-Level npm Configuration
-
-Add this to `~/.npmrc`:
-
-```ini
-@nicolopadovan:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_CLASSIC_PAT
-always-auth=true
-```
-
-## Install
+# Installation
 
 ```bash
-pnpm add @nicolopadovan/analytics-consent-manager
+pnpm add consentlayer
 ```
 
-Subpath entrypoints are available under the same package:
+Install the SDK of each provider you use as well; they are optional peer
+dependencies, so nothing is pulled in for providers you don't use:
 
-- `@nicolopadovan/analytics-consent-manager`
-- `@nicolopadovan/analytics-consent-manager/react`
-- `@nicolopadovan/analytics-consent-manager/server` (plus `/server/ga4`, `/server/meta`)
-- `@nicolopadovan/analytics-consent-manager/ecommerce`
-- `@nicolopadovan/analytics-consent-manager/testing`
-- `@nicolopadovan/analytics-consent-manager/ui`
-- `@nicolopadovan/analytics-consent-manager/providers/*`
+| You use | Also install |
+|---|---|
+| `consentlayer/react`, `consentlayer/ui` | `react`, `react-dom` |
+| `posthog()` | `posthog-js` |
+| `sentry()` | `@sentry/browser` |
+| `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs` |
 
-## CI Install
+## Entry Points
 
-For CI environments outside GitHub Actions, inject a token with `read:packages` into the job and write the same scoped registry config before `pnpm install`.
-
-## Common Failure Modes
-
-- `404` or package not found: the user is missing package or repo access
-- auth failure: the PAT is missing `read:packages`
-- install works in Actions but not locally: the user assumed their `gh auth` session was enough; it is not
+- `consentlayer`
+- `consentlayer/react`
+- `consentlayer/ui` (plus `consentlayer/ui/styles.css`)
+- `consentlayer/server` (plus `/server/ga4`, `/server/meta`)
+- `consentlayer/ecommerce`
+- `consentlayer/testing`
+- `consentlayer/providers/*`
+- `consentlayer/sentry/server`, `consentlayer/sentry/next`

@@ -1,6 +1,6 @@
 # Server-Side Tracking
 
-Two pieces, both from `@nicolopadovan/analytics-consent-manager/server`:
+Two pieces, both from `consentlayer/server`:
 
 - `createAnalyticsHandler`: one route that receives the browser's events and
   forwards them to Meta CAPI.
@@ -16,8 +16,8 @@ it, so GA4 only receives server-only events.
 
 ```ts
 // app/api/analytics/route.ts
-import { createAnalyticsHandler } from '@nicolopadovan/analytics-consent-manager/server'
-import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
+import { createAnalyticsHandler } from 'consentlayer/server'
+import { metaCapi } from 'consentlayer/server/meta'
 
 export const runtime = 'nodejs'
 
@@ -63,10 +63,10 @@ Remix, Hono, Cloudflare, Bun and Deno use it as is. Meta hashing uses
 ## Server-only events (webhooks)
 
 ```ts
-import { sendServerEvent } from '@nicolopadovan/analytics-consent-manager/server'
-import { ga4Server } from '@nicolopadovan/analytics-consent-manager/server/ga4'
-import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
-import { orderParams } from '@nicolopadovan/analytics-consent-manager/ecommerce'
+import { sendServerEvent } from 'consentlayer/server'
+import { ga4Server } from 'consentlayer/server/ga4'
+import { metaCapi } from 'consentlayer/server/meta'
+import { orderParams } from 'consentlayer/ecommerce'
 
 const results = await sendServerEvent(
   {
@@ -100,7 +100,7 @@ const results = await sendServerEvent(
 ## Writing a destination
 
 ```ts
-import type { ServerDestination } from '@nicolopadovan/analytics-consent-manager/server'
+import type { ServerDestination } from 'consentlayer/server'
 
 const myDestination: ServerDestination<true> = {
   id: 'mine',                 // matched against `only`

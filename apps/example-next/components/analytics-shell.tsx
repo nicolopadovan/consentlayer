@@ -1,11 +1,11 @@
 'use client'
 
-import { AnalyticsProvider } from '@nicolopadovan/analytics-consent-manager/react'
+import { AnalyticsProvider } from 'consentlayer/react'
 import {
   CookieBanner,
   CookieDialog,
   ManageConsentTrigger,
-} from '@nicolopadovan/analytics-consent-manager/ui'
+} from 'consentlayer/ui'
 import { usePathname, useSearchParams } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { analytics } from '../lib/analytics'

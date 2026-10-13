@@ -1,0 +1,163 @@
+/*
+ * Default theme for consentlayer UI components.
+ *
+ * Every visible property is driven by a CSS custom property so consumers can
+ * override the theme without rewriting markup. Override at any selector:
+ *
+ *   :root { --cl-accent: #3b82f6; --cl-radius: 8px; }
+ *
+ * Or scope to a single component:
+ *
+ *   .cl-banner { --cl-bg: #111; --cl-fg: #eee; }
+ *
+ * The pre-rc.2 names (`--acm-*`, `.acm-*`) still work.
+ */
+
+:where(.cl-banner, .acm-banner, .cl-dialog, .acm-dialog, .cl-manage-trigger, .acm-manage-trigger) {
+  --_cl-bg: var(--cl-bg, var(--acm-bg, #ffffff));
+  --_cl-fg: var(--cl-fg, var(--acm-fg, #111827));
+  --_cl-muted: var(--cl-muted, var(--acm-muted, #6b7280));
+  --_cl-border: var(--cl-border, var(--acm-border, #e5e7eb));
+  --_cl-accent: var(--cl-accent, var(--acm-accent, #111827));
+  --_cl-accent-fg: var(--cl-accent-fg, var(--acm-accent-fg, #ffffff));
+  --_cl-danger: var(--cl-danger, var(--acm-danger, #b91c1c));
+  --_cl-radius: var(--cl-radius, var(--acm-radius, 12px));
+  --_cl-radius-button: var(--cl-radius-button, var(--acm-radius-button, 8px));
+  --_cl-padding: var(--cl-padding, var(--acm-padding, 20px));
+  --_cl-gap: var(--cl-gap, var(--acm-gap, 12px));
+  --_cl-shadow: var(--cl-shadow, var(--acm-shadow, 0 10px 30px rgba(0, 0, 0, 0.12)));
+  --_cl-font-family: var(--cl-font-family, var(--acm-font-family, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif));
+  --_cl-z-index: var(--cl-z-index, var(--acm-z-index, 1000));
+
+  box-sizing: border-box;
+  font-family: var(--_cl-font-family);
+  color: var(--_cl-fg);
+}
+
+:where(.cl-banner, .acm-banner, .cl-dialog, .acm-dialog) *,
+:where(.cl-banner, .acm-banner, .cl-dialog, .acm-dialog) *::before,
+:where(.cl-banner, .acm-banner, .cl-dialog, .acm-dialog) *::after {
+  box-sizing: inherit;
+}
+
+:is(.cl-banner, .acm-banner) {
+  position: fixed;
+  inset: auto 16px 16px 16px;
+  max-width: 640px;
+  margin-inline: auto;
+  padding: var(--_cl-padding);
+  background: var(--_cl-bg);
+  border: 1px solid var(--_cl-border);
+  border-radius: var(--_cl-radius);
+  box-shadow: var(--_cl-shadow);
+  z-index: var(--_cl-z-index);
+  display: flex;
+  flex-direction: column;
+  gap: var(--_cl-gap);
+}
+
+:is(.cl-banner__title, .acm-banner__title) {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+:is(.cl-banner__description, .acm-banner__description) {
+  margin: 0;
+  color: var(--_cl-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+:is(.cl-banner__error, .acm-banner__error) {
+  margin: 0;
+  color: var(--_cl-danger);
+  font-size: 0.85rem;
+}
+
+:is(.cl-banner__actions, .acm-banner__actions) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+:is(.cl-banner__button, .acm-banner__button),
+:is(.cl-dialog__button, .acm-dialog__button),
+:is(.cl-manage-trigger, .acm-manage-trigger) {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: var(--_cl-radius-button);
+  border: 1px solid var(--_cl-border);
+  background: transparent;
+  color: var(--_cl-fg);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+:is(.cl-banner__button, .acm-banner__button):hover,
+:is(.cl-dialog__button, .acm-dialog__button):hover,
+:is(.cl-manage-trigger, .acm-manage-trigger):hover {
+  background: color-mix(in srgb, var(--_cl-fg) 5%, transparent);
+}
+
+:is(.cl-banner__button--primary, .acm-banner__button--primary),
+:is(.cl-dialog__button--primary, .acm-dialog__button--primary) {
+  background: var(--_cl-accent);
+  color: var(--_cl-accent-fg);
+  border-color: var(--_cl-accent);
+}
+
+:is(.cl-banner__button--primary, .acm-banner__button--primary):hover,
+:is(.cl-dialog__button--primary, .acm-dialog__button--primary):hover {
+  background: color-mix(in srgb, var(--_cl-accent) 90%, black);
+}
+
+:is(.cl-dialog, .acm-dialog) {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, calc(100vw - 32px));
+  padding: var(--_cl-padding);
+  background: var(--_cl-bg);
+  border: 1px solid var(--_cl-border);
+  border-radius: var(--_cl-radius);
+  box-shadow: var(--_cl-shadow);
+  z-index: calc(var(--_cl-z-index) + 1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--_cl-gap);
+}
+
+:is(.cl-dialog__title, .acm-dialog__title) {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+:is(.cl-dialog__option, .acm-dialog__option) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+:is(.cl-dialog__option, .acm-dialog__option):has(input:disabled) {
+  cursor: default;
+  color: var(--_cl-muted);
+}
+
+:is(.cl-dialog__checkbox, .acm-dialog__checkbox) {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--_cl-accent);
+}
+
+:is(.cl-dialog__actions, .acm-dialog__actions) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}

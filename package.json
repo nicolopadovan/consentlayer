@@ -1,5 +1,5 @@
 {
-  "name": "analytics-consent-manager-monorepo",
+  "name": "consentlayer-monorepo",
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.4.1",
@@ -7,7 +7,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "publish:package": "pnpm --filter @nicolopadovan/analytics-consent-manager publish --no-git-checks",
+    "publish:package": "pnpm --filter consentlayer publish",
     "test": "turbo test",
     "typecheck": "turbo typecheck"
   },

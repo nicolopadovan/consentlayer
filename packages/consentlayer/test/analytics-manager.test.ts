@@ -167,13 +167,13 @@ describe('analytics manager', () => {
     manager.newPageSession()
     await vi.runOnlyPendingTimersAsync()
 
-    expect(trackedEvents).toContain('npcm.page_session_start')
-    expect(trackedEvents).toContain('npcm.ui_click')
-    expect(trackedEvents).toContain('npcm.scroll_depth')
-    expect(trackedEvents).toContain('npcm.time_on_page')
+    expect(trackedEvents).toContain('consentlayer.page_session_start')
+    expect(trackedEvents).toContain('consentlayer.ui_click')
+    expect(trackedEvents).toContain('consentlayer.scroll_depth')
+    expect(trackedEvents).toContain('consentlayer.time_on_page')
     expect(
       trackedEvents.filter(
-        (eventName) => eventName === 'npcm.page_session_start',
+        (eventName) => eventName === 'consentlayer.page_session_start',
       )
         .length,
     ).toBeGreaterThan(1)

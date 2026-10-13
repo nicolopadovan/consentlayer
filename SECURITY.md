@@ -16,7 +16,7 @@ If you find a security issue:
 - `META_TOKEN`
 - `FACEBOOK_TEST_EVENT_CODE`
 - `GA4_API_SECRET`
-- GitHub Packages PATs used for local install or local publish
+- npm tokens used for a local publish
 
 ## Scope
 

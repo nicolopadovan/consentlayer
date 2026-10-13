@@ -52,7 +52,7 @@ export function meta(options: MetaOptions) {
 
       const bootstrap = document.createElement('script')
       bootstrap.setAttribute(
-        'data-analytics-consent-manager',
+        'data-consentlayer',
         'meta-pixel-bootstrap',
       )
       bootstrap.text = `!function(f,b,e,v,n){if(f.fbq)return;n=f.fbq=function(){n.callMethod?

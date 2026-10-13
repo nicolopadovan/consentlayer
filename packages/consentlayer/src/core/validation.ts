@@ -10,7 +10,7 @@ export function isValidGa4MeasurementId(value: unknown): value is string {
 export function assertValidGa4MeasurementId(value: unknown): string {
   if (!isValidGa4MeasurementId(value)) {
     throw new Error(
-      `[analytics-consent-manager] Invalid GA4 measurement ID: expected format "G-XXXXXXXX", received ${describe(value)}.`,
+      `[consentlayer] Invalid GA4 measurement ID: expected format "G-XXXXXXXX", received ${describe(value)}.`,
     )
   }
   return value
@@ -23,7 +23,7 @@ export function isValidMetaPixelId(value: unknown): value is string {
 export function assertValidMetaPixelId(value: unknown): string {
   if (!isValidMetaPixelId(value)) {
     throw new Error(
-      `[analytics-consent-manager] Invalid Meta Pixel ID: expected 8-20 digit numeric string, received ${describe(value)}.`,
+      `[consentlayer] Invalid Meta Pixel ID: expected 8-20 digit numeric string, received ${describe(value)}.`,
     )
   }
   return value
@@ -42,7 +42,7 @@ export function isHttpsOrRelativeUrl(value: unknown): value is string {
 export function assertHttpsOrRelativeUrl(value: unknown, label: string): string {
   if (!isHttpsOrRelativeUrl(value)) {
     throw new Error(
-      `[analytics-consent-manager] ${label} must be an HTTPS URL or a relative path starting with "/", received ${describe(value)}.`,
+      `[consentlayer] ${label} must be an HTTPS URL or a relative path starting with "/", received ${describe(value)}.`,
     )
   }
   return value

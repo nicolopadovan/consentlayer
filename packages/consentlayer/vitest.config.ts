@@ -6,8 +6,8 @@ export default defineConfig({
   test: {
     ...rootConfig.test,
     include: [
-      'packages/analytics-consent-manager/test/**/*.test.ts',
-      'packages/analytics-consent-manager/test/**/*.test.tsx',
+      'packages/consentlayer/test/**/*.test.ts',
+      'packages/consentlayer/test/**/*.test.tsx',
     ],
   },
 })

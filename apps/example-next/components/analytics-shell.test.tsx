@@ -49,7 +49,7 @@ describe('AnalyticsShell', () => {
       NEXT_PUBLIC_FACEBOOK_PIXEL_ID: '1959498944961766',
     })
     const { useConsent } = await import(
-      '@nicolopadovan/analytics-consent-manager/react'
+      'consentlayer/react'
     )
     const { AnalyticsShell } = await import('./analytics-shell')
 
@@ -72,7 +72,7 @@ describe('AnalyticsShell', () => {
     await waitFor(() =>
       expect(screen.queryByText('Cookie preferences')).toBeNull(),
     )
-    expect(localStorage.getItem('npcm_consent')).toContain('"marketing":true')
+    expect(localStorage.getItem('consentlayer_consent')).toContain('"marketing":true')
     expect(screen.getByText('Manage cookies')).toBeTruthy()
     expect(screen.getByTestId('consent-probe').textContent).toContain(
       '"marketing":true',

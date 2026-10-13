@@ -31,9 +31,9 @@ Breaking changes are allowed: the package is still a release candidate.
 ## Consumer API
 
 ```ts
-import { createAnalytics } from '@nicolopadovan/analytics-consent-manager'
-import { ga4 } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
-import { meta } from '@nicolopadovan/analytics-consent-manager/providers/meta'
+import { createAnalytics } from 'consentlayer'
+import { ga4 } from 'consentlayer/providers/ga4'
+import { meta } from 'consentlayer/providers/meta'
 
 export const analytics = createAnalytics({
   providers: [
@@ -42,7 +42,7 @@ export const analytics = createAnalytics({
   ],
   server: { endpoint: '/api/analytics' }, // optional; see Server
   autoTracking: { clicks: true, scroll: true },
-  names: { prefix: 'npcm' },               // replaces configureNames()
+  names: { prefix: 'consentlayer' },               // replaces configureNames()
 })
 
 analytics.track('sign_up', { method: 'google' })
@@ -168,16 +168,16 @@ destinations hash internally.
 
 ```ts
 // app/api/analytics/route.ts
-import { createAnalyticsHandler } from '@nicolopadovan/analytics-consent-manager/server'
-import { metaCapi } from '@nicolopadovan/analytics-consent-manager/server/meta'
+import { createAnalyticsHandler } from 'consentlayer/server'
+import { metaCapi } from 'consentlayer/server/meta'
 
 export const POST = createAnalyticsHandler({
   destinations: [metaCapi({ pixelId, accessToken: process.env.META_CAPI_TOKEN! })],
 })
 
 // a Stripe / Shopify webhook
-import { sendServerEvent } from '@nicolopadovan/analytics-consent-manager/server'
-import { ga4Server } from '@nicolopadovan/analytics-consent-manager/server/ga4'
+import { sendServerEvent } from 'consentlayer/server'
+import { ga4Server } from 'consentlayer/server/ga4'
 
 await sendServerEvent(
   { name: 'purchase', params: orderParams(order), clientId, consent },

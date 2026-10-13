@@ -1,44 +1,32 @@
 # Publishing and Releases
 
-## Registry
+The package publishes to [npmjs.com](https://www.npmjs.com/package/consentlayer)
+from GitHub Actions with npm trusted publishing: no npm token is stored.
 
-- package: `@nicolopadovan/analytics-consent-manager`
-- registry: `https://npm.pkg.github.com`
-- visibility: private
+## One-Time Setup
 
-## Publish Workflow
-
-Workflow file:
-
-- [`.github/workflows/publish-package.yml`](../.github/workflows/publish-package.yml)
-
-Triggers:
-
-- manual dispatch
-- GitHub release published
-
-The workflow installs dependencies, runs package lint/test/build, and publishes with the repo `GITHUB_TOKEN`.
+1. Publish the first version by hand (`npm login`, then `npm publish` in
+   `packages/consentlayer` after `pnpm build`), or claim the name otherwise.
+2. On npmjs.com, open the package settings → Trusted publishing → GitHub
+   Actions, and enter owner `nicolopadovan`, repository
+   `analytics-consent-manager-npm` and workflow `publish-package.yml`.
+3. Make the repository public. npm adds provenance (a signed link from the
+   tarball to the commit and workflow that built it) only for public
+   repositories.
 
 ## Release Steps
 
-1. update `packages/analytics-consent-manager/package.json`
-2. merge to `main`
-3. run `Publish Package` or create a GitHub release
-4. verify the Actions run succeeded
+1. Bump `version` in `packages/consentlayer/package.json` and move the
+   `[Unreleased]` CHANGELOG entries under the new version.
+2. Merge to `main`.
+3. Publish a GitHub release, or run the `Publish Package` workflow.
 
-## Local Publish
-
-Local publish is optional. If you need it, configure a user-level `~/.npmrc` with a classic PAT that has:
-
-- `write:packages`
-- `read:packages`
-
-Then run:
-
-```bash
-pnpm publish:package
-```
+The workflow ([`publish-package.yml`](../.github/workflows/publish-package.yml))
+runs typecheck, lint, test and build, then `npm publish` with Node 24. It
+publishes with `npm` rather than `pnpm` because trusted publishing needs npm
+11.5.1 or later.
 
 ## Versioning
 
-Use semver and bump intentionally. Consumers install from GitHub Packages, so version churn is the main contract surface they will see.
+Semver. The workflow publishes prereleases (`1.0.0-rc.N`) under the `next`
+dist-tag, so `npm install consentlayer` keeps getting the latest stable version.

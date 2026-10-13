@@ -3,11 +3,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@nicolopadovan/analytics-consent-manager": [
-        "../../packages/analytics-consent-manager/src/index.ts"
+      "consentlayer": [
+        "../../packages/consentlayer/src/index.ts"
       ],
-      "@nicolopadovan/analytics-consent-manager/*": [
-        "../../packages/analytics-consent-manager/src/*"
+      "consentlayer/*": [
+        "../../packages/consentlayer/src/*"
       ]
     },
     "plugins": [{ "name": "next" }]

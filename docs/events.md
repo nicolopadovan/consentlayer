@@ -30,7 +30,7 @@ Ecommerce events carry GA4's `items[]`. `/ecommerce` builds them from
 storefront shapes (Shopify-style `{ amount, currencyCode }` prices):
 
 ```ts
-import { cartParams, orderParams, productParams } from '@nicolopadovan/analytics-consent-manager/ecommerce'
+import { cartParams, orderParams, productParams } from 'consentlayer/ecommerce'
 
 analytics.track('view_item', productParams(product))
 analytics.track('add_to_cart', productParams({ ...product, quantity: 2 }))
@@ -82,7 +82,7 @@ await analytics.identify('user_123', { email: 'ada@example.com', plan: 'pro' })
 await analytics.reset() // on logout
 ```
 
-- The user ID is stored locally (`npcm_user_identity`) and passed to
+- The user ID is stored locally (`consentlayer_user_identity`) and passed to
   providers. Identifying a different user replaces what was stored. A provider
   that loads later receives it when it starts.
 - Email and phone are used only while **marketing** consent is granted. Until

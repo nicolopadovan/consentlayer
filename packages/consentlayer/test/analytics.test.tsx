@@ -82,11 +82,11 @@ describe('createAnalytics', () => {
       userId: 'user_1',
       email: 'a@example.com',
     })
-    expect(localStorage.getItem('npcm_user_identity')).toContain('user_1')
+    expect(localStorage.getItem('consentlayer_user_identity')).toContain('user_1')
 
     await analytics.reset()
     expect(meta.reset).toHaveBeenCalledTimes(1)
-    expect(localStorage.getItem('npcm_user_identity')).toBeNull()
+    expect(localStorage.getItem('consentlayer_user_identity')).toBeNull()
     analytics.destroy()
   })
 
@@ -94,13 +94,13 @@ describe('createAnalytics', () => {
     const analytics = createAnalytics()
     await analytics.identify('alice', { email: 'alice@example.com' })
     await analytics.identify('bob', { plan: 'pro' })
-    expect(JSON.parse(localStorage.getItem('npcm_user_identity') ?? '{}')).toEqual({ userId: 'bob' })
+    expect(JSON.parse(localStorage.getItem('consentlayer_user_identity') ?? '{}')).toEqual({ userId: 'bob' })
     analytics.destroy()
   })
 
   it('merges an update made before bootstrap into stored consent', async () => {
     localStorage.setItem(
-      'npcm_consent',
+      'consentlayer_consent',
       JSON.stringify(granted),
     )
     const analytics = createAnalytics()
@@ -129,7 +129,7 @@ describe('createAnalytics', () => {
     await analytics.identify('u1', { email: 'a@example.com', plan: 'pro' })
 
     expect(ga4.identify).toHaveBeenLastCalledWith({ userId: 'u1' }, { plan: 'pro' }, expect.anything())
-    expect(JSON.parse(localStorage.getItem('npcm_user_identity') ?? '{}')).toEqual({ userId: 'u1' })
+    expect(JSON.parse(localStorage.getItem('consentlayer_user_identity') ?? '{}')).toEqual({ userId: 'u1' })
 
     await analytics.consent.update({ marketing: true })
     await waitFor(() =>
@@ -139,7 +139,7 @@ describe('createAnalytics', () => {
         expect.anything(),
       ),
     )
-    expect(JSON.parse(localStorage.getItem('npcm_user_identity') ?? '{}')).toEqual({
+    expect(JSON.parse(localStorage.getItem('consentlayer_user_identity') ?? '{}')).toEqual({
       userId: 'u1',
       email: 'a@example.com',
     })
@@ -148,10 +148,10 @@ describe('createAnalytics', () => {
     await waitFor(() =>
       expect(ga4.identify).toHaveBeenLastCalledWith({ userId: 'u1' }, {}, expect.anything()),
     )
-    expect(JSON.parse(localStorage.getItem('npcm_user_identity') ?? '{}')).toEqual({ userId: 'u1' })
+    expect(JSON.parse(localStorage.getItem('consentlayer_user_identity') ?? '{}')).toEqual({ userId: 'u1' })
 
     await analytics.consent.update({ marketing: true })
-    expect(localStorage.getItem('npcm_user_identity')).not.toContain('a@example.com')
+    expect(localStorage.getItem('consentlayer_user_identity')).not.toContain('a@example.com')
     analytics.destroy()
   })
 
@@ -168,7 +168,7 @@ describe('createAnalytics', () => {
 
   it('discards stored email when stored consent has no marketing', async () => {
     localStorage.setItem('acm_user_identity', JSON.stringify({ userId: 'u1', email: 'a@example.com' }))
-    localStorage.setItem('npcm_consent', JSON.stringify({ ...granted, marketing: false }))
+    localStorage.setItem('consentlayer_consent', JSON.stringify({ ...granted, marketing: false }))
     const ga4 = spyProvider('ga4')
     const analytics = createAnalytics({ providers: [ga4] })
     await analytics.consent.bootstrap()
@@ -176,7 +176,7 @@ describe('createAnalytics', () => {
     await analytics.consent.update({ marketing: true })
     await waitFor(() => expect(analytics.consent.getConsent()?.marketing).toBe(true))
     expect(ga4.identify.mock.calls.flat()).not.toContainEqual(expect.objectContaining({ email: 'a@example.com' }))
-    expect(localStorage.getItem('npcm_user_identity')).not.toContain('a@example.com')
+    expect(localStorage.getItem('consentlayer_user_identity')).not.toContain('a@example.com')
     expect(localStorage.getItem('acm_user_identity')).toBeNull()
     analytics.destroy()
   })
@@ -194,7 +194,7 @@ describe('createAnalytics', () => {
 
   it('keeps the Meta pixel off after a withdrawal once it holds an email', () => {
     const fbq = vi.fn()
-    Object.assign(window, { fbq, __npcmMetaPixelInitialized: undefined, __acmMetaPixelInitialized: undefined })
+    Object.assign(window, { fbq, __consentlayerMetaPixelInitialized: undefined, __acmMetaPixelInitialized: undefined })
     const pixel = meta({ pixelId: '123456789012345' })
     const ctx = { debug: false, emitError: () => undefined }
     const on = { ...ctx, consent: granted, identity: { email: 'a@example.com' } }
@@ -236,7 +236,7 @@ describe('createAnalytics', () => {
     await analytics.consent.update({ analytics: true })
     await waitFor(() =>
       expect(ga4.track.mock.calls.map(([e]) => (e as AnalyticsEventPayload).name)).toContain(
-        'npcm.page_session_start',
+        'consentlayer.page_session_start',
       ),
     )
     expect(hotjar.track).not.toHaveBeenCalled()
@@ -279,16 +279,16 @@ describe('event translation', () => {
     ).toEqual(['v1'])
     expect(toMetaEvent(event('schedule', {})).name).toBe('Schedule')
     expect(toMetaEvent(event('Donate', {})).method).toBe('track')
-    expect(toMetaEvent(event('npcm.ui_click', { ui_target: 'Buy' }))).toEqual({
+    expect(toMetaEvent(event('consentlayer.ui_click', { ui_target: 'Buy' }))).toEqual({
       method: 'trackCustom',
-      name: 'npcm.ui_click',
+      name: 'consentlayer.ui_click',
       params: { ui_target: 'Buy' },
     })
   })
 
   it('maps event names GA4 would reject', () => {
     expect(ga4EventName('lead')).toBe('generate_lead')
-    expect(ga4EventName('npcm.ui_click')).toBe('npcm_ui_click')
+    expect(ga4EventName('consentlayer.ui_click')).toBe('consentlayer_ui_click')
     expect(ga4EventName('purchase')).toBe('purchase')
   })
 

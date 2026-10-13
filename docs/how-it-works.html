@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How @nicolopadovan/analytics-consent-manager works</title>
+<title>How consentlayer works</title>
 <style>
   :root {
     --bg: #0f1115; --panel: #171a21; --line: #2a2f3a; --text: #e6e8ee; --dim: #8b93a7;
@@ -84,8 +84,8 @@
 </head>
 <body>
 <main>
-  <h1>@nicolopadovan/analytics-consent-manager</h1>
-  <p class="dim">How the package decides what loads, when, and why. Based on <code>1.0.0-rc.1</code> source (<code>packages/analytics-consent-manager/src</code>).</p>
+  <h1>consentlayer</h1>
+  <p class="dim">How the package decides what loads, when, and why. Based on <code>1.0.0-rc.1</code> source (<code>packages/consentlayer/src</code>).</p>
 
   <h2>1. The three layers</h2>
   <div class="grid arch">
@@ -94,9 +94,9 @@
       <p>Holds the visitor's choice. Nothing else.</p>
       <ul>
         <li><code>{ preferences, analytics, marketing }</code> or <code>null</code> (= not asked yet)</li>
-        <li>Reads/writes a <b>storage</b> adapter (default: <code>localStorage["npcm_consent"]</code>, migrated from the old <code>acm_consent</code>; Scriptie uses a cookie)</li>
+        <li>Reads/writes a <b>storage</b> adapter (default: <code>localStorage["consentlayer_consent"]</code>, migrated from the old <code>acm_consent</code>; Scriptie uses a cookie)</li>
         <li>Syncs with <b>integration adapters</b> (e.g. Shopify Customer Privacy API)</li>
-        <li>Broadcasts <code>npcm:consent</code> DOM event + <code>window.NPCM_CONSENT</code> (plus the old <code>acm:</code>/<code>ACM_</code> names)</li>
+        <li>Broadcasts <code>consentlayer:consent</code> DOM event + <code>window.CONSENTLAYER_CONSENT</code> (plus the old <code>acm:</code>/<code>ACM_</code> names)</li>
       </ul>
     </div>
     <div class="arrow">→</div>
@@ -126,7 +126,7 @@
   <div class="grid side">
     <div class="panel">
       <h3>React layer <span class="tag">/react, /ui</span></h3>
-      <p><code>&lt;AnalyticsProvider analytics={…}&gt;</code> takes the <code>createAnalytics()</code> instance, boots it (immediately, on idle, or manually) and fires a page view per route · <code>&lt;CookieBanner&gt;</code>/<code>&lt;CookieDialog&gt;</code> give you Accept all / Reject / Customize; <code>useAnalytics()</code> / <code>useConsent()</code> for your own UI. <code>window.NPCM_openConsent()</code> reopens the dialog.</p>
+      <p><code>&lt;AnalyticsProvider analytics={…}&gt;</code> takes the <code>createAnalytics()</code> instance, boots it (immediately, on idle, or manually) and fires a page view per route · <code>&lt;CookieBanner&gt;</code>/<code>&lt;CookieDialog&gt;</code> give you Accept all / Reject / Customize; <code>useAnalytics()</code> / <code>useConsent()</code> for your own UI. <code>window.CONSENTLAYER_openConsent()</code> reopens the dialog.</p>
     </div>
     <div class="panel">
       <h3>Server <span class="tag">/server</span></h3>
@@ -157,7 +157,7 @@
       <div class="group">
         <h3>Visitor actions</h3>
         <button id="trackEvent">Fire <code>track("add_to_cart")</code></button>
-        <button id="reopen">Reopen dialog (<code>NPCM_openConsent</code>)</button>
+        <button id="reopen">Reopen dialog (<code>CONSENTLAYER_openConsent</code>)</button>
       </div>
       <div class="group">
         <h3>Options</h3>
@@ -357,7 +357,7 @@ function syncCheckboxes() {
 function render() {
   $('banner').hidden = sim.consent !== null && !sim.dialog
   $('boot').disabled = sim.booted
-  $('storage').textContent = `localStorage["npcm_consent"]\n= ${stored ? JSON.stringify(stored, null, 1) : 'null'}\n\nmanager.booted = ${sim.booted}`
+  $('storage').textContent = `localStorage["consentlayer_consent"]\n= ${stored ? JSON.stringify(stored, null, 1) : 'null'}\n\nmanager.booted = ${sim.booted}`
   const grid = $('providers')
   grid.innerHTML = ''
   for (const s of sim.states.values()) {
