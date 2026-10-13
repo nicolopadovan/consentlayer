@@ -9,6 +9,6 @@ export default [
   ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.2 kB'],
   ['providers/posthog', 'dist/providers/posthog.js', '1.2 kB'],
   ['providers/sentry', 'dist/providers/sentry.js', '1.2 kB'],
-  ['server', 'dist/server/index.js', '1.5 kB'],
+  ['server', 'dist/server/index.js', '2.5 kB'],
   ['server/meta', 'dist/server/meta.js', '1.5 kB'],
 ].map(([name, path, limit]) => ({ name, path, limit, modifyEsbuildConfig }))

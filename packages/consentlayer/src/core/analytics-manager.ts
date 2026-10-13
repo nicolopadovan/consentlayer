@@ -224,7 +224,9 @@ export function createAnalyticsManager(
       emitError({ ...error, providerId: error.providerId ?? providerId })
 
   const serverEndpoint =
-    options.server && assertHttpsOrRelativeUrl(options.server.endpoint, 'server.endpoint')
+    options.server?.endpoint !== undefined
+      ? assertHttpsOrRelativeUrl(options.server.endpoint, 'server.endpoint')
+      : undefined
 
   const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
     if (!serverEndpoint || !(consent?.analytics || consent?.marketing)) return

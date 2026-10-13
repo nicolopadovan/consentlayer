@@ -9,8 +9,10 @@ import type {
   Analytics,
   AnalyticsManagerOptions,
   ConsentEngineOptions,
+  ConsentIntegrationAdapter,
   ConsentState,
 } from './types'
+import { assertHttpsOrRelativeUrl } from './validation'
 
 /** Options for `createAnalytics`. */
 export type AnalyticsOptions = Omit<
@@ -30,6 +32,22 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
   const { consent: consentOptions, categories, names, ...managerOptions } = options
   if (names) configureNames(names)
 
+  const consentEndpoint =
+    options.server?.consentEndpoint !== undefined
+      ? assertHttpsOrRelativeUrl(options.server.consentEndpoint, 'server.consentEndpoint')
+      : undefined
+  const recorder: ConsentIntegrationAdapter = {
+    id: 'consent-endpoint',
+    async apply(consent) {
+      const response = await fetch(consentEndpoint!, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ consent }),
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    },
+  }
+
   const engine = createConsentEngine({
     storage: createLocalStorageConsentStorage({ key: getNames().consentStorageKey }),
     broadcast: {
@@ -37,6 +55,7 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
       globalKey: withLegacy((n) => n.consentGlobalKey),
     },
     ...consentOptions,
+    adapters: [...(consentOptions?.adapters ?? []), ...(consentEndpoint ? [recorder] : [])],
     categories,
     debug: options.debug,
     onError: options.onError,

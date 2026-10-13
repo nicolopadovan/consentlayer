@@ -10,6 +10,9 @@ Two pieces, both from `consentlayer/server`:
 - `sendServerEvent`: sends events that only the server knows about (a Stripe
   or Shopify webhook) to GA4 and Meta.
 
+To make the route trust only consent you recorded, rather than what the
+browser claims, see [consent records](/guides/consent-records/).
+
 Each follows its vendor's recommended setup. Meta dedupes browser and server
 events by event ID, so every browser event is also sent to CAPI. GA4 has no
 such dedupe and its Measurement Protocol is meant to add to gtag, not mirror

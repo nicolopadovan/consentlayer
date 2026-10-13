@@ -262,8 +262,13 @@ export type AnalyticsManagerOptions = {
    * `false` turns both off; `{ globalHandlers: false }` keeps only `captureError`.
    */
   errors?: boolean | { globalHandlers?: boolean }
-  /** Also send each event to this route (see `createAnalyticsHandler`). HTTPS URL or a path starting with "/". */
-  server?: { endpoint: string }
+  /** HTTPS URLs or paths starting with "/". */
+  server?: {
+    /** Also send each event to this route (see `createAnalyticsHandler`). */
+    endpoint?: string
+    /** Post each consent choice to this route (see `createConsentHandler`). */
+    consentEndpoint?: string
+  }
 }
 
 /** What the browser sends to the server, and what `sendServerEvent` takes. */

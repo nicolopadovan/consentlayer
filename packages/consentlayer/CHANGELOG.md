@@ -72,6 +72,11 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- Consent records: `createAnalytics({ server: { consentEndpoint } })` posts
+  each choice to `createConsentHandler`, which appends a record (consent ID,
+  time, choices, policy version, user ID) to Postgres, Supabase, Prisma,
+  Drizzle or Upstash and sets a signed cookie. `createAnalyticsHandler({
+  consentCookie })` then takes consent from that cookie instead of the body.
 - Custom consent categories: declare them in `ConsentCategories` and pass
   `createAnalytics({ categories })`; any plugin can require one, and
   `analytics.consent.categories` lists them all. A Shopify or other adapter

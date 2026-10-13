@@ -233,3 +233,29 @@ describe('custom categories', () => {
     expect(engine.getConsent()).toEqual({ preferences: false, analytics: true, marketing: false, functional: true })
   })
 })
+
+describe('consent endpoint', () => {
+  it('posts each choice, not the restored one, and reports a failed post', async () => {
+    localStorage.setItem('consentlayer_consent', JSON.stringify({ preferences: false, analytics: true, marketing: false }))
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const onError = vi.fn()
+    const analytics = createAnalytics({ server: { consentEndpoint: '/api/consent' }, onError })
+
+    await analytics.consent.bootstrap()
+    expect(fetchMock).not.toHaveBeenCalled()
+    await analytics.consent.update({ marketing: true })
+    expect(fetchMock).toHaveBeenCalledWith('/api/consent', expect.objectContaining({ method: 'POST' }))
+    expect(JSON.parse(fetchMock.mock.calls[0][1]!.body as string)).toEqual({
+      consent: { preferences: false, analytics: true, marketing: true },
+    })
+
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 500 }))
+    await analytics.consent.update({ marketing: false })
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'consent-adapter', providerId: 'consent-endpoint' }))
+
+    vi.unstubAllGlobals()
+    analytics.destroy()
+    localStorage.clear()
+  })
+})

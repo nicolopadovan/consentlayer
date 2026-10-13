@@ -26,6 +26,7 @@ export default defineConfig({
             'guides/consent-ui',
             'guides/providers',
             'guides/server-side-tracking',
+            'guides/consent-records',
             'guides/names',
             'guides/migrating-to-v1',
             'guides/troubleshooting',

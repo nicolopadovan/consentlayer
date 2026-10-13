@@ -1,4 +1,5 @@
 import type { ConsentState, ServerEvent } from '../core/types'
+import { readConsentCookie, type ConsentCookieOptions } from './consent'
 import { ANALYTICS_MAX_BODY, assertSameOrigin, parseCookieHeader, parseJsonWithLimit } from './http'
 
 export type { ServerEvent }
@@ -89,12 +90,21 @@ function parseServerEvent(body: unknown): ServerEvent {
  */
 export function createAnalyticsHandler(options: {
   destinations: ServerDestination<true>[]
+  /** Take consent from the cookie `createConsentHandler` signs, ignoring the body's; no valid cookie means denied. */
+  consentCookie?: ConsentCookieOptions
   onError?: (error: unknown) => void
 }): (request: Request) => Promise<Response> {
   return async (request) => {
     try {
       assertSameOrigin(request, { requireHeader: true })
       const event = parseServerEvent(await parseJsonWithLimit(request, ANALYTICS_MAX_BODY))
+      if (options.consentCookie) {
+        event.consent = (await readConsentCookie(request, options.consentCookie))?.consent ?? {
+          preferences: false,
+          analytics: false,
+          marketing: false,
+        }
+      }
       const results = await sendServerEvent(event, {
         destinations: options.destinations.filter((destination) => destination.forwardBrowserEvents),
         request: requestInfo(request),
