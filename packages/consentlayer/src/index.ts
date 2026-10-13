@@ -1,5 +1,5 @@
 export { createAnalytics, type AnalyticsOptions } from './core/create-analytics'
-export { configureNames, getNames } from './core/names'
+export { getNames } from './core/names'
 export { definePlugin, getFlag, loadScript, setFlag } from './core/plugin'
 export type { AutoTrackingEventNames, Names, NamesInput } from './core/names'
 export { createEnvConfig } from './core/presets'

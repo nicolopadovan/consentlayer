@@ -14,7 +14,8 @@ call `boot()` and when to send page views.
 
 `createAnalytics()` does three things and nothing else:
 
-1. applies `names` with `configureNames()` if you passed any;
+1. applies `names` (the defaults if you passed none) and remembers the
+   instance for hooks used outside `<AnalyticsProvider>`;
 2. creates the consent engine, which reads and writes consent in
    `localStorage` and broadcasts every change as a DOM event and a window
    global;

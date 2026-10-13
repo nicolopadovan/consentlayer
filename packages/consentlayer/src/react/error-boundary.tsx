@@ -2,6 +2,7 @@
 
 import { Component, useEffect, type ContextType, type ReactNode } from 'react'
 import type { Analytics, ErrorContext } from '../core/types'
+import { latestAnalytics } from '../core/create-analytics'
 import { AnalyticsContext } from './analytics-provider'
 
 type FallbackProps = { error: unknown; reset: () => void }
@@ -10,7 +11,7 @@ type FallbackProps = { error: unknown; reset: () => void }
 export type ErrorBoundaryProps = {
   children: ReactNode
   fallback: ReactNode | ((props: FallbackProps) => ReactNode)
-  /** Defaults to the instance from `<AnalyticsProvider>`. */
+  /** Defaults to the instance from `<AnalyticsProvider>`, else the one `createAnalytics()` made. */
   analytics?: Analytics
   tags?: ErrorContext['tags']
 }
@@ -26,7 +27,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, { error: unknow
   }
 
   componentDidCatch(error: unknown) {
-    const analytics = this.props.analytics ?? this.context?.analytics
+    const analytics = this.props.analytics ?? this.context ?? latestAnalytics()
     void analytics?.captureError(error, { source: 'boundary', tags: this.props.tags })
   }
 

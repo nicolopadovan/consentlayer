@@ -27,10 +27,15 @@ export type AnalyticsOptions = Omit<
   names?: NamesInput
 }
 
+let latest: { analytics: Analytics; names: string } | undefined
+
+/** The most recent `createAnalytics()` instance, for hooks used outside `<AnalyticsProvider>`. */
+export const latestAnalytics = (): Analytics | undefined => latest?.analytics
+
 /** Creates the analytics instance. Nothing loads until `boot()` (which `<AnalyticsProvider>` calls) and then only what consent allows. */
 export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
   const { consent: consentOptions, categories, names, ...managerOptions } = options
-  if (names) configureNames(names)
+  configureNames(names)
 
   const consentEndpoint =
     options.server?.consentEndpoint !== undefined
@@ -68,7 +73,7 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     consentEngine: engine,
   })
 
-  return {
+  const analytics: Analytics = {
     boot: manager.boot,
     registerProvider: manager.registerProvider,
     page: manager.page,
@@ -95,6 +100,15 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     destroy() {
       manager.destroy()
       engine.destroy()
+      if (latest?.analytics === analytics) latest = undefined
     },
   }
+  const namesKey = JSON.stringify(names ?? {})
+  if (latest && latest.names !== namesKey) {
+    console.warn(
+      '[consentlayer] createAnalytics() was called again with different names. Storage keys, globals and events are per page, so the last names win: create one instance per page.',
+    )
+  }
+  latest = { analytics, names: namesKey }
+  return analytics
 }

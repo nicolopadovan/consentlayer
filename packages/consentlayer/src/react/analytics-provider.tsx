@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useSyncExternalStore,
   type ReactNode,
@@ -16,14 +15,10 @@ import type {
   LazyBootConfig,
   PageViewPayload,
 } from '../core/types'
+import { latestAnalytics } from '../core/create-analytics'
 import { ConsentControllerProvider } from './consent-controller'
 
-type AnalyticsContextValue = {
-  analytics: Analytics
-  consent: ConsentState | null
-}
-
-export const AnalyticsContext = createContext<AnalyticsContextValue | undefined>(undefined)
+export const AnalyticsContext = createContext<Analytics | undefined>(undefined)
 
 /** Props for `<AnalyticsProvider>`. */
 export type AnalyticsProviderProps = {
@@ -73,11 +68,6 @@ export function AnalyticsProvider({
   autoShowBanner,
   openConsentGlobalKey,
 }: AnalyticsProviderProps) {
-  const consent = useSyncExternalStore(
-    (listener) => analytics.consent.subscribe(listener),
-    () => analytics.consent.getConsent(),
-    () => analytics.consent.getConsent(),
-  )
   const snapshot = useSyncExternalStore(
     (listener) => analytics.subscribe(listener),
     () => analytics.getSnapshot(),
@@ -113,10 +103,8 @@ export function AnalyticsProvider({
     analytics.newPageSession()
   }, [analytics, routeKey])
 
-  const value = useMemo(() => ({ analytics, consent }), [analytics, consent])
-
   return (
-    <AnalyticsContext.Provider value={value}>
+    <AnalyticsContext.Provider value={analytics}>
       <ConsentControllerProvider
         autoShowBanner={autoShowBanner}
         openConsentGlobalKey={openConsentGlobalKey}
@@ -127,15 +115,11 @@ export function AnalyticsProvider({
   )
 }
 
-function useAnalyticsContext(hook: string): AnalyticsContextValue {
-  const value = useContext(AnalyticsContext)
-  if (!value) throw new Error(`${hook} must be used within AnalyticsProvider`)
-  return value
-}
-
-/** The analytics instance from `<AnalyticsProvider>`. */
+/** The instance from `<AnalyticsProvider>`, else the one `createAnalytics()` made. */
 export function useAnalytics(): Analytics {
-  return useAnalyticsContext('useAnalytics').analytics
+  const analytics = useContext(AnalyticsContext) ?? latestAnalytics()
+  if (!analytics) throw new Error('useAnalytics needs createAnalytics() to have run, or an AnalyticsProvider above it')
+  return analytics
 }
 
 /** Current consent, re-rendering when it changes. */
@@ -145,7 +129,12 @@ export function useConsent(): {
   setConsent: (consent: ConsentState) => Promise<void>
   update: (partial: Partial<ConsentState>) => Promise<void>
 } {
-  const { analytics, consent } = useAnalyticsContext('useConsent')
+  const analytics = useAnalytics()
+  const consent = useSyncExternalStore(
+    (listener) => analytics.consent.subscribe(listener),
+    () => analytics.consent.getConsent(),
+    () => analytics.consent.getConsent(),
+  )
   return {
     consent,
     engine: analytics.consent,

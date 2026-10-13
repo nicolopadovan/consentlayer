@@ -83,8 +83,9 @@ drop their `storage` and `broadcast` options.
 | `enableAutoTracking()`, `newPageSession()` | `autoTracking` option; `AnalyticsProvider` handles route changes |
 | `saveIdentity({ email, external_id })`, `getIdentity()` | `analytics.identify(userId, { email, phone, ...traits })`; `analytics.reset()` on logout |
 
-`useConsent()` and `useConsentController()` still exist and now require
-`AnalyticsProvider` above them.
+`useConsent()` and `useConsentController()` still exist.
+`useConsentController()` needs `AnalyticsProvider` above it; `useAnalytics()`
+and `useConsent()` fall back to the instance `createAnalytics()` made.
 
 ### Events
 
@@ -164,6 +165,8 @@ Nothing is renamed. New:
   `names.classPrefix`. Copy the [Consent UI recipe](/guides/consent-ui/) into
   your app and restyle it; if you copied the `.acm-*` markup or themed the
   `--acm-*` variables, move those styles onto your component.
+- `configureNames()` is no longer exported: pass `createAnalytics({ names })`.
+  An instance created without `names` now resets them to the defaults.
 - The `acm_*` names are off by default. Upgrading from rc.1 or earlier, pass
   `names: { legacy: true }` so stored consent and identity carry over.
 - `ga4()` and `meta()` no longer load before consent. For the old behaviour

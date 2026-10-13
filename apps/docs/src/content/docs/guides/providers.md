@@ -155,7 +155,7 @@ The package default runtime preset uses:
 - `CONSENTLAYER_CONSENT`
 - `CONSENTLAYER_openConsent`
 
-Change them with `configureNames()`; see "Names" in the README. The pre-rc.2
+Change them with `createAnalytics({ names })`; see [names](/guides/names/). The pre-rc.2
 `acm_*` names are read, migrated and broadcast too with `legacy: true`.
 
 ## Loading Before Consent

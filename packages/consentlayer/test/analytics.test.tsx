@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
+import { getNames } from '../src/core/names'
 import type { AnalyticsEventPayload, AnalyticsPlugin } from '../src/core/types'
 import { cartParams, orderParams, productParams } from '../src/ecommerce'
 import { ga4EventName, ga4UserData } from '../src/providers/ga4'
@@ -333,6 +334,32 @@ describe('AnalyticsProvider', () => {
     )
     await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(2))
     analytics.destroy()
+  })
+
+  it('lets hooks outside the provider use the latest instance', async () => {
+    const analytics = createAnalytics()
+    function Probe() {
+      const { consent } = useConsent()
+      return <pre data-testid="outside">{String(useAnalytics() === analytics)} {String(consent?.analytics)}</pre>
+    }
+    render(<Probe />)
+    await act(() => analytics.consent.update({ analytics: true }))
+    expect(screen.getByTestId('outside').textContent).toBe('true true')
+    analytics.destroy()
+    expect(() => render(<Probe />)).toThrow('useAnalytics needs createAnalytics()')
+  })
+
+  it('warns when a second instance uses different names', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const first = createAnalytics()
+    const same = createAnalytics()
+    expect(warn).not.toHaveBeenCalled()
+    const other = createAnalytics({ names: { prefix: 'shop' } })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('one instance per page'))
+    ;[first, same, other].forEach((instance) => instance.destroy())
+    createAnalytics().destroy()
+    expect(getNames().prefix).toBe('consentlayer')
+    warn.mockRestore()
   })
 
   it('sends the current page to a provider that starts later on the same route', async () => {

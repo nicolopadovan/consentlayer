@@ -42,11 +42,10 @@ describe('names', () => {
   })
 
   it('broadcasts under the new and legacy names', async () => {
-    configureNames({ legacy: true })
     const seen: string[] = []
     document.addEventListener('consentlayer:consent', () => seen.push('consentlayer'))
     document.addEventListener('acm:consent', () => seen.push('acm'))
-    await createAnalytics().consent.update(granted)
+    await createAnalytics({ names: { legacy: true } }).consent.update(granted)
     expect(seen).toEqual(['consentlayer', 'acm'])
     expect(win.CONSENTLAYER_CONSENT).toEqual(granted)
     expect(win.ACM_CONSENT).toEqual(granted)

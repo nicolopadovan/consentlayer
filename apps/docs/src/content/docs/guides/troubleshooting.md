@@ -29,4 +29,4 @@ Check:
 
 - the rendered page content is inside the consent/provider tree
 - the consumer uses the same engine instance for the shell and the UI
-- storage is writing to `consentlayer_consent` (or your `configureNames` key)
+- storage is writing to `consentlayer_consent` (or your `names` key)

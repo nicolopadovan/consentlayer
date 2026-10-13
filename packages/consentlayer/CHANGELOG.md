@@ -18,6 +18,8 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   strings such as `'false'` counted as granted.
 - "Reject non-essential" now stores `preferences: false`; it used to grant
   preferences. `CookieDialog` gains a Preferences toggle, and Save stores it.
+- `configureNames()` is no longer exported; pass `createAnalytics({ names })`.
+  `createAnalytics()` without `names` now resets them to the defaults.
 - `names.legacy` defaults to `false`: the `acm_*` names are no longer read or
   written unless you pass `names: { legacy: true }`.
 - `ga4()` and `meta()` default to `loadBeforeConsent: false`: no script loads
@@ -72,6 +74,10 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `useAnalytics()`, `useConsent()` and `ErrorBoundary` work outside
+  `<AnalyticsProvider>`, using the instance `createAnalytics()` made.
+- `createAnalytics()` warns when a second instance on the page uses different
+  names.
 - Consent records: `createAnalytics({ server: { consentEndpoint } })` posts
   each choice to `createConsentHandler`, which appends a record (consent ID,
   time, choices, policy version, user ID) to Postgres, Supabase, Prisma,

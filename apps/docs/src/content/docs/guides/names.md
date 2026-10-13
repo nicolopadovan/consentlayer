@@ -14,10 +14,10 @@ prefix comes from one place. Defaults use the `consentlayer` prefix:
 | consent global | `window.CONSENTLAYER_CONSENT` |
 | open-dialog global | `window.CONSENTLAYER_openConsent()` |
 | auto-tracking events | `consentlayer.page_session_start`, `consentlayer.scroll_depth`, `consentlayer.time_on_page`, `consentlayer.ui_click` |
-| UI class prefix | `cl-` |
 
-Change them with `createAnalytics({ names })` (or `configureNames()` before
-the first consent read):
+Change them with `createAnalytics({ names })`. Names belong to the page, not
+the instance, so create one instance per page: a second `createAnalytics()`
+with different names logs a warning, and the last one's names win.
 
 ```ts
 createAnalytics({
