@@ -4,16 +4,14 @@ import { hotjar } from 'consentlayer/providers/hotjar'
 import { meta } from 'consentlayer/providers/meta'
 import { posthog } from 'consentlayer/providers/posthog'
 import { sentry } from 'consentlayer/providers/sentry'
-import {
-  createShopifyCustomerPrivacyAdapter,
-  shopify,
-} from 'consentlayer/providers/shopify'
+import { createShopifyCustomerPrivacyAdapter } from 'consentlayer/providers/shopify'
 
 // Next inlines only literal `process.env.NEXT_PUBLIC_*` reads into browser code.
 const env = createEnvConfig({
   NODE_ENV: process.env.NODE_ENV,
   NEXT_PUBLIC_ENABLE_ANALYTICS: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS,
   NEXT_PUBLIC_ANALYTICS_DEBUG: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG,
+  NEXT_PUBLIC_ANALYTICS_LOCALE: process.env.NEXT_PUBLIC_ANALYTICS_LOCALE,
   NEXT_PUBLIC_FACEBOOK_PIXEL_ID: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID,
   NEXT_PUBLIC_GA4_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,
   NEXT_PUBLIC_HOTJAR_SITE_ID: process.env.NEXT_PUBLIC_HOTJAR_SITE_ID,
@@ -27,7 +25,6 @@ const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN
 const providers: AnalyticsPlugin[] = []
 if (env.ga4.measurementId) providers.push(ga4({ measurementId: env.ga4.measurementId }))
 if (env.meta.pixelId) providers.push(meta({ pixelId: env.meta.pixelId }))
-if (env.shopify.storeId) providers.push(shopify())
 if (env.hotjar.siteId && env.hotjar.version) {
   providers.push(hotjar({ siteId: env.hotjar.siteId, version: env.hotjar.version }))
 }
@@ -50,4 +47,5 @@ export const analytics = createAnalytics({
   autoTracking: true,
   enabled: env.runtimeEnabled,
   debug: env.debug,
+  locale: env.locale,
 })

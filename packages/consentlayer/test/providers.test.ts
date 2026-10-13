@@ -82,11 +82,14 @@ describe('providers', () => {
       consent: denied,
     })
     const commands = () =>
-      (window.dataLayer ?? []).map((entry) => (entry.args as unknown[])[0])
+      (window.dataLayer ?? []).map((entry) => {
+        expect(Object.prototype.toString.call(entry)).toBe('[object Arguments]')
+        return (entry as ArrayLike<unknown>)[0]
+      })
     await manager.boot()
-    expect(document.querySelector('script[src*="gtag/js?id=G-ABC123"]')).toBeTruthy()
-    expect(commands()).not.toContain('config')
+    expect(document.querySelector('script[src*="gtag/js?id=G-ABC123"]')).toBeNull()
     await manager.updateConsent({ ...denied, analytics: true })
+    expect(document.querySelector('script[src*="gtag/js?id=G-ABC123"]')).toBeTruthy()
     expect(commands().filter((command) => command === 'config')).toHaveLength(1)
     manager.destroy()
   })

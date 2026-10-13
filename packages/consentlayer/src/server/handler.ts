@@ -94,7 +94,7 @@ export function createAnalyticsHandler(options: {
       assertSameOrigin(request, { requireHeader: true })
       const event = parseServerEvent(await parseJsonWithLimit(request, ANALYTICS_MAX_BODY))
       const results = await sendServerEvent(event, {
-        destinations: options.destinations,
+        destinations: options.destinations.filter((destination) => destination.forwardBrowserEvents),
         request: requestInfo(request),
       })
       for (const result of results) if (!result.ok) options.onError?.(result.error)

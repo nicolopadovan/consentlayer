@@ -20,18 +20,21 @@ export function createLocalStorageConsentStorage(
 ): ConsentStorageAdapter {
   return {
     read() {
-      const storage = getStorage(options.storage)
-      if (!storage) return null
-      return safeJsonParse<ConsentState>(readMigrating(storage, options))
+      return withStorage(
+        options,
+        (storage) => safeJsonParse<ConsentState>(readMigrating(storage, options)),
+        null,
+      )
     },
     write(consent) {
-      const storage = getStorage(options.storage)
-      if (!storage) return
-      if (consent) {
-        storage.setItem(options.key, JSON.stringify(consent))
-      } else {
-        storage.removeItem(options.key)
-      }
+      withStorage(
+        options,
+        (storage) =>
+          consent
+            ? storage.setItem(options.key, JSON.stringify(consent))
+            : storage.removeItem(options.key),
+        undefined,
+      )
     },
     subscribe(listener) {
       const win = options.window ?? (isBrowser() ? window : undefined)
@@ -43,8 +46,7 @@ export function createLocalStorageConsentStorage(
       return () => win.removeEventListener('storage', handleStorage)
     },
     clear() {
-      const storage = getStorage(options.storage)
-      storage?.removeItem(options.key)
+      withStorage(options, (storage) => storage.removeItem(options.key), undefined)
     },
   }
 }
@@ -54,22 +56,30 @@ export function createLocalStorageIdentityStorage(
 ): IdentityStorageAdapter {
   return {
     read() {
-      const storage = getStorage(options.storage)
-      if (!storage) return {}
-      return normalizeIdentity(
-        safeJsonParse<UserIdentity>(readMigrating(storage, options)) ?? {},
+      return withStorage(
+        options,
+        (storage) =>
+          normalizeIdentity(safeJsonParse<UserIdentity>(readMigrating(storage, options)) ?? {}),
+        {},
       )
     },
     write(identity) {
-      const storage = getStorage(options.storage)
-      if (!storage) return
-      storage.setItem(options.key, JSON.stringify(normalizeIdentity(identity)))
+      withStorage(
+        options,
+        (storage) => storage.setItem(options.key, JSON.stringify(normalizeIdentity(identity))),
+        undefined,
+      )
     },
     clear() {
-      const storage = getStorage(options.storage)
-      for (const key of [options.key, ...(options.legacyKeys ?? legacyStorageKeysFor(options.key))]) {
-        storage?.removeItem(key)
-      }
+      withStorage(
+        options,
+        (storage) => {
+          for (const key of [options.key, ...(options.legacyKeys ?? legacyStorageKeysFor(options.key))]) {
+            storage.removeItem(key)
+          }
+        },
+        undefined,
+      )
     },
   }
 }
@@ -131,8 +141,16 @@ function readMigrating(
   return null
 }
 
-function getStorage(storage?: Storage): Storage | undefined {
-  if (storage) return storage
-  if (!isBrowser()) return undefined
-  return window.localStorage
+/** Blocked storage (sandboxed iframes, "block all cookies") and a full quota throw; consent then lives in memory only. */
+function withStorage<T>(
+  options: LocalStorageAdapterOptions,
+  run: (storage: Storage) => T,
+  fallback: T,
+): T {
+  try {
+    const storage = options.storage ?? (isBrowser() ? window.localStorage : undefined)
+    return storage ? run(storage) : fallback
+  } catch {
+    return fallback
+  }
 }

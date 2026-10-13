@@ -13,9 +13,7 @@ import type {
   UserTraits,
 } from './types'
 import { createMemoryIdentityStorage } from './storage'
-import {
-  defaultRuntimePreset,
-} from './presets'
+import { getNames } from './names'
 import {
   createEventId,
   debugLog,
@@ -166,7 +164,7 @@ export function createAnalyticsManager(
   let timeouts: number[] = []
   let autoOnly: string[] | undefined
   const autoTrack = (name: string, params: Record<string, unknown>) =>
-    api.track(name, params, { only: autoOnly })
+    api.track(name, params, { only: autoOnly, requireAnalyticsConsent: true })
 
   const snapshot = (): AnalyticsManagerStateSnapshot => ({
     booted,
@@ -241,7 +239,7 @@ export function createAnalyticsManager(
 
   const persistIdentity = () => {
     const stored = sharedIdentity()
-    if (Object.keys(stored).length) identityStorage.write(stored)
+    if (Object.keys(stored).length && (consent?.analytics || consent?.marketing)) identityStorage.write(stored)
     else identityStorage.clear?.()
   }
 
@@ -307,9 +305,8 @@ export function createAnalyticsManager(
     if (!allowed) return teardown(state)
     if (state.active) return
     state.active = true
-    const shared = sharedIdentity()
-    if (Object.keys(shared).length && !identifyQueued) {
-      await call(state, 'identify', (p, ctx) => p.identify?.(shared, {}, ctx))
+    if (Object.keys(sharedIdentity()).length && !identifyQueued) {
+      await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), {}, ctx))
     }
   }
 
@@ -401,7 +398,7 @@ export function createAnalyticsManager(
 
     if (autoTracking.pageViews) {
       void autoTrack(
-        defaultRuntimePreset.autoTrackingEvents.pageSessionStart,
+        getNames().autoTrackingEvents.pageSessionStart,
         { session_id: sessionId },
       )
     }
@@ -420,7 +417,7 @@ export function createAnalyticsManager(
         if (emitted.has(threshold)) return
         emitted.add(threshold)
         void autoTrack(
-          defaultRuntimePreset.autoTrackingEvents.scrollDepth,
+          getNames().autoTrackingEvents.scrollDepth,
           { depth: threshold, session_id: sessionId },
         )
       }
@@ -452,7 +449,7 @@ export function createAnalyticsManager(
         const handle = window.setTimeout(() => {
           if (sessionId !== pageSessionIdCounter) return
           void autoTrack(
-            defaultRuntimePreset.autoTrackingEvents.timeOnPage,
+            getNames().autoTrackingEvents.timeOnPage,
             { seconds, session_id: sessionId },
           )
         }, seconds * 1000)
@@ -522,8 +519,8 @@ export function createAnalyticsManager(
       if (!hadContact || hadMarketing === Boolean(nextConsent?.marketing)) return
       if (hadMarketing) {
         for (const state of providerStates.values()) {
-          if (!state.setup) continue
-          await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), {}, ctx))
+          if (state.active) await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), {}, ctx))
+          else if (state.setup) await call(state, 'reset', (p, ctx) => p.reset?.(ctx))
         }
       } else if (wasActive.length) {
         await identifyProviders({}, wasActive)
@@ -555,7 +552,7 @@ export function createAnalyticsManager(
       await trackAgainstProviders(
         optionsInput.only,
         async (state) => {
-          if (allowed()) await call(state, 'track', (p, ctx) => p.track?.(event, ctx))
+          await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined))
         },
         () =>
           allowed()
@@ -586,6 +583,7 @@ export function createAnalyticsManager(
     },
     async reset() {
       identity = {}
+      storedContact = undefined
       identityStorage.clear?.()
       for (const state of providerStates.values()) {
         if (!state.setup) continue
@@ -631,7 +629,7 @@ export function createAnalyticsManager(
             element.getAttribute('name') ||
             element.textContent?.trim()?.slice(0, 80) ||
             'unknown'
-          void autoTrack(defaultRuntimePreset.autoTrackingEvents.uiClick, {
+          void autoTrack(getNames().autoTrackingEvents.uiClick, {
             ui_target: name,
             ui_element: element.tagName.toLowerCase(),
             ui_id: element.id || undefined,
@@ -656,6 +654,7 @@ export function createAnalyticsManager(
       return () => listeners.delete(listener)
     },
     destroy() {
+      for (const state of providerStates.values()) void teardown(state)
       destroyed = true
       unsubscribeConsent?.()
       if (globalHandlers) {
@@ -669,7 +668,6 @@ export function createAnalyticsManager(
       if (activeClickHandler && isBrowser()) {
         window.removeEventListener('click', activeClickHandler)
       }
-      for (const state of providerStates.values()) void teardown(state)
       providerStates.clear()
       listeners.clear()
     },

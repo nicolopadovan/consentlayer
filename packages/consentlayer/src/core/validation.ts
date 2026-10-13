@@ -31,7 +31,7 @@ export function assertValidMetaPixelId(value: unknown): string {
 
 export function isHttpsOrRelativeUrl(value: unknown): value is string {
   if (typeof value !== 'string' || value.length === 0) return false
-  if (value.startsWith('/')) return true
+  if (value.startsWith('/')) return !value.startsWith('//')
   try {
     return new URL(value).protocol === 'https:'
   } catch {

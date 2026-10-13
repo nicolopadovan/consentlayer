@@ -11,6 +11,7 @@ import {
 } from 'react'
 import { withLegacy } from '../core/names'
 import type { ConsentState } from '../core/types'
+import type { ConsentMessageOverrides } from '../ui/messages'
 import { useConsent } from './analytics-provider'
 
 type ConsentControllerValue = {
@@ -29,6 +30,9 @@ type ConsentControllerValue = {
   acceptAll: () => Promise<void>
   rejectNonEssential: () => Promise<void>
   savePreferences: () => Promise<void>
+  locale?: string
+  messages?: ConsentMessageOverrides
+  privacyPolicyUrl?: string
 }
 
 const ConsentControllerContext = createContext<
@@ -38,14 +42,20 @@ const ConsentControllerContext = createContext<
 export type ConsentControllerProviderProps = {
   children: ReactNode
   autoShowBanner?: boolean
-  /** Defaults to the configured name (plus the legacy `ACM_openConsent`). */
+  /** Defaults to the configured name (plus `ACM_openConsent` with `names.legacy`). */
   openConsentGlobalKey?: string
+  locale?: string
+  messages?: ConsentMessageOverrides
+  privacyPolicyUrl?: string
 }
 
 export function ConsentControllerProvider({
   children,
   autoShowBanner = true,
   openConsentGlobalKey,
+  locale,
+  messages,
+  privacyPolicyUrl,
 }: ConsentControllerProviderProps) {
   const { engine, consent, setConsent } = useConsent()
   const [ready, setReady] = useState(false)
@@ -135,18 +145,21 @@ export function ConsentControllerProvider({
         }),
       rejectNonEssential: () =>
         applyAndClose({
-          preferences: true,
+          preferences: false,
           analytics: false,
           marketing: false,
         }),
       savePreferences: () =>
         applyAndClose({
-          preferences: true,
+          preferences: prefs.preferences,
           analytics: prefs.analytics,
           marketing: prefs.marketing,
         }),
+      locale,
+      messages,
+      privacyPolicyUrl,
     }),
-    [applyAndClose, bannerVisible, dialogVisible, error, prefs, ready],
+    [applyAndClose, bannerVisible, dialogVisible, error, locale, messages, prefs, privacyPolicyUrl, ready],
   )
 
   return (
@@ -160,7 +173,7 @@ export function useConsentController(): ConsentControllerValue {
   const value = useContext(ConsentControllerContext)
   if (!value) {
     throw new Error(
-      'useConsentController must be used within ConsentControllerProvider',
+      'useConsentController must be used within AnalyticsProvider',
     )
   }
   return value

@@ -1,7 +1,3 @@
-import {
-  createElement,
-  type ComponentPropsWithoutRef,
-} from 'react'
 import { metaUserData, toMetaEvent } from '../core/meta-events'
 import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
 import { assertValidMetaPixelId } from '../core/validation'
@@ -24,8 +20,8 @@ export type MetaOptions = {
   pixelId: string
   locale?: string
   /**
-   * `true` (default): the pixel script loads at boot and is told consent is revoked.
-   * `false`: nothing loads until marketing consent is granted.
+   * `true`: the pixel script loads at boot and is told consent is revoked.
+   * `false` (default): nothing loads until marketing consent is granted.
    */
   loadBeforeConsent?: boolean
 }
@@ -46,7 +42,7 @@ export function meta(options: MetaOptions) {
   return definePlugin({
     id: 'meta',
     requiredConsent: 'marketing',
-    loadBeforeConsent: options.loadBeforeConsent ?? true,
+    loadBeforeConsent: options.loadBeforeConsent ?? false,
     load(loadContext) {
       if (typeof window === 'undefined' || getFlag('MetaPixelInitialized')) return
 
@@ -88,30 +84,4 @@ fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(loadContex
       window.fbq?.(method, name, params, { eventID: event.id })
     },
   })
-}
-
-export function renderMetaPixelNoscriptHtml(pixelId: string): string {
-  return `https://www.facebook.com/tr?id=${encodeURIComponent(pixelId)}&ev=PageView&noscript=1`
-}
-
-export function MetaPixelNoscript(
-  props: {
-    pixelId: string
-    enabled?: boolean
-  } & ComponentPropsWithoutRef<'img'>,
-) {
-  const { pixelId, enabled, ...imageProps } = props
-  if (!enabled) return null
-  return createElement(
-    'noscript',
-    undefined,
-    createElement('img', {
-      ...imageProps,
-      alt: '',
-      height: imageProps.height ?? 1,
-      width: imageProps.width ?? 1,
-      style: { display: 'none', ...imageProps.style },
-      src: renderMetaPixelNoscriptHtml(pixelId),
-    }),
-  )
 }

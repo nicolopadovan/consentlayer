@@ -1,5 +1,11 @@
 export const ANALYTICS_MAX_BODY = 16 * 1024
 
+export async function sha256(input: string | null | undefined): Promise<string | undefined> {
+  if (!input) return undefined
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input))
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
 export function assertSameOrigin(
   request: Request,
   options?: { requireHeader?: boolean },
@@ -7,7 +13,14 @@ export function assertSameOrigin(
   const requestUrl = new URL(request.url)
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')
-  const headerOrigin = origin || (referer ? new URL(referer).origin : null)
+  let headerOrigin = origin
+  if (!headerOrigin && referer) {
+    try {
+      headerOrigin = new URL(referer).origin
+    } catch {
+      throw Object.assign(new Error('Forbidden: malformed referer'), { status: 403 })
+    }
+  }
 
   if (options?.requireHeader && !headerOrigin) {
     throw Object.assign(new Error('Forbidden: missing origin header'), {
@@ -31,9 +44,7 @@ export async function parseJsonWithLimit<T = unknown>(
     throw Object.assign(new Error('Unsupported Media Type'), { status: 415 })
   }
   const reader = request.body?.getReader()
-  if (!reader) {
-    return (await request.json()) as T
-  }
+  if (!reader) throw Object.assign(new Error('Empty body'), { status: 400 })
   let received = 0
   const chunks: Uint8Array[] = []
   while (true) {

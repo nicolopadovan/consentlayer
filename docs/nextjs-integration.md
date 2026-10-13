@@ -119,10 +119,10 @@ export const { register, onRequestError } = sentryInstrumentation({ dsn: process
 
 ```ts
 // next.config.ts
-import { withSentry } from 'consentlayer/sentry/next'
+import { withSentryConfig } from 'consentlayer/sentry/next'
 
-export default withSentry(nextConfig, { silent: true })
+export default withSentryConfig(nextConfig, { silent: true })
 ```
 
-`withSentry` is Sentry's `withSentryConfig`; give it `org`, `project` and
+`withSentryConfig` is re-exported from `@sentry/nextjs`; give it `org`, `project` and
 `authToken` to upload source maps.

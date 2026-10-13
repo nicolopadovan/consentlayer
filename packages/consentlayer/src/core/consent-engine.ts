@@ -47,15 +47,26 @@ export function createConsentEngine(
     if (persist) {
       storage?.write(next)
     }
-    if (applyAdapters) {
-      for (const adapter of adapters) {
-        if (!adapter.apply || adapter === excludeAdapter) continue
-        await Promise.resolve(adapter.apply(next))
-      }
-    }
     broadcastConsent(next, options.broadcast)
     debugLog(options.debug ?? false, 'consent updated', source, next)
     notify()
+    if (!applyAdapters) return
+    await Promise.all(
+      adapters
+        .filter((adapter) => adapter.apply && adapter !== excludeAdapter)
+        .map(async (adapter) => {
+          try {
+            await adapter.apply?.(next)
+          } catch (cause) {
+            options.onError?.({
+              scope: 'consent-adapter',
+              providerId: adapter.id,
+              message: `Consent adapter "${adapter.id}" failed to apply consent`,
+              cause,
+            })
+          }
+        }),
+    )
   }
 
   if (storage?.subscribe) {

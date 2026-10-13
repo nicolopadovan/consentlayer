@@ -1,108 +1,35 @@
 // @vitest-environment node
 
+import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
-import {
-  ANALYTICS_MAX_BODY,
-  assertSameOrigin,
-  createAnalyticsHandler,
-  sendServerEvent,
-  createGa4CollectUrl,
-  createGa4MeasurementPayload,
-  createMetaEventPayload,
-  parseJsonWithLimit,
-  sanitizeMetaCustomData,
-  sha256,
-} from '../src/server'
+import { createAnalyticsHandler, sendServerEvent } from '../src/server'
 import { ga4Server } from '../src/server/ga4'
+import { assertSameOrigin, parseJsonWithLimit } from '../src/server/http'
 import { metaCapi } from '../src/server/meta'
 
-describe('server helpers', () => {
-  it('validates same-origin headers', () => {
-    const allowed = new Request('https://example.com/test', {
-      headers: { origin: 'https://example.com' },
-    })
-    expect(() => assertSameOrigin(allowed, { requireHeader: true })).not.toThrow()
+const sha256 = (input: string) => createHash('sha256').update(input).digest('hex')
 
-    const blocked = new Request('https://example.com/test', {
-      headers: { origin: 'https://evil.com' },
-    })
-    expect(() => assertSameOrigin(blocked, { requireHeader: true })).toThrow(
-      /cross-origin/,
-    )
+describe('request guards', () => {
+  it('validates same-origin headers', () => {
+    const request = (headers: Record<string, string>) => new Request('https://example.com/test', { headers })
+    expect(() => assertSameOrigin(request({ origin: 'https://example.com' }), { requireHeader: true })).not.toThrow()
+    expect(() => assertSameOrigin(request({ origin: 'https://evil.com' }))).toThrow(/cross-origin/)
+    expect(() => assertSameOrigin(request({ referer: 'not a url' }))).toThrow(/malformed referer/)
+    expect(() => assertSameOrigin(request({}), { requireHeader: true })).toThrow(/missing origin/)
   })
 
   it('parses bounded JSON bodies', async () => {
-    const request = new Request('https://example.com/test', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ ok: true }),
-    })
-    await expect(parseJsonWithLimit<{ ok: boolean }>(request, ANALYTICS_MAX_BODY)).resolves.toEqual({
-      ok: true,
-    })
-
-    const oversized = new Request('https://example.com/test', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ blob: 'x'.repeat(32) }),
-    })
-    await expect(parseJsonWithLimit(oversized, 8)).rejects.toThrow(
+    const post = (body?: string) =>
+      new Request('https://example.com/test', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+      })
+    await expect(parseJsonWithLimit(post('{"ok":true}'))).resolves.toEqual({ ok: true })
+    await expect(parseJsonWithLimit(post(JSON.stringify({ blob: 'x'.repeat(32) })), 8)).rejects.toThrow(
       /Payload Too Large/,
     )
-  })
-
-  it('shapes and sanitizes Meta payloads', () => {
-    const payload = createMetaEventPayload({
-      eventName: 'Purchase',
-      eventId: 'evt-1',
-      eventSourceUrl: 'https://example.com',
-      customData: {
-        valid: true,
-        nested: { ok: true },
-        invalid: () => undefined,
-      },
-      user: {
-        email: 'Demo@Example.com',
-        phone: '+39 333 123 4567',
-        external_id: 'user-1',
-      },
-      cookieHeader: '_fbp=fbp123; _fbc=fbc123',
-    })
-
-    expect(payload.data[0].event_id).toBe('evt-1')
-    expect(payload.data[0].custom_data).toEqual({
-      valid: true,
-      nested: { ok: true },
-      currency: 'EUR',
-    })
-    expect(payload.data[0].user_data.em).toBe(sha256('demo@example.com'))
-    expect(payload.data[0].user_data.fbp).toBe('fbp123')
-  })
-
-  it('builds GA4 measurement payloads and urls', () => {
-    expect(
-      createGa4MeasurementPayload({
-        clientId: 'client-1',
-        userId: 'user-1',
-        eventName: 'purchase',
-        params: { value: 42 },
-      }),
-    ).toEqual({
-      client_id: 'client-1',
-      user_id: 'user-1',
-      events: [{ name: 'purchase', params: { value: 42 } }],
-    })
-
-    expect(
-      createGa4CollectUrl({
-        measurementId: 'G-123',
-        apiSecret: 'secret',
-      }),
-    ).toContain('measurement_id=G-123')
-    expect(sanitizeMetaCustomData({ value: 99 }, { currency: 'EUR' })).toEqual({
-      value: 99,
-      currency: 'EUR',
-    })
+    await expect(parseJsonWithLimit(post())).rejects.toMatchObject({ status: 400 })
   })
 })
 
@@ -130,17 +57,20 @@ describe('server destinations', () => {
           name: 'page_view',
           url: 'https://shop.example/p',
           consent: granted,
+          params: { value: 3, kept: { ok: true } },
           identity: { email: 'Ada@Example.com', userId: 'u1' },
         },
         { cookie: '_fbp=fb.1.1.2; _ga=GA1.1.3.4', 'user-agent': 'UA', 'x-forwarded-for': '1.2.3.4, 5.6.7.8' },
       ),
     )
     expect(response.status).toBe(204)
+    expect(fetchImpl.mock.calls[0]?.[0]).toContain('graph.facebook.com/v26.0/123456789012345/events')
     const [event] = sentBody(fetchImpl).data as unknown[]
     expect(event).toMatchObject({
       event_name: 'PageView',
       event_id: 'evt-1',
       event_source_url: 'https://shop.example/p',
+      custom_data: { value: 3, kept: { ok: true } },
       user_data: {
         client_ip_address: '1.2.3.4',
         client_user_agent: 'UA',
@@ -161,6 +91,15 @@ describe('server destinations', () => {
     expect(
       (await POST(post({ name: 'x', consent: { ...granted, marketing: false } }))).status,
     ).toBe(204)
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
+  it('never forwards browser events to server-only destinations', async () => {
+    const fetchImpl = okFetch()
+    const ga = ga4Server({ measurementId: 'G-ABC123', apiSecret: 's', fetchImpl })
+    // @ts-expect-error server-only destinations are rejected by the types too
+    const POST = createAnalyticsHandler({ destinations: [ga] })
+    expect((await POST(post({ name: 'x', consent: granted, clientId: 'c.1' }))).status).toBe(204)
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 

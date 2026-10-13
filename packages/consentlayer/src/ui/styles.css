@@ -138,7 +138,7 @@
 
 :is(.cl-dialog__option, .acm-dialog__option) {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   font-size: 0.95rem;
   cursor: pointer;
@@ -150,9 +150,27 @@
 }
 
 :is(.cl-dialog__checkbox, .acm-dialog__checkbox) {
+  flex: none;
   width: 16px;
   height: 16px;
+  margin: 2px 0 0;
   accent-color: var(--_cl-accent);
+}
+
+:is(.cl-dialog__option-text, .acm-dialog__option-text) {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+:is(.cl-dialog__option-description, .acm-dialog__option-description) {
+  font-size: 0.85rem;
+  color: var(--_cl-muted);
+}
+
+:is(.cl-banner__link, .acm-banner__link, .cl-dialog__link, .acm-dialog__link) {
+  color: inherit;
+  text-decoration: underline;
 }
 
 :is(.cl-dialog__actions, .acm-dialog__actions) {

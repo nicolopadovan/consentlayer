@@ -97,13 +97,38 @@ If you need deeper control, target the classes directly:
 
 | Component | Root class | Notable child classes |
 |---|---|---|
-| `CookieBanner` | `.cl-banner` | `.cl-banner__title`, `.cl-banner__description`, `.cl-banner__error`, `.cl-banner__actions`, `.cl-banner__button`, `.cl-banner__button--primary`, `.cl-banner__button--secondary` |
-| `CookieDialog` | `.cl-dialog` | `.cl-dialog__title`, `.cl-dialog__option`, `.cl-dialog__checkbox`, `.cl-dialog__actions`, `.cl-dialog__button`, `.cl-dialog__button--primary` |
+| `CookieBanner` | `.cl-banner` | `.cl-banner__title`, `.cl-banner__description`, `.cl-banner__link`, `.cl-banner__error`, `.cl-banner__actions`, `.cl-banner__button`, `.cl-banner__button--primary`, `.cl-banner__button--secondary` |
+| `CookieDialog` | `.cl-dialog` | `.cl-dialog__title`, `.cl-dialog__option`, `.cl-dialog__checkbox`, `.cl-dialog__option-label`, `.cl-dialog__option-description`, `.cl-dialog__link`, `.cl-dialog__actions`, `.cl-dialog__button`, `.cl-dialog__button--primary` |
 | `ManageConsentTrigger` | `.cl-manage-trigger` | — |
 
 Pre-rc.2 names (`--acm-*` variables, `.acm-*` classes) still work: the
 components emit both classes and the stylesheet matches both. Pass
 `configureNames({ classPrefix })` to change the emitted class prefix.
+
+## UI Language
+
+The components ship English and Italian. The language is the first of:
+
+1. `<AnalyticsProvider locale="it">`
+2. `createAnalytics({ locale })`; `createEnvConfig` reads it from `NEXT_PUBLIC_ANALYTICS_LOCALE`
+3. `<html lang>`
+4. English
+
+`it-CH` uses `it`. Any string can be replaced, and any language added, with
+`messages`; missing strings fall back to the built-in text, then English:
+
+```tsx
+<AnalyticsProvider
+  analytics={analytics}
+  privacyPolicyUrl="/privacy"
+  messages={{
+    it: { acceptAll: 'Va bene' },
+    de: { acceptAll: 'Alle akzeptieren', rejectNonEssential: 'Nur notwendige' },
+  }}
+>
+```
+
+The keys are in the exported `ConsentMessages` type.
 
 ## Names
 
@@ -130,14 +155,14 @@ createAnalytics({
     prefix: 'shop',                     // shop_consent, shop:consent, SHOP_CONSENT, …
     consentStorageKey: 'my_consent',    // any single name can be overridden
     classPrefix: 'shop',                // .shop-banner, .shop-dialog, …
-    legacy: false,                      // drop the acm_* compatibility below
+    legacy: true,                       // also read and write the acm_* names below
   },
 })
 ```
 
 ### Migrating from `acm_*`
 
-Until 1.0.0-rc.1 the prefix was `acm`. While `legacy` is on (the default):
+Until 1.0.0-rc.1 the prefix was `acm`. With `legacy: true`:
 
 - a stored `acm_consent` / `acm_user_identity` value is moved to the new key on first read;
 - `acm:consent` is dispatched and `ACM_CONSENT` / `ACM_openConsent` are set alongside the new names;

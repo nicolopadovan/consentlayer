@@ -1,27 +1,3 @@
-import { getNames } from './names'
-
-/** Live view of the names set with `configureNames()`. */
-export const defaultRuntimePreset = {
-  get consentStorageKey() {
-    return getNames().consentStorageKey
-  },
-  get identityStorageKey() {
-    return getNames().identityStorageKey
-  },
-  get consentEventName() {
-    return getNames().consentEventName
-  },
-  get consentGlobalKey() {
-    return getNames().consentGlobalKey
-  },
-  get openConsentGlobalKey() {
-    return getNames().openConsentGlobalKey
-  },
-  get autoTrackingEvents() {
-    return getNames().autoTrackingEvents
-  },
-}
-
 export type EnvConfigInput = Record<string, string | undefined>
 
 export function createEnvConfig(env: EnvConfigInput) {
@@ -36,6 +12,7 @@ export function createEnvConfig(env: EnvConfigInput) {
       env.NODE_ENV === 'production' ||
       env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
     debug: env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true',
+    locale: env.NEXT_PUBLIC_ANALYTICS_LOCALE || undefined,
     ga4: {
       measurementId: env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,
     },

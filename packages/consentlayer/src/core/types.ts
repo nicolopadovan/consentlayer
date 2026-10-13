@@ -63,6 +63,7 @@ export type ConsentEngineOptions = {
   initialConsent?: ConsentState | null
   broadcast?: ConsentBroadcastConfig
   debug?: boolean
+  onError?: AnalyticsErrorHandler
 }
 
 export type ConsentEngineSnapshot = {
@@ -70,11 +71,11 @@ export type ConsentEngineSnapshot = {
 }
 
 export interface ConsentEngine {
-  bootstrap(): Promise<ConsentState | null>
-  getConsent(): ConsentState | null
-  setConsent(consent: ConsentState, source?: ConsentChangeSource): Promise<void>
-  subscribe(listener: (snapshot: ConsentEngineSnapshot) => void): () => void
-  destroy(): void
+  bootstrap: () => Promise<ConsentState | null>
+  getConsent: () => ConsentState | null
+  setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>
+  subscribe: (listener: (snapshot: ConsentEngineSnapshot) => void) => () => void
+  destroy: () => void
 }
 
 export type LazyBootMode = 'immediate' | 'idle' | 'manual'
@@ -197,6 +198,7 @@ export type AnalyticsErrorScope =
   | 'provider-teardown'
   | 'provider-script-load'
   | 'server-forward'
+  | 'consent-adapter'
 
 export type AnalyticsError = {
   scope: AnalyticsErrorScope
@@ -214,7 +216,6 @@ export type AnalyticsManagerOptions = {
   identityStorage?: IdentityStorageAdapter
   enabled?: boolean | (() => boolean)
   debug?: boolean
-  lazy?: LazyBootConfig
   /** Starts once analytics consent is granted. `true` turns everything on; off by default. */
   autoTracking?: AutoTrackingConfig | boolean
   onError?: AnalyticsErrorHandler
@@ -329,7 +330,7 @@ export interface AnalyticsManager {
   destroy: () => void
 }
 
-export type ConsentApi = ConsentEngine & {
+export type ConsentApi = Omit<ConsentEngine, 'destroy'> & {
   /** Merges into the current consent; categories left out stay as they are (denied if unset). */
   update(partial: Partial<ConsentState>): Promise<void>
 }
@@ -339,4 +340,6 @@ export type Analytics = Omit<
   'updateConsent' | 'getConsent' | 'enableAutoTracking'
 > & {
   consent: ConsentApi
+  /** Default consent UI language passed to `createAnalytics`. */
+  locale?: string
 }

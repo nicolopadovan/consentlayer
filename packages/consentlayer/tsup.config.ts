@@ -1,4 +1,4 @@
-import { copyFile, mkdir } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { defineConfig } from 'tsup'
 
@@ -33,5 +33,9 @@ export default defineConfig({
     const target = path.resolve('dist/ui/styles.css')
     await mkdir(path.dirname(target), { recursive: true })
     await copyFile(path.resolve('src/ui/styles.css'), target)
+    // esbuild drops module directives; prepended on line 1 so the sourcemaps stay aligned.
+    for (const entry of ['dist/react/index.js', 'dist/ui/index.js']) {
+      await writeFile(entry, `'use client';${await readFile(entry, 'utf8')}`)
+    }
   },
 })

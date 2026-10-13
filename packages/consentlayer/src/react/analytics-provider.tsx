@@ -16,6 +16,7 @@ import type {
   LazyBootConfig,
   PageViewPayload,
 } from '../core/types'
+import type { ConsentMessageOverrides } from '../ui/messages'
 import { ConsentControllerProvider } from './consent-controller'
 
 type AnalyticsContextValue = {
@@ -34,8 +35,14 @@ export type AnalyticsProviderProps = {
   /** When providers load. Defaults to `{ mode: 'immediate' }`. */
   boot?: LazyBootConfig
   autoShowBanner?: boolean
-  /** Defaults to the configured name (plus the legacy `ACM_openConsent`). */
+  /** Defaults to the configured name (plus `ACM_openConsent` with `names.legacy`). */
   openConsentGlobalKey?: string
+  /** Consent UI language. Falls back to `createAnalytics({ locale })`, then `<html lang>`, then English. */
+  locale?: string
+  /** Overrides for any consent UI string, keyed by locale. */
+  messages?: ConsentMessageOverrides
+  /** Adds a privacy policy link to the banner and dialog. */
+  privacyPolicyUrl?: string
 }
 
 function scheduleBoot(
@@ -70,6 +77,9 @@ export function AnalyticsProvider({
   boot,
   autoShowBanner,
   openConsentGlobalKey,
+  locale,
+  messages,
+  privacyPolicyUrl,
 }: AnalyticsProviderProps) {
   const consent = useSyncExternalStore(
     (listener) => analytics.consent.subscribe(listener),
@@ -118,6 +128,9 @@ export function AnalyticsProvider({
       <ConsentControllerProvider
         autoShowBanner={autoShowBanner}
         openConsentGlobalKey={openConsentGlobalKey}
+        locale={locale}
+        messages={messages}
+        privacyPolicyUrl={privacyPolicyUrl}
       >
         {children}
       </ConsentControllerProvider>

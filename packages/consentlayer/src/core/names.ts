@@ -44,10 +44,10 @@ function derive(prefix: string, classPrefix: string, legacy: boolean): Names {
   }
 }
 
-/** Names used before 1.0.0-rc.2. Still read and written while `legacy` is on. */
+/** Names used before 1.0.0-rc.2. Read and written too when `legacy` is on. */
 export const legacyNames: Names = derive('acm', 'acm', false)
 
-let current = derive(DEFAULT_PREFIX, DEFAULT_CLASS_PREFIX, true)
+let current = derive(DEFAULT_PREFIX, DEFAULT_CLASS_PREFIX, false)
 
 /**
  * Sets every storage key, global, DOM event, auto-tracking event name and CSS
@@ -59,7 +59,7 @@ export function configureNames(input: NamesInput = {}): Names {
   const base = derive(
     input.prefix ?? DEFAULT_PREFIX,
     input.classPrefix ?? DEFAULT_CLASS_PREFIX,
-    input.legacy ?? true,
+    input.legacy ?? false,
   )
   const overrides = Object.fromEntries(
     Object.entries(input).filter(([, value]) => value !== undefined),

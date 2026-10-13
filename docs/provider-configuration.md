@@ -6,7 +6,6 @@
 | --- | --- | --- | --- | --- |
 | GA4 | `ga4` | `analytics` | `measurementId` | Initializes Google Consent Mode with denied defaults, then updates on consent changes |
 | Meta Pixel | `meta` | `marketing` | `pixelId` | Browser pixel; add CAPI with `metaCapi` on the server ([server-side tracking](./server-side-tracking.md)) |
-| Shopify analytics | `shopify` | `analytics` | optional script URLs | Queues page/event payloads for Shopify browser analytics |
 | Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter` | consent source | optional headless storefront config | Bootstraps and syncs consent state |
 | Hotjar | `hotjar` | `analytics` | `siteId`, `version`, `reloadOnRevoke` | Loads only after analytics consent; on withdrawal its cookies and storage are deleted, but its script keeps running and recreates them until the page reloads; set `reloadOnRevoke` to reload and stop it |
 | TikTok consent bridge | `tiktok` | `marketing` | `ttq` loaded by consumer | Consent sync only; no SDK bootstrap in package |
@@ -79,6 +78,7 @@ and delivered after the SDK loads.
 
 - `NEXT_PUBLIC_ENABLE_ANALYTICS`
 - `NEXT_PUBLIC_ANALYTICS_DEBUG`
+- `NEXT_PUBLIC_ANALYTICS_LOCALE` (consent UI language)
 - `NEXT_PUBLIC_GA4_MEASUREMENT_ID`
 - `NEXT_PUBLIC_HOTJAR_SITE_ID`
 - `NEXT_PUBLIC_HOTJAR_VERSION`
@@ -110,16 +110,16 @@ The package default runtime preset uses:
 - `CONSENTLAYER_openConsent`
 
 Change them with `configureNames()`; see "Names" in the README. The pre-rc.2
-`acm_*` names are still read, migrated and broadcast unless `legacy: false`.
+`acm_*` names are read, migrated and broadcast too with `legacy: true`.
 
 ## Loading Before Consent
 
-GA4 and Meta load their scripts at boot by default, with consent denied
-(Consent Mode / `fbq('consent', 'revoke')`), and only send data once the
-category is granted. Fetching the script still sends the visitor's IP to
-Google or Meta. To load nothing until consent:
+GA4 and Meta load nothing until their category is granted. To load them at
+boot with consent denied (Consent Mode / `fbq('consent', 'revoke')`), which
+keeps Google's cookieless pings and modelling but sends the visitor's IP to
+Google or Meta before consent:
 
 ```ts
-ga4({ measurementId, loadBeforeConsent: false })
-meta({ pixelId, loadBeforeConsent: false })
+ga4({ measurementId, loadBeforeConsent: true })
+meta({ pixelId, loadBeforeConsent: true })
 ```

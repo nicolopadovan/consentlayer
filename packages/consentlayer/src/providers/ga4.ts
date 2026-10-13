@@ -4,7 +4,7 @@ import { assertValidGa4MeasurementId } from '../core/validation'
 
 declare global {
   interface Window {
-    dataLayer?: Array<Record<string, unknown>>
+    dataLayer?: unknown[]
     gtag?: (...args: unknown[]) => void
   }
 }
@@ -12,8 +12,8 @@ declare global {
 export type Ga4Options = {
   measurementId: string
   /**
-   * `true` (default): gtag.js loads at boot with Consent Mode set to denied.
-   * `false`: nothing loads until analytics consent is granted.
+   * `true`: gtag.js loads at boot with Consent Mode set to denied.
+   * `false` (default): nothing loads until analytics consent is granted.
    */
   loadBeforeConsent?: boolean
 }
@@ -41,15 +41,17 @@ export function ga4(options: Ga4Options) {
   return definePlugin({
     id: 'ga4',
     requiredConsent: 'analytics',
-    loadBeforeConsent: options.loadBeforeConsent ?? true,
+    loadBeforeConsent: options.loadBeforeConsent ?? false,
     setup() {
       if (typeof window === 'undefined') return
       window.dataLayer = window.dataLayer ?? []
+      // gtag.js only executes dataLayer entries that are real `arguments` objects.
       window.gtag =
         window.gtag ??
-        ((...args: unknown[]) => {
-          window.dataLayer?.push({ args })
-        })
+        function gtag() {
+          // eslint-disable-next-line prefer-rest-params
+          window.dataLayer?.push(arguments)
+        }
       gtag('consent', 'default', {
         ad_user_data: 'denied',
         ad_personalization: 'denied',

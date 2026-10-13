@@ -33,7 +33,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify package
-        run: pnpm turbo run typecheck lint test build --filter consentlayer
+        run: |
+          pnpm turbo run typecheck lint test build --filter consentlayer
+          pnpm --filter consentlayer check:package
 
       # npm (not pnpm) publishes, so npm's trusted publishing (OIDC) applies: no token.
       - name: Publish package

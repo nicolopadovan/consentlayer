@@ -112,10 +112,7 @@ const myDestination: ServerDestination<true> = {
 }
 ```
 
-## Low-level helpers
+## Runtime
 
-Still exported for custom routes: `ANALYTICS_MAX_BODY`, `assertSameOrigin`,
-`parseCookieHeader`, `parseJsonWithLimit`, `requestInfo`,
-`createMetaEventPayload`, `createMetaGraphUrl`, `extractMetaCookies`,
-`sanitizeMetaCustomData`, `sendMetaCapiEvent`, `sha256`,
-`createGa4MeasurementPayload`, `createGa4CollectUrl`, `sendGa4MeasurementEvent`.
+The server entries use only `fetch`, `Request`/`Response` and WebCrypto, so
+they run on Node 20+, the Next.js edge runtime and Workers alike.

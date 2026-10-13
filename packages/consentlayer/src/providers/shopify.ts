@@ -2,13 +2,6 @@ import type {
   ConsentIntegrationAdapter,
   ConsentState,
 } from '../core/types'
-import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
-
-type ShopifyAnalyticsQueue = Array<{
-  type: string
-  name?: string
-  params?: Record<string, unknown>
-}>
 
 declare global {
   interface Window {
@@ -46,10 +39,6 @@ type ShopifyCustomerPrivacy = {
   }
 }
 
-export type ShopifyOptions = {
-  scriptUrls?: string[]
-}
-
 export type ShopifyCustomerPrivacyAdapterOptions = {
   canBootstrap?: () => boolean
   headlessStorefront?: {
@@ -76,13 +65,6 @@ function coerceShopifyConsent(value: unknown, fallback = false): boolean {
   return fallback
 }
 
-function ensureQueue(): ShopifyAnalyticsQueue {
-  return setFlag(
-    'ShopifyAnalyticsQueue',
-    getFlag<ShopifyAnalyticsQueue>('ShopifyAnalyticsQueue') ?? [],
-  )
-}
-
 async function ensureCustomerPrivacyFeature(
   win: Window,
   loadFeature: boolean,
@@ -93,55 +75,6 @@ async function ensureCustomerPrivacyFeature(
       [{ name: 'consent-tracking-api', version: '0.1' }],
       () => resolve(),
     )
-  })
-}
-
-export function shopify(options: ShopifyOptions = {}) {
-  return definePlugin({
-    id: 'shopify',
-    requiredConsent: 'analytics',
-    setup() {
-      ensureQueue()
-    },
-    load() {
-      if (typeof window === 'undefined' || getFlag('ShopifyAnalyticsInitialized')) return
-      ensureQueue()
-      const urls =
-        options.scriptUrls ??
-        [
-          'https://cdn.shopify.com/shopifycloud/web-pixels-manager/v1/latest/browser.min.js',
-          'https://cdn.shopify.com/shopifycloud/web-pixels-manager/v1/browser.js',
-        ]
-      void (async () => {
-        for (const url of urls) {
-          try {
-            await loadScript(url)
-            break
-          } catch {
-            continue
-          }
-        }
-      })()
-      setFlag('ShopifyAnalyticsInitialized', true)
-    },
-    page(page) {
-      if (typeof window === 'undefined') return
-      ensureQueue().push({
-        type: 'page_view',
-        params: {
-          path: page.path ?? window.location.pathname,
-          url: page.url ?? window.location.href,
-        },
-      })
-    },
-    track(event) {
-      if (typeof window === 'undefined') return
-      ensureQueue().push({
-        type: 'event',
-        name: event.name,
-        params: event.params,
-      })
-    },
   })
 }
 

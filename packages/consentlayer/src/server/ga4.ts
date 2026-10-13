@@ -1,61 +1,9 @@
 import { ga4EventName } from '../providers/ga4'
 import type { ServerDestination } from './handler'
-import { sha256 } from './meta'
+import { sha256 } from './http'
 
-export type Ga4MeasurementEventInput = {
-  clientId?: string
-  userId?: string
-  eventName?: string
-  params?: Record<string, unknown>
-}
-
-export function createGa4MeasurementPayload(
-  input: Ga4MeasurementEventInput,
-) {
-  return {
-    client_id: input.clientId ?? '555.555',
-    user_id: input.userId,
-    events: [
-      {
-        name: input.eventName ?? 'page_view',
-        params: input.params ?? {},
-      },
-    ],
-  }
-}
-
-export function createGa4CollectUrl(input: {
-  measurementId: string
-  apiSecret: string
-}): string {
-  const url = new URL('https://www.google-analytics.com/mp/collect')
-  url.searchParams.set('measurement_id', input.measurementId)
-  url.searchParams.set('api_secret', input.apiSecret)
-  return url.toString()
-}
-
-export async function sendGa4MeasurementEvent(input: {
-  measurementId: string
-  apiSecret: string
-  payload: ReturnType<typeof createGa4MeasurementPayload>
-  fetchImpl?: typeof fetch
-}) {
-  const fetchImpl = input.fetchImpl ?? globalThis.fetch
-  if (!fetchImpl) {
-    throw new Error('fetch is required to send GA4 measurement events')
-  }
-  return fetchImpl(
-    createGa4CollectUrl({
-      measurementId: input.measurementId,
-      apiSecret: input.apiSecret,
-    }),
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input.payload),
-    },
-  )
-}
+const collectUrl = (measurementId: string, apiSecret: string) =>
+  `https://www.google-analytics.com/mp/collect?${new URLSearchParams({ measurement_id: measurementId, api_secret: apiSecret })}`
 
 /** `GA1.1.123.456` → `123.456` */
 function clientIdFromCookie(cookie: string | undefined): string | undefined {
@@ -88,12 +36,12 @@ export function ga4Server(options: {
       const userData = marketing
         ? Object.fromEntries(
             Object.entries({
-              sha256_email_address: sha256(email),
-              sha256_phone_number: sha256(phone && (phone.startsWith('+') ? phone : `+${phone}`)),
+              sha256_email_address: await sha256(email),
+              sha256_phone_number: await sha256(phone && (phone.startsWith('+') ? phone : `+${phone}`)),
             }).filter(([, value]) => value),
           )
         : {}
-      const response = await fetchImpl(createGa4CollectUrl(options), {
+      const response = await fetchImpl(collectUrl(options.measurementId, options.apiSecret), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

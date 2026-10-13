@@ -20,6 +20,8 @@ export type AnalyticsOptions = Omit<
   consent?: Omit<ConsentEngineOptions, 'debug'>
   /** Renames storage keys, globals, DOM events and CSS classes. */
   names?: NamesInput
+  /** Default consent UI language, e.g. from `NEXT_PUBLIC_ANALYTICS_LOCALE`. `<AnalyticsProvider locale>` wins over it. */
+  locale?: string
 }
 
 const DENIED: ConsentState = {
@@ -29,7 +31,7 @@ const DENIED: ConsentState = {
 }
 
 export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
-  const { consent: consentOptions, names, ...managerOptions } = options
+  const { consent: consentOptions, names, locale, ...managerOptions } = options
   if (names) configureNames(names)
 
   const engine = createConsentEngine({
@@ -40,6 +42,7 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     },
     ...consentOptions,
     debug: options.debug,
+    onError: options.onError,
   })
   const manager = createAnalyticsManager({
     identityStorage: createLocalStorageIdentityStorage({
@@ -50,6 +53,7 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
   })
 
   return {
+    locale,
     boot: manager.boot,
     registerProvider: manager.registerProvider,
     page: manager.page,
@@ -62,7 +66,10 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     getSnapshot: manager.getSnapshot,
     subscribe: manager.subscribe,
     consent: {
-      ...engine,
+      bootstrap: engine.bootstrap,
+      getConsent: engine.getConsent,
+      setConsent: engine.setConsent,
+      subscribe: engine.subscribe,
       async update(partial) {
         await engine.bootstrap()
         await engine.setConsent({ ...DENIED, ...engine.getConsent(), ...partial })

@@ -93,6 +93,8 @@ describe('createAnalytics', () => {
   it('drops the previous user\'s email when a different user is identified', async () => {
     const analytics = createAnalytics()
     await analytics.identify('alice', { email: 'alice@example.com' })
+    expect(localStorage.getItem('consentlayer_user_identity')).toBeNull()
+    await analytics.consent.update(granted)
     await analytics.identify('bob', { plan: 'pro' })
     expect(JSON.parse(localStorage.getItem('consentlayer_user_identity') ?? '{}')).toEqual({ userId: 'bob' })
     analytics.destroy()
@@ -162,12 +164,13 @@ describe('createAnalytics', () => {
     await analytics.boot()
     await analytics.identify(undefined, { email: 'a@example.com' })
     await analytics.consent.update({ analytics: false, marketing: false })
-    await waitFor(() => expect(ga4.identify).toHaveBeenLastCalledWith({}, {}, expect.anything()))
+    await waitFor(() => expect(ga4.reset).toHaveBeenCalledTimes(1))
+    expect(ga4.identify).toHaveBeenCalledTimes(1)
     analytics.destroy()
   })
 
   it('discards stored email when stored consent has no marketing', async () => {
-    localStorage.setItem('acm_user_identity', JSON.stringify({ userId: 'u1', email: 'a@example.com' }))
+    localStorage.setItem('consentlayer_user_identity', JSON.stringify({ userId: 'u1', email: 'a@example.com' }))
     localStorage.setItem('consentlayer_consent', JSON.stringify({ ...granted, marketing: false }))
     const ga4 = spyProvider('ga4')
     const analytics = createAnalytics({ providers: [ga4] })
@@ -177,7 +180,6 @@ describe('createAnalytics', () => {
     await waitFor(() => expect(analytics.consent.getConsent()?.marketing).toBe(true))
     expect(ga4.identify.mock.calls.flat()).not.toContainEqual(expect.objectContaining({ email: 'a@example.com' }))
     expect(localStorage.getItem('consentlayer_user_identity')).not.toContain('a@example.com')
-    expect(localStorage.getItem('acm_user_identity')).toBeNull()
     analytics.destroy()
   })
 
@@ -421,5 +423,60 @@ describe('errors in React', () => {
     ])
     expect(screen.getByText('Try again')).toBeTruthy()
     quiet.mockRestore()
+  })
+})
+
+describe('withdrawal and failure paths', () => {
+  it('stops providers even when a consent adapter throws, and reports it', async () => {
+    const onError = vi.fn()
+    const ga4 = { ...spyProvider('ga4'), teardown: vi.fn() }
+    const analytics = createAnalytics({
+      providers: [ga4],
+      onError,
+      consent: { adapters: [{ id: 'cmp', apply: () => Promise.reject(new Error('down')) }] },
+    })
+    await analytics.consent.update(granted)
+    await analytics.boot()
+    await analytics.consent.update({ analytics: false, marketing: false })
+    await waitFor(() => expect(ga4.teardown).toHaveBeenCalledTimes(1))
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'consent-adapter', providerId: 'cmp' }))
+    analytics.destroy()
+  })
+
+  it('works when localStorage throws', async () => {
+    const blocked = vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('blocked', 'SecurityError')
+    })
+    const analytics = createAnalytics()
+    await analytics.consent.update(granted)
+    await analytics.identify('u1')
+    expect(analytics.consent.getConsent()).toEqual(granted)
+    analytics.destroy()
+    blocked.mockRestore()
+  })
+
+  it('stops auto-tracking events once analytics is withdrawn', async () => {
+    const cookieless = spyProvider('cookieless', 'none')
+    const analytics = createAnalytics({ providers: [cookieless], autoTracking: { scroll: false, timeOnPage: false, pageViews: false } })
+    await analytics.consent.update(granted)
+    await analytics.boot()
+    const button = document.body.appendChild(document.createElement('button'))
+    button.click()
+    await waitFor(() => expect(cookieless.track).toHaveBeenCalledTimes(1))
+    await analytics.consent.update({ analytics: false })
+    button.click()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(cookieless.track).toHaveBeenCalledTimes(1)
+    button.remove()
+    analytics.destroy()
+  })
+
+  it('runs plugin teardown on destroy', async () => {
+    const ga4 = { ...spyProvider('ga4'), teardown: vi.fn() }
+    const analytics = createAnalytics({ providers: [ga4] })
+    await analytics.consent.update(granted)
+    await analytics.boot()
+    analytics.destroy()
+    expect(ga4.teardown).toHaveBeenCalledTimes(1)
   })
 })

@@ -9,10 +9,34 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
 
 ### Breaking
+- "Reject non-essential" now stores `preferences: false`; it used to grant
+  preferences. `CookieDialog` gains a Preferences toggle, and Save stores it.
+- `names.legacy` defaults to `false`: the `acm_*` names are no longer read or
+  written unless you pass `names: { legacy: true }`.
+- `ga4()` and `meta()` default to `loadBeforeConsent: false`: no script loads
+  until the category is granted.
+- Removed from the root entry: the validators (`isValid*`, `assertValid*`,
+  `*HttpsOrRelativeUrl`), `legacyNames`, `defaultRuntimePreset` (use `getNames()`)
+  and the `ConsentEngine`, `ConsentEngineOptions`, `AnalyticsManager` and
+  `AnalyticsManagerOptions` types. `analytics.consent.destroy` is gone; call
+  `analytics.destroy()`.
+- `/server` keeps only `createAnalyticsHandler`, `sendServerEvent` and their
+  types; `/server/meta` and `/server/ga4` keep only `metaCapi` and `ga4Server`.
+  The low-level helpers (`createMetaEventPayload`, `sendMetaCapiEvent`, `sha256`,
+  `assertSameOrigin`, `parseJsonWithLimit`, the GA4 Measurement Protocol helpers…)
+  are gone. Hashing uses WebCrypto, so the server entries run on the edge runtime.
+- `metaCapi` defaults to Graph API v26.0 (v18.0 was retired by Meta) and takes
+  `apiVersion`.
+- Removed the `shopify()` plugin: its events went to a queue no Shopify script
+  reads. `createShopifyCustomerPrivacyAdapter` stays.
+- `MetaPixelNoscript` moved from `consentlayer/providers/meta` to
+  `consentlayer/react`, so the Meta provider no longer imports React;
+  `renderMetaPixelNoscriptHtml` is removed.
+- `consentlayer/sentry/next` exports `withSentryConfig` instead of `withSentry`.
 - Renamed from `@nicolopadovan/analytics-consent-manager` (GitHub Packages) to
   `consentlayer` on npmjs.com. Default names use `consentlayer` (`consentlayer_consent`,
   `consentlayer:consent`, `CONSENTLAYER_CONSENT`, `consentlayer.*` auto-tracking
-  events) and `cl` for CSS (`.cl-*`, `--cl-*`); the `acm` names are still read.
+  events) and `cl` for CSS (`.cl-*`, `--cl-*`).
 - One instance replaces the module singletons: `createAnalytics({ providers, consent, autoTracking, names })`
   returns `track`, `page`, `identify`, `reset`, `group`, `consent.update` and friends.
   Removed `createAnalyticsManager`, `createConsentEngine`, the default runtime
@@ -41,6 +65,11 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- Consent UI localization: English and Italian built in, picked from
+  `<AnalyticsProvider locale>`, then `createAnalytics({ locale })` (fed by
+  `NEXT_PUBLIC_ANALYTICS_LOCALE` through `createEnvConfig`), then `<html lang>`.
+  `messages` overrides any string for any locale; `privacyPolicyUrl` adds a
+  policy link. The dialog describes each category.
 - `definePlugin`, `loadScript`, `getFlag` / `setFlag` for plugin authors, and
   `checkPlugin()` in `/testing`, which every built-in passes. The manager runs
   `setup` → `consent` → `load` (once) and `teardown` on withdrawal.

@@ -1,7 +1,7 @@
 import {
   createEnvConfig,
 } from 'consentlayer'
-import { MetaPixelNoscript } from 'consentlayer/providers/meta'
+import { MetaPixelNoscript } from 'consentlayer/react'
 import { getShopifyCustomerPrivacyScriptUrl } from 'consentlayer/providers/shopify'
 import Script from 'next/script'
 import { Suspense, type ReactNode } from 'react'

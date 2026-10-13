@@ -3,18 +3,16 @@ import type { AnalyticsPlugin } from '../src/core/types'
 import { ga4 } from '../src/providers/ga4'
 import { hotjar } from '../src/providers/hotjar'
 import { meta } from '../src/providers/meta'
-import { shopify } from '../src/providers/shopify'
 import { tiktok } from '../src/providers/tiktok'
 import { vercel } from '../src/providers/vercel'
 import { checkPlugin } from '../src/testing'
 
 const plugins: Record<string, () => AnalyticsPlugin> = {
   ga4: () => ga4({ measurementId: 'G-ABC123' }),
-  'ga4 without loadBeforeConsent': () => ga4({ measurementId: 'G-ABC123', loadBeforeConsent: false }),
+  'ga4 with loadBeforeConsent': () => ga4({ measurementId: 'G-ABC123', loadBeforeConsent: true }),
   meta: () => meta({ pixelId: '123456789012345' }),
-  'meta without loadBeforeConsent': () => meta({ pixelId: '123456789012345', loadBeforeConsent: false }),
+  'meta with loadBeforeConsent': () => meta({ pixelId: '123456789012345', loadBeforeConsent: true }),
   hotjar: () => hotjar({ siteId: 1, version: 6 }),
-  shopify: () => shopify(),
   tiktok: () => tiktok(),
   vercel: () => vercel({ trackEvent: () => undefined }),
 }

@@ -19,7 +19,7 @@ dependencies, so nothing is pulled in for providers you don't use:
 - `consentlayer`
 - `consentlayer/react`
 - `consentlayer/ui` (plus `consentlayer/ui/styles.css`)
-- `consentlayer/server` (plus `/server/ga4`, `/server/meta`)
+- `consentlayer/server` (plus `/server/ga4` for `ga4Server`, `/server/meta` for `metaCapi`)
 - `consentlayer/ecommerce`
 - `consentlayer/testing`
 - `consentlayer/providers/*`

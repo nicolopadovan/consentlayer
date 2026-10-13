@@ -3,6 +3,7 @@
 import type { ComponentPropsWithoutRef } from 'react'
 import { getNames, ui } from '../core/names'
 import { useConsentController } from '../react/consent-controller'
+import { useConsentMessages } from './messages'
 
 function cx(...values: Array<string | undefined>): string {
   return values.filter(Boolean).join(' ')
@@ -19,6 +20,7 @@ export function CookieBanner(
     rejectNonEssential,
     openDialog,
   } = useConsentController()
+  const { messages, privacyPolicyUrl } = useConsentMessages()
 
   if (!ready || !bannerVisible) return null
 
@@ -33,11 +35,18 @@ export function CookieBanner(
       aria-labelledby={`${getNames().classPrefix}-cookie-banner-title`}
     >
       <h2 id={`${getNames().classPrefix}-cookie-banner-title`} className={ui('banner__title')}>
-        Cookie preferences
+        {messages.bannerTitle}
       </h2>
       <p className={ui('banner__description')}>
-        We use cookies for essential functionality and, with consent, for
-        analytics and marketing.
+        {messages.bannerDescription}
+        {privacyPolicyUrl ? (
+          <>
+            {' '}
+            <a className={ui('banner__link')} href={privacyPolicyUrl}>
+              {messages.privacyPolicy}
+            </a>
+          </>
+        ) : null}
       </p>
       {error ? <p className={ui('banner__error')}>{error}</p> : null}
       <div className={ui('banner__actions')}>
@@ -46,21 +55,21 @@ export function CookieBanner(
           className={ui('banner__button', 'banner__button--secondary')}
           onClick={() => void rejectNonEssential()}
         >
-          Reject non-essential
+          {messages.rejectNonEssential}
         </button>
         <button
           type="button"
           className={ui('banner__button', 'banner__button--secondary')}
           onClick={() => void openDialog()}
         >
-          Customize
+          {messages.customize}
         </button>
         <button
           type="button"
           className={ui('banner__button', 'banner__button--primary')}
           onClick={() => void acceptAll()}
         >
-          Accept all
+          {messages.acceptAll}
         </button>
       </div>
     </section>

@@ -1,1 +1,1 @@
-export { withSentryConfig as withSentry } from '@sentry/nextjs/config'
+export { withSentryConfig } from '@sentry/nextjs/config'

@@ -150,6 +150,20 @@ Nothing is renamed. New:
   (`export const analytics = createAnalytics(…)`) instead of inside a
   component. See [Next.js integration](./nextjs-integration.md#errors).
 - `react` and `react-dom` are now optional peer dependencies.
+- "Reject non-essential" stores `preferences: false` instead of `true`. If your
+  app reads `consent.preferences` (for a language or theme cookie), visitors who
+  reject now have it off; the dialog has a Preferences toggle to grant it.
+- The consent UI follows `<html lang>` and ships English and Italian. To keep
+  English on an Italian page, pass `<AnalyticsProvider locale="en">`.
+- The `acm_*` names are off by default. Upgrading from rc.1 or earlier, pass
+  `names: { legacy: true }` so stored consent and identity carry over.
+- `ga4()` and `meta()` no longer load before consent. For the old behaviour
+  (Consent Mode pings while denied), pass `loadBeforeConsent: true`.
+- `MetaPixelNoscript` is now imported from `consentlayer/react`, and
+  `withSentry` from `consentlayer/sentry/next` is now `withSentryConfig`.
+- The root entry no longer exports the validators, `legacyNames`,
+  `defaultRuntimePreset` (use `getNames()`) or the engine/manager types, and
+  `analytics.consent.destroy` is gone (call `analytics.destroy()`).
 
 
 ### Provider factories
@@ -159,7 +173,7 @@ Nothing is renamed. New:
 | `createGa4Adapter(options)` | `ga4(options)` |
 | `createMetaAdapter(options)` | `meta(options)` |
 | `createHotjarAdapter(options)` | `hotjar(options)` |
-| `createShopifyAnalyticsAdapter(options)` | `shopify(options)` |
+| `createShopifyAnalyticsAdapter(options)` | removed: it queued events nothing read, so Shopify never received them |
 | `createTikTokConsentAdapter()` | `tiktok()` |
 | `createVercelAdapter(options)` | `vercel(options)` |
 
