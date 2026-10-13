@@ -30,7 +30,7 @@ Each provider is a named export of its own entry point,
 | Hotjar (deprecated) | `hotjar()` from `consentlayer/providers/hotjar` | `analytics` | `siteId`, `version` |
 | Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter()` from `consentlayer/providers/shopify` | Consent source | None |
 
-The ID option of GA4, Meta, PostHog, Sentry and Contentsquare may be
+The ID options of GA4, Meta, PostHog, Sentry, Contentsquare and Hotjar may be
 `undefined` or empty: the provider is then turned off, and with `debug: true`
 it logs `[consentlayer] <id> is off: <option> is not set.` at boot. Pass
 `process.env` values directly instead of guarding each provider. A value that
@@ -111,7 +111,8 @@ page's lifetime, even if consent is granted again. It resumes after a reload.
 
 For visitors without JavaScript, `<MetaPixelNoscript pixelId enabled />` from
 `consentlayer/react` renders Meta's `<noscript>` image pixel. It fires without
-consent, since those visitors never see a banner.
+consent, since those visitors never see a banner. It renders nothing without
+`enabled` or while `pixelId` is `undefined` or empty.
 
 </details>
 
@@ -167,9 +168,13 @@ pixel yourself; on every consent change, if `window.ttq` is a function,
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `siteId` | `number` | Required | The Hotjar site ID. |
-| `version` | `number` | Required | The snippet version, `hjsv`. |
+| `siteId` | `number \| string \| undefined` | Required | The Hotjar site ID, a number or numeric string. |
+| `version` | `number \| string \| undefined` | Required | The snippet version, `hjsv`, a number or numeric string. |
 | `reloadOnRevoke` | `boolean` | `false` | Reloads the page when analytics consent is withdrawn. |
+
+An unset or empty `siteId` or `version` turns the provider off. Any other value
+that is not a positive integer throws `[consentlayer] Invalid Hotjar siteId or
+version: expected positive integers, …`.
 
 Hotjar accounts are moving to Contentsquare; switch to `contentsquare()` once
 yours has. Events are sent as `hj('event', name)`. `identify` calls
@@ -275,13 +280,31 @@ at bootstrap. Every choice made through ConsentLayer is written to Shopify with
 applied back to the instance. The optional `sale_of_data` flag is passed
 through in both directions.
 
+```ts
+import { createShopifyCustomerPrivacyAdapter } from 'consentlayer/providers/shopify'
+
+createAnalytics({
+  providers,
+  consent: {
+    adapters: [
+      createShopifyCustomerPrivacyAdapter({
+        headlessStorefront: { storefrontAccessToken: process.env.NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN },
+      }),
+    ],
+  },
+})
+```
+
+On a Shopify-hosted theme the token is unset and `headlessStorefront` is
+ignored; on a headless storefront it is set and the headless options apply.
+
 <details>
 <summary>Shopify adapter options</summary>
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `loadFeature` | `boolean` | `true` | Calls `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`, when available, before reading or writing consent. |
-| `headlessStorefront` | `{ checkoutRootDomain?, storefrontRootDomain?, storefrontAccessToken? }` | None | Required off Shopify-hosted themes. Passed to `setTrackingConsent` with `headlessStorefront: true`. |
+| `headlessStorefront` | `{ checkoutRootDomain?, storefrontRootDomain?, storefrontAccessToken? }` | None | Required off Shopify-hosted themes. Applies only once `storefrontAccessToken` is set, so you can pass the environment variable directly; then passed to `setTrackingConsent` with `headlessStorefront: true`. |
 | `canBootstrap` | `() => boolean` | None | Returning `false` skips reading Shopify's existing choice at bootstrap. |
 | `document` | `Document` | The global `document` | The document to listen on. |
 | `window` | `Window` | The global `window` | The window that holds `Shopify`. |

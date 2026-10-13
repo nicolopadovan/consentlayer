@@ -63,7 +63,7 @@ object to configure or disable each kind.
 
 | Option | Default | Event | Params |
 |---|---|---|---|
-| `pageViews` | `true` | `consentlayer.page_session_start`, on start and on every `routeKey` change | `session_id` |
+| `pageViews` | `true` | `consentlayer.page_session_start`, on start and on every route change | `session_id` |
 | `clicks` | `{ mode: 'all', attribute: 'data-track' }` | `consentlayer.ui_click`, for clicks on `button`, `[role="button"]`, `a`, `input[type="submit"]` and `input[type="button"]` | `ui_target`, `ui_element`, `ui_id`, `path`, `session_id` |
 | `scroll` | `{ thresholds: [25, 50, 75, 100] }` | `consentlayer.scroll_depth`, once per threshold and page session | `depth`, `session_id` |
 | `timeOnPage` | `{ intervals: [5, 15, 30, 60, 120] }` | `consentlayer.time_on_page`, after each interval in seconds | `seconds`, `session_id` |
@@ -76,40 +76,24 @@ event names derive from [`names.prefix`](/guides/names/).
 </details>
 
 <details>
-<summary>Reading configuration with <code>createEnvConfig</code></summary>
+<summary>Turning analytics off in development</summary>
 
-The example app reads its configuration with `createEnvConfig` from
-`consentlayer`, which maps the documented environment variables to one typed
-object. Pass it an object of literal reads, for the inlining reason above:
+Pass `enabled` and `debug` from the environment in the same way:
 
 ```ts
-// lib/analytics.ts
-import { createAnalytics, createEnvConfig } from 'consentlayer'
-import { ga4 } from 'consentlayer/providers/ga4'
-import { meta } from 'consentlayer/providers/meta'
-
-const env = createEnvConfig({
-  NODE_ENV: process.env.NODE_ENV,
-  NEXT_PUBLIC_ENABLE_ANALYTICS: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS,
-  NEXT_PUBLIC_ANALYTICS_DEBUG: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG,
-  NEXT_PUBLIC_GA4_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,
-  NEXT_PUBLIC_FACEBOOK_PIXEL_ID: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID,
-})
-
 export const analytics = createAnalytics({
-  providers: [ga4({ measurementId: env.ga4.measurementId }), meta({ pixelId: env.meta.pixelId })],
-  autoTracking: true,
-  enabled: env.runtimeEnabled,
-  debug: env.debug,
+  providers: [/* … */],
+  enabled: process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
+  debug: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true',
 })
 ```
 
-`env.runtimeEnabled` is `true` when `NODE_ENV` is `production` or
-`NEXT_PUBLIC_ENABLE_ANALYTICS` is `'true'`, so development builds send nothing
-unless you opt in. While `enabled` is false, every provider is torn down and
-calls are dropped. `env.debug` is `true` when `NEXT_PUBLIC_ANALYTICS_DEBUG` is
-`'true'`, and logs consent changes and provider errors with `console.debug`.
-The full list of variables is in the [API reference](/reference/api/).
+While `enabled` is `false`, every provider is torn down and calls are dropped,
+so development builds send nothing unless you opt in. `debug: true` logs
+consent changes, skipped providers and provider errors with `console.debug`.
+Earlier versions read these variables with `createEnvConfig`, which is
+deprecated: reading `process.env` directly is shorter and keeps each read
+literal.
 
 </details>
 
@@ -124,8 +108,8 @@ visitors a way to reopen their settings:
 // components/analytics-shell.tsx
 'use client'
 
-import { AnalyticsProvider, useConsentController } from 'consentlayer/react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { AnalyticsProvider } from 'consentlayer/next'
+import { useConsentController } from 'consentlayer/react'
 import type { ReactNode } from 'react'
 import { analytics } from '../lib/analytics'
 import { ConsentBanner } from './consent-banner'
@@ -141,11 +125,8 @@ function CookieSettingsButton() {
 }
 
 export function AnalyticsShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
   return (
-    <AnalyticsProvider analytics={analytics} routeKey={`${pathname}?${searchParams.toString()}`}>
+    <AnalyticsProvider analytics={analytics}>
       <ConsentBanner privacyPolicyUrl="/privacy" />
       <CookieSettingsButton />
       {children}
@@ -154,8 +135,12 @@ export function AnalyticsShell({ children }: { children: ReactNode }) {
 }
 ```
 
-`consentlayer/react` carries its own `'use client'` directive, but this file
-needs one because it calls `usePathname` and `useSearchParams`.
+`<AnalyticsProvider>` from `consentlayer/next` is the provider from
+`consentlayer/react` with the route taken from the App Router: it reads
+`usePathname()` and `useSearchParams()` and sends a page view whenever either
+changes, so navigating from `/shop` to `/shop?page=2` sends one. It accepts
+every prop of the React provider except `routeKey`. The shell still needs
+`'use client'` because it renders `CookieSettingsButton`, which calls a hook.
 
 On mount, `<AnalyticsProvider>` performs these steps:
 
@@ -167,43 +152,55 @@ On mount, `<AnalyticsProvider>` performs these steps:
    prop. Boot runs each provider's `setup` and `consent` hooks, and `load` for
    those whose consent requirement is met or that set `loadBeforeConsent`.
 3. After boot, it sends a page view to every active provider that has not
-   received one for the current `routeKey`. A provider that becomes active
+   received one for the current route. A provider that becomes active
    later, because the visitor grants its category, receives the current page
    view at that point, so it is not sent twice and not lost.
-4. Whenever `routeKey` changes, it sends a page view to every active provider
+4. Whenever the route changes, it sends a page view to every active provider
    and calls `analytics.newPageSession()`, which restarts the auto-tracking
    scroll and time counters when auto-tracking is on.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `analytics` | `Analytics` | Required | The instance from `createAnalytics()`. |
-| `routeKey` | `string` | `'default'` | Identifies the current page. A page view is sent once per provider and key. |
 | `page` | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details. |
 | `boot` | `{ mode?, timeoutMs? }` | `{ mode: 'immediate' }` | When providers start. Read once, on mount. See [Boot timing](#boot-timing). |
 | `autoShowBanner` | `boolean` | `true` | Whether `bannerVisible` becomes `true` when there is no stored choice. |
 | `openConsentGlobalKey` | `string` | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog from outside React. |
 
-The `routeKey` above includes the query string, so navigating from `/shop` to
-`/shop?page=2` sends a page view. Use `pathname` alone to send page views only
-when the path changes.
+<details>
+<summary>Why there is no <code>&lt;Suspense&gt;</code> around your pages</summary>
+
+During static rendering, `useSearchParams()` makes the nearest `<Suspense>`
+boundary above it render only on the client. The usual pattern, a shell that
+calls `useSearchParams()` wrapped in `<Suspense fallback={null}>` in the root
+layout, therefore moves every page into that boundary: the prerendered HTML
+contains the fallback instead of the page. `consentlayer/next` calls
+`useSearchParams()` in an internal component that renders nothing, inside its
+own `<Suspense>` boundary, so only that component waits for the client and
+your pages are prerendered as usual. Page views are held until it reports the
+first route, so the first page is not counted twice.
+
+`consentlayer/next` supports the App Router only. In the Pages Router and in
+other frameworks, use `<AnalyticsProvider>` from `consentlayer/react` and
+pass `routeKey` yourself: any string that changes on navigation, or `null`
+while the route is not yet known. See the [API reference](/reference/api/#analyticsprovider).
+
+</details>
 
 ## 3. Wrap the layout
 
-`useSearchParams` requires a `<Suspense>` boundary above the component that
-calls it, so render the shell inside one in the root layout:
+Render the shell in the root layout. No `<Suspense>` boundary is needed:
 
 ```tsx
 // app/layout.tsx
-import { Suspense, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { AnalyticsShell } from '../components/analytics-shell'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Suspense fallback={null}>
-          <AnalyticsShell>{children}</AnalyticsShell>
-        </Suspense>
+        <AnalyticsShell>{children}</AnalyticsShell>
       </body>
     </html>
   )
@@ -217,9 +214,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 PageView image, `https://www.facebook.com/tr?id=<pixelId>&ev=PageView&noscript=1`,
 for visitors with JavaScript disabled. Those visitors never see the consent
 banner, so the image tracks them without consent. For that reason it renders
-nothing unless you pass `enabled`. The example app enables it with
-`NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT=true`, which `createEnvConfig` exposes as
-`env.meta.noscriptEnabled`.
+nothing unless you pass `enabled`, and nothing while `pixelId` is `undefined`
+or empty, so you can pass the environment variable directly. The example app
+enables it with `NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT=true`.
 
 The Shopify Customer Privacy adapter needs Shopify's consent script on the
 page. `getShopifyCustomerPrivacyScriptUrl()` from
@@ -228,34 +225,30 @@ page. `getShopifyCustomerPrivacyScriptUrl()` from
 
 ```tsx
 // app/layout.tsx
-import { createEnvConfig } from 'consentlayer'
 import { MetaPixelNoscript } from 'consentlayer/react'
 import { getShopifyCustomerPrivacyScriptUrl } from 'consentlayer/providers/shopify'
 import Script from 'next/script'
-import { Suspense, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { AnalyticsShell } from '../components/analytics-shell'
-
-const env = createEnvConfig(process.env)
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
         <Script src={getShopifyCustomerPrivacyScriptUrl()} strategy="lazyOnload" />
-        {env.meta.pixelId ? (
-          <MetaPixelNoscript enabled={env.meta.noscriptEnabled} pixelId={env.meta.pixelId} />
-        ) : null}
-        <Suspense fallback={null}>
-          <AnalyticsShell>{children}</AnalyticsShell>
-        </Suspense>
+        <MetaPixelNoscript
+          enabled={process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT === 'true'}
+          pixelId={process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}
+        />
+        <AnalyticsShell>{children}</AnalyticsShell>
       </body>
     </html>
   )
 }
 ```
 
-The root layout is a Server Component, so `createEnvConfig(process.env)` reads
-the server's environment here. Configure the adapter itself as described in
+The root layout is a Server Component, so these reads use the server's
+environment at render time. Configure the adapter itself as described in
 [Providers](/guides/providers/).
 
 </details>
@@ -384,7 +377,7 @@ By default, providers boot as soon as `<AnalyticsProvider>` mounts. To keep
 provider setup off the critical rendering path, boot when the browser is idle:
 
 ```tsx
-<AnalyticsProvider analytics={analytics} boot={{ mode: 'idle', timeoutMs: 3000 }} routeKey={routeKey}>
+<AnalyticsProvider analytics={analytics} boot={{ mode: 'idle', timeoutMs: 3000 }}>
 ```
 
 | `mode` | Providers boot |
@@ -420,14 +413,17 @@ export const analytics = createAnalytics({
 import { createAnalyticsHandler } from 'consentlayer/server'
 import { metaCapi } from 'consentlayer/server/meta'
 
-const pixelId = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID
-const accessToken = process.env.META_TOKEN
-
 export const POST = createAnalyticsHandler({
-  destinations: pixelId && accessToken ? [metaCapi({ pixelId, accessToken })] : [],
+  destinations: [
+    metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN }),
+  ],
   onError: console.error,
 })
 ```
+
+`metaCapi()` returns `undefined` while `pixelId` or `accessToken` is unset, and
+the handler skips `undefined` destinations, so the route answers `204` and
+sends nothing in environments without the token.
 
 `server.endpoint` must be an HTTPS URL or a path starting with `/`;
 `createAnalytics()` throws otherwise. The browser posts each page view and

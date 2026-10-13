@@ -42,7 +42,8 @@ ConsentLayer has no runtime dependencies.
 | Node.js | 20 or later. The server entry points use the global `fetch` and Web Crypto (`crypto.subtle`, `crypto.randomUUID`) APIs. |
 | Edge runtimes | Any runtime with `fetch` and Web Crypto, such as the Next.js Edge runtime. |
 | Browsers | The package is compiled to ES2022. Your bundler transpiles it if you target older browsers. |
-| React | 18.3 or 19, only for `consentlayer/react`. |
+| React | 18.3 or 19, only for `consentlayer/react` and `consentlayer/next`. |
+| Next.js | 15 or 16, only for `consentlayer/next`, which supports the App Router only. |
 | TypeScript | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`. |
 
 ## Optional peer dependencies
@@ -56,6 +57,7 @@ install and import yourself.
 | Import | Peer dependency |
 |---|---|
 | `consentlayer/react` | `react`, `react-dom` |
+| `consentlayer/next` | `react`, `react-dom`, `next` |
 | `consentlayer/providers/posthog` | `posthog-js` |
 | `consentlayer/providers/sentry` | `@sentry/browser` |
 | `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs` |
@@ -73,15 +75,17 @@ are loaded with dynamic `import()` when they are first needed.
 |---|---|
 | `consentlayer` | `createAnalytics`, `definePlugin`, storage helpers and core types |
 | `consentlayer/react` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript` |
+| `consentlayer/next` | `AnalyticsProvider` for the App Router, which tracks navigation itself |
 | `consentlayer/providers/<name>` | One provider factory: `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, `shopify` |
 | `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
-| `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, consent stores |
+| `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores |
 | `consentlayer/server/meta`, `consentlayer/server/ga4` | `metaCapi`, `ga4Server` |
 | `consentlayer/sentry/server`, `consentlayer/sentry/next` | Sentry configuration for Next.js |
 | `consentlayer/testing` | `checkPlugin` |
 
-`consentlayer/react` starts with a `'use client'` directive, so you can import
-it from a React Server Component without adding your own client boundary.
+`consentlayer/react` and `consentlayer/next` start with a `'use client'`
+directive, so you can import them from a React Server Component without adding
+your own client boundary.
 
 The full list of exports is in the [API reference](/reference/api/).
 

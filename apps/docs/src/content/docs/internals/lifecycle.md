@@ -262,16 +262,20 @@ tracks which providers have already received a page view for the current
 
 1. After boot, whenever the snapshot or `routeKey` changes, it computes the
    active providers that have not yet received a page view for this key.
+   While `routeKey` is `null`, it does nothing.
 2. If there are any, it records them and calls
    `analytics.page(pageProp, { only: fresh })`.
 3. A new `routeKey` resets the record and also calls
-   `analytics.newPageSession()`.
+   `analytics.newPageSession()`, unless the previous key was `null`: the first
+   known route continues the session that started at boot.
 
 A provider that becomes active part-way through a visit, for example after
 the visitor accepts the banner, therefore receives one page view for the
 current page, and providers that already counted it do not receive a
-duplicate. Pass a new `routeKey` on every navigation; in the Next.js App
-Router that is the pathname plus the search string.
+duplicate. Pass a new `routeKey` on every navigation. The provider from
+`consentlayer/next` passes the pathname plus the query string, and `null`
+until its route listener, which renders inside its own `<Suspense>` boundary,
+has mounted.
 
 `page()` builds the event from `location.href` (`url`), the pathname plus
 search (`path`) and `document.title` (`title`), overlays your payload, and

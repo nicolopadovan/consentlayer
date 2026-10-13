@@ -201,7 +201,7 @@ keeps Shopify's consent state and ConsentLayer's in step. Its adapter ID is
 | Part | Behaviour |
 |---|---|
 | `bootstrap` | Returns `null` if `canBootstrap()` returns false. Unless `loadFeature: false`, awaits `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`. Reads `Shopify.customerPrivacy.currentVisitorConsent()` and returns `null` if it is missing or every value is empty, which means the visitor has not chosen. Otherwise maps the values as below. |
-| `apply` | Loads the feature in the same way, then calls `setTrackingConsent({ preferences, analytics, marketing, sale_of_data? })`. With `headlessStorefront` set, it adds `headlessStorefront: true` and your `checkoutRootDomain`, `storefrontRootDomain` and `storefrontAccessToken`, which Shopify requires outside its hosted themes. It does not wait for Shopify's callback. |
+| `apply` | Loads the feature in the same way, then calls `setTrackingConsent({ preferences, analytics, marketing, sale_of_data? })`. With `headlessStorefront.storefrontAccessToken` set, it adds `headlessStorefront: true` and your `checkoutRootDomain`, `storefrontRootDomain` and `storefrontAccessToken`, which Shopify requires outside its hosted themes. It does not wait for Shopify's callback. |
 | `subscribe` | Listens for Shopify's `visitorConsentCollected` DOM event and maps `preferencesAllowed`, `analyticsAllowed`, `marketingAllowed` and `saleOfDataAllowed` to the matching categories. |
 
 | Shopify value | Becomes |

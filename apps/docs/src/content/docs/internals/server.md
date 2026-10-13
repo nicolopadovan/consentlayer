@@ -74,8 +74,9 @@ instead.
 
 `createAnalyticsHandler({ destinations, consentCookie?, onError? })` from
 `consentlayer/server` returns a web-standard
-`(request: Request) => Promise<Response>`. It runs these steps in order and
-stops at the first failure:
+`(request: Request) => Promise<Response>`. For each request, it runs these
+steps in order and stops at the first failure. With `consentCookie`, a missing
+secret or one under 32 characters fails before step 1 with a `500`:
 
 1. **Origin check.** Takes the `Origin` header, or the origin of the
    `Referer` header when `Origin` is absent, and requires it to equal the
@@ -95,13 +96,16 @@ stops at the first failure:
 5. **Consent source.** With `consentCookie`, the body's `consent` is
    replaced by the consent in the signed cookie that `createConsentHandler`
    set. A missing or invalid cookie means every category is denied.
-6. **Destinations.** Only destinations with `forwardBrowserEvents: true`
-   are considered. Of the built-in ones, that is `metaCapi`.
+6. **Destinations.** `undefined` entries, such as a `metaCapi()` called
+   without its token, are dropped. Only destinations with
+   `forwardBrowserEvents: true` are considered. Of the built-in ones, that is
+   `metaCapi`.
 7. **Consent and `only` filter.** A destination receives the event only if
    `consent[destination.requiredConsent] === true` and, when `only` is set,
    its `id` is in `only`.
-8. **Request info.** The client IP (the first `x-forwarded-for` entry, else
-   `x-real-ip`), `user-agent`, and the parsed `cookie` header.
+8. **Request info.** `requestInfo(request)`: the client IP (the first
+   `x-forwarded-for` entry, else `x-real-ip`), `user-agent`, and the parsed
+   `cookie` header.
 9. **Send.** All remaining destinations in parallel with
    `Promise.allSettled`, so one failing vendor does not stop the others.
 10. **Response.** `204` once every send has settled. Each failed send is
@@ -127,8 +131,8 @@ non-browser client can forge both headers.
 
 </details>
 
-`sendServerEvent(event, { destinations, request? })` runs steps 7 and 9 on
-their own, for webhooks and other events that originate on the server. You
+`sendServerEvent(event, { destinations, request? })` drops `undefined`
+destinations and runs steps 7 and 9 on their own, for webhooks and other events that originate on the server. You
 build the event, including `consent`, yourself. It returns one
 `{ id, ok, error? }` per destination that passed the filter instead of
 calling `onError`.
@@ -183,8 +187,10 @@ on the server.
 ## What `metaCapi` sends
 
 `metaCapi({ pixelId, accessToken, testEventCode?, apiVersion?, fetchImpl? })`
-from `consentlayer/server/meta` has the ID `meta`, requires marketing consent
-and accepts browser events. It sends:
+from `consentlayer/server/meta` returns `undefined` while `pixelId` or
+`accessToken` is unset or empty, and calls `console.warn` once when only one
+of them is set. Otherwise the destination has the ID `meta`,
+requires marketing consent and accepts browser events. It sends:
 
 `POST https://graph.facebook.com/<apiVersion ?? 'v26.0'>/<pixelId>/events?access_token=…[&test_event_code=…]`
 
@@ -229,8 +235,10 @@ which is also when the browser includes email and phone. Fields that end up
 ## What `ga4Server` sends
 
 `ga4Server({ measurementId, apiSecret, fetchImpl? })` from
-`consentlayer/server/ga4` has the ID `ga4` and requires analytics consent. It
-sends:
+`consentlayer/server/ga4` returns `undefined` while `measurementId` or
+`apiSecret` is unset or empty, with the same warning when only one is set.
+Otherwise the destination has the ID `ga4` and
+requires analytics consent. It sends:
 
 `POST https://www.google-analytics.com/mp/collect?measurement_id=…&api_secret=…`
 

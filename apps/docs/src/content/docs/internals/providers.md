@@ -255,6 +255,7 @@ moved; `hotjar` will be removed in the next major version.
 
 | Hook | Behaviour |
 |---|---|
+| Options | `siteId` and `version` accept numbers or numeric strings. Either one `undefined` or `''` turns the provider off; any other value that is not a positive safe integer throws when `hotjar()` is called. |
 | Script | `https://static.hotjar.com/c/hotjar-<siteId>.js?sv=<version>` |
 | `load` | Skipped if Hotjar was already initialised on the page. Otherwise defines a queueing `window.hj` and `window._hjSettings = { hjid, hjsv }` and injects the script. Script failures are ignored. |
 | `page` | Not implemented; Hotjar tracks page views itself. |

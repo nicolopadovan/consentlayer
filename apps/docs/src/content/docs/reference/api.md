@@ -10,11 +10,12 @@ return value and the errors it throws. Options are optional unless marked
 
 | Entry point | Exports |
 |---|---|
-| [`consentlayer`](#consentlayer) | `createAnalytics`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, `createEnvConfig`, storage adapters, core types |
+| [`consentlayer`](#consentlayer) | `createAnalytics`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types |
 | [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript` |
+| [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for the App Router |
 | [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify consent adapter |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
-| [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, consent stores |
+| [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
 | [`consentlayer/server/meta`](#consentlayerservermeta) | `metaCapi` |
 | [`consentlayer/server/ga4`](#consentlayerserverga4) | `ga4Server` |
 | [`consentlayer/sentry/server`](#consentlayersentryserver) | `sentryInstrumentation` |
@@ -98,8 +99,8 @@ type AnalyticsOptions = {
 | `initialConsent` | `ConsentState \| null` | `null` | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one. |
 | `broadcast` | `ConsentBroadcastConfig` | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set. |
 
-The type also accepts `consent.categories` and `consent.onError`, but both are
-overridden by the top-level `categories` and `onError`. Use those instead.
+Custom categories and the error callback are set with the top-level
+`categories` and `onError`; passing them inside `consent` is a type error.
 
 <details>
 <summary><code>ConsentBroadcastConfig</code></summary>
@@ -259,7 +260,13 @@ function getNames(): Names
 
 ### `createEnvConfig(env)`
 
-Reads ConsentLayer's environment variables into one object.
+**Deprecated.** Pass `process.env` values to the providers directly; an unset
+one turns its provider off. For the instance options, use
+`enabled: process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true'`
+and `debug: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true'`.
+
+<details>
+<summary>Signature and variables</summary>
 
 ```ts
 function createEnvConfig(env: Record<string, string | undefined>): {
@@ -292,16 +299,7 @@ function createEnvConfig(env: Record<string, string | undefined>): {
 | `NEXT_PUBLIC_SHOPIFY_STORE_ID`, `NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN`, `NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN` | `shopify.storeId`, `shopify.storefrontDomain`, `shopify.storefrontAccessToken` |
 | `META_TOKEN`, `FACEBOOK_TEST_EVENT_CODE`, `GA4_API_SECRET` | `server.metaToken`, `server.facebookTestEventCode`, `server.ga4ApiSecret` |
 
-Next.js inlines `NEXT_PUBLIC_*` variables only where they are read by their
-full name, so in browser code pass an object literal rather than
-`process.env`:
-
-```ts
-createEnvConfig({
-  NODE_ENV: process.env.NODE_ENV,
-  NEXT_PUBLIC_GA4_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,
-})
-```
+</details>
 
 ### Storage adapters
 
@@ -634,7 +632,7 @@ and provides the state for [`useConsentController()`](#useconsentcontroller).
 |---|---|---|---|
 | `analytics` | `Analytics` | | **Required.** The instance. |
 | `children` | `ReactNode` | | **Required.** |
-| `routeKey` | `string` | `'default'` | Identifies the current route. Each active provider receives one page view per key, including providers that become active later on the same route. A new key also starts a new page session. |
+| `routeKey` | `string \| null` | `'default'` | Identifies the current route. Each active provider receives one page view per key, including providers that become active later on the same route. A new key also starts a new page session, except the first key after `null`. `null` holds page views until the route is known. In Next.js, use [`consentlayer/next`](#consentlayernext), which sets it for you. |
 | `page` | `PageViewPayload` | | Overrides the page view's `url`, `path` or `title`. |
 | `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | When to call `analytics.boot()`. Read once, on mount. |
 | `boot.mode` | `'immediate' \| 'idle' \| 'manual'` | `'immediate'` | `'idle'` waits for `requestIdleCallback`; `'manual'` leaves the call to you. |
@@ -750,9 +748,36 @@ consent. Render it only where that is lawful.
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `pixelId` | `string` | | **Required.** |
+| `pixelId` | `string \| undefined` | | **Required.** Renders nothing while `undefined` or empty. |
 | `enabled` | `boolean` | `undefined` | Renders nothing unless `true`. |
 | other `<img>` props | `ComponentPropsWithoutRef<'img'>` | `width` and `height` `1`, `style.display` `'none'` | Passed to the image. `alt` is always `''`. |
+
+## `consentlayer/next`
+
+Requires `next` 15 or 16, an optional peer dependency, and works only in the
+App Router: it reads the route from `next/navigation`. In the Pages Router,
+use `<AnalyticsProvider>` from `consentlayer/react` with
+`routeKey={router.asPath}`. The entry point starts with a `'use client'`
+directive.
+
+### `<AnalyticsProvider>` for Next.js
+
+The [`<AnalyticsProvider>`](#analyticsprovider) from `consentlayer/react`, with
+`routeKey` taken from the App Router: the pathname and the query string from
+`usePathname()` and `useSearchParams()`. A change to either sends a page view
+and starts a new page session.
+
+It accepts every prop of the React provider except `routeKey`; the props type
+is exported as `NextAnalyticsProviderProps`.
+
+```ts
+type NextAnalyticsProviderProps = Omit<AnalyticsProviderProps, 'routeKey'>
+```
+
+Only the internal component that reads the route sits in a
+`<Suspense fallback={null}>` boundary, so your pages are still rendered on the
+server. Until that component reports the first route, `routeKey` is `null` and
+page views are held.
 
 ## `consentlayer/providers/*`
 
@@ -866,9 +891,14 @@ The options type is exported as `ContentsquareOptions`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `siteId` | `number` | | **Required.** |
-| `version` | `number` | | **Required.** The Hotjar snippet version. |
+| `siteId` | `number \| string \| undefined` | | **Required.** A number or numeric string. |
+| `version` | `number \| string \| undefined` | | **Required.** The Hotjar snippet version, a number or numeric string. |
 | `reloadOnRevoke` | `boolean` | `false` | Hotjar cannot be stopped once loaded. On withdrawal its cookies and storage are always deleted; `true` also reloads the page so recording stops. |
+
+While `siteId` or `version` is `undefined` or `''`, the provider is off and,
+with `debug`, logs `hotjar is off: siteId is not set.` (or `version`). Any
+other value that is not a positive safe integer throws
+`[consentlayer] Invalid Hotjar siteId or version: expected positive integers, received … and ….`
 
 The options type is exported as `HotjarOptions`.
 
@@ -901,7 +931,7 @@ Privacy API. Pass it to `createAnalytics({ consent: { adapters } })`.
 |---|---|---|---|
 | `loadFeature` | `boolean` | `true` | Loads Shopify's `consent-tracking-api` feature through `Shopify.loadFeatures` when available. |
 | `canBootstrap` | `() => boolean` | | Return `false` to skip reading Shopify's consent during bootstrap. |
-| `headlessStorefront` | `{ storefrontAccessToken?: string; checkoutRootDomain?: string; storefrontRootDomain?: string }` | | Required off Shopify-hosted themes. Passed to `setTrackingConsent` with `headlessStorefront: true`. |
+| `headlessStorefront` | `{ storefrontAccessToken?: string; checkoutRootDomain?: string; storefrontRootDomain?: string }` | | Required off Shopify-hosted themes. Applies only once `storefrontAccessToken` is set; then passed to `setTrackingConsent` with `headlessStorefront: true`. |
 | `document` | `Document` | `document` | The document that receives `visitorConsentCollected` events. |
 | `window` | `Window` | `window` | The window that holds `Shopify`. |
 
@@ -985,7 +1015,7 @@ event and sends it to the destinations its consent allows. See
 
 ```ts
 function createAnalyticsHandler(options: {
-  destinations: ServerDestination<true>[]
+  destinations: (ServerDestination<true> | undefined)[]
   consentCookie?: ConsentCookieOptions
   onError?: (error: unknown) => void
 }): (request: Request) => Promise<Response>
@@ -993,8 +1023,8 @@ function createAnalyticsHandler(options: {
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `destinations` | `ServerDestination<true>[]` | | **Required.** Destinations that accept browser events, such as `metaCapi()`. `ga4Server()` is rejected by the type. |
-| `consentCookie` | `ConsentCookieOptions` | | Takes consent from the cookie signed by `createConsentHandler`, ignoring the body's; without a valid cookie, every category is denied. |
+| `destinations` | `(ServerDestination<true> \| undefined)[]` | | **Required.** Destinations that accept browser events, such as `metaCapi()`. `ga4Server()` is rejected by the type. `undefined` entries, such as a `metaCapi()` without its token, are skipped. |
+| `consentCookie` | `ConsentCookieOptions` | | Takes consent from the cookie signed by `createConsentHandler`, ignoring the body's; without a valid cookie, every category is denied. A missing `secret`, or one shorter than 32 characters, makes every request answer `500` before the body is read. |
 | `onError` | `(error: unknown) => void` | | Receives each destination failure and any unexpected error. |
 
 | Status | When |
@@ -1015,18 +1045,35 @@ allowed when `event.consent[destination.requiredConsent]` is `true`.
 ```ts
 function sendServerEvent(
   event: ServerEvent,
-  options: { destinations: ServerDestination[]; request?: ServerRequestInfo },
+  options: { destinations: (ServerDestination | undefined)[]; request?: ServerRequestInfo },
 ): Promise<ServerSendResult[]>
 ```
 
 | Parameter | Type | Description |
 |---|---|---|
 | `event` | [`ServerEvent`](#serverevent) | **Required.** |
-| `options.destinations` | `ServerDestination[]` | **Required.** Any destination, including `ga4Server()`. |
-| `options.request` | `ServerRequestInfo` | The client's IP, user agent and cookies, when you have them. |
+| `options.destinations` | `(ServerDestination \| undefined)[]` | **Required.** Any destination, including `ga4Server()`. `undefined` entries are skipped. |
+| `options.request` | `ServerRequestInfo` | The client's IP, user agent and cookies, when you have them. Build it with [`requestInfo(request)`](#requestinforequest). |
 
-**Returns** one `{ id, ok, error? }` per destination that was called. A
-failing destination does not reject the promise; its error is in `error`.
+**Returns** one `{ id, ok, error? }` per destination that was called. Skipped
+`undefined` entries have no result. A failing destination does not reject the
+promise; its error is in `error`.
+
+### `requestInfo(request)`
+
+Reads the client details that destinations use from a `Request`.
+
+```ts
+function requestInfo(request: Request): ServerRequestInfo
+```
+
+**Returns** `ip`, the first address in `X-Forwarded-For`, else `X-Real-IP`;
+`userAgent`, from `User-Agent`; and `cookies`, parsed from `Cookie`.
+`createAnalyticsHandler` uses it for every event.
+
+```ts
+await sendServerEvent(event, { destinations, request: requestInfo(request) })
+```
 
 ### `createConsentHandler(options)`
 
@@ -1048,7 +1095,7 @@ function createConsentHandler(options: {
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `secret` | `string` | | **Required.** The HMAC-SHA-256 key that signs the cookie. At least 32 characters. |
+| `secret` | `string` | | **Required.** The HMAC-SHA-256 key that signs the cookie. At least 32 characters. A missing or shorter one makes every request answer `500`, with `[consentlayer] the consent secret needs at least 32 characters` passed to `onError`, before the body is read or anything is stored. |
 | `store` | `ConsentStore` | | **Required.** Where records are appended. |
 | `policyVersion` | `string` | | **Required.** The privacy policy version the visitor saw, such as `'2026-10-01'`. |
 | `categories` | `(keyof ConsentCategories)[]` | `[]` | The custom categories passed to `createAnalytics({ categories })`. Each must be a boolean in the request. |
@@ -1067,7 +1114,7 @@ with `crypto.randomUUID()`. The cookie is set with
 | `403` | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's. |
 | `413` | The body exceeds 4 KiB. |
 | `415` | The `Content-Type` is not `application/json`. |
-| `500` | The store threw, `secret` is shorter than 32 characters, or another error occurred; `onError` is called. |
+| `500` | `secret` is missing or shorter than 32 characters (checked first, so no record is stored), the store threw, or another error occurred; `onError` is called. |
 
 ### `readConsentCookie(request, options)`
 
@@ -1186,8 +1233,8 @@ type ServerRequestInfo = {
 type ServerSendResult = { id: string; ok: boolean; error?: unknown }
 ```
 
-`createAnalyticsHandler` fills `ServerRequestInfo` from the first
-`X-Forwarded-For` address (else `X-Real-IP`), `User-Agent` and `Cookie`.
+`createAnalyticsHandler` fills `ServerRequestInfo` with
+[`requestInfo(request)`](#requestinforequest).
 
 </details>
 
@@ -1201,23 +1248,26 @@ before sending; `_fbp` and `_fbc` are read from the request's cookies.
 
 ```ts
 function metaCapi(options: {
-  pixelId: string
-  accessToken: string
+  pixelId: string | undefined
+  accessToken: string | undefined
   testEventCode?: string
   apiVersion?: string
   fetchImpl?: typeof fetch
-}): ServerDestination<true>
+}): ServerDestination<true> | undefined
 ```
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `pixelId` | `string` | | **Required.** |
-| `accessToken` | `string` | | **Required.** The Conversions API access token. |
+| `pixelId` | `string \| undefined` | | **Required.** |
+| `accessToken` | `string \| undefined` | | **Required.** The Conversions API access token. |
 | `testEventCode` | `string` | | Sends events to Test Events in Events Manager. |
 | `apiVersion` | `string` | `'v26.0'` | The Graph API version. |
 | `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
 
-**Returns** a destination with `id` `'meta'` and `requiredConsent`
+**Returns** `undefined` while `pixelId` or `accessToken` is unset or empty, so
+the destination is off. When exactly one of the two is set, which usually means
+a missing variable, it also calls `console.warn` once; with both unset it is
+silent. Otherwise it returns a destination with `id` `'meta'` and `requiredConsent`
 `'marketing'`. Its `send` throws `Error('Meta CAPI <status>: <body>')` on a
 non-2xx response.
 
@@ -1232,19 +1282,21 @@ events and `createAnalyticsHandler` does not take it. Use it with
 
 ```ts
 function ga4Server(options: {
-  measurementId: string
-  apiSecret: string
+  measurementId: string | undefined
+  apiSecret: string | undefined
   fetchImpl?: typeof fetch
-}): ServerDestination<false>
+}): ServerDestination<false> | undefined
 ```
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `measurementId` | `string` | | **Required.** |
-| `apiSecret` | `string` | | **Required.** A Measurement Protocol API secret. |
+| `measurementId` | `string \| undefined` | | **Required.** |
+| `apiSecret` | `string \| undefined` | | **Required.** A Measurement Protocol API secret. |
 | `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
 
-**Returns** a destination with `id` `'ga4'` and `requiredConsent`
+**Returns** `undefined` while `measurementId` or `apiSecret` is unset or
+empty, and calls `console.warn` once when exactly one of the two is set.
+Otherwise it returns a destination with `id` `'ga4'` and `requiredConsent`
 `'analytics'`. Hashed email and phone are sent only with marketing consent.
 Its `send` throws when there is neither `event.clientId` nor a `_ga` cookie in
 `request.cookies`, and `Error('GA4 Measurement Protocol <status>: <body>')` on

@@ -278,8 +278,12 @@ missing may have been merged with its pixel event.
 [consentlayer] the consent secret needs at least 32 characters
 ```
 
-`createConsentHandler()` signs the consent cookie with HMAC-SHA-256 and
-rejects short secrets. Generate one with `openssl rand -base64 32`.
+`createConsentHandler()` and `createAnalyticsHandler({ consentCookie })` pass
+this to `onError` and answer 500 when the secret is missing or shorter than 32
+characters. The check runs at the start of each request, before anything is
+stored, so check that `CONSENT_SECRET` is set in the runtime environment, not
+only at build time. The secret signs the consent cookie with
+HMAC-SHA-256. Generate one with `openssl rand -base64 32`.
 
 A 400 from the consent endpoint means the browser sent consent without boolean
 categories. A store error, such as `[consentlayer] supabase insert failed`,

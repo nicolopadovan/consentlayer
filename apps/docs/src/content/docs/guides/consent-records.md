@@ -37,7 +37,9 @@ stored choice, or when a submitted choice is identical to the current one.
 
 Generate a secret of at least 32 characters, for example with
 `openssl rand -base64 32`, and set it as `CONSENT_SECRET` on the server only.
-The consent route and the tracking route must use the same secret.
+The consent route and the tracking route must use the same secret. Both
+check it at the start of each request rather than when they are created, so
+`next build` succeeds where the secret exists only at runtime.
 
 ```ts
 // app/api/consent/route.ts
@@ -65,7 +67,9 @@ export const analytics = createAnalytics({
 ```ts
 // app/api/analytics/route.ts
 export const POST = createAnalyticsHandler({
-  destinations: [metaCapi({ pixelId, accessToken: process.env.META_TOKEN! })],
+  destinations: [
+    metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN }),
+  ],
   consentCookie: { secret: process.env.CONSENT_SECRET! },
 })
 ```
@@ -140,10 +144,11 @@ resolves to `{ consentId, consent, policyVersion }` or `null`.
   from the stored one. Submitting an identical choice posts nothing.
 - **Secret rotation.** Changing the secret invalidates every existing cookie,
   with the same effect as a lost cookie.
-- **Short secret.** With a secret under 32 characters, `readConsentCookie`
-  returns `null` and the consent route answers 500, passing the error
-  `[consentlayer] the consent secret needs at least 32 characters` to
-  `onError`.
+- **Missing or short secret.** With no secret or one under 32 characters,
+  `createConsentHandler()` and `createAnalyticsHandler({ consentCookie })`
+  answer every request with 500 and pass
+  `[consentlayer] the consent secret needs at least 32 characters` to `onError`. The
+  check runs before the body is read, so no record is stored.
 - **Policy version.** The cookie is not checked against the current
   `policyVersion`; a cookie signed under an earlier version still verifies.
 

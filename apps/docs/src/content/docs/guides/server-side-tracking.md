@@ -30,13 +30,17 @@ import { metaCapi } from 'consentlayer/server/meta'
 export const POST = createAnalyticsHandler({
   destinations: [
     metaCapi({
-      pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID!,
-      accessToken: process.env.META_TOKEN!,
+      pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID,
+      accessToken: process.env.META_TOKEN,
     }),
   ],
   onError: console.error,
 })
 ```
+
+`metaCapi()` returns `undefined` while either value is unset, and the handler
+skips `undefined` destinations, so the same route works in environments
+without the token: it validates each event and answers `204` without sending.
 
 Point the instance at the route. `server.endpoint` must be an HTTPS URL or a
 path starting with `/`; any other value throws when `createAnalytics` is
@@ -108,8 +112,8 @@ or later.
 
 | Option | Type | Description |
 |---|---|---|
-| `destinations` | `ServerDestination<true>[]` | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, and any destination with `forwardBrowserEvents: false` is skipped at runtime. |
-| `consentCookie` | `{ secret: string; cookie?: string }` | Takes consent from the signed cookie set by `createConsentHandler`. See [Consent records](/guides/consent-records/). |
+| `destinations` | `(ServerDestination<true> \| undefined)[]` | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, any destination with `forwardBrowserEvents: false` is skipped at runtime, and `undefined` entries are ignored. |
+| `consentCookie` | `{ secret: string; cookie?: string }` | Takes consent from the signed cookie set by `createConsentHandler`. A missing secret, or one shorter than 32 characters, makes every request answer `500`. See [Consent records](/guides/consent-records/). |
 | `onError` | `(error: unknown) => void` | Receives destination failures and unexpected errors. |
 
 An event is valid when:
@@ -148,8 +152,11 @@ const results = await sendServerEvent(
   },
   {
     destinations: [
-      ga4Server({ measurementId, apiSecret: process.env.GA4_API_SECRET! }),
-      metaCapi({ pixelId, accessToken: process.env.META_TOKEN! }),
+      ga4Server({
+        measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,
+        apiSecret: process.env.GA4_API_SECRET,
+      }),
+      metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN }),
     ],
   },
 )
@@ -162,13 +169,30 @@ receives the event only if its `requiredConsent` category is `true` in
 destinations are called in parallel. The promise never rejects because of a
 destination; it resolves to one `{ id, ok, error? }` result per selected
 destination, in the order they were passed. Destinations skipped for lack of
-consent or by `only` do not appear in the results.
+consent or by `only`, and `undefined` entries such as a `ga4Server()` without
+its secret, do not appear in the results.
 
 A webhook carries neither the visitor's consent nor their GA client ID, so
 save both with the order while the visitor is still in the browser. The client
 ID is the last two dot-separated parts of the `_ga` cookie (`GA1.1.123.456`
-becomes `123.456`). When you pass the optional `request` with the visitor's
-cookies, `ga4Server` falls back to the `_ga` cookie if `clientId` is omitted.
+becomes `123.456`).
+
+When the event is sent while handling the visitor's own request, such as in a
+server action or a route the browser calls, also pass
+`request: requestInfo(request)`. `requestInfo` from `consentlayer/server`
+reads the visitor's IP, user agent and cookies, so Meta receives `_fbp`,
+`_fbc` and the client details, and `ga4Server` falls back to the `_ga` cookie
+when `clientId` is omitted. Do not pass a webhook's request: it comes from the
+payment provider, not from the visitor.
+
+```ts
+import { requestInfo, sendServerEvent } from 'consentlayer/server'
+
+export async function POST(request: Request) {
+  // …
+  await sendServerEvent(event, { destinations, request: requestInfo(request) })
+}
+```
 
 Event names and params are translated as in the browser; see
 [Events and identity](/guides/events/).
@@ -197,8 +221,10 @@ type ServerRequestInfo = {
 
 function sendServerEvent(
   event: ServerEvent,
-  options: { destinations: ServerDestination[]; request?: ServerRequestInfo },
+  options: { destinations: (ServerDestination | undefined)[]; request?: ServerRequestInfo },
 ): Promise<{ id: string; ok: boolean; error?: unknown }[]>
+
+function requestInfo(request: Request): ServerRequestInfo
 ```
 
 </details>
@@ -213,11 +239,15 @@ and `sendServerEvent`. Its `id` is `meta`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `pixelId` | `string` | Required | The pixel ID. |
-| `accessToken` | `string` | Required | A Conversions API access token. Server only. |
+| `pixelId` | `string \| undefined` | Required | The pixel ID. |
+| `accessToken` | `string \| undefined` | Required | A Conversions API access token. Server only. |
 | `testEventCode` | `string` | None | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
 | `apiVersion` | `string` | `'v26.0'` | The Graph API version. |
 | `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+
+While `pixelId` or `accessToken` is `undefined` or empty, `metaCapi()` returns
+`undefined` and the destination is off. When only one of them is set, it also
+logs a `console.warn` once, since that is usually a missing variable.
 
 <details>
 <summary>Request sent to Meta</summary>
@@ -253,9 +283,12 @@ Its `id` is `ga4`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `measurementId` | `string` | Required | The `G-` measurement ID. |
-| `apiSecret` | `string` | Required | A Measurement Protocol API secret. Server only. |
+| `measurementId` | `string \| undefined` | Required | The `G-` measurement ID. |
+| `apiSecret` | `string \| undefined` | Required | A Measurement Protocol API secret. Server only. |
 | `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+
+While either is `undefined` or empty, `ga4Server()` returns `undefined` and the
+destination is off, with a `console.warn` once when only one of them is set.
 
 GA4 always receives the user ID, when there is one. The hashed email and
 phone number are added only with marketing consent, and they are used only if

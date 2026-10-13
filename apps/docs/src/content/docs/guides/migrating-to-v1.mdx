@@ -87,7 +87,7 @@ import { createAnalytics } from 'consentlayer'
 import { ga4 } from 'consentlayer/providers/ga4'
 
 export const analytics = createAnalytics({
-  providers: [ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID! })],
+  providers: [ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID })],
   autoTracking: true,
   names: { legacy: true },
 })
@@ -96,18 +96,25 @@ export const analytics = createAnalytics({
 ```tsx title="app/providers.tsx"
 'use client'
 
-import { AnalyticsProvider } from 'consentlayer/react'
-import { usePathname } from 'next/navigation'
+import { AnalyticsProvider } from 'consentlayer/next'
 import { analytics } from '@/lib/analytics'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AnalyticsProvider analytics={analytics} routeKey={usePathname()}>
+    <AnalyticsProvider analytics={analytics}>
       {children}
     </AnalyticsProvider>
   )
 }
 ```
+
+`<AnalyticsProvider>` from `consentlayer/next` takes the route from the App
+Router, so it replaces the `routeKey={usePathname()}` you passed before and
+also counts query-string changes. Remove any `<Suspense>` boundary you added
+around the provider for `useSearchParams()`: it made every page inside it
+render only on the client. The [Next.js guide](/start/nextjs/) explains why. In
+other React apps, keep `<AnalyticsProvider>` from `consentlayer/react` and
+pass `routeKey` yourself.
 
 Create the instance once, at module level, rather than inside a component.
 Code outside React, such as `app/global-error.tsx`, imports the same instance,
@@ -188,8 +195,8 @@ import { meta } from 'consentlayer/providers/meta'
 
 export const analytics = createAnalytics({
   providers: [
-    ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID! }),
-    meta({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID! }),
+    ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID }),
+    meta({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID }),
   ],
   server: { endpoint: '/api/analytics' },
   autoTracking: true,
@@ -200,14 +207,13 @@ export const analytics = createAnalytics({
 ```tsx title="app/providers.tsx"
 'use client'
 
-import { AnalyticsProvider } from 'consentlayer/react'
-import { usePathname } from 'next/navigation'
+import { AnalyticsProvider } from 'consentlayer/next'
 import { ConsentBanner } from '@/components/consent-banner'
 import { analytics } from '@/lib/analytics'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AnalyticsProvider analytics={analytics} routeKey={usePathname()} boot={{ mode: 'idle' }}>
+    <AnalyticsProvider analytics={analytics} boot={{ mode: 'idle' }}>
       {children}
       <ConsentBanner />
     </AnalyticsProvider>
@@ -243,7 +249,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 | `<AnalyticsManager lazy={...}>` | `<AnalyticsProvider boot={...}>`, with the same `mode` and `timeoutMs` |
 | `useTracker()` | `useAnalytics()`, which returns `track`, `page` and `newPageSession` |
 
-The `routeKey` and `page` props move to `<AnalyticsProvider>` unchanged.
+The `routeKey` and `page` props move to `<AnalyticsProvider>` from
+`consentlayer/react` unchanged; the one from `consentlayer/next` sets
+`routeKey` for you.
 `<AnalyticsProvider>` reads stored consent, boots the instance and sends a page
 view for each `routeKey`. Outside React, make the same calls once at startup:
 
@@ -501,8 +509,8 @@ import { metaCapi } from 'consentlayer/server/meta'
 export const POST = createAnalyticsHandler({
   destinations: [
     metaCapi({
-      pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID!,
-      accessToken: process.env.META_TOKEN!,
+      pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID,
+      accessToken: process.env.META_TOKEN,
     }),
   ],
 })
@@ -545,8 +553,10 @@ Crypto, so the server entry points run on the Edge runtime. See
 | `ProviderAdapter`, `AnalyticsProviderContext` types | `AnalyticsPlugin`, `PluginContext` |
 
 The storage factories (`createLocalStorageConsentStorage`,
-`createLocalStorageIdentityStorage` and the memory variants) and
-`createEnvConfig` are still exported from the package root.
+`createLocalStorageIdentityStorage` and the memory variants) are still
+exported from the package root. `createEnvConfig` is too, but it is
+deprecated: pass `process.env` values to the providers directly, since a
+provider whose ID is unset turns itself off.
 
 ## Update custom plugins
 
