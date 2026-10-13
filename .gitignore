@@ -6,3 +6,4 @@ coverage
 .env.local
 apps/*/.env.local
 .playwright-cli
+.DS_Store
