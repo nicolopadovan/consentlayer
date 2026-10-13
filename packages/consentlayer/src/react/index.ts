@@ -3,7 +3,7 @@ export {
   type AnalyticsProviderProps,
   useAnalytics,
   useConsent,
+  useConsentController,
 } from './analytics-provider'
-export { useConsentController } from './consent-controller'
 export { createGlobalError, ErrorBoundary, type ErrorBoundaryProps } from './error-boundary'
 export { MetaPixelNoscript } from './meta-pixel-noscript'

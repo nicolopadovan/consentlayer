@@ -4,7 +4,8 @@ import {
   createContext,
   useContext,
   useEffect,
-  useRef,
+  useMemo,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from 'react'
@@ -16,9 +17,17 @@ import type {
   PageViewPayload,
 } from '../core/types'
 import { latestAnalytics } from '../core/create-analytics'
-import { ConsentControllerProvider } from './consent-controller'
+import {
+  createConsentController,
+  type ConsentControllerActions,
+  type ConsentControllerState,
+} from '../core/consent-controller'
 
 export const AnalyticsContext = createContext<Analytics | undefined>(undefined)
+
+type ConsentControllerValue = ConsentControllerState & ConsentControllerActions
+
+const ConsentControllerContext = createContext<ConsentControllerValue | undefined>(undefined)
 
 /** Props for `<AnalyticsProvider>`. */
 export type AnalyticsProviderProps = {
@@ -34,30 +43,6 @@ export type AnalyticsProviderProps = {
   openConsentGlobalKey?: string
 }
 
-function scheduleBoot(
-  analytics: Analytics,
-  boot: LazyBootConfig | undefined,
-): () => void {
-  const mode = boot?.mode ?? 'immediate'
-  if (mode === 'manual') return () => undefined
-  if (mode === 'immediate' || typeof window === 'undefined') {
-    void analytics.boot()
-    return () => undefined
-  }
-  if ('requestIdleCallback' in window) {
-    const handle = window.requestIdleCallback(
-      () => void analytics.boot(),
-      { timeout: boot?.timeoutMs ?? 3000 },
-    )
-    return () => window.cancelIdleCallback?.(handle)
-  }
-  const timeout = globalThis.setTimeout(
-    () => void analytics.boot(),
-    boot?.timeoutMs ?? 1500,
-  )
-  return () => globalThis.clearTimeout(timeout)
-}
-
 /** Boots analytics, sends page views on navigation and provides the state for your consent UI. */
 export function AnalyticsProvider({
   analytics,
@@ -68,50 +53,18 @@ export function AnalyticsProvider({
   autoShowBanner,
   openConsentGlobalKey,
 }: AnalyticsProviderProps) {
-  const snapshot = useSyncExternalStore(
-    (listener) => analytics.subscribe(listener),
-    () => analytics.getSnapshot(),
-    () => analytics.getSnapshot(),
-  )
-  const bootRef = useRef(boot)
-  const paged = useRef<{ routeKey: string | null; providers: Set<string> }>({
-    routeKey: null,
-    providers: new Set(),
-  })
-  const sessionRouteKey = useRef(routeKey)
+  const [controller] = useState(() => createConsentController(analytics, { boot, autoShowBanner, openConsentGlobalKey }))
+  const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot)
+  const value = useMemo<ConsentControllerValue>(() => ({ ...controller.actions, ...state }), [controller, state])
 
-  useEffect(() => {
-    void analytics.consent.bootstrap()
-  }, [analytics])
-
-  useEffect(() => scheduleBoot(analytics, bootRef.current), [analytics])
-
-  useEffect(() => {
-    if (!snapshot.booted || routeKey === null) return
-    if (paged.current.routeKey !== routeKey) {
-      paged.current = { routeKey, providers: new Set() }
-    }
-    const fresh = snapshot.activeProviders.filter((id) => !paged.current.providers.has(id))
-    if (!fresh.length) return
-    fresh.forEach((id) => paged.current.providers.add(id))
-    void analytics.page(page, { only: fresh })
-  }, [analytics, page, routeKey, snapshot])
-
-  useEffect(() => {
-    if (routeKey === null || sessionRouteKey.current === routeKey) return
-    const known = sessionRouteKey.current !== null
-    sessionRouteKey.current = routeKey
-    if (known) analytics.newPageSession()
-  }, [analytics, routeKey])
+  useEffect(() => controller.start(), [controller])
+  useEffect(() => controller.setRoute(routeKey, page), [controller, routeKey, page])
 
   return (
     <AnalyticsContext.Provider value={analytics}>
-      <ConsentControllerProvider
-        autoShowBanner={autoShowBanner}
-        openConsentGlobalKey={openConsentGlobalKey}
-      >
+      <ConsentControllerContext.Provider value={value}>
         {children}
-      </ConsentControllerProvider>
+      </ConsentControllerContext.Provider>
     </AnalyticsContext.Provider>
   )
 }
@@ -142,4 +95,11 @@ export function useConsent(): {
     setConsent: (next) => analytics.consent.setConsent(next),
     update: (partial) => analytics.consent.update(partial),
   }
+}
+
+/** State and actions for building your own consent UI. */
+export function useConsentController(): ConsentControllerValue {
+  const value = useContext(ConsentControllerContext)
+  if (!value) throw new Error('useConsentController must be used within AnalyticsProvider')
+  return value
 }
