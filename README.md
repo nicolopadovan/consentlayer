@@ -185,7 +185,7 @@ export async function POST(request: Request) {
 
 ```ts
 // Don't inline secrets, even in "private" code — bundlers ship this to the browser.
-const adapter = createMetaAdapter({
+const adapter = meta({
   pixelId: '123456789012345',
   serverEndpoint: 'https://graph.facebook.com/...',
   // The browser bundle MUST NOT contain the CAPI access token.

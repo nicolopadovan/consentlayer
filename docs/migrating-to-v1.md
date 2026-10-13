@@ -123,3 +123,48 @@ What reaches each provider:
 
 Call `analytics.consent.bootstrap()` once at startup to load stored consent,
 then `analytics.boot()`. `AnalyticsProvider` does both.
+
+## 1.0.0-rc.3: plugin contract
+
+### Provider factories
+
+| Before | After |
+|---|---|
+| `createGa4Adapter(options)` | `ga4(options)` |
+| `createMetaAdapter(options)` | `meta(options)` |
+| `createHotjarAdapter(options)` | `hotjar(options)` |
+| `createShopifyAnalyticsAdapter(options)` | `shopify(options)` |
+| `createTikTokConsentAdapter()` | `tiktok()` |
+| `createVercelAdapter(options)` | `vercel(options)` |
+
+Options are unchanged. `vercel()` now runs without consent, because Vercel
+Analytics sets no cookies; pass `{ ...vercel(options), requiredConsent: 'analytics' }` to keep
+the old gate.
+
+### Plugins you wrote
+
+Wrap the object in `definePlugin()` (from the package root) and rename hooks:
+
+| Before | After |
+|---|---|
+| `ProviderAdapter`, `AnalyticsProviderContext` | `AnalyticsPlugin`, `PluginContext` |
+| `init(ctx)` | `load(ctx)`: inject scripts here; runs once |
+| `onConsentChange(ctx)` | `consent(ctx)` |
+| `trackPage(payload, ctx)` | `page(page, ctx)`; `page.id` is the page view's event ID |
+| `trackEvent(event, ctx)` | `track(event, ctx)` |
+| `enabled(ctx)` / `consentLatch()` | `loadBeforeConsent: false` (the default for plugins) |
+| `ctx.isBooted` | removed: hooks run only after boot |
+
+`setup` must not touch the network or cookies; it runs at boot before
+consent. Without `requiredConsent` a plugin now runs with no consent at all
+(`'none'`). Error scopes are renamed to match: `provider-load`,
+`provider-consent`, `provider-page`, `provider-track`.
+
+Check a plugin in a DOM test:
+
+```ts
+import { checkPlugin } from '@nicolopadovan/analytics-consent-manager/testing'
+
+expect(await checkPlugin(posthog({ apiKey }))).toEqual([])
+```
+

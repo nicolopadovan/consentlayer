@@ -25,8 +25,20 @@ Breaking. See [docs/migrating-to-v1.md](../../docs/migrating-to-v1.md).
 - `UserIdentity.external_id` → `userId` (stored `external_id` values are still read).
 - `track` no longer requires analytics consent by default; each provider's own
   consent category decides. `page`, `identify` and `group` now check it too.
+- Plugin contract: `ProviderAdapter` → `AnalyticsPlugin`, `AnalyticsProviderContext`
+  → `PluginContext`; hooks `init` → `load`, `onConsentChange` → `consent`,
+  `trackPage` → `page`, `trackEvent` → `track`; `enabled` and `ctx.isBooted`
+  removed; `loadBeforeConsent` is a plugin field. A plugin without
+  `requiredConsent` runs without consent. Error scopes renamed to match.
+- Provider factories renamed: `ga4()`, `meta()`, `hotjar()`, `shopify()`,
+  `tiktok()`, `vercel()`. `vercel()` no longer requires analytics consent.
 
 ### Added
+- `definePlugin`, `loadScript`, `getFlag` / `setFlag` for plugin authors, and
+  `checkPlugin()` in `/testing`, which every built-in passes. The manager runs
+  `setup` → `consent` → `load` (once) and `teardown` on withdrawal.
+- `requiredConsent: 'none'` for cookieless providers.
+- Page views carry an ID (`page.id`) that Meta uses as `eventID`.
 - Typed `StandardEvents` params; `providers: { [id]: extras }` per-event option.
 - `identify(userId, traits)`, `reset()`, `group(id, traits)` and matching
   optional provider hooks. GA4 sets `user_id`; Hotjar identifies without email

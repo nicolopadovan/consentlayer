@@ -1,12 +1,12 @@
 import type {
   AnalyticsError,
-  AnalyticsErrorScope,
   AnalyticsEventPayload,
   AnalyticsManager,
   AnalyticsManagerOptions,
   AnalyticsManagerStateSnapshot,
+  AnalyticsPlugin,
   AutoTrackingConfig,
-  ProviderAdapter,
+  PluginContext,
   UserIdentity,
   UserTraits,
 } from './types'
@@ -24,10 +24,13 @@ import {
 } from './utils'
 
 type ProviderState = {
-  adapter: ProviderAdapter
+  plugin: AnalyticsPlugin
   setup: boolean
+  loaded: boolean
   active: boolean
 }
+
+type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent'>
 
 const DEFAULT_CLICK_SELECTORS = [
   'button',
@@ -138,7 +141,7 @@ export function createAnalyticsManager(
     consent,
     activeProviders: [...providerStates.values()]
       .filter((state) => state.active)
-      .map((state) => state.adapter.id),
+      .map((state) => state.plugin.id),
   })
 
   let currentSnapshot = snapshot()
@@ -184,97 +187,65 @@ export function createAnalyticsManager(
     else identityStorage.clear?.()
   }
 
-  const context = (providerId?: string) => ({
+  const context = (providerId: string): PluginContext => ({
     consent,
     identity: sharedIdentity(),
     debug: options.debug ?? false,
-    isBooted: booted,
-    emitError: providerId ? providerEmitError(providerId) : emitError,
+    emitError: providerEmitError(providerId),
   })
 
-  const scopeForLabel = (label: string): AnalyticsErrorScope => {
-    if (label.endsWith('.setup')) return 'provider-setup'
-    if (label.endsWith('.init')) return 'provider-init'
-    if (label.endsWith('.teardown')) return 'provider-teardown'
-    if (label.endsWith('.onConsentChange')) return 'provider-consent-change'
-    if (label.endsWith('.trackEvent')) return 'provider-track-event'
-    if (label.endsWith('.trackPage')) return 'provider-track-page'
-    if (/\.(identify|reset|group)$/.test(label)) return 'provider-identify'
-    return 'provider-setup'
-  }
-
-  const ensureProviderState = (provider: ProviderAdapter): ProviderState => {
-    const existing = providerStates.get(provider.id)
-    if (existing) return existing
-    const created: ProviderState = {
-      adapter: provider,
-      setup: false,
-      active: false,
-    }
-    providerStates.set(provider.id, created)
-    return created
-  }
-
-  const safeCall = async (
-    label: string,
-    callback: (() => Promise<void> | void) | undefined,
+  const call = async (
+    state: ProviderState,
+    hook: HookName,
+    run: (plugin: AnalyticsPlugin, ctx: PluginContext) => Promise<void> | void,
   ) => {
-    if (!callback || destroyed) return
+    if (destroyed) return
+    const { plugin } = state
     try {
-      await Promise.resolve(callback())
+      await run(plugin, context(plugin.id))
     } catch (error) {
-      const [providerId] = label.split('.')
       emitError({
-        scope: scopeForLabel(label),
-        providerId,
-        message: `${label} failed`,
+        scope: hook === 'reset' || hook === 'group' ? 'provider-identify' : `provider-${hook}`,
+        providerId: plugin.id,
+        message: `${plugin.id}.${hook} failed`,
         cause: error,
       })
     }
   }
 
-  const ensureSetup = async (state: ProviderState) => {
-    if (state.setup || !booted || !runtimeEnabled()) return
-    const enabled = state.adapter.enabled?.(context(state.adapter.id)) ?? true
-    if (!enabled) return
-    await safeCall(`${state.adapter.id}.setup`, () =>
-      state.adapter.setup?.(context(state.adapter.id)),
-    )
-    state.setup = true
+  const ensureProviderState = (plugin: AnalyticsPlugin): ProviderState => {
+    const existing = providerStates.get(plugin.id)
+    if (existing) return existing
+    const created: ProviderState = { plugin, setup: false, loaded: false, active: false }
+    providerStates.set(plugin.id, created)
+    return created
+  }
+
+  const teardown = async (state: ProviderState) => {
+    if (!state.active) return
+    state.active = false
+    await call(state, 'teardown', (plugin, ctx) => plugin.teardown?.(ctx))
   }
 
   const evaluateProvider = async (state: ProviderState) => {
-    const enabled =
-      runtimeEnabled() &&
-      (state.adapter.enabled?.(context(state.adapter.id)) ?? true)
-    const allowed = hasRequiredConsent(consent, state.adapter.requiredConsent)
-
-    if (booted && enabled) {
-      await ensureSetup(state)
-      await safeCall(`${state.adapter.id}.onConsentChange`, () =>
-        state.adapter.onConsentChange?.(context(state.adapter.id)),
-      )
+    if (!booted || !runtimeEnabled()) return teardown(state)
+    const { plugin } = state
+    const allowed = hasRequiredConsent(consent, plugin.requiredConsent)
+    if (!state.setup) {
+      state.setup = true
+      await call(state, 'setup', (p, ctx) => p.setup?.(ctx))
     }
-
-    if (booted && enabled && allowed && !state.active) {
-      await safeCall(`${state.adapter.id}.init`, () =>
-        state.adapter.init?.(context(state.adapter.id)),
-      )
-      state.active = true
-      const shared = sharedIdentity()
-      if (Object.keys(shared).length && !identifyQueued) {
-        await safeCall(`${state.adapter.id}.identify`, () =>
-          state.adapter.identify?.(shared, {}, context(state.adapter.id)),
-        )
-      }
-      return
+    await call(state, 'consent', (p, ctx) => p.consent?.(ctx))
+    if (!state.loaded && (allowed || plugin.loadBeforeConsent)) {
+      state.loaded = true
+      await call(state, 'load', (p, ctx) => p.load?.(ctx))
     }
-
-    if ((!booted || !enabled || !allowed) && state.active) {
-      await safeCall(`${state.adapter.id}.teardown`, () =>
-        state.adapter.teardown?.(context(state.adapter.id)),
-      )
-      state.active = false
+    if (!allowed) return teardown(state)
+    if (state.active) return
+    state.active = true
+    const shared = sharedIdentity()
+    if (Object.keys(shared).length && !identifyQueued) {
+      await call(state, 'identify', (p, ctx) => p.identify?.(shared, {}, ctx))
     }
   }
 
@@ -318,8 +289,8 @@ export function createAnalyticsManager(
     if (destroyed) return
     for (const state of providerStates.values()) {
       if (!state.active) continue
-      if (!hasRequiredConsent(consent, state.adapter.requiredConsent)) continue
-      if (selectedProviderIds && !selectedProviderIds.includes(state.adapter.id)) {
+      if (!hasRequiredConsent(consent, state.plugin.requiredConsent)) continue
+      if (selectedProviderIds && !selectedProviderIds.includes(state.plugin.id)) {
         continue
       }
       await callback(state)
@@ -328,9 +299,7 @@ export function createAnalyticsManager(
 
   const identifyProviders = (traits: UserTraits, only?: string[]) =>
     trackAgainstProviders(only, async (state) => {
-      await safeCall(`${state.adapter.id}.identify`, () =>
-        state.adapter.identify?.(sharedIdentity(), traits, context(state.adapter.id)),
-      )
+      await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx))
     })
 
   const clearSessionTimers = () => {
@@ -429,19 +398,11 @@ export function createAnalyticsManager(
     },
     registerProvider(provider) {
       const state = ensureProviderState(provider)
-      if (booted) {
-        void ensureSetup(state).then(queueLifecycle)
-      } else {
-        refreshSnapshot()
-        notify()
-      }
+      if (booted) void queueLifecycle()
+      else notify()
       return () => {
         if (!providerStates.has(provider.id)) return
-        if (state.active) {
-          void safeCall(`${provider.id}.teardown`, () =>
-            provider.teardown?.(context(provider.id)),
-          )
-        }
+        void teardown(state)
         providerStates.delete(provider.id)
         notify()
       }
@@ -451,7 +412,7 @@ export function createAnalyticsManager(
       const hadContact = Boolean(identity.email || identity.phone)
       const wasActive = [...providerStates.values()]
         .filter((state) => state.active)
-        .map((state) => state.adapter.id)
+        .map((state) => state.plugin.id)
       consent = nextConsent
       if (!nextConsent) storedContact = undefined
       settleStoredContact()
@@ -464,9 +425,7 @@ export function createAnalyticsManager(
       if (hadMarketing) {
         for (const state of providerStates.values()) {
           if (!state.setup) continue
-          await safeCall(`${state.adapter.id}.identify`, () =>
-            state.adapter.identify?.(sharedIdentity(), {}, context(state.adapter.id)),
-          )
+          await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), {}, ctx))
         }
       } else if (wasActive.length) {
         await identifyProviders({}, wasActive)
@@ -476,11 +435,9 @@ export function createAnalyticsManager(
       return consent
     },
     async page(payload = {}, pageOptions = {}) {
-      const page = { ...getWindowLocation(), ...payload }
+      const page = { ...getWindowLocation(), ...payload, id: createEventId() }
       await trackAgainstProviders(pageOptions.only, async (state) => {
-        await safeCall(`${state.adapter.id}.trackPage`, () =>
-          state.adapter.trackPage?.(page, context(state.adapter.id)),
-        )
+        await call(state, 'page', (p, ctx) => p.page?.(page, ctx))
       })
     },
     async track(name, params, optionsInput = {}) {
@@ -493,9 +450,7 @@ export function createAnalyticsManager(
       await trackAgainstProviders(optionsInput.only, async (state) => {
         if (optionsInput.requireAnalyticsConsent && !consent?.analytics) return
         if (optionsInput.requireMarketingConsent && !consent?.marketing) return
-        await safeCall(`${state.adapter.id}.trackEvent`, () =>
-          state.adapter.trackEvent?.(event, context(state.adapter.id)),
-        )
+        await call(state, 'track', (p, ctx) => p.track?.(event, ctx))
       })
     },
     async identify(userId, traits = {}) {
@@ -517,16 +472,12 @@ export function createAnalyticsManager(
       identityStorage.clear?.()
       for (const state of providerStates.values()) {
         if (!state.setup) continue
-        await safeCall(`${state.adapter.id}.reset`, () =>
-          state.adapter.reset?.(context(state.adapter.id)),
-        )
+        await call(state, 'reset', (p, ctx) => p.reset?.(ctx))
       }
     },
     async group(groupId, traits = {}) {
       await trackAgainstProviders(undefined, async (state) => {
-        await safeCall(`${state.adapter.id}.group`, () =>
-          state.adapter.group?.(groupId, traits, context(state.adapter.id)),
-        )
+        await call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx))
       })
     },
     enableAutoTracking(config) {
@@ -590,13 +541,7 @@ export function createAnalyticsManager(
       if (activeClickHandler && isBrowser()) {
         window.removeEventListener('click', activeClickHandler)
       }
-      for (const state of providerStates.values()) {
-        if (state.active) {
-          void safeCall(`${state.adapter.id}.teardown`, () =>
-            state.adapter.teardown?.(context(state.adapter.id)),
-          )
-        }
-      }
+      for (const state of providerStates.values()) void teardown(state)
       providerStates.clear()
       listeners.clear()
     },

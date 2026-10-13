@@ -12,16 +12,16 @@ describe('analytics manager', () => {
     const analyticsProvider = {
       id: 'ga4',
       requiredConsent: 'analytics' as const,
-      init: vi.fn(),
+      load: vi.fn(),
       teardown: vi.fn(),
-      trackEvent: vi.fn(),
+      track: vi.fn(),
     }
     const marketingProvider = {
       id: 'meta',
       requiredConsent: 'marketing' as const,
-      init: vi.fn(),
+      load: vi.fn(),
       teardown: vi.fn(),
-      trackEvent: vi.fn(),
+      track: vi.fn(),
     }
 
     const manager = createAnalyticsManager({
@@ -36,8 +36,8 @@ describe('analytics manager', () => {
       marketing: false,
     })
 
-    expect(analyticsProvider.init).toHaveBeenCalledTimes(1)
-    expect(marketingProvider.init).not.toHaveBeenCalled()
+    expect(analyticsProvider.load).toHaveBeenCalledTimes(1)
+    expect(marketingProvider.load).not.toHaveBeenCalled()
 
     await manager.updateConsent({
       preferences: true,
@@ -45,7 +45,7 @@ describe('analytics manager', () => {
       marketing: true,
     })
 
-    expect(marketingProvider.init).toHaveBeenCalledTimes(1)
+    expect(marketingProvider.load).toHaveBeenCalledTimes(1)
 
     await manager.updateConsent({
       preferences: true,
@@ -57,6 +57,33 @@ describe('analytics manager', () => {
     expect(marketingProvider.teardown).toHaveBeenCalledTimes(1)
   })
 
+  it('runs setup, consent and load in order, and load only once', async () => {
+    const calls: string[] = []
+    const plugin = (id: string, loadBeforeConsent: boolean) => ({
+      id,
+      requiredConsent: 'analytics' as const,
+      loadBeforeConsent,
+      setup: () => void calls.push(`${id}.setup`),
+      consent: () => void calls.push(`${id}.consent`),
+      load: () => void calls.push(`${id}.load`),
+      teardown: () => void calls.push(`${id}.teardown`),
+    })
+    const denied = { preferences: false, analytics: false, marketing: false }
+    const manager = createAnalyticsManager({
+      providers: [plugin('early', true), plugin('late', false)],
+      consent: denied,
+    })
+    await manager.boot()
+    expect(calls).toEqual(['early.setup', 'early.consent', 'early.load', 'late.setup', 'late.consent'])
+    calls.length = 0
+    await manager.updateConsent({ ...denied, analytics: true })
+    await manager.updateConsent(denied)
+    await manager.updateConsent({ ...denied, analytics: true })
+    expect(calls.filter((call) => call.startsWith('late'))).toEqual([
+      'late.consent', 'late.load', 'late.consent', 'late.teardown', 'late.consent',
+    ])
+  })
+
   it('enforces provider-level marketing gating for Meta dispatch', async () => {
     const analyticsTrack = vi.fn()
     const metaTrack = vi.fn()
@@ -66,12 +93,12 @@ describe('analytics manager', () => {
         {
           id: 'ga4',
           requiredConsent: 'analytics',
-          trackEvent: analyticsTrack,
+          track: analyticsTrack,
         },
         {
           id: 'meta',
           requiredConsent: 'marketing',
-          trackEvent: metaTrack,
+          track: metaTrack,
         },
       ],
       identityStorage: createMemoryIdentityStorage(),
@@ -99,7 +126,7 @@ describe('analytics manager', () => {
         {
           id: 'ga4',
           requiredConsent: 'analytics',
-          trackEvent: (event) => {
+          track: (event) => {
             trackedEvents.push(event.name)
             eventPayloads.push(event.params)
           },

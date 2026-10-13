@@ -5,11 +5,9 @@ import {
 import type {
   AnalyticsEventPayload,
   EcommerceItem,
-  ProviderAdapter,
   UserIdentity,
 } from '../core/types'
-import { getFlag, setFlag } from '../core/names'
-import { consentLatch, createEventId } from '../core/utils'
+import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
 import {
   assertHttpsOrRelativeUrl,
   assertValidMetaPixelId,
@@ -27,7 +25,7 @@ declare global {
   }
 }
 
-export type MetaAdapterOptions = {
+export type MetaOptions = {
   pixelId: string
   serverEndpoint?: string
   fetchImpl?: typeof fetch
@@ -101,9 +99,7 @@ export function metaUserData(identity: UserIdentity): Record<string, string> {
   return data
 }
 
-export function createMetaAdapter(
-  options: MetaAdapterOptions,
-): ProviderAdapter {
+export function meta(options: MetaOptions) {
   const pixelId = assertValidMetaPixelId(options.pixelId)
   const serverEndpoint =
     options.serverEndpoint !== undefined
@@ -150,12 +146,11 @@ export function createMetaAdapter(
   let matched = false
   let stale = false
 
-  return {
+  return definePlugin({
     id: 'meta',
     requiredConsent: 'marketing',
-    enabled:
-      options.loadBeforeConsent === false ? consentLatch('marketing') : undefined,
-    setup(setupContext) {
+    loadBeforeConsent: options.loadBeforeConsent ?? true,
+    load(loadContext) {
       if (typeof window === 'undefined' || getFlag('MetaPixelInitialized')) return
 
       const bootstrap = document.createElement('script')
@@ -166,48 +161,38 @@ export function createMetaAdapter(
       bootstrap.text = `!function(f,b,e,v,n){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
 n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];}(window);
-fbq('consent', ${setupContext.consent?.marketing ? "'grant'" : "'revoke'"});
-fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(setupContext.identity)).replace(/</g, '\\u003c')});`
+fbq('consent', ${loadContext.consent?.marketing ? "'grant'" : "'revoke'"});
+fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(loadContext.identity)).replace(/</g, '\\u003c')});`
       document.head.appendChild(bootstrap)
       bootstrap.remove()
-      matched = Boolean(setupContext.identity.email || setupContext.identity.phone)
-
-      const loader = document.createElement('script')
-      loader.setAttribute(
-        'data-analytics-consent-manager',
-        'meta-pixel-loader',
+      matched = Boolean(loadContext.identity.email || loadContext.identity.phone)
+      loadScript(`https://connect.facebook.net/${encodeURIComponent(locale)}/fbevents.js`).catch(
+        () =>
+          loadContext.emitError({
+            scope: 'provider-script-load',
+            message: 'Failed to load Meta Pixel (fbevents.js)',
+          }),
       )
-      loader.async = true
-      loader.src = `https://connect.facebook.net/${encodeURIComponent(locale)}/fbevents.js`
-      loader.onerror = () => {
-        setupContext.emitError({
-          scope: 'provider-script-load',
-          providerId: 'meta',
-          message: 'Failed to load Meta Pixel (fbevents.js)',
-        })
-      }
-      document.head.appendChild(loader)
 
       setFlag('MetaPixelInitialized', true)
     },
-    onConsentChange(context) {
+    consent(context) {
       if (!isReady()) return
       if (matched && !context.consent?.marketing) stale = true
       window.fbq?.('consent', context.consent?.marketing && !stale ? 'grant' : 'revoke')
     },
-    async trackPage(_, context) {
+    async page(page, context) {
       if (!isReady() || !context.consent?.marketing) return
-      const eventId = createEventId()
-      if (!stale) window.fbq?.('track', 'PageView', {}, { eventID: eventId })
-      await mirrorEvent('PageView', eventId, undefined, context.identity)
+      if (!stale) window.fbq?.('track', 'PageView', {}, { eventID: page.id })
+      await mirrorEvent('PageView', page.id, undefined, context.identity)
     },
-    async trackEvent(event, context) {
+    async track(event, context) {
       if (!isReady() || !context.consent?.marketing) return
       const { method, name, params } = toMetaEvent(event)
       if (!stale) window.fbq?.(method, name, params, { eventID: event.id })
       await mirrorEvent(name, event.id, params, context.identity)
     },
-  }
+  })
 }
 
 export function renderMetaPixelNoscriptHtml(pixelId: string): string {

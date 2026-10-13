@@ -10,8 +10,8 @@ import {
   isValidEmail,
   isValidPhoneE164,
 } from '../src/core/validation'
-import { createGa4Adapter } from '../src/providers/ga4'
-import { createMetaAdapter } from '../src/providers/meta'
+import { ga4 } from '../src/providers/ga4'
+import { meta } from '../src/providers/meta'
 
 describe('validation helpers', () => {
   it('accepts well-formed GA4 measurement ids and rejects bad ones', () => {
@@ -70,15 +70,15 @@ describe('normalizeIdentity', () => {
 
 describe('adapter construction', () => {
   it('throws at construction when GA4 measurement id is invalid', () => {
-    expect(() => createGa4Adapter({ measurementId: 'oops' })).toThrow(
+    expect(() => ga4({ measurementId: 'oops' })).toThrow(
       /GA4 measurement ID/,
     )
   })
 
   it('throws at construction when Meta pixel id or endpoint is invalid', () => {
-    expect(() => createMetaAdapter({ pixelId: 'oops' })).toThrow(/Meta Pixel ID/)
+    expect(() => meta({ pixelId: 'oops' })).toThrow(/Meta Pixel ID/)
     expect(() =>
-      createMetaAdapter({
+      meta({
         pixelId: '123456789012345',
         serverEndpoint: 'http://insecure.example.com',
       }),
@@ -91,7 +91,7 @@ describe('onError plumbing', () => {
     const onError = vi.fn<(error: AnalyticsError) => void>()
     const provider = {
       id: 'broken',
-      init: () => {
+      load: () => {
         throw new Error('boom')
       },
     }
@@ -112,7 +112,7 @@ describe('onError plumbing', () => {
     expect(onError).toHaveBeenCalled()
     const errorArg = onError.mock.calls[0]?.[0]
     expect(errorArg?.providerId).toBe('broken')
-    expect(errorArg?.scope).toBe('provider-init')
+    expect(errorArg?.scope).toBe('provider-load')
     expect((errorArg?.cause as Error).message).toBe('boom')
   })
 

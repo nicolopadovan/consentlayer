@@ -3,11 +3,9 @@ import { createAnalytics } from '../src/core/create-analytics'
 import { configureNames, getFlag, setFlag, ui } from '../src/core/names'
 import { defaultRuntimePreset } from '../src/core/presets'
 import { createLocalStorageConsentStorage } from '../src/core/storage'
-import type { AnalyticsProviderContext, ConsentState } from '../src/core/types'
-import { createGa4Adapter } from '../src/providers/ga4'
+import type { ConsentState } from '../src/core/types'
 
 const granted: ConsentState = { preferences: true, analytics: true, marketing: true }
-const denied: ConsentState = { preferences: false, analytics: false, marketing: false }
 const win = window as unknown as Record<string, unknown>
 
 describe('names', () => {
@@ -62,25 +60,5 @@ describe('names', () => {
     setFlag('MetaPixelInitialized', true)
     expect(win.__npcmMetaPixelInitialized).toBe(true)
     expect(win.__acmMetaPixelInitialized).toBe(true)
-  })
-})
-
-describe('loadBeforeConsent', () => {
-  const context = (consent: ConsentState) =>
-    ({ consent }) as unknown as AnalyticsProviderContext
-
-  it('keeps the provider enabled by default', () => {
-    const adapter = createGa4Adapter({ measurementId: 'G-ABC123' })
-    expect(adapter.enabled?.(context(denied)) ?? true).toBe(true)
-  })
-
-  it('stays disabled until consent, then stays enabled', () => {
-    const adapter = createGa4Adapter({
-      measurementId: 'G-ABC123',
-      loadBeforeConsent: false,
-    })
-    expect(adapter.enabled?.(context(denied))).toBe(false)
-    expect(adapter.enabled?.(context(granted))).toBe(true)
-    expect(adapter.enabled?.(context(denied))).toBe(true)
   })
 })

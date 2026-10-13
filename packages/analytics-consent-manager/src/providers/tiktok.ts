@@ -1,4 +1,4 @@
-import type { ProviderAdapter } from '../core/types'
+import { definePlugin } from '../core/plugin'
 
 declare global {
   interface Window {
@@ -6,13 +6,14 @@ declare global {
   }
 }
 
-export function createTikTokConsentAdapter(): ProviderAdapter {
-  return {
+/** Forwards consent to a `ttq` the app loads itself. */
+export function tiktok() {
+  return definePlugin({
     id: 'tiktok',
     requiredConsent: 'marketing',
-    onConsentChange(context) {
+    consent({ consent }) {
       if (typeof window === 'undefined' || typeof window.ttq !== 'function') return
-      window.ttq('consent', context.consent?.marketing ? 'grant' : 'reject')
+      window.ttq('consent', consent?.marketing ? 'grant' : 'reject')
     },
-  }
+  })
 }

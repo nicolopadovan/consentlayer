@@ -1,5 +1,4 @@
 import type {
-  AnalyticsProviderContext,
   ConsentBroadcastConfig,
   ConsentState,
   ProviderConsentRequirement,
@@ -38,7 +37,7 @@ export function hasRequiredConsent(
   consent: ConsentState | null,
   required?: ProviderConsentRequirement,
 ): boolean {
-  if (!required) return true
+  if (!required || required === 'none') return true
   if (!consent) return false
   if (typeof required === 'function') return required(consent)
   return Boolean(consent[required])
@@ -111,17 +110,6 @@ export function broadcastConsent(
       doc.dispatchEvent(new CustomEvent(name, { detail: consent }))
     }
   }
-}
-
-/**
- * `enabled()` for a provider that must not run at all before `category` is
- * granted. Stays true afterwards so a withdrawal still reaches the provider.
- */
-export function consentLatch(
-  category: keyof ConsentState,
-): (context: AnalyticsProviderContext) => boolean {
-  let granted = false
-  return (context) => (granted ||= context.consent?.[category] === true)
 }
 
 export function debugLog(enabled: boolean, ...parts: unknown[]): void {

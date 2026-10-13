@@ -1,5 +1,6 @@
 export { createAnalytics, type AnalyticsOptions } from './core/create-analytics'
 export { configureNames, getNames, legacyNames } from './core/names'
+export { definePlugin, getFlag, loadScript, setFlag } from './core/plugin'
 export type { AutoTrackingEventNames, Names, NamesInput } from './core/names'
 export {
   createEnvConfig,
@@ -30,7 +31,7 @@ export type {
   AnalyticsManager,
   AnalyticsManagerOptions,
   AnalyticsManagerStateSnapshot,
-  AnalyticsProviderContext,
+  AnalyticsPlugin,
   AutoTrackingClickConfig,
   AutoTrackingClickMode,
   AutoTrackingConfig,
@@ -50,8 +51,9 @@ export type {
   IdentityStorageAdapter,
   LazyBootConfig,
   LazyBootMode,
+  PageEvent,
   PageViewPayload,
-  ProviderAdapter,
+  PluginContext,
   ProviderConsentRequirement,
   StandardEvents,
   TrackEventOptions,

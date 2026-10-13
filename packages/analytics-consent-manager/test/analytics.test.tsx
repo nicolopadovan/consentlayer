@@ -1,24 +1,24 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
-import type { AnalyticsEventPayload, ProviderAdapter } from '../src/core/types'
+import type { AnalyticsEventPayload, AnalyticsPlugin } from '../src/core/types'
 import { cartParams, orderParams, productParams } from '../src/ecommerce'
 import { ga4EventName, ga4UserData } from '../src/providers/ga4'
-import { createHotjarAdapter } from '../src/providers/hotjar'
-import { createMetaAdapter, metaUserData, toMetaEvent } from '../src/providers/meta'
+import { hotjar } from '../src/providers/hotjar'
+import { meta, metaUserData, toMetaEvent } from '../src/providers/meta'
 import { AnalyticsProvider, useAnalytics, useConsent } from '../src/react'
 
 const granted = { preferences: true, analytics: true, marketing: true }
 
-function spyProvider(id: string, requiredConsent: ProviderAdapter['requiredConsent'] = 'analytics') {
+function spyProvider(id: string, requiredConsent: AnalyticsPlugin['requiredConsent'] = 'analytics') {
   return {
     id,
     requiredConsent,
-    trackEvent: vi.fn(),
-    trackPage: vi.fn(),
+    track: vi.fn(),
+    page: vi.fn(),
     identify: vi.fn(),
     reset: vi.fn(),
-  } satisfies ProviderAdapter
+  } satisfies AnalyticsPlugin
 }
 
 const event = (
@@ -40,10 +40,10 @@ describe('createAnalytics', () => {
     await analytics.track('sign_up', { method: 'google' })
     await analytics.track('login', {}, { only: ['ga4'], eventId: 'fixed' })
 
-    expect(ga4.trackEvent).toHaveBeenCalledTimes(2)
-    expect(hotjar.trackEvent).toHaveBeenCalledTimes(1)
-    const [first] = ga4.trackEvent.mock.calls[0] as [AnalyticsEventPayload]
-    const [second] = ga4.trackEvent.mock.calls[1] as [AnalyticsEventPayload]
+    expect(ga4.track).toHaveBeenCalledTimes(2)
+    expect(hotjar.track).toHaveBeenCalledTimes(1)
+    const [first] = ga4.track.mock.calls[0] as [AnalyticsEventPayload]
+    const [second] = ga4.track.mock.calls[1] as [AnalyticsEventPayload]
     expect(first.id).toMatch(/.+/)
     expect(second.id).toBe('fixed')
     analytics.destroy()
@@ -110,8 +110,8 @@ describe('createAnalytics', () => {
     await analytics.consent.update({ marketing: true })
     await analytics.boot()
     await analytics.track('purchase', { transaction_id: 'o1' })
-    expect(meta.trackEvent).toHaveBeenCalledTimes(1)
-    expect(ga4.trackEvent).not.toHaveBeenCalled()
+    expect(meta.track).toHaveBeenCalledTimes(1)
+    expect(ga4.track).not.toHaveBeenCalled()
     analytics.destroy()
   })
 
@@ -182,22 +182,22 @@ describe('createAnalytics', () => {
     await analytics.track('sign_up', {}, { requireMarketingConsent: true })
     await analytics.consent.update({ marketing: false })
     await analytics.boot()
-    expect(ga4.trackEvent).not.toHaveBeenCalled()
+    expect(ga4.track).not.toHaveBeenCalled()
     analytics.destroy()
   })
 
   it('keeps the Meta pixel off after a withdrawal once it holds an email', async () => {
     const fbq = vi.fn()
     Object.assign(window, { fbq, __npcmMetaPixelInitialized: undefined, __acmMetaPixelInitialized: undefined })
-    const meta = createMetaAdapter({ pixelId: '123456789012345' })
-    const ctx = { debug: false, isBooted: true, emitError: () => undefined }
+    const pixel = meta({ pixelId: '123456789012345' })
+    const ctx = { debug: false, emitError: () => undefined }
     const on = { ...ctx, consent: granted, identity: { email: 'a@example.com' } }
     const off = { ...ctx, consent: { ...granted, marketing: false }, identity: {} }
-    await meta.setup?.(on)
+    pixel.load?.(on)
     window.fbq = fbq
-    await meta.onConsentChange?.(off)
-    await meta.onConsentChange?.({ ...on, identity: {} })
-    await meta.trackEvent?.(event('purchase', {}), { ...on, identity: {} })
+    pixel.consent?.(off)
+    pixel.consent?.({ ...on, identity: {} })
+    await pixel.track?.(event('purchase', {}), { ...on, identity: {} })
     expect(fbq.mock.calls).toEqual([['consent', 'revoke'], ['consent', 'revoke']])
   })
 
@@ -207,12 +207,12 @@ describe('createAnalytics', () => {
     await analytics.consent.update({ analytics: true })
     await analytics.identify('u1', { plan: 'pro' })
     await analytics.track('sign_up')
-    expect(ga4.trackEvent).not.toHaveBeenCalled()
+    expect(ga4.track).not.toHaveBeenCalled()
 
     await analytics.boot()
     expect(ga4.identify).toHaveBeenCalledOnce()
     expect(ga4.identify).toHaveBeenCalledWith({ userId: 'u1' }, { plan: 'pro' }, expect.anything())
-    expect(ga4.trackEvent).toHaveBeenCalledTimes(1)
+    expect(ga4.track).toHaveBeenCalledTimes(1)
     analytics.destroy()
   })
 
@@ -225,15 +225,15 @@ describe('createAnalytics', () => {
     const hotjar = spyProvider('hotjar')
     analytics.registerProvider(hotjar)
     await analytics.boot()
-    expect(ga4.trackEvent).not.toHaveBeenCalled()
+    expect(ga4.track).not.toHaveBeenCalled()
 
     await analytics.consent.update({ analytics: true })
     await waitFor(() =>
-      expect(ga4.trackEvent.mock.calls.map(([e]) => (e as AnalyticsEventPayload).name)).toContain(
+      expect(ga4.track.mock.calls.map(([e]) => (e as AnalyticsEventPayload).name)).toContain(
         'npcm.page_session_start',
       ),
     )
-    expect(hotjar.trackEvent).not.toHaveBeenCalled()
+    expect(hotjar.track).not.toHaveBeenCalled()
     analytics.destroy()
   })
 })
@@ -315,7 +315,7 @@ describe('AnalyticsProvider', () => {
       </AnalyticsProvider>,
     )
     await act(() => analytics.consent.update({ analytics: true }))
-    await waitFor(() => expect(ga4.trackPage).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(1))
     expect(screen.getByTestId('probe').textContent).toContain('true {"preferences":false,"analytics":true')
 
     rerender(
@@ -323,7 +323,7 @@ describe('AnalyticsProvider', () => {
         <Probe />
       </AnalyticsProvider>,
     )
-    await waitFor(() => expect(ga4.trackPage).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(2))
     analytics.destroy()
   })
 
@@ -337,10 +337,10 @@ describe('AnalyticsProvider', () => {
       </AnalyticsProvider>,
     )
     await act(() => analytics.consent.update({ analytics: true }))
-    await waitFor(() => expect(ga4.trackPage).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(ga4.page).toHaveBeenCalledTimes(1))
     await act(() => analytics.consent.update({ marketing: true }))
-    await waitFor(() => expect(meta.trackPage).toHaveBeenCalledTimes(1))
-    expect(ga4.trackPage).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(meta.page).toHaveBeenCalledTimes(1))
+    expect(ga4.page).toHaveBeenCalledTimes(1)
     analytics.destroy()
   })
 })
@@ -359,17 +359,17 @@ describe('provider identity', () => {
     })
   })
 
-  it('deletes Hotjar cookies and storage when analytics is withdrawn', async () => {
+  it('deletes Hotjar cookies and storage when analytics is withdrawn', () => {
     document.cookie = '_hjSessionUser_1=x; path=/'
     document.cookie = 'keep=1; path=/'
     localStorage.setItem('_hjUserAttributes', 'x')
     sessionStorage.setItem('hjViewportId', 'x')
     localStorage.setItem('hjActiveViewportIds', 'x')
-    const hotjar = createHotjarAdapter({ siteId: 1, version: 6 })
-    const ctx = { identity: {}, debug: false, isBooted: true, emitError: () => undefined }
-    await hotjar.teardown?.({ ...ctx, consent: { preferences: false, analytics: true, marketing: false } })
+    const plugin = hotjar({ siteId: 1, version: 6 })
+    const ctx = { identity: {}, debug: false, emitError: () => undefined }
+    plugin.teardown?.({ ...ctx, consent: { preferences: false, analytics: true, marketing: false } })
     expect(document.cookie).toContain('_hjSessionUser_1')
-    await hotjar.teardown?.({ ...ctx, consent: { preferences: false, analytics: false, marketing: false } })
+    plugin.teardown?.({ ...ctx, consent: { preferences: false, analytics: false, marketing: false } })
     expect(document.cookie).not.toContain('_hj')
     expect(document.cookie).toContain('keep=1')
     expect(localStorage.getItem('_hjUserAttributes')).toBeNull()

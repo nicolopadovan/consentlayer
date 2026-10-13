@@ -3,7 +3,7 @@
 import {
   createAnalytics,
   type createEnvConfig,
-  type ProviderAdapter,
+  type AnalyticsPlugin,
 } from '@nicolopadovan/analytics-consent-manager'
 import { AnalyticsProvider } from '@nicolopadovan/analytics-consent-manager/react'
 import {
@@ -11,12 +11,12 @@ import {
   CookieDialog,
   ManageConsentTrigger,
 } from '@nicolopadovan/analytics-consent-manager/ui'
-import { createGa4Adapter } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
-import { createHotjarAdapter } from '@nicolopadovan/analytics-consent-manager/providers/hotjar'
-import { createMetaAdapter } from '@nicolopadovan/analytics-consent-manager/providers/meta'
+import { ga4 } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
+import { hotjar } from '@nicolopadovan/analytics-consent-manager/providers/hotjar'
+import { meta } from '@nicolopadovan/analytics-consent-manager/providers/meta'
 import {
-  createShopifyAnalyticsAdapter,
   createShopifyCustomerPrivacyAdapter,
+  shopify,
 } from '@nicolopadovan/analytics-consent-manager/providers/shopify'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
@@ -29,24 +29,24 @@ export type AnalyticsShellProps = {
 }
 
 function createShellAnalytics(env: AnalyticsShellEnv) {
-  const providers: ProviderAdapter[] = []
+  const providers: AnalyticsPlugin[] = []
   if (env.ga4.measurementId) {
-    providers.push(createGa4Adapter({ measurementId: env.ga4.measurementId }))
+    providers.push(ga4({ measurementId: env.ga4.measurementId }))
   }
   if (env.meta.pixelId) {
     providers.push(
-      createMetaAdapter({
+      meta({
         pixelId: env.meta.pixelId,
         serverEndpoint: '/api/facebook/track',
       }),
     )
   }
   if (env.shopify.storeId) {
-    providers.push(createShopifyAnalyticsAdapter())
+    providers.push(shopify())
   }
   if (env.hotjar.siteId && env.hotjar.version) {
     providers.push(
-      createHotjarAdapter({
+      hotjar({
         siteId: env.hotjar.siteId,
         version: env.hotjar.version,
       }),

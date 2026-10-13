@@ -113,13 +113,13 @@
     <div class="arrow">→</div>
     <div class="panel layer">
       <h3>Providers <span class="tag">providers/*.ts</span></h3>
-      <p>Small adapters, each with a <code>requiredConsent</code> category and optional hooks:</p>
+      <p>Small plugins, each with a <code>requiredConsent</code> category and optional hooks:</p>
       <ul>
-        <li><code>setup</code> — <b>runs after boot, regardless of consent</b></li>
-        <li><code>init</code> — runs once consent for its category is granted</li>
-        <li><code>onConsentChange</code> — runs on every change, regardless of consent</li>
+        <li><code>setup</code> — <b>runs at boot, regardless of consent</b>; no network, no cookies</li>
+        <li><code>consent</code> — runs at boot and on every change, regardless of consent</li>
+        <li><code>load</code> — injects scripts, once: when its category is granted, or at boot with <code>loadBeforeConsent</code></li>
         <li><code>teardown</code> — runs when consent is withdrawn</li>
-        <li><code>trackPage</code> / <code>trackEvent</code> / <code>identify</code> — only while active; each provider translates the standard event (<code>add_to_cart</code> → Meta's <code>AddToCart</code>)</li>
+        <li><code>page</code> / <code>track</code> / <code>identify</code> — only while active; each provider translates the standard event (<code>add_to_cart</code> → Meta's <code>AddToCart</code>)</li>
       </ul>
     </div>
   </div>
@@ -193,8 +193,8 @@
   <div class="grid timeline">
     <div class="panel"><b>Engine bootstraps</b><p class="dim">Reads storage. If empty, asks integration adapters (Shopify). Still nothing → consent is <code>null</code>.</p></div>
     <div class="panel"><b>Banner shows</b><p class="dim">The controller sees <code>null</code> and shows the banner. Providers are untouched so far.</p></div>
-    <div class="panel"><b>Manager boots</b><p class="dim">Every enabled provider gets <code>setup()</code> and <code>onConsentChange()</code>, <em>with consent still <code>null</code></em>.</p></div>
-    <div class="panel"><b>Visitor chooses</b><p class="dim">Engine saves it, notifies the manager. Providers whose category is now granted get <code>init()</code> and become active.</p></div>
+    <div class="panel"><b>Manager boots</b><p class="dim">Every provider gets <code>setup()</code> and <code>consent()</code>, <em>with consent still <code>null</code></em>; those with <code>loadBeforeConsent</code> also get <code>load()</code>.</p></div>
+    <div class="panel"><b>Visitor chooses</b><p class="dim">Engine saves it, notifies the manager. Providers whose category is now granted get <code>load()</code> (once) and become active.</p></div>
     <div class="panel"><b>Tracking flows</b><p class="dim">Page views and events go only to active providers. Withdrawing consent calls <code>teardown()</code>.</p></div>
   </div>
 
@@ -202,15 +202,15 @@
   <table>
     <thead><tr><th>Provider</th><th>Category</th><th>Third-party code before consent?</th><th>Why</th></tr></thead>
     <tbody>
-      <tr><td>GA4</td><td>analytics</td><td class="yes">Yes</td><td><code>setup()</code> injects <code>gtag.js</code> from googletagmanager.com and sets Consent Mode defaults to <em>denied</em>. Google receives the script request; <code>config</code> only runs after consent.</td></tr>
-      <tr><td>Meta Pixel</td><td>marketing</td><td class="yes">Yes</td><td><code>setup()</code> injects <code>fbevents.js</code> and calls <code>fbq('init')</code>; <code>fbq('consent','revoke')</code> is sent only afterwards.</td></tr>
-      <tr><td>Hotjar</td><td>analytics</td><td class="no">No</td><td>Script injected in <code>init()</code>. No <code>teardown</code>: stays loaded after withdrawal until reload.</td></tr>
-      <tr><td>Shopify Web Pixels</td><td>analytics</td><td class="no">No</td><td><code>setup()</code> only creates a local queue; the CDN script loads in <code>init()</code>.</td></tr>
-      <tr><td>Vercel / TikTok</td><td>analytics / marketing</td><td class="no">No</td><td>Don't load scripts; they forward events or consent to an SDK the app loaded.</td></tr>
-      <tr><td>PostHog</td><td>analytics</td><td class="no">No (in Scriptie &amp; Bruciami)</td><td>Not part of the package. Both apps write their own adapter that calls <code>posthog.init()</code> in <code>init()</code>. Bruciami even <code>import()</code>s the SDK there.</td></tr>
+      <tr><td>GA4</td><td>analytics</td><td class="yes">Yes</td><td><code>setup()</code> sets Consent Mode defaults to <em>denied</em>; <code>load()</code> then injects <code>gtag.js</code> at boot. Google receives the script request, but no data until consent.</td></tr>
+      <tr><td>Meta Pixel</td><td>marketing</td><td class="yes">Yes</td><td><code>load()</code> calls <code>fbq('consent','revoke')</code>, then <code>fbq('init')</code>, then injects <code>fbevents.js</code> at boot.</td></tr>
+      <tr><td>Hotjar</td><td>analytics</td><td class="no">No</td><td>Script injected in <code>load()</code>. <code>teardown()</code> deletes its cookies; the script stays loaded until reload.</td></tr>
+      <tr><td>Shopify Web Pixels</td><td>analytics</td><td class="no">No</td><td><code>setup()</code> only creates a local queue; the CDN script loads in <code>load()</code>.</td></tr>
+      <tr><td>Vercel / TikTok</td><td>none / marketing</td><td class="no">No</td><td>Don't load scripts; they forward events or consent to an SDK the app loaded.</td></tr>
+      <tr><td>PostHog</td><td>analytics</td><td class="no">No (in Scriptie &amp; Bruciami)</td><td>Not part of the package. Both apps write their own adapter that calls <code>posthog.init()</code> in its <code>load()</code> equivalent. Bruciami even <code>import()</code>s the SDK there.</td></tr>
     </tbody>
   </table>
-  <p class="dim">Pass <code>loadBeforeConsent: false</code> to <code>createGa4Adapter</code> / <code>createMetaAdapter</code>: <code>enabled()</code> returns false until the category is granted, so <code>setup()</code> never runs before consent. Bruciami does the same by hand in <code>apps/web/src/lib/consent/consent-runtime.ts</code>. Toggle it in the simulator above.</p>
+  <p class="dim">Pass <code>loadBeforeConsent: false</code> to <code>ga4()</code> / <code>meta()</code>: <code>load()</code> then waits until the category is granted, so no script loads before consent. Bruciami does the same by hand in <code>apps/web/src/lib/consent/consent-runtime.ts</code>. Toggle it in the simulator above.</p>
 </main>
 
 <script>

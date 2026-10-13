@@ -82,7 +82,7 @@ describe('AnalyticsShell', () => {
     )
     expect(
       document.head.querySelector(
-        'script[data-analytics-consent-manager="meta-pixel-loader"]',
+        'script[src*="fbevents.js"]',
       ),
     ).toBeTruthy()
   })

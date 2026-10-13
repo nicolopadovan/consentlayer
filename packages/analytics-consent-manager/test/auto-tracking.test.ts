@@ -10,7 +10,7 @@ function setupManager(collected: CollectedEvent[]) {
       {
         id: 'collector',
         requiredConsent: 'analytics',
-        trackEvent: (event) => {
+        track: (event) => {
           collected.push({ name: event.name, params: event.params })
         },
       },

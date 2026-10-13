@@ -27,7 +27,7 @@ The example app in [`apps/example-next`](../apps/example-next) is the reference 
 import { createAnalytics } from '@nicolopadovan/analytics-consent-manager'
 import { AnalyticsProvider } from '@nicolopadovan/analytics-consent-manager/react'
 import { CookieBanner, CookieDialog, ManageConsentTrigger } from '@nicolopadovan/analytics-consent-manager/ui'
-import { createGa4Adapter } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
+import { ga4 } from '@nicolopadovan/analytics-consent-manager/providers/ga4'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
 
@@ -36,7 +36,7 @@ export function AnalyticsShell({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
   const [analytics] = useState(() =>
     createAnalytics({
-      providers: [createGa4Adapter({ measurementId: 'G-XXXXXXX' })],
+      providers: [ga4({ measurementId: 'G-XXXXXXX' })],
       autoTracking: true,
     }),
   )

@@ -1,9 +1,8 @@
 import type {
   ConsentIntegrationAdapter,
   ConsentState,
-  ProviderAdapter,
 } from '../core/types'
-import { getFlag, setFlag } from '../core/names'
+import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
 
 type ShopifyAnalyticsQueue = Array<{
   type: string
@@ -47,7 +46,7 @@ type ShopifyCustomerPrivacy = {
   }
 }
 
-export type ShopifyAnalyticsAdapterOptions = {
+export type ShopifyOptions = {
   scriptUrls?: string[]
 }
 
@@ -77,21 +76,6 @@ function coerceShopifyConsent(value: unknown, fallback = false): boolean {
   return fallback
 }
 
-async function loadScript(src: string): Promise<void> {
-  if (typeof document === 'undefined') return
-  const existing = document.querySelector(`script[data-shopify-analytics="${src}"]`)
-  if (existing) return
-  await new Promise<void>((resolve, reject) => {
-    const script = document.createElement('script')
-    script.async = true
-    script.src = src
-    script.dataset.shopifyAnalytics = src
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error(`Failed to load ${src}`))
-    document.head.appendChild(script)
-  })
-}
-
 function ensureQueue(): ShopifyAnalyticsQueue {
   return setFlag(
     'ShopifyAnalyticsQueue',
@@ -112,16 +96,14 @@ async function ensureCustomerPrivacyFeature(
   })
 }
 
-export function createShopifyAnalyticsAdapter(
-  options: ShopifyAnalyticsAdapterOptions = {},
-): ProviderAdapter {
-  return {
+export function shopify(options: ShopifyOptions = {}) {
+  return definePlugin({
     id: 'shopify',
     requiredConsent: 'analytics',
     setup() {
       ensureQueue()
     },
-    init() {
+    load() {
       if (typeof window === 'undefined' || getFlag('ShopifyAnalyticsInitialized')) return
       ensureQueue()
       const urls =
@@ -142,17 +124,17 @@ export function createShopifyAnalyticsAdapter(
       })()
       setFlag('ShopifyAnalyticsInitialized', true)
     },
-    trackPage(payload) {
+    page(page) {
       if (typeof window === 'undefined') return
       ensureQueue().push({
         type: 'page_view',
         params: {
-          path: payload.path ?? window.location.pathname,
-          url: payload.url ?? window.location.href,
+          path: page.path ?? window.location.pathname,
+          url: page.url ?? window.location.href,
         },
       })
     },
-    trackEvent(event) {
+    track(event) {
       if (typeof window === 'undefined') return
       ensureQueue().push({
         type: 'event',
@@ -160,7 +142,7 @@ export function createShopifyAnalyticsAdapter(
         params: event.params,
       })
     },
-  }
+  })
 }
 
 export function createShopifyCustomerPrivacyAdapter(

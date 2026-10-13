@@ -1,6 +1,6 @@
 # Spec: v1 architecture
 
-Status: stage 1 implemented · 2026-10-13
+Status: stage 1 implemented; stage 2 in progress · 2026-10-13
 
 ## Goal
 
@@ -114,8 +114,9 @@ them; deleted from storage and memory when it is refused or withdrawn. `reset()`
 everything. Providers receive identity through the context; they never read
 storage themselves.
 
-Deferred to stage 2: a package-level anonymous ID. Each provider keeps its
-own until server forwarding needs a shared one.
+No package-level anonymous ID: each provider keeps its own, and the server
+handler reads `_fbp` / `_fbc` / `_ga` from cookies, so forwarding doesn't need
+one either.
 
 ## Consent
 
@@ -130,36 +131,39 @@ own until server forwarding needs a shared one.
 ```ts
 definePlugin({
   id: 'posthog',
-  requiredConsent: 'analytics',
-  consentMode?: true,           // can load before consent with tracking denied
-  setup(ctx),                   // no network, no cookies
-  load(ctx),                    // inject scripts; runs once
-  consent(ctx),                 // apply the current consent state
-  identify(identity, ctx),
+  requiredConsent: 'analytics',  // or 'none'; defaults to 'none'
+  loadBeforeConsent?: boolean,   // load at boot, relying on the provider's consent mode
+  setup(ctx),                    // no network, no cookies
+  consent(ctx),                  // apply the current consent state
+  load(ctx),                     // inject scripts; runs once
+  identify(identity, traits, ctx),
   reset(ctx),
-  page(payload, ctx),
-  track(event, ctx),            // receives the standard event
-  teardown(ctx),                // stop sending; remove cookies where possible
+  group(id, traits, ctx),
+  page(page, ctx),               // page.id is shared with the server
+  track(event, ctx),             // receives the standard event
+  teardown(ctx),                 // stop sending; remove cookies where possible
 })
 ```
 
 The manager, not the plugin, enforces the rules:
 
-1. `setup` runs at boot.
-2. `load` runs once the category is granted. If the plugin declares
-   `consentMode` and the consumer passes `loadBeforeConsent: true`, `load`
-   runs at boot instead, and `consent` always runs before the first call to
-   the provider.
-3. `page`, `track` and `identify` run only while consent is granted. Calls
-   made before `load` are queued and replayed after it.
+1. `setup` runs at boot, then `consent` at boot and on every consent change.
+2. `load` runs once, after `consent`: when the category is granted, or at
+   boot if the plugin sets `loadBeforeConsent` (GA4 and Meta do by default;
+   the consumer turns it off with `loadBeforeConsent: false`).
+3. `page`, `track`, `identify` and `group` run only while consent is granted.
+   Calls made before boot are queued and delivered right after it; calls
+   made later without consent are dropped, never replayed.
 4. A withdrawal runs `teardown`; tracking calls are dropped until consent
-   returns.
+   returns. A regrant doesn't run `load` again.
 5. Every hook is wrapped: an error is reported through `onError` and never
    breaks other providers.
 
-Public helpers for plugin authors: `loadScript(src, attrs)`, `getFlag` /
-`setFlag`, `mapEvent(event, table)`, `hashUserData()`, and a contract test kit
-(`/testing`) that every built-in also uses.
+Public helpers for plugin authors: `definePlugin`, `loadScript(src, attrs)`,
+`getFlag` / `setFlag`, and `checkPlugin(plugin)` from `/testing`, which every
+built-in passes. `mapEvent` and `hashUserData` were dropped: a plain lookup
+table does the first, and browser SDKs hash for you while server
+destinations hash internally.
 
 ## Server
 

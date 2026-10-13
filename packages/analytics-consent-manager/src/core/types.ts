@@ -7,6 +7,7 @@ export type ConsentState = {
 
 export type ProviderConsentRequirement =
   | keyof ConsentState
+  | 'none'
   | ((consent: ConsentState | null) => boolean)
 
 export type UserIdentity = {
@@ -187,14 +188,14 @@ export type AnalyticsManagerStateSnapshot = {
 
 export type AnalyticsErrorScope =
   | 'provider-setup'
-  | 'provider-init'
-  | 'provider-teardown'
-  | 'provider-consent-change'
-  | 'provider-track-event'
-  | 'provider-track-page'
+  | 'provider-load'
+  | 'provider-consent'
+  | 'provider-page'
+  | 'provider-track'
   | 'provider-identify'
+  | 'provider-teardown'
   | 'provider-script-load'
-  | 'identity-validation'
+  | 'server-forward'
 
 export type AnalyticsError = {
   scope: AnalyticsErrorScope
@@ -206,7 +207,7 @@ export type AnalyticsError = {
 export type AnalyticsErrorHandler = (error: AnalyticsError) => void
 
 export type AnalyticsManagerOptions = {
-  providers?: ProviderAdapter[]
+  providers?: AnalyticsPlugin[]
   consent?: ConsentState | null
   consentEngine?: ConsentEngine
   identityStorage?: IdentityStorageAdapter
@@ -218,46 +219,54 @@ export type AnalyticsManagerOptions = {
   onError?: AnalyticsErrorHandler
 }
 
-export type AnalyticsProviderContext = {
+export type PluginContext = {
   consent: ConsentState | null
   identity: UserIdentity
   debug: boolean
-  isBooted: boolean
   emitError: AnalyticsErrorHandler
 }
 
-export interface ProviderAdapter {
+export type PageEvent = PageViewPayload & {
+  /** Shared by browser and server so providers can dedupe. */
   id: string
+}
+
+type Hook<Args extends unknown[] = []> = (
+  ...args: [...Args, PluginContext]
+) => Promise<void> | void
+
+/**
+ * A provider. The manager decides when each hook runs:
+ * `setup` at boot; `load` once, when `requiredConsent` is granted (at boot
+ * with `loadBeforeConsent`, or when there is no `load`); then `consent` on
+ * every consent change. `page`, `track`, `identify` and `group` run only
+ * while consent is granted; a withdrawal runs `teardown`. Errors go to
+ * `onError` and never reach other plugins.
+ */
+export interface AnalyticsPlugin {
+  id: string
+  /** Defaults to `'none'`. */
   requiredConsent?: ProviderConsentRequirement
-  enabled?(context: AnalyticsProviderContext): boolean
-  setup?(context: AnalyticsProviderContext): Promise<void> | void
-  init?(context: AnalyticsProviderContext): Promise<void> | void
-  teardown?(context: AnalyticsProviderContext): Promise<void> | void
-  onConsentChange?(context: AnalyticsProviderContext): Promise<void> | void
-  trackPage?(
-    payload: PageViewPayload,
-    context: AnalyticsProviderContext,
-  ): Promise<void> | void
-  trackEvent?(
-    event: AnalyticsEventPayload,
-    context: AnalyticsProviderContext,
-  ): Promise<void> | void
-  identify?(
-    identity: UserIdentity,
-    traits: UserTraits,
-    context: AnalyticsProviderContext,
-  ): Promise<void> | void
-  reset?(context: AnalyticsProviderContext): Promise<void> | void
-  group?(
-    groupId: string,
-    traits: Record<string, unknown>,
-    context: AnalyticsProviderContext,
-  ): Promise<void> | void
+  /** Load before consent and rely on the provider's own consent mode. */
+  loadBeforeConsent?: boolean
+  /** No network, no cookies. */
+  setup?: Hook
+  /** Inject scripts. Runs once. */
+  load?: Hook
+  /** Apply the current consent state. */
+  consent?: Hook
+  page?: Hook<[page: PageEvent]>
+  track?: Hook<[event: AnalyticsEventPayload]>
+  identify?: Hook<[identity: UserIdentity, traits: UserTraits]>
+  reset?: Hook
+  group?: Hook<[groupId: string, traits: Record<string, unknown>]>
+  /** Stop sending; remove cookies where possible. */
+  teardown?: Hook
 }
 
 export interface AnalyticsManager {
   boot: () => Promise<void>
-  registerProvider: (provider: ProviderAdapter) => () => void
+  registerProvider: (provider: AnalyticsPlugin) => () => void
   updateConsent: (consent: ConsentState | null) => Promise<void>
   getConsent: () => ConsentState | null
   /** `only` limits which providers receive it. */

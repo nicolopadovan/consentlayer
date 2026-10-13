@@ -1,21 +1,20 @@
-import type { ProviderAdapter } from '../core/types'
+import { definePlugin } from '../core/plugin'
 import { sanitizeVercelPayload } from '../core/utils'
 
-export type VercelAdapterOptions = {
+export type VercelOptions = {
   trackEvent: (
     name: string,
     payload: Record<string, string | number | boolean | null>,
   ) => void
 }
 
-export function createVercelAdapter(
-  options: VercelAdapterOptions,
-): ProviderAdapter {
-  return {
+/** Vercel Analytics is cookieless, so it runs without consent. */
+export function vercel(options: VercelOptions) {
+  return definePlugin({
     id: 'vercel',
-    requiredConsent: 'analytics',
-    trackEvent(event) {
+    requiredConsent: 'none',
+    track(event) {
       options.trackEvent(event.name, sanitizeVercelPayload(event.params))
     },
-  }
+  })
 }

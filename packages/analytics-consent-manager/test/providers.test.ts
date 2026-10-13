@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createMetaAdapter } from '../src/providers/meta'
+import { createAnalyticsManager } from '../src/core/analytics-manager'
+import { ga4 } from '../src/providers/ga4'
+import { meta } from '../src/providers/meta'
 
 describe('providers', () => {
   it('reuses the same Meta event id for browser and server dedupe', async () => {
@@ -15,13 +17,13 @@ describe('providers', () => {
       json: () => Promise.resolve({}),
     })
 
-    const adapter = createMetaAdapter({
+    const adapter = meta({
       pixelId: '123456789012345',
       serverEndpoint: '/api/facebook/track',
       fetchImpl: fetchImpl as unknown as typeof fetch,
     })
 
-    await adapter.trackEvent?.(
+    await adapter.track?.(
       {
         id: 'dedupe-123',
         name: 'purchase',
@@ -36,7 +38,6 @@ describe('providers', () => {
         },
         identity: { email: 'demo@example.com' },
         debug: false,
-        isBooted: true,
         emitError: () => undefined,
       },
     )
@@ -54,17 +55,16 @@ describe('providers', () => {
     expect(body.event_id).toBe('dedupe-123')
   })
 
-  it('sets Meta consent before init', async () => {
+  it('sets Meta consent before init', () => {
     const win = window as unknown as Record<string, unknown>
     delete win.__npcmMetaPixelInitialized
     delete win.__acmMetaPixelInitialized
-    const adapter = createMetaAdapter({ pixelId: '123456789012345' })
+    const adapter = meta({ pixelId: '123456789012345' })
     const append = vi.spyOn(document.head, 'appendChild')
-    await adapter.setup?.({
+    adapter.load?.({
       consent: { preferences: false, analytics: false, marketing: false },
       identity: {},
       debug: false,
-      isBooted: true,
       emitError: () => undefined,
     })
     const bootstrap = (append.mock.calls[0]?.[0] as HTMLScriptElement).text
@@ -74,5 +74,23 @@ describe('providers', () => {
     expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeLessThan(
       bootstrap.indexOf("fbq('init'"),
     )
+  })
+
+  it('configures GA4 only once analytics is granted', async () => {
+    const win = window as unknown as Record<string, unknown>
+    for (const key of ['dataLayer', 'gtag', '__npcmGa4Configured', '__acmGa4Configured']) delete win[key]
+    const denied = { preferences: false, analytics: false, marketing: false }
+    const manager = createAnalyticsManager({
+      providers: [ga4({ measurementId: 'G-ABC123' })],
+      consent: denied,
+    })
+    const commands = () =>
+      (window.dataLayer ?? []).map((entry) => (entry.args as unknown[])[0])
+    await manager.boot()
+    expect(document.querySelector('script[src*="gtag/js?id=G-ABC123"]')).toBeTruthy()
+    expect(commands()).not.toContain('config')
+    await manager.updateConsent({ ...denied, analytics: true })
+    expect(commands().filter((command) => command === 'config')).toHaveLength(1)
+    manager.destroy()
   })
 })

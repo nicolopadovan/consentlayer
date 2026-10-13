@@ -1,5 +1,4 @@
-import { getFlag, setFlag } from '../core/names'
-import type { ProviderAdapter } from '../core/types'
+import { definePlugin, getFlag, loadScript, setFlag } from '../core/plugin'
 
 declare global {
   interface Window {
@@ -8,7 +7,7 @@ declare global {
   }
 }
 
-export type HotjarAdapterOptions = {
+export type HotjarOptions = {
   siteId: number
   version: number
   /**
@@ -34,7 +33,7 @@ function clearHotjarStorage(): void {
   }
 }
 
-function ensureHotjar(options: HotjarAdapterOptions): void {
+function ensureHotjar(options: HotjarOptions): void {
   if (typeof window === 'undefined' || getFlag('HotjarInitialized')) return
   window.hj =
     window.hj ??
@@ -45,24 +44,20 @@ function ensureHotjar(options: HotjarAdapterOptions): void {
     })
   window._hjSettings = { hjid: options.siteId, hjsv: options.version }
 
-  const script = document.createElement('script')
-  script.async = true
-  script.src = `https://static.hotjar.com/c/hotjar-${options.siteId}.js?sv=${options.version}`
-  script.dataset.hotjar = String(options.siteId)
-  document.head.appendChild(script)
+  void loadScript(
+    `https://static.hotjar.com/c/hotjar-${options.siteId}.js?sv=${options.version}`,
+  ).catch(() => undefined)
   setFlag('HotjarInitialized', true)
 }
 
-export function createHotjarAdapter(
-  options: HotjarAdapterOptions,
-): ProviderAdapter {
-  return {
+export function hotjar(options: HotjarOptions) {
+  return definePlugin({
     id: 'hotjar',
     requiredConsent: 'analytics',
-    init() {
+    load() {
       ensureHotjar(options)
     },
-    trackEvent(event) {
+    track(event) {
       window.hj?.('event', event.name)
     },
     identify(identity, traits) {
@@ -80,5 +75,5 @@ export function createHotjarAdapter(
     reset() {
       window.hj?.('identify', null, {})
     },
-  }
+  })
 }

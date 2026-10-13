@@ -14,6 +14,7 @@ export default defineConfig({
     'providers/vercel': 'src/providers/vercel.ts',
     'providers/tiktok': 'src/providers/tiktok.ts',
     'server/index': 'src/server/index.ts',
+    testing: 'src/testing.ts',
     'ui/index': 'src/ui/index.ts',
   },
   dts: true,
