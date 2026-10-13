@@ -4,6 +4,12 @@ import { AnalyticsProvider, useAnalytics, useConsent, useConsentController } fro
 import { ConsentBanner } from './ConsentBanner'
 import './playground.css'
 
+declare module 'consentlayer' {
+  interface ConsentCategories {
+    functional: true
+  }
+}
+
 type Entry = { id: number; time: string; provider: string; hook: string; detail: string }
 
 let entries: Entry[] = []
@@ -19,7 +25,7 @@ const subscribe = (listener: () => void) => {
 
 const consentLabel = (consent: ConsentState | null) =>
   consent
-    ? (['preferences', 'analytics', 'marketing'] as const).map((key) => `${key} ${consent[key] ? '✓' : '✗'}`).join(', ')
+    ? analytics.consent.categories.map((key) => `${key} ${consent[key] ? '✓' : '✗'}`).join(', ')
     : 'no choice yet'
 
 function logger(id: string, requiredConsent: ProviderConsentRequirement) {
@@ -38,10 +44,12 @@ function logger(id: string, requiredConsent: ProviderConsentRequirement) {
 
 const analytics = createAnalytics({
   names: { prefix: 'playground' },
+  categories: ['functional'],
   providers: [
     logger('cookieless', 'none'),
     logger('product-analytics', 'analytics'),
     logger('ads-pixel', 'marketing'),
+    logger('support-chat', 'functional'),
   ],
 })
 

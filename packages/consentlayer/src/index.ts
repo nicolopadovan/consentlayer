@@ -25,6 +25,8 @@ export type {
   ConsentBroadcastConfig,
   ConsentChangeSource,
   ConsentApi,
+  ConsentCategories,
+  ConsentCategory,
   ConsentEngineSnapshot,
   ConsentIntegrationAdapter,
   ConsentState,

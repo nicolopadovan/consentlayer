@@ -1,8 +1,15 @@
+/**
+ * Your own consent categories. Declare them here and pass them to `createAnalytics({ categories })`:
+ * `declare module 'consentlayer' { interface ConsentCategories { functional: true } }`
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ConsentCategories {}
+
+/** A category the visitor can toggle: the built-in ones plus yours. */
+export type ConsentCategory = keyof ({ preferences: true; analytics: true; marketing: true } & ConsentCategories)
+
 /** Consent per category. Necessary cookies are always allowed, so they have no flag. */
-export type ConsentState = {
-  preferences: boolean
-  analytics: boolean
-  marketing: boolean
+export type ConsentState = Record<ConsentCategory, boolean> & {
   sale_of_data?: boolean
 }
 
@@ -70,6 +77,8 @@ export type ConsentEngineOptions = {
   storage?: ConsentStorageAdapter
   adapters?: ConsentIntegrationAdapter[]
   initialConsent?: ConsentState | null
+  /** Your own categories, on top of preferences, analytics and marketing. */
+  categories?: (keyof ConsentCategories)[]
   broadcast?: ConsentBroadcastConfig
   debug?: boolean
   onError?: AnalyticsErrorHandler
@@ -81,6 +90,8 @@ export type ConsentEngineSnapshot = {
 }
 
 export interface ConsentEngine {
+  /** Every category the visitor can toggle, built-in first. */
+  categories: readonly ConsentCategory[]
   bootstrap: () => Promise<ConsentState | null>
   getConsent: () => ConsentState | null
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>

@@ -23,14 +23,17 @@ type ConsentState = {
 }
 ```
 
+Your own [categories](/guides/consent-ui/#custom-categories) sit next to
+`preferences`, `analytics` and `marketing` as more booleans.
+
 Every value is coerced to a boolean on the way in (`normalizeConsent`).
 `sale_of_data` is kept only if it is a real boolean, otherwise it is dropped.
 
 `null` means **the visitor hasn't chosen yet**. It is not the same as "all
 denied": with `null` the banner shows, and only providers whose required
 category is `'none'` run. Once a choice is made, consent is never `null` again
-in that page: `setConsent` rejects with a `TypeError` unless `preferences`,
-`analytics` and `marketing` are booleans (and `sale_of_data`, if present), so
+in that page: `setConsent` rejects with a `TypeError` unless every category
+is a boolean (and `sale_of_data`, if present), so
 `null` or `'false'` never slip through. To forget a choice, remove the storage
 key and reload.
 
@@ -57,7 +60,7 @@ the new key is missing, the old value is copied over and the old key deleted.
 | Call | What it commits |
 |---|---|
 | `consent.setConsent(state)` | `state` exactly; rejects with a `TypeError` if it isn't a valid consent object |
-| `consent.update(partial)` | waits for `bootstrap()`, then commits `{ preferences: false, analytics: false, marketing: false, ...current, ...partial }` |
+| `consent.update(partial)` | waits for `bootstrap()`, then commits every category denied, overlaid with the current consent and then `partial` |
 
 So `update({ analytics: true })` on a first visit gives
 `{ preferences: false, analytics: true, marketing: false }`, and on a visitor
@@ -145,7 +148,9 @@ type ConsentIntegrationAdapter = {
 | `subscribe` | once, when the engine is created | hear choices made in the outside system |
 
 Pass them with `createAnalytics({ consent: { adapters: [...] } })`.
-`destroy()` calls every `subscribe` cleanup.
+`destroy()` calls every `subscribe` cleanup. A choice from `subscribe` is
+merged into the current consent, so categories the outside system doesn't know
+(your own, or `sale_of_data`) keep their value.
 
 ### Shopify Customer Privacy
 
@@ -215,8 +220,8 @@ dialog:
 
 | Button | Commits |
 |---|---|
-| Accept all | `{ preferences: true, analytics: true, marketing: true }` |
-| Reject non-essential | `{ preferences: false, analytics: false, marketing: false }` |
+| Accept all | every category `true` |
+| Reject non-essential | every category `false` |
 | Save (dialog) | the toggles as set |
 
 "Reject" is a real choice: it is stored, so the banner doesn't come back, and

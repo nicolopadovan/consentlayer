@@ -72,6 +72,10 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- Custom consent categories: declare them in `ConsentCategories` and pass
+  `createAnalytics({ categories })`; any plugin can require one, and
+  `analytics.consent.categories` lists them all. A Shopify or other adapter
+  choice no longer resets categories it doesn't know.
 - `contentsquare()` provider (`consentlayer/providers/contentsquare`).
 - `tunnel` on `sentry()` and `uiHost` on `posthog()`, for reverse proxies.
 - `onError` reports a second provider with an `id` already in use (scope

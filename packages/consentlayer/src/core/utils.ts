@@ -1,5 +1,6 @@
 import type {
   ConsentBroadcastConfig,
+  ConsentCategory,
   ConsentState,
   ProviderConsentRequirement,
   UserIdentity,
@@ -12,14 +13,17 @@ export function isBrowser(): boolean {
 
 export function noop(): void {}
 
+export const BUILT_IN_CATEGORIES = ['preferences', 'analytics', 'marketing'] as const
+
 export function normalizeConsent(
   consent: Partial<ConsentState> | null | undefined,
+  categories: readonly ConsentCategory[] = BUILT_IN_CATEGORIES,
 ): ConsentState | null {
   if (!consent) return null
   return {
-    preferences: Boolean(consent.preferences),
-    analytics: Boolean(consent.analytics),
-    marketing: Boolean(consent.marketing),
+    ...(Object.fromEntries(
+      categories.map((category) => [category, Boolean(consent[category])]),
+    ) as Record<ConsentCategory, boolean>),
     ...(typeof consent.sale_of_data === 'boolean'
       ? { sale_of_data: consent.sale_of_data }
       : {}),
@@ -30,7 +34,7 @@ export function equalConsent(
   left: ConsentState | null,
   right: ConsentState | null,
 ): boolean {
-  return JSON.stringify(normalizeConsent(left)) === JSON.stringify(normalizeConsent(right))
+  return JSON.stringify(left) === JSON.stringify(right)
 }
 
 export function hasRequiredConsent(

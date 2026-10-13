@@ -7,6 +7,7 @@ import type {
   ConsentState,
 } from './types'
 import {
+  BUILT_IN_CATEGORIES,
   broadcastConsent,
   debugLog,
   equalConsent,
@@ -17,7 +18,10 @@ import { assertValidConsent } from './validation'
 export function createConsentEngine(
   options: ConsentEngineOptions = {},
 ): ConsentEngine {
-  let current = normalizeConsent(options.initialConsent)
+  const categories = [...BUILT_IN_CATEGORIES, ...(options.categories ?? [])]
+  const normalize = (consent: Partial<ConsentState> | null | undefined) =>
+    normalizeConsent(consent, categories)
+  let current = normalize(options.initialConsent)
   const listeners = new Set<(snapshot: ConsentEngineSnapshot) => void>()
   const cleanup = new Set<() => void>()
   const adapters = options.adapters ?? []
@@ -73,7 +77,7 @@ export function createConsentEngine(
   if (storage?.subscribe) {
     cleanup.add(
       storage.subscribe(() => {
-        const next = normalizeConsent(storage.read())
+        const next = normalize(storage.read())
         if (next) {
           void commit(next, 'storage', { persist: false, applyAdapters: false })
         }
@@ -84,7 +88,7 @@ export function createConsentEngine(
   for (const adapter of adapters) {
     if (!adapter.subscribe) continue
     const unsubscribe = adapter.subscribe((next) => {
-      void commit(normalizeConsent(next), 'adapter', {
+      void commit(normalize({ ...current, ...next }), 'adapter', {
         persist: true,
         applyAdapters: true,
         excludeAdapter: adapter,
@@ -96,7 +100,7 @@ export function createConsentEngine(
   }
 
   const runBootstrap = async () => {
-      const stored = normalizeConsent(storage?.read() ?? null)
+      const stored = normalize(storage?.read() ?? null)
       if (stored) {
         await commit(stored, 'bootstrap', {
           persist: false,
@@ -107,7 +111,7 @@ export function createConsentEngine(
 
       for (const adapter of adapters) {
         if (!adapter.bootstrap) continue
-        const next = normalizeConsent(await Promise.resolve(adapter.bootstrap()))
+        const next = normalize(await Promise.resolve(adapter.bootstrap()))
         if (!next) continue
         await commit(next, 'bootstrap', {
           persist: true,
@@ -122,6 +126,7 @@ export function createConsentEngine(
   }
 
   return {
+    categories,
     bootstrap() {
       bootstrapping ??= runBootstrap()
       return bootstrapping
@@ -130,8 +135,8 @@ export function createConsentEngine(
       return current
     },
     async setConsent(consent, source = 'imperative') {
-      assertValidConsent(consent)
-      await commit(normalizeConsent(consent), source, {
+      assertValidConsent(consent, categories)
+      await commit(normalize(consent), source, {
         persist: true,
         applyAdapters: true,
       })

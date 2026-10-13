@@ -1,13 +1,14 @@
 'use client'
 
+import type { ConsentCategory } from 'consentlayer'
 import { useConsentController } from 'consentlayer/react'
 import './consent-banner.css'
 
-const categories = [
-  { key: 'preferences', label: 'Preferences', description: 'Remember settings such as language or region.' },
-  { key: 'analytics', label: 'Analytics', description: 'Help us understand how the site is used.' },
-  { key: 'marketing', label: 'Marketing', description: 'Measure our ads and show relevant ones on other sites.' },
-] as const
+const categories: Record<ConsentCategory, { label: string; description: string }> = {
+  preferences: { label: 'Preferences', description: 'Remember settings such as language or region.' },
+  analytics: { label: 'Analytics', description: 'Help us understand how the site is used.' },
+  marketing: { label: 'Marketing', description: 'Measure our ads and show relevant ones on other sites.' },
+}
 
 export function ConsentBanner({ privacyPolicyUrl }: { privacyPolicyUrl?: string }) {
   const consent = useConsentController()
@@ -23,7 +24,7 @@ export function ConsentBanner({ privacyPolicyUrl }: { privacyPolicyUrl?: string 
             <strong>Necessary</strong> Needed for the site to work, such as remembering this choice. Always on.
           </span>
         </label>
-        {categories.map(({ key, label, description }) => (
+        {(Object.keys(consent.prefs) as ConsentCategory[]).map((key) => (
           <label key={key}>
             <input
               type="checkbox"
@@ -31,7 +32,7 @@ export function ConsentBanner({ privacyPolicyUrl }: { privacyPolicyUrl?: string 
               onChange={(event) => consent.setPrefs({ ...consent.prefs, [key]: event.target.checked })}
             />
             <span>
-              <strong>{label}</strong> {description}
+              <strong>{categories[key].label}</strong> {categories[key].description}
             </span>
           </label>
         ))}

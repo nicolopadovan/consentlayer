@@ -19,19 +19,15 @@ export type AnalyticsOptions = Omit<
 > & {
   /** Storage, CMP integrations (e.g. Shopify Customer Privacy) and broadcast. Defaults to localStorage. */
   consent?: Omit<ConsentEngineOptions, 'debug'>
+  /** Your own categories, declared in `ConsentCategories`. Stored, broadcast and sent to the server like the built-in ones. */
+  categories?: ConsentEngineOptions['categories']
   /** Renames storage keys, globals and DOM events. */
   names?: NamesInput
 }
 
-const DENIED: ConsentState = {
-  preferences: false,
-  analytics: false,
-  marketing: false,
-}
-
 /** Creates the analytics instance. Nothing loads until `boot()` (which `<AnalyticsProvider>` calls) and then only what consent allows. */
 export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
-  const { consent: consentOptions, names, ...managerOptions } = options
+  const { consent: consentOptions, categories, names, ...managerOptions } = options
   if (names) configureNames(names)
 
   const engine = createConsentEngine({
@@ -41,6 +37,7 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
       globalKey: withLegacy((n) => n.consentGlobalKey),
     },
     ...consentOptions,
+    categories,
     debug: options.debug,
     onError: options.onError,
   })
@@ -65,13 +62,15 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     getSnapshot: manager.getSnapshot,
     subscribe: manager.subscribe,
     consent: {
+      categories: engine.categories,
       bootstrap: engine.bootstrap,
       getConsent: engine.getConsent,
       setConsent: engine.setConsent,
       subscribe: engine.subscribe,
       async update(partial) {
         await engine.bootstrap()
-        await engine.setConsent({ ...DENIED, ...engine.getConsent(), ...partial })
+        const denied = Object.fromEntries(engine.categories.map((category) => [category, false]))
+        await engine.setConsent({ ...denied, ...engine.getConsent(), ...partial } as ConsentState)
       },
     },
     destroy() {

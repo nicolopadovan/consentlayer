@@ -21,9 +21,9 @@ Use it inside `<AnalyticsProvider>`.
 | `ready` | `true` once stored consent has been read. Render nothing before it, so returning visitors don't see the banner flash |
 | `bannerVisible` | `true` until the visitor chooses (with `<AnalyticsProvider autoShowBanner>`, the default) |
 | `dialogVisible` | the settings dialog is open |
-| `prefs`, `setPrefs` | the dialog's draft choices, saved only by `savePreferences` |
+| `prefs`, `setPrefs` | the dialog's draft choices, one per category, saved only by `savePreferences` |
 | `acceptAll()` | grants every category and closes both |
-| `rejectNonEssential()` | denies preferences, analytics and marketing and closes both |
+| `rejectNonEssential()` | denies every category and closes both |
 | `savePreferences()` | saves `prefs` and closes both |
 | `openDialog()`, `closeDialog()`, `showBanner()`, `hideBanner()` | visibility |
 | `error` | why reading stored consent failed, if it did |
@@ -34,8 +34,11 @@ To reopen the settings from a footer link outside React, call
 
 ## Recipe
 
-Copy both files, then change the text, the categories you show and the styles.
-Necessary cookies are always on, so the dialog shows them checked and disabled.
+Copy both files, then change the text and the styles. The dialog shows a toggle
+for every category, so `categories` needs a label for each. Necessary cookies
+are always on, so the dialog shows them checked and disabled. `functional` is
+the Playground's [custom category](#custom-categories); delete it unless you
+declare it.
 
 <Code code={banner} lang="tsx" title="components/consent-banner.tsx" />
 
@@ -61,3 +64,36 @@ function CookieSettingsButton() {
 
 Translations are plain strings in your component; use whatever i18n your app
 already has.
+
+## Custom categories
+
+`preferences`, `analytics` and `marketing` are built in. Declare more by
+name, for TypeScript, and pass them to `createAnalytics`:
+
+```ts
+import { createAnalytics, definePlugin, loadScript } from 'consentlayer'
+
+declare module 'consentlayer' {
+  interface ConsentCategories {
+    functional: true
+  }
+}
+
+const supportChat = definePlugin({
+  id: 'support-chat',
+  requiredConsent: 'functional',
+  load: () => loadScript('https://chat.example.com/widget.js'),
+})
+
+export const analytics = createAnalytics({
+  categories: ['functional'],
+  providers: [supportChat],
+})
+```
+
+They work like the built-in ones: stored, broadcast, sent to your server,
+denied until granted, granted by "Accept all" and denied by "Reject
+non-essential". Any plugin can require one with `requiredConsent`, and
+`analytics.consent.categories` lists them all. Without the declaration,
+`categories: ['functional']` and `requiredConsent: 'functional'` don't compile;
+without the `categories` option, the value is never stored.

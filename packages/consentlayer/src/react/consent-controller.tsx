@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react'
 import { withLegacy } from '../core/names'
-import type { ConsentState } from '../core/types'
+import type { ConsentCategory, ConsentState } from '../core/types'
 import { useConsent } from './analytics-provider'
 
 type ConsentControllerValue = {
@@ -18,10 +18,9 @@ type ConsentControllerValue = {
   error: string | null
   bannerVisible: boolean
   dialogVisible: boolean
-  prefs: Pick<ConsentState, 'preferences' | 'analytics' | 'marketing'>
-  setPrefs: (
-    next: Pick<ConsentState, 'preferences' | 'analytics' | 'marketing'>,
-  ) => void
+  /** The dialog's toggles, one per category in `analytics.consent.categories`. */
+  prefs: Prefs
+  setPrefs: (next: Prefs) => void
   showBanner: () => void
   hideBanner: () => void
   openDialog: () => void
@@ -30,6 +29,8 @@ type ConsentControllerValue = {
   rejectNonEssential: () => Promise<void>
   savePreferences: () => Promise<void>
 }
+
+type Prefs = Record<ConsentCategory, boolean>
 
 const ConsentControllerContext = createContext<
   ConsentControllerValue | undefined
@@ -52,11 +53,17 @@ export function ConsentControllerProvider({
   const [error, setError] = useState<string | null>(null)
   const [bannerVisible, setBannerVisible] = useState(false)
   const [dialogVisible, setDialogVisible] = useState(false)
-  const [prefs, setPrefs] = useState({
-    preferences: false,
-    analytics: false,
-    marketing: false,
-  })
+  const all = useCallback(
+    (granted: boolean | ((category: ConsentCategory) => boolean)) =>
+      Object.fromEntries(
+        engine.categories.map((category) => [
+          category,
+          typeof granted === 'function' ? granted(category) : granted,
+        ]),
+      ) as Prefs,
+    [engine],
+  )
+  const [prefs, setPrefs] = useState(() => all(false))
 
   useEffect(() => {
     let cancelled = false
@@ -65,11 +72,7 @@ export function ConsentControllerProvider({
       .then((bootstrappedConsent) => {
         if (cancelled) return
         if (bootstrappedConsent) {
-          setPrefs({
-            preferences: bootstrappedConsent.preferences,
-            analytics: bootstrappedConsent.analytics,
-            marketing: bootstrappedConsent.marketing,
-          })
+          setPrefs(all((category) => bootstrappedConsent[category]))
           setBannerVisible(false)
         } else {
           setBannerVisible(autoShowBanner)
@@ -87,16 +90,12 @@ export function ConsentControllerProvider({
     return () => {
       cancelled = true
     }
-  }, [autoShowBanner, engine])
+  }, [all, autoShowBanner, engine])
 
   useEffect(() => {
     if (!consent) return
-    setPrefs({
-      preferences: consent.preferences,
-      analytics: consent.analytics,
-      marketing: consent.marketing,
-    })
-  }, [consent])
+    setPrefs(all((category) => consent[category]))
+  }, [all, consent])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -127,26 +126,11 @@ export function ConsentControllerProvider({
       hideBanner: () => setBannerVisible(false),
       openDialog: () => setDialogVisible(true),
       closeDialog: () => setDialogVisible(false),
-      acceptAll: () =>
-        applyAndClose({
-          preferences: true,
-          analytics: true,
-          marketing: true,
-        }),
-      rejectNonEssential: () =>
-        applyAndClose({
-          preferences: false,
-          analytics: false,
-          marketing: false,
-        }),
-      savePreferences: () =>
-        applyAndClose({
-          preferences: prefs.preferences,
-          analytics: prefs.analytics,
-          marketing: prefs.marketing,
-        }),
+      acceptAll: () => applyAndClose(all(true)),
+      rejectNonEssential: () => applyAndClose(all(false)),
+      savePreferences: () => applyAndClose(all((category) => prefs[category])),
     }),
-    [applyAndClose, bannerVisible, dialogVisible, error, prefs, ready],
+    [all, applyAndClose, bannerVisible, dialogVisible, error, prefs, ready],
   )
 
   return (
