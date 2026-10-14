@@ -8,6 +8,12 @@ import { Tabs, TabItem } from '@astrojs/starlight/components'
 Install ConsentLayer and the SDKs of the providers you use, then configure
 TypeScript and your Content Security Policy.
 
+:::caution[Not legal advice]
+ConsentLayer has not been legally reviewed. Whether your implementation
+complies with the law where you and your visitors are is your responsibility;
+see the [legal notice](/guides/legal/).
+:::
+
 ## Install the package
 
 <Tabs syncKey="pkg">
@@ -80,9 +86,10 @@ install and import yourself.
 ConsentLayer is published as ES modules only, with type declarations and
 source maps. Each feature is a separate entry point declared in the
 package's `exports` field, and the package is marked `"sideEffects": false`,
-so bundlers include only the entry points you import. Provider SDKs and
-heavier features, such as Sentry Session Replay, are split into chunks that
-are loaded with dynamic `import()` when they are first needed.
+so bundlers include only the exports you import. Provider SDKs and heavier
+features, such as Sentry Session Replay, are split into chunks that are
+loaded with dynamic `import()` when they are first needed. See
+[Reduce bundle size](/guides/bundle-size/).
 
 | Entry point | Exports |
 |---|---|
@@ -96,10 +103,11 @@ are loaded with dynamic `import()` when they are first needed.
 | `consentlayer/solid` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript` |
 | `consentlayer/solidstart` | The same, with page views on Solid Router navigation |
 | `consentlayer/angular` | `provideConsentLayer`, the `inject*` functions, `provideMetaPixelNoscript` and `provideGtmNoscript` |
-| `consentlayer/providers/<name>` | One provider factory: `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, `shopify` |
+| `consentlayer/providers/<name>` | One provider factory: `ga4`, `gtm`, `meta`, `tiktok`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel` |
+| `consentlayer/adapters/<name>` | One consent adapter: `tcf`, `shopify`, `google-consent-mode` |
 | `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
 | `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores |
-| `consentlayer/server/meta`, `consentlayer/server/ga4` | `metaCapi`, `ga4Server` |
+| `consentlayer/server/<name>` | One server destination: `meta`, `tiktok`, `sgtm`, `ga4` |
 | `consentlayer/sentry/server`, `consentlayer/sentry/next` | Sentry configuration for Next.js |
 | `consentlayer/testing` | `checkPlugin` |
 

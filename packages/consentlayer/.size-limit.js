@@ -9,6 +9,8 @@ const modifyEsbuildConfig = (config) => ({
 
 export default [
   ['core', 'dist/index.js', '8 kB'],
+  ['core: createAnalytics only', 'dist/index.js', '7 kB', '{ createAnalytics }'],
+  ['core: tree-shaken to createConsentController', 'dist/index.js', '1.5 kB', '{ createConsentController }'],
   ['react', 'dist/react/index.js', '2.5 kB'],
   ['next', 'dist/next.js', '2.5 kB'],
   ['vue', 'dist/vue.js', '2.5 kB'],
@@ -30,4 +32,4 @@ export default [
   ['server/sgtm', 'dist/server/sgtm.js', '1.5 kB'],
   ['script tag', 'dist/consentlayer.global.js', '15 kB'],
   ['script tag banner', 'dist/consentlayer-banner.global.js', '2 kB'],
-].map(([name, path, limit]) => ({ name, path, limit, modifyEsbuildConfig }))
+].map(([name, path, limit, imports]) => ({ name, path, limit, import: imports, modifyEsbuildConfig }))

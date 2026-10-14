@@ -7,6 +7,12 @@ This page describes what ConsentLayer does, how the documentation is organized,
 what runs in the browser and on the server, and what each entry point adds to
 your bundle.
 
+:::caution[Not legal advice]
+ConsentLayer has not been legally reviewed. Whether your implementation
+complies with the law where you and your visitors are is your responsibility;
+see the [legal notice](/guides/legal/).
+:::
+
 ## What is ConsentLayer?
 
 ConsentLayer is an analytics library that routes your events to GA4, Meta
@@ -122,39 +128,41 @@ server, so Meta can deduplicate an event it receives from both.
 
 ## Bundle size
 
-Each entry point is a separate module, and provider SDKs, Sentry Session Replay
-and Sentry tracing are loaded with dynamic `import()` only when they are first
-needed. The package's CI checks every entry point below against its size limit,
-measured minified and brotli-compressed. Vendor SDKs, whether installed from
-npm or loaded from the vendor's CDN, are not included in these figures.
+Each entry point is a separate module, the package is marked free of side
+effects so bundlers drop the exports you don't import, and provider SDKs,
+Sentry Session Replay and Sentry tracing are loaded with dynamic `import()`
+only when they are first needed. These are the sizes of the current release,
+minified and brotli-compressed, each including the shared code it imports, so
+they don't add up exactly. Vendor SDKs, whether installed from npm or loaded
+from the vendor's CDN, are not included.
 
-| Entry point | Limit |
+| Entry point | Size |
 |---|---|
-| `consentlayer` | 8 kB |
-| `consentlayer/react` | 2.5 kB |
-| `consentlayer/next` | 2.5 kB |
-| `consentlayer/vue` | 2.5 kB |
-| `consentlayer/svelte` | 2.5 kB |
-| `consentlayer/sveltekit` | 2.5 kB |
-| `consentlayer/solid` | 2.5 kB |
-| `consentlayer/solidstart` | 2.5 kB |
-| `consentlayer/angular` | 2.5 kB |
-| `consentlayer/providers/ga4` | 2 kB |
-| `consentlayer/providers/gtm` | 2 kB |
-| `consentlayer/providers/meta` | 2.5 kB |
-| `consentlayer/providers/contentsquare` | 1.2 kB |
-| `consentlayer/providers/posthog` | 1.2 kB |
-| `consentlayer/providers/sentry` | 1.2 kB |
-| `consentlayer/server` | 2.5 kB |
-| `consentlayer/server/meta` | 1.5 kB |
-| `consentlayer/server/sgtm` | 1.5 kB |
+| `consentlayer`, everything | 7.8 kB |
+| `consentlayer`, only `createAnalytics` | 6.5 kB |
+| `consentlayer/react` | 2.1 kB |
+| `consentlayer/next` | 1.6 kB |
+| `consentlayer/vue` | 2.2 kB |
+| `consentlayer/svelte` | 1.9 kB |
+| `consentlayer/sveltekit` | 2.0 kB |
+| `consentlayer/solid` | 2.1 kB |
+| `consentlayer/solidstart` | 2.2 kB |
+| `consentlayer/angular` | 2.2 kB |
+| `consentlayer/providers/ga4` | 1.9 kB |
+| `consentlayer/providers/gtm` | 1.8 kB |
+| `consentlayer/providers/meta` | 1.8 kB |
+| `consentlayer/providers/tiktok` | 1.8 kB |
+| `consentlayer/providers/contentsquare` | 1.1 kB |
+| `consentlayer/providers/posthog` | 1.0 kB |
+| `consentlayer/providers/sentry` | 0.9 kB |
+| `consentlayer/server` | 2.4 kB |
+| `consentlayer/server/meta` | 1.3 kB |
+| `consentlayer/server/tiktok` | 1.2 kB |
+| `consentlayer/server/sgtm` | 1.0 kB |
+| Script tag, `consentlayer.global.js` | 14.0 kB |
+| Script tag banner, `consentlayer-banner.global.js` | 1.7 kB |
 
-The core currently measures 7.8 kB, `consentlayer/react` 2.1 kB,
-`consentlayer/next` 1.6 kB, `consentlayer/vue` 2.2 kB,
-`consentlayer/svelte` 1.9 kB, `consentlayer/sveltekit` 2.0 kB,
-`consentlayer/solid` 2.1 kB, `consentlayer/solidstart` 2.2 kB and
-`consentlayer/angular` 2.2 kB. The Svelte
-figures count the `MetaPixelNoscript` and `GtmNoscript` components as source, which your Svelte
-compiler builds.
-`consentlayer/nuxt` runs at build time, and adds `consentlayer/vue` to your
-application.
+The Svelte figures count the `MetaPixelNoscript` and `GtmNoscript` components
+as source, which your Svelte compiler builds. `consentlayer/nuxt` runs at build
+time, and adds `consentlayer/vue` to your application. To keep your own bundle
+small, see [Reduce bundle size](/guides/bundle-size/).
