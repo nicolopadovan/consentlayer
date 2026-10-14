@@ -44,6 +44,7 @@ export default defineConfig([
       sveltekit: 'src/sveltekit.ts',
       solid: 'src/solid.ts',
       solidstart: 'src/solidstart.ts',
+      'solid/banner': 'src/solid/banner.ts',
       angular: 'src/angular.ts',
       'nuxt/index': 'src/nuxt/index.ts',
       'nuxt/plugin': 'src/nuxt/plugin.ts',

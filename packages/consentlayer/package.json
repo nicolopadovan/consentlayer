@@ -97,6 +97,10 @@
       "types": "./dist/solid.d.ts",
       "import": "./dist/solid.js"
     },
+    "./solid/banner": {
+      "types": "./dist/solid/banner.d.ts",
+      "import": "./dist/solid/banner.js"
+    },
     "./solidstart": {
       "types": "./dist/solidstart.d.ts",
       "import": "./dist/solidstart.js"

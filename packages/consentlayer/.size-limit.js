@@ -20,6 +20,7 @@ export default [
   ['sveltekit', 'dist/sveltekit.js', '2.5 kB'],
   ['solid', 'dist/solid.js', '2.5 kB'],
   ['solidstart', 'dist/solidstart.js', '2.5 kB'],
+  ['solid/banner', 'dist/solid/banner.js', '4.3 kB'],
   ['angular', 'dist/angular.js', '2.5 kB'],
   ['providers/ga4', 'dist/providers/ga4.js', '2.5 kB'],
   ['providers/meta', 'dist/providers/meta.js', '2.5 kB'],
