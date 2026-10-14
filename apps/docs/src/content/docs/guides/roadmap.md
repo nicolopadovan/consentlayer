@@ -21,6 +21,21 @@ only from the CDN. The planned `consentlayer/banner` entry exports it for
 applications that install ConsentLayer from npm, as a function that mounts it
 on a consent controller.
 
+### Banner components for UI libraries
+
+The npm package ships no banner; you build one on
+[`useConsentController()`](/guides/consent-ui/), starting from the recipe. The
+planned components are first-party banners and settings dialogs built on the
+UI libraries applications already use, so they match the rest of the
+interface:
+
+| Library | Planned component |
+|---|---|
+| [shadcn/ui](https://ui.shadcn.com) | A banner and dialog added with the shadcn CLI from a ConsentLayer registry, as source you own and restyle. The first to come. |
+| shadcn-vue, shadcn-svelte and solid-ui | The same component for Vue, Svelte and Solid. |
+| MUI, Mantine and Chakra UI | Components for React applications built on them. |
+| Vuetify, Angular Material and others | Components for the main UI library of each framework, added as there is demand. |
+
 ### Adapters for consent platforms
 
 Sites that already use a consent platform such as iubenda, Cookiebot, OneTrust
@@ -43,6 +58,22 @@ planned ports set ConsentLayer up where those sites add code:
 | Framer, Squarespace and Wix | A snippet for each platform's custom code settings. |
 | Shopify themes | A theme app extension. In a headless storefront, `shopifyCustomerPrivacy()` already keeps Shopify's consent in sync. |
 | Google Tag Manager | A community template that loads the script tag from a GTM container. |
+
+### Privacy laws beyond the GDPR
+
+ConsentLayer's defaults follow the opt-in model of the EU's GDPR and ePrivacy
+Directive: nothing that needs consent runs before the visitor gives it. They
+have not been legally reviewed; see the [legal notice](/guides/legal/).
+Other laws work differently, and the planned jurisdiction presets set the
+consent model, the defaults and the signals to honor per visitor region:
+
+| Law | Planned |
+|---|---|
+| US state laws, such as California's CCPA and CPRA | An opt-out model: tracking until the visitor opts out of the sale or sharing of their data, through a "Do Not Sell or Share" choice or [Global Privacy Control](/guides/consent-ui/#global-privacy-control), which ConsentLayer already reads. |
+| UK GDPR and PECR | A preset for the UK's opt-in rules. |
+| Switzerland's Federal Act on Data Protection | A preset for Swiss requirements. |
+| France, CNIL guidance | A preset for the CNIL's recommendations on cookies, such as how long a choice is kept. |
+| Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each, after the ones above. |
 
 ## Under consideration
 
