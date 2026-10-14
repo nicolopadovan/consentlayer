@@ -20,9 +20,9 @@ from. Each ships in its own minor release, in order of priority:
 
 | Item                                                                              | Priority | Target        |
 | --------------------------------------------------------------------------------- | -------- | ------------- |
-| [Banner on npm](#banner-on-npm-consentlayerbanner)                                | High     | November 2026 |
-| [Banner translations](#banner-translations)                                       | High     | November 2026 |
-| [US opt-out model and region lookup](#privacy-laws-beyond-the-gdpr)               | High     | December 2026 |
+| [Privacy laws per visitor region](#privacy-laws-beyond-the-gdpr)                  | High     | December 2026 |
+| [Banner on npm](#banner-on-npm-consentlayerbanner)                                | High     | January 2027  |
+| [Banner translations](#banner-translations)                                       | High     | January 2027  |
 | [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027  |
 | [Astro and TanStack Start](#astro-and-tanstack-start)                             | Medium   | January 2027  |
 | [Google Ads, Microsoft Clarity and LinkedIn Insight](#more-providers)             | Medium   | February 2027 |
@@ -30,10 +30,8 @@ from. Each ships in its own minor release, in order of priority:
 | [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027    |
 | [The other planned providers](#more-providers)                                    | Medium   | Q2 2027       |
 | [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027       |
-| [UK, Swiss and CNIL presets](#privacy-laws-beyond-the-gdpr)                       | Medium   | Q2 2027       |
 | [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027       |
 | [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027       |
-| [LGPD, PIPEDA and Law 25 presets](#privacy-laws-beyond-the-gdpr)                  | Low      | Q4 2027       |
 | [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028          |
 
 ### Banner on npm: `consentlayer/banner`
@@ -140,12 +138,13 @@ consent model, the defaults and the signals to honor per visitor region:
 | UK GDPR and PECR                                   | A preset for the UK's opt-in rules.                                                                                                                                                                                                            |
 | Switzerland's Federal Act on Data Protection       | A preset for Swiss requirements.                                                                                                                                                                                                               |
 | France, CNIL guidance                              | A preset for the CNIL's recommendations on cookies, such as how long a choice is kept.                                                                                                                                                         |
-| Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each, after the ones above.                                                                                                                                                                                                        |
+| Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each.                                                                                                                                                                                                                              |
 
 Applying a preset per region needs the visitor's region. The planned region
 lookup reads it on the server, from the country header your host or CDN adds,
 such as Vercel's `x-vercel-ip-country` or Cloudflare's `CF-IPCountry`, and
-passes it to the browser with the page. No IP address is stored.
+passes it to the browser with the page. No IP address is stored. The presets
+and the region lookup ship together, in one release.
 
 ### A full IAB TCF and GPP consent manager
 
