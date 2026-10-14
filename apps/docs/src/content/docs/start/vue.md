@@ -49,7 +49,10 @@ import App from './App.vue'
 import { analytics } from './analytics'
 import { router } from './router'
 
-createApp(App).use(router).use(consentLayer, { analytics, router }).mount('#app')
+createApp(App)
+  .use(router)
+  .use(consentLayer, { analytics, router })
+  .mount('#app')
 ```
 
 In the browser, `app.use(consentLayer, options)` performs these steps:

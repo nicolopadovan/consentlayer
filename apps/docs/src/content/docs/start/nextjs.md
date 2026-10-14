@@ -281,7 +281,9 @@ import { createAnalyticsHandler } from 'consentlayer/server'
 import { metaCapi } from 'consentlayer/server/meta'
 
 export const POST = createAnalyticsHandler({
-  destinations: [metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN })],
+  destinations: [
+    metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN }),
+  ],
   onError: console.error,
 })
 ```

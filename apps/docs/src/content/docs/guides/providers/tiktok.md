@@ -1,6 +1,6 @@
 ---
 title: TikTok Pixel
-description: 'tiktok() loads the TikTok Pixel after marketing consent, with TikTok consent mode and event IDs shared with the Events API.'
+description: "tiktok() loads the TikTok Pixel after marketing consent, with TikTok consent mode and event IDs shared with the Events API."
 ---
 
 `tiktok()` from `consentlayer/providers/tiktok` loads the TikTok Pixel and sends

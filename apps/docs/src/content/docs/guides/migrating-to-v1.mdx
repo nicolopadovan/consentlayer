@@ -38,12 +38,30 @@ route handler.
 Remove the old package and install ConsentLayer:
 
 <Tabs syncKey="pkg">
-  <TabItem label="pnpm">```bash pnpm remove @nicolopadovan/analytics-consent-manager pnpm add consentlayer ```</TabItem>
-  <TabItem label="npm">
-    ```bash npm uninstall @nicolopadovan/analytics-consent-manager npm install consentlayer ```
+  <TabItem label="pnpm">
+    ```bash
+    pnpm remove @nicolopadovan/analytics-consent-manager
+    pnpm add consentlayer
+    ```
   </TabItem>
-  <TabItem label="yarn">```bash yarn remove @nicolopadovan/analytics-consent-manager yarn add consentlayer ```</TabItem>
-  <TabItem label="bun">```bash bun remove @nicolopadovan/analytics-consent-manager bun add consentlayer ```</TabItem>
+  <TabItem label="npm">
+    ```bash
+    npm uninstall @nicolopadovan/analytics-consent-manager
+    npm install consentlayer
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn remove @nicolopadovan/analytics-consent-manager
+    yarn add consentlayer
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash
+    bun remove @nicolopadovan/analytics-consent-manager
+    bun add consentlayer
+    ```
+  </TabItem>
 </Tabs>
 
 Replace `@nicolopadovan/analytics-consent-manager` with `consentlayer` in every
@@ -83,7 +101,11 @@ import { AnalyticsProvider } from 'consentlayer/next'
 import { analytics } from '@/lib/analytics'
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <AnalyticsProvider analytics={analytics}>{children}</AnalyticsProvider>
+  return (
+    <AnalyticsProvider analytics={analytics}>
+      {children}
+    </AnalyticsProvider>
+  )
 }
 ```
 

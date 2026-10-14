@@ -1,6 +1,6 @@
 ---
 title: Meta Pixel
-description: 'meta() loads the Meta Pixel after marketing consent and shares event IDs with the Conversions API.'
+description: "meta() loads the Meta Pixel after marketing consent and shares event IDs with the Conversions API."
 ---
 
 `meta()` from `consentlayer/providers/meta` loads the Meta Pixel and sends page

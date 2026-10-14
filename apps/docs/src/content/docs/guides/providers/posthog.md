@@ -1,6 +1,6 @@
 ---
 title: PostHog
-description: 'posthog() sends page views, events and errors to PostHog, cookieless until analytics consent.'
+description: "posthog() sends page views, events and errors to PostHog, cookieless until analytics consent."
 ---
 
 `posthog()` from `consentlayer/providers/posthog` sends page views, events and

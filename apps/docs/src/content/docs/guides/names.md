@@ -49,7 +49,7 @@ Pass `names` to `createAnalytics()`. Every name you omit is derived from
 createAnalytics({
   providers,
   names: {
-    prefix: 'shop', // shop_consent, shop:consent, SHOP_CONSENT, …
+    prefix: 'shop',                 // shop_consent, shop:consent, SHOP_CONSENT, …
     consentStorageKey: 'my_consent',
     autoTrackingEvents: { uiClick: 'click' },
   },

@@ -80,9 +80,7 @@ Pass `enabled` and `debug` from the environment in the same way:
 
 ```ts
 export const analytics = createAnalytics({
-  providers: [
-    /* … */
-  ],
+  providers: [/* … */],
   enabled: import.meta.env.PROD || import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
   debug: import.meta.env.VITE_ANALYTICS_DEBUG === 'true',
 })
@@ -215,7 +213,7 @@ on the instance and renders `fallback`:
 ```tsx
 import { ErrorBoundary } from 'consentlayer/react'
 
-;<ErrorBoundary fallback={<p>Could not load the cart.</p>} tags={{ area: 'cart' }}>
+<ErrorBoundary fallback={<p>Could not load the cart.</p>} tags={{ area: 'cart' }}>
   <Cart />
 </ErrorBoundary>
 ```

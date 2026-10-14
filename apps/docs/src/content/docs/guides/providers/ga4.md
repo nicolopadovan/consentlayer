@@ -1,6 +1,6 @@
 ---
 title: GA4
-description: 'ga4() sends page views and events to Google Analytics 4 after analytics consent, with Google Consent Mode v2.'
+description: "ga4() sends page views and events to Google Analytics 4 after analytics consent, with Google Consent Mode v2."
 ---
 
 `ga4()` from `consentlayer/providers/ga4` loads gtag.js and sends page views

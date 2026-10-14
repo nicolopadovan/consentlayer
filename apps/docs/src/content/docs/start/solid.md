@@ -147,7 +147,7 @@ with JavaScript disabled:
 ```tsx
 import { MetaPixelNoscript } from 'consentlayer/solidstart'
 
-;<MetaPixelNoscript pixelId={import.meta.env.VITE_FACEBOOK_PIXEL_ID} enabled />
+<MetaPixelNoscript pixelId={import.meta.env.VITE_FACEBOOK_PIXEL_ID} enabled />
 ```
 
 Those visitors never see the consent banner, so the image tracks them without
@@ -194,7 +194,7 @@ smaller part of the page:
 ```tsx
 import { ErrorBoundary } from 'consentlayer/solidstart'
 
-;<ErrorBoundary fallback={(error, reset) => <button onClick={reset}>Retry</button>} tags={{ area: 'cart' }}>
+<ErrorBoundary fallback={(error, reset) => <button onClick={reset}>Retry</button>} tags={{ area: 'cart' }}>
   <Cart />
 </ErrorBoundary>
 ```

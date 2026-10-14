@@ -88,7 +88,9 @@ export const analytics = createAnalytics({
 ```ts
 // app/api/analytics/route.ts
 export const POST = createAnalyticsHandler({
-  destinations: [metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN })],
+  destinations: [
+    metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN }),
+  ],
   consentCookie: { secret: process.env.CONSENT_SECRET },
 })
 ```

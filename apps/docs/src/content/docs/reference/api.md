@@ -1756,7 +1756,9 @@ schemas are in [Consent records](/guides/consent-records/).
 <summary>Type signatures</summary>
 
 ```ts
-function postgresStore(sql: (strings: TemplateStringsArray, ...values: unknown[]) => PromiseLike<unknown>): ConsentStore
+function postgresStore(
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => PromiseLike<unknown>,
+): ConsentStore
 
 function supabaseStore(
   supabase: { from(table: string): { insert(row: object): PromiseLike<{ error: unknown }> } },

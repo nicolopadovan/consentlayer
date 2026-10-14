@@ -1,6 +1,6 @@
 ---
 title: Hotjar (deprecated)
-description: 'hotjar() loads Hotjar after analytics consent. Deprecated: Hotjar accounts are moving to Contentsquare.'
+description: "hotjar() loads Hotjar after analytics consent. Deprecated: Hotjar accounts are moving to Contentsquare."
 ---
 
 `hotjar()` from `consentlayer/providers/hotjar` loads Hotjar once `analytics`

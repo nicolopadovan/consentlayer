@@ -1,6 +1,6 @@
 ---
 title: Contentsquare
-description: 'contentsquare() loads the Contentsquare tag after analytics consent.'
+description: "contentsquare() loads the Contentsquare tag after analytics consent."
 ---
 
 `contentsquare()` from `consentlayer/providers/contentsquare` loads the

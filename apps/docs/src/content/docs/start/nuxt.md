@@ -46,7 +46,10 @@ import { meta } from 'consentlayer/providers/meta'
 export default defineConsentLayerConfig(() => {
   const config = useRuntimeConfig().public
   return {
-    providers: [ga4({ measurementId: config.ga4MeasurementId }), meta({ pixelId: String(config.facebookPixelId) })],
+    providers: [
+      ga4({ measurementId: config.ga4MeasurementId }),
+      meta({ pixelId: String(config.facebookPixelId) }),
+    ],
     autoTracking: true,
   }
 })

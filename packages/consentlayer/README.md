@@ -40,7 +40,10 @@ import { ga4 } from 'consentlayer/providers/ga4'
 import { posthog } from 'consentlayer/providers/posthog'
 
 export const analytics = createAnalytics({
-  providers: [ga4({ measurementId: 'G-XXXXXXX' }), posthog({ apiKey: 'phc_…' })],
+  providers: [
+    ga4({ measurementId: 'G-XXXXXXX' }),
+    posthog({ apiKey: 'phc_…' }),
+  ],
 })
 ```
 

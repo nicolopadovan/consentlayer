@@ -173,9 +173,7 @@ the `marketing` category off unless the visitor switches it on:
 while the signal is honored, so your banner can say so:
 
 ```tsx
-{
-  gpc && <p>Your browser's Global Privacy Control signal is on, so marketing is off.</p>
-}
+{gpc && <p>Your browser's Global Privacy Control signal is on, so marketing is off.</p>}
 ```
 
 To ignore the signal, set `gpc: false`:

@@ -220,25 +220,23 @@ requires marketing consent and accepts browser events. It sends:
 
 ```json
 {
-  "data": [
-    {
-      "event_name": "AddToCart",
-      "event_time": 1760353200,
-      "event_id": "6f1c2a9e-…",
-      "event_source_url": "https://shop.example/products/mug",
-      "action_source": "website",
-      "custom_data": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_category": "mugs" },
-      "user_data": {
-        "client_ip_address": "203.0.113.7",
-        "client_user_agent": "Mozilla/5.0 …",
-        "fbp": "fb.1.1760000000000.123456789",
-        "fbc": "fb.1.1760000000000.AbCdEf",
-        "em": "<sha256>",
-        "ph": "<sha256>",
-        "external_id": "<sha256>"
-      }
+  "data": [{
+    "event_name": "AddToCart",
+    "event_time": 1760353200,
+    "event_id": "6f1c2a9e-…",
+    "event_source_url": "https://shop.example/products/mug",
+    "action_source": "website",
+    "custom_data": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_category": "mugs" },
+    "user_data": {
+      "client_ip_address": "203.0.113.7",
+      "client_user_agent": "Mozilla/5.0 …",
+      "fbp": "fb.1.1760000000000.123456789",
+      "fbc": "fb.1.1760000000000.AbCdEf",
+      "em": "<sha256>",
+      "ph": "<sha256>",
+      "external_id": "<sha256>"
     }
-  ]
+  }]
 }
 ```
 
@@ -275,24 +273,22 @@ headers `Access-Token: <accessToken>` and `Content-Type: application/json`
   "event_source": "web",
   "event_source_id": "<pixelId>",
   "test_event_code": "<testEventCode>",
-  "data": [
-    {
-      "event": "AddToCart",
-      "event_time": 1760353200,
-      "event_id": "6f1c2a9e-…",
-      "user": {
-        "email": "<sha256>",
-        "phone": "<sha256>",
-        "external_id": "<sha256>",
-        "ip": "203.0.113.7",
-        "user_agent": "Mozilla/5.0 …",
-        "ttp": "…",
-        "ttclid": "…"
-      },
-      "properties": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_type": "product" },
-      "page": { "url": "https://shop.example/products/mug" }
-    }
-  ]
+  "data": [{
+    "event": "AddToCart",
+    "event_time": 1760353200,
+    "event_id": "6f1c2a9e-…",
+    "user": {
+      "email": "<sha256>",
+      "phone": "<sha256>",
+      "external_id": "<sha256>",
+      "ip": "203.0.113.7",
+      "user_agent": "Mozilla/5.0 …",
+      "ttp": "…",
+      "ttclid": "…"
+    },
+    "properties": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_type": "product" },
+    "page": { "url": "https://shop.example/products/mug" }
+  }]
 }
 ```
 

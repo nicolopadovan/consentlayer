@@ -1,6 +1,6 @@
 ---
 title: Google Tag Manager
-description: 'gtm() loads a Google Tag Manager container after the Consent Mode defaults and feeds it page views, events, the user ID and consent.'
+description: "gtm() loads a Google Tag Manager container after the Consent Mode defaults and feeds it page views, events, the user ID and consent."
 ---
 
 `gtm()` from `consentlayer/providers/gtm` loads a Google Tag Manager web
@@ -100,12 +100,6 @@ On a page without a framework, such as one using the
 `<body>` yourself, under the same condition:
 
 ```html
-<noscript
-  ><iframe
-    src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
-    height="0"
-    width="0"
-    style="display:none;visibility:hidden"
-  ></iframe
-></noscript>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 ```

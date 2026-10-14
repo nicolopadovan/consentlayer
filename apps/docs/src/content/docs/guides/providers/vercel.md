@@ -1,6 +1,6 @@
 ---
 title: Vercel Analytics
-description: 'vercel() forwards events to Vercel Analytics, which needs no consent.'
+description: "vercel() forwards events to Vercel Analytics, which needs no consent."
 ---
 
 `vercel()` from `consentlayer/providers/vercel` forwards events to

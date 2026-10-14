@@ -159,10 +159,10 @@ import { orderParams } from 'consentlayer/ecommerce'
 
 const results = await sendServerEvent(
   {
-    id: order.id, // the browser purchase event's ID, if there was one
+    id: order.id,               // the browser purchase event's ID, if there was one
     name: 'purchase',
     params: orderParams(order),
-    consent: order.consent, // saved at checkout
+    consent: order.consent,     // saved at checkout
     clientId: order.gaClientId, // saved at checkout; required by GA4
     identity: { userId, email },
   },
@@ -218,13 +218,13 @@ Event names and params are translated as in the browser; see
 
 ```ts
 type ServerEvent = {
-  id?: string // shared with the browser event for deduplication
+  id?: string                 // shared with the browser event for deduplication
   name: string
   params?: Record<string, unknown>
-  consent: ConsentState // the consent the event was collected under
+  consent: ConsentState       // the consent the event was collected under
   identity?: { userId?: string; email?: string; phone?: string }
   url?: string
-  clientId?: string // GA4 client ID; read from the _ga cookie when omitted
+  clientId?: string           // GA4 client ID; read from the _ga cookie when omitted
   only?: string[]
   providers?: Record<string, Record<string, unknown>>
 }
@@ -411,7 +411,9 @@ import { createAnalyticsHandler } from 'consentlayer/server'
 import { sgtm } from 'consentlayer/server/sgtm'
 
 export const POST = createAnalyticsHandler({
-  destinations: [sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: process.env.GA_MEASUREMENT_ID })],
+  destinations: [
+    sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: process.env.GA_MEASUREMENT_ID }),
+  ],
 })
 ```
 
@@ -444,7 +446,7 @@ A destination is an object implementing `ServerDestination`:
 import type { ServerDestination } from 'consentlayer/server'
 
 const myDestination: ServerDestination<true> = {
-  id: 'mine', // matched against `only`
+  id: 'mine',                 // matched against `only`
   requiredConsent: 'analytics',
   forwardBrowserEvents: true, // false keeps it out of createAnalyticsHandler
   async send(event, request) {

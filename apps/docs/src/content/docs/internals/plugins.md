@@ -195,7 +195,8 @@ time.
 import { definePlugin } from 'consentlayer'
 
 export function beaconLogger(endpoint: string) {
-  const send = (body: Record<string, unknown>) => navigator.sendBeacon(endpoint, JSON.stringify(body))
+  const send = (body: Record<string, unknown>) =>
+    navigator.sendBeacon(endpoint, JSON.stringify(body))
 
   return definePlugin({
     id: 'beacon-logger',

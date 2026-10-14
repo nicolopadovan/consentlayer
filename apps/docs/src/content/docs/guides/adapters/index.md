@@ -1,6 +1,6 @@
 ---
 title: Consent adapters
-description: 'Adapters connect ConsentLayer to other consent systems: IAB TCF, Shopify Customer Privacy and Google Consent Mode.'
+description: "Adapters connect ConsentLayer to other consent systems: IAB TCF, Shopify Customer Privacy and Google Consent Mode."
 ---
 
 A consent adapter keeps ConsentLayer's consent in sync with another consent

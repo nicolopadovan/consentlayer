@@ -1,6 +1,6 @@
 ---
 title: Shopify Customer Privacy
-description: 'shopifyCustomerPrivacy() keeps ConsentLayer and Shopify’s Customer Privacy API in agreement.'
+description: "shopifyCustomerPrivacy() keeps ConsentLayer and Shopify’s Customer Privacy API in agreement."
 ---
 
 `shopifyCustomerPrivacy()` keeps the instance and Shopify's

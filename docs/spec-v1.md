@@ -36,16 +36,19 @@ import { ga4 } from 'consentlayer/providers/ga4'
 import { meta } from 'consentlayer/providers/meta'
 
 export const analytics = createAnalytics({
-  providers: [ga4({ measurementId: 'G-…' }), meta({ pixelId: '…', loadBeforeConsent: false })],
+  providers: [
+    ga4({ measurementId: 'G-…' }),
+    meta({ pixelId: '…', loadBeforeConsent: false }),
+  ],
   server: { endpoint: '/api/analytics' }, // optional; see Server
   autoTracking: { clicks: true, scroll: true },
-  names: { prefix: 'consentlayer' }, // replaces configureNames()
+  names: { prefix: 'consentlayer' },               // replaces configureNames()
 })
 
 analytics.track('sign_up', { method: 'google' })
 analytics.identify('user_123', { email, plan: 'pro' })
-analytics.reset() // on logout
-analytics.page() // usually automatic
+analytics.reset()                           // on logout
+analytics.page()                            // usually automatic
 analytics.consent.update({ analytics: true, marketing: false })
 ```
 
@@ -61,7 +64,7 @@ that aren't theirs:
 ```ts
 analytics.track('purchase', params, {
   providers: { meta: { content_category: 'shoes' } }, // merged into Meta's params
-  only: ['ga4', 'meta'], // optional destination filter
+  only: ['ga4', 'meta'],                    // optional destination filter
 })
 ```
 

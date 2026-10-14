@@ -1,6 +1,6 @@
 ---
 title: Sentry
-description: 'sentry() reports errors to Sentry without personal data, with Replay and tracing after analytics consent.'
+description: "sentry() reports errors to Sentry without personal data, with Replay and tracing after analytics consent."
 ---
 
 `sentry()` from `consentlayer/providers/sentry` reports errors to Sentry. It is
