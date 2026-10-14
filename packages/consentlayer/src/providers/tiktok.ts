@@ -1,5 +1,6 @@
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { tiktokUserData, toTikTokEvent } from '../core/tiktok-events'
+import { expireCookies } from '../core/utils'
 
 export { tiktokUserData, toTikTokEvent }
 
@@ -71,6 +72,10 @@ ttq.load(${JSON.stringify(pixelId).replace(/</g, '\\u003c')});
       if (matched && !context.consent?.marketing) stale = true
       if (context.consent?.marketing && !stale) window.ttq?.grantConsent()
       else window.ttq?.revokeConsent()
+    },
+    teardown(context) {
+      if (typeof window === 'undefined' || context.consent?.marketing) return
+      expireCookies((name) => name === '_ttp' || name === 'ttclid' || name.startsWith('ttcsid'))
     },
     identify(identity, _traits, context) {
       if (!isReady() || stale || !context.consent?.marketing) return

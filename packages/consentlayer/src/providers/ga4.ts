@@ -1,6 +1,7 @@
 import { builtInConsentMode, ensureGtag } from '../core/consent-mode'
 import type { UserIdentity } from '../core/types'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
+import { expireCookies } from '../core/utils'
 import { assertHttpsOrRelativeUrl, assertValidGa4MeasurementId } from '../core/validation'
 
 declare global {
@@ -85,6 +86,8 @@ export function ga4(options: Ga4Options) {
     consent({ consent, identity }) {
       if (typeof window === 'undefined') return
       if (ownConsentMode) builtInConsentMode(consent)
+      if (consent && !consent.analytics)
+        expireCookies((name) => name === '_ga' || name === '_gid' || name.startsWith('_ga_'))
       if (advanced) applyIdentity(consent?.analytics ? identity : {})
       // In basic mode, configured only after consent, so no cookieless pings are sent before it.
       else if (consent?.analytics) configure()

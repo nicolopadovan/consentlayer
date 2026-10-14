@@ -497,3 +497,27 @@ describe('tiktok', () => {
     manager.destroy()
   })
 })
+
+describe('withdrawal', () => {
+  it('expires the cookies of ga4, meta and tiktok when their consent is withdrawn', async () => {
+    const granted = { preferences: true, analytics: true, marketing: true }
+    const manager = createAnalyticsManager({
+      providers: [ga4({ measurementId: 'G-ABC123' }), meta({ pixelId: '12345678' }), tiktok({ pixelId: 'CABC123' })],
+      consent: granted,
+    })
+    await manager.boot()
+    const cookies = ['_ga', '_ga_ABC123', '_gid', '_fbp', '_fbc', '_ttp', 'ttclid', 'ttcsid', 'ttcsid_CABC123', 'keep']
+    for (const name of cookies) document.cookie = `${name}=1; path=/`
+    await manager.updateConsent({ ...granted, marketing: false })
+    expect(document.cookie.split('; ').map((cookie) => cookie.split('=')[0])).toEqual([
+      '_ga',
+      '_ga_ABC123',
+      '_gid',
+      'keep',
+    ])
+    await manager.updateConsent({ ...granted, analytics: false, marketing: false })
+    expect(document.cookie).toBe('keep=1')
+    manager.destroy()
+    document.cookie = 'keep=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+  })
+})

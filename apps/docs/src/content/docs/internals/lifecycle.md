@@ -317,8 +317,8 @@ without awaiting it:
 
 What `teardown` does is up to the provider. Most built-in providers stop
 sending and update the vendor's own consent switch; Contentsquare sends its
-opt-out command; Hotjar deletes its `_hj` cookies and storage and can reload
-the page (`reloadOnRevoke`). See [What each provider receives](/internals/providers/).
+opt-out command; GA4, Meta and TikTok expire their cookies; Hotjar deletes its
+`_hj` cookies and storage and can reload the page (`reloadOnRevoke`). See [What each provider receives](/internals/providers/).
 
 ## Auto-tracking
 

@@ -1,5 +1,6 @@
 import { metaUserData, toMetaEvent } from '../core/meta-events'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
+import { expireCookies } from '../core/utils'
 import { assertValidMetaPixelId } from '../core/validation'
 
 export { metaUserData, toMetaEvent }
@@ -71,6 +72,10 @@ fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(loadContex
       if (!isReady()) return
       if (matched && !context.consent?.marketing) stale = true
       window.fbq?.('consent', context.consent?.marketing && !stale ? 'grant' : 'revoke')
+    },
+    teardown(context) {
+      if (typeof window === 'undefined' || context.consent?.marketing) return
+      expireCookies((name) => name === '_fbp' || name === '_fbc')
     },
     page(page, context) {
       if (!isReady() || stale || !context.consent?.marketing) return
