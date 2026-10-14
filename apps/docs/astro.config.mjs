@@ -26,7 +26,22 @@ export default defineConfig({
           items: [
             'guides/events',
             'guides/consent-ui',
-            'guides/providers',
+            {
+              label: 'Providers',
+              collapsed: true,
+              items: [
+                { label: 'Overview', slug: 'guides/providers' },
+                'guides/providers/ga4',
+                'guides/providers/meta',
+                'guides/providers/tiktok',
+                'guides/providers/posthog',
+                'guides/providers/sentry',
+                'guides/providers/contentsquare',
+                'guides/providers/vercel',
+                'guides/providers/shopify',
+                'guides/providers/hotjar',
+              ],
+            },
             'guides/server-side-tracking',
             'guides/consent-records',
             'guides/names',

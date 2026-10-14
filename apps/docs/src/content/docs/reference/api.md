@@ -1264,7 +1264,7 @@ marketing consent.
 |---|---|---|---|
 | `measurementId` | `string \| undefined` | | **Required.** Must match `G-` followed by 4 to 16 upper-case letters or digits; `undefined` or `''` turns the provider off. |
 | `loadBeforeConsent` | `boolean` | `false` | `true` loads gtag.js at boot with Consent Mode set to denied. |
-| `consentMode` | `Ga4ConsentMode` | `{ mode: 'basic' }` | See below and [Google Consent Mode](/guides/providers/#google-consent-mode). |
+| `consentMode` | `Ga4ConsentMode` | `{ mode: 'basic' }` | See below and [Google Consent Mode](/guides/providers/ga4/#google-consent-mode). |
 
 ```ts
 type Ga4ConsentMode = {
