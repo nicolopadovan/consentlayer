@@ -51,7 +51,7 @@ export function createTcfAdapter(options: TcfAdapterOptions = {}): ConsentIntegr
     Object.fromEntries(
       Object.entries(purposes).map(([category, ids]) => [
         category,
-        Boolean(ids?.length) && ids!.every((id) => tcData.purpose?.consents?.[id] === true),
+        ids.length > 0 && ids.every((id) => tcData.purpose?.consents?.[id] === true),
       ]),
     ) as ConsentState
 
