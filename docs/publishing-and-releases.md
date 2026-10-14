@@ -52,12 +52,12 @@ reaches `main`.
 
 ## Prereleases
 
-The repository is in Changesets prerelease mode (`.changeset/pre.json`, tag
-`rc`), so releases are numbered `1.0.0-rc.N`. The workflow publishes any
-version with a prerelease suffix under the `next` dist-tag, so
-`npm install consentlayer` keeps getting the latest stable version. To
-release 1.0.0, run `pnpm changeset pre exit` and merge; the next release
-pull request bumps to `1.0.0`, which is published under `latest`.
+Releases are stable versions under the `latest` dist-tag. To publish
+prereleases, run `pnpm changeset pre enter <tag>` (for example `rc`) and
+merge; versions then carry a suffix such as `2.0.0-rc.0`, and the workflow
+publishes any version with a suffix under the `next` dist-tag, so
+`npm install consentlayer` keeps getting the latest stable version. Run
+`pnpm changeset pre exit` and merge to return to stable releases.
 
 ## When The Workflow Fails
 
