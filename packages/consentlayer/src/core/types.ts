@@ -384,8 +384,8 @@ export interface AnalyticsManager {
   registerProvider: (provider: AnalyticsPlugin) => () => void
   updateConsent: (consent: ConsentState | null) => Promise<void>
   getConsent: () => ConsentState | null
-  /** `only` limits which providers receive it. */
-  page: (payload?: PageViewPayload, options?: { only?: string[] }) => Promise<void>
+  /** `only` limits which providers and server destinations receive it; `server: true` ignores it for the server, `false` skips the server. */
+  page: (payload?: PageViewPayload, options?: { only?: string[]; server?: boolean }) => Promise<void>
   track: <Name extends string>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>
   identify: (userId?: string, traits?: UserTraits) => Promise<void>
   reset: () => Promise<void>

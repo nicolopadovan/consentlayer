@@ -556,13 +556,16 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     getConsent() {
       return consent
     },
-    async page(payload = {}, pageOptions = {}) {
+    async page(payload = {}, { only, server } = {}) {
       const page = { ...getWindowLocation(), ...payload, id: createEventId() }
       await trackAgainstProviders(
         'page',
-        pageOptions.only,
+        only,
         (state) => call(state, 'page', (p, ctx) => p.page?.(page, ctx), page),
-        () => ({ id: page.id, name: 'page_view', url: page.url, only: pageOptions.only }),
+        () =>
+          server === false
+            ? undefined
+            : { id: page.id, name: 'page_view', url: page.url, only: server ? undefined : only },
       )
     },
     async track(name, params, optionsInput = {}) {

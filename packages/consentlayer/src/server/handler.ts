@@ -107,7 +107,10 @@ export function createAnalyticsHandler(options: {
       if (options.consentCookie) {
         const recorded = proof?.consent ?? { preferences: false, analytics: false, marketing: false }
         event.consent = Object.fromEntries(
-          Object.entries(recorded).map(([key, value]) => [key, value === true && event.consent[key] === true]),
+          Object.entries(recorded).map(([key, value]) => [
+            key,
+            value === true && event.consent[key as keyof ConsentState] === true,
+          ]),
         ) as ConsentState
       }
       const results = await sendServerEvent(event, {

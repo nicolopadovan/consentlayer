@@ -269,8 +269,11 @@ tracks which providers have already received a page view for the current
 1. After boot, whenever the snapshot or `routeKey` changes, it computes the
    active providers that have not yet received a page view for this key.
    While `routeKey` is `null`, it does nothing.
-2. If there are any, it records them and calls
-   `analytics.page(pageProp, { only: fresh })`.
+2. It also checks whether this key's page view has been forwarded to the
+   server, which happens once, while analytics or marketing consent is
+   granted. If there are fresh providers or the server is due, it records
+   them and calls `analytics.page(pageProp, { only: fresh, server })`, so the
+   server's destinations are not limited to the browser provider IDs.
 3. A new `routeKey` resets the record and also calls
    `analytics.newPageSession()`, unless it is the first key that is not
    `null`: that route continues the session that started at boot. A `null`

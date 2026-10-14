@@ -24,7 +24,10 @@ export async function sendMeasurementProtocol(
   const email = event.identity?.email
     ?.trim()
     .toLowerCase()
-    .replace(/^(.+)@(gmail|googlemail)\.com$/, (_, local: string, domain: string) => `${local.replace(/\./g, '')}@${domain}.com`)
+    .replace(
+      /^(.+)@(gmail|googlemail)\.com$/,
+      (_, local: string, domain: string) => `${local.replace(/\./g, '')}@${domain}.com`,
+    )
   const phone = event.identity?.phone && `+${event.identity.phone.replace(/\D/g, '')}`
   const userData = marketing
     ? Object.fromEntries(

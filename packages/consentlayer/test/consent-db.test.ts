@@ -132,7 +132,10 @@ describe('consent handler', () => {
     expect(send).not.toHaveBeenCalled()
     const valid = await analytics(post('/api/analytics', event(granted), cookie))
     expect(send).toHaveBeenCalledTimes(1)
-    expect(send).toHaveBeenCalledWith(expect.objectContaining({ consent: { ...denied, marketing: true } }), expect.anything())
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ consent: { ...denied, marketing: true } }),
+      expect.anything(),
+    )
     expect(valid.headers.get('consentlayer-consent')).toBeNull()
 
     const [name, value] = cookie.split('=') as [string, string]

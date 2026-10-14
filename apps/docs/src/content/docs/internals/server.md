@@ -68,7 +68,9 @@ For `track('add_to_cart', params, options)`:
 ```
 
 For `page()`, the body has `id`, `name: "page_view"`, `url`, `only` (if
-passed), `consent` and `identity`, and no `params` or `providers`.
+passed and `server` is not `true`), `consent` and `identity`, and no `params`
+or `providers`. Automatic page views are forwarded once per route without
+`only`.
 
 | Field               | Source                                                                                                                         |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |

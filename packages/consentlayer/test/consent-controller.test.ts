@@ -75,6 +75,42 @@ describe('createConsentController', () => {
     analytics.destroy()
   })
 
+  it('forwards one page view per route to every server destination', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }))
+    const forwarded = () =>
+      fetchMock.mock.calls.map(([, init]) => JSON.parse(init?.body as string) as { name: string; only?: string[] })
+    const ga4 = spyProvider('ga4')
+    const meta = spyProvider('meta', 'marketing')
+    const analytics = createAnalytics({ providers: [ga4, meta], server: { endpoint: '/api/analytics' } })
+    await analytics.consent.update({ analytics: true })
+    const controller = createConsentController(analytics)
+    const stop = controller.start()
+    controller.setRoute('/a')
+    await settle()
+    await analytics.consent.update({ marketing: true })
+    await settle()
+    expect(meta.page).toHaveBeenCalledTimes(1)
+    expect(forwarded()).toEqual([expect.objectContaining({ name: 'page_view' })])
+    expect(forwarded()[0]).not.toHaveProperty('only')
+
+    controller.setRoute('/b')
+    await settle()
+    expect(forwarded()).toHaveLength(2)
+    stop()
+    analytics.destroy()
+
+    const serverOnly = createAnalytics({ providers: [], server: { endpoint: '/api/analytics' } })
+    await serverOnly.consent.update({ analytics: true })
+    const serverOnlyController = createConsentController(serverOnly)
+    const stopServerOnly = serverOnlyController.start()
+    serverOnlyController.setRoute('/')
+    await settle()
+    expect(forwarded()).toHaveLength(3)
+    stopServerOnly()
+    serverOnly.destroy()
+    fetchMock.mockRestore()
+  })
+
   it('holds page views while the route is null', async () => {
     const ga4 = spyProvider('ga4')
     const analytics = createAnalytics({ providers: [ga4] })
