@@ -151,7 +151,11 @@ Set-Cookie: __Host-consentlayer_proof=<payload>.<signature>; Path=/; Max-Age=345
 `Secure` is left out when the request's host is `localhost`, `127.0.0.1` or
 `[::1]`, because Safari does not store `Secure` cookies on
 `http://localhost`. Browsers accept a `__Host-` cookie only with `Secure`, so
-there the default name is `consentlayer_proof`.
+there the default name is `consentlayer_proof`. The handler sets the cookie
+only when the request's `Origin` equals the origin of the request URL, so the
+host it checks is always the one the visitor's browser sees. Behind a proxy
+that rewrites the host or protocol, the handler answers 403 instead; configure
+the proxy, or your framework, to keep the public origin in the request URL.
 
 `Max-Age` is 400 days, the longest lifetime browsers allow. The payload is the
 base64url-encoded JSON of `{ consentId, consent, policyVersion }`; the

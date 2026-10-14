@@ -99,6 +99,15 @@ describe('consent handler', () => {
       headers: { 'content-type': 'application/json', origin: 'http://localhost:3000' },
     })
     expect((await consent(local)).headers.get('set-cookie')).toMatch(/^consentlayer_proof=.+; SameSite=Lax$/)
+
+    const behindProxy = new Request('http://localhost:3000/api/consent', {
+      method: 'POST',
+      body: JSON.stringify({ consent: granted }),
+      headers: { 'content-type': 'application/json', origin: 'https://shop.example' },
+    })
+    const refused = await consent(behindProxy)
+    expect(refused.status).toBe(403)
+    expect(refused.headers.get('set-cookie')).toBeNull()
   })
 
   it('exports requestInfo for sendServerEvent', () => {
