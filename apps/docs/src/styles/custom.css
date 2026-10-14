@@ -33,3 +33,19 @@
   --sl-card-border: var(--sl-color-accent);
   --sl-card-bg: var(--sl-color-accent-low);
 }
+
+.sidebar-content ul ul summary {
+  padding-block: 0.3em;
+}
+
+.sidebar-content ul ul summary .large {
+  font-size: inherit;
+  font-weight: 400;
+  color: var(--sl-color-gray-2);
+}
+
+@media (min-width: 50rem) {
+  .sidebar-content ul ul summary .large {
+    font-size: var(--sl-text-sm);
+  }
+}
