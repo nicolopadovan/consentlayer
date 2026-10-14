@@ -42,4 +42,22 @@ describe('debug', () => {
     await run({ events: false, logger: (entry) => entries.push(entry) })
     expect(new Set(entries.map((entry) => entry.topic))).toEqual(new Set(['consent', 'providers']))
   })
+  it('reports events that are held, dropped or reach no provider', async () => {
+    const entries: string[] = []
+    const logger = (entry: DebugEntry) => entries.push(entry.message)
+    const analytics = createAnalytics({ providers: [spyProvider('ga4')], debug: { events: true, logger } })
+    await analytics.track('sign_up')
+    await analytics.boot()
+    await analytics.track('purchase')
+    analytics.destroy()
+    const off = createAnalytics({ providers: [], enabled: false, debug: { events: true, logger } })
+    await off.page()
+    off.destroy()
+    expect(entries).toEqual([
+      'sign_up held until boot',
+      'sign_up reached no provider',
+      'purchase reached no provider',
+      'page dropped: enabled is false',
+    ])
+  })
 })

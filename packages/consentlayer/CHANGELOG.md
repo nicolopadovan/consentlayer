@@ -80,7 +80,8 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 
 ### Added
 - `debug` logs every page view and event each provider receives, provider
-  lifecycle and `boot`, alongside consent changes and errors. An object form,
+  lifecycle and `boot`, alongside consent changes and errors, and says when a
+  call reaches no provider, is held until boot or is dropped by `enabled`. An object form,
   `debug: { consent, events, providers, errors, only, logger }`, picks topics
   and providers and sends entries to your own logger. `PluginContext.log`
   logs on behalf of a plugin.

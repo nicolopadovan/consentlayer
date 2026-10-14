@@ -157,9 +157,9 @@ createAnalytics({
 | Topic | Logs |
 |---|---|
 | `consent` | Each consent change, with its source, and a stored choice found stale. |
-| `events` | Each page view, `track`, `identify`, `group` and `reset`, once per provider that receives it, with its payload: `ga4.track sign_up {method: 'email'}`. |
+| `events` | Each page view, `track`, `identify`, `group` and `reset`, once per provider that receives it, with its payload: `ga4.track sign_up {method: 'email'}`. Also a call that reaches no provider, is held until boot, or is dropped because `enabled` is `false`. |
 | `providers` | `boot`, and each provider's `setup`, `consent`, `load` and `teardown`, including `ga4 is off: measurementId is not set.` |
-| `errors` | Every [`AnalyticsError`](#analyticserror), and each provider a `captureError` call reaches. |
+| `errors` | Every [`AnalyticsError`](#analyticserror), and each provider a `captureError` call reaches, or that it reaches none. |
 
 Topics set to `true` are logged. When no topic is `true`, every topic is
 logged except those set to `false`, so `{ events: false }` logs everything but

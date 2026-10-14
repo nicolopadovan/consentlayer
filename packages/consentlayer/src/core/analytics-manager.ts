@@ -405,20 +405,26 @@ export function createAnalyticsManager(
     await lifecycleQueue
   }
 
+  const labelTopic = (label: string): DebugTopic => (label === 'captureError' ? 'errors' : 'events')
+
   const trackAgainstProviders = async (
+    label: string,
     selectedProviderIds: string[] | undefined,
     callback: (state: ProviderState) => Promise<void>,
     serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined,
   ) => {
-    if (destroyed || !runtimeEnabled()) return
+    if (destroyed) return
+    if (!runtimeEnabled()) return debugLog(labelTopic(label), undefined, `${label} dropped: enabled is false`)
     if (!ready) {
-      enqueue(pending, () => deliver(selectedProviderIds, callback, serverEvent))
+      debugLog(labelTopic(label), undefined, `${label} held until boot`)
+      enqueue(pending, () => deliver(label, selectedProviderIds, callback, serverEvent))
       return
     }
-    await deliver(selectedProviderIds, callback, serverEvent)
+    await deliver(label, selectedProviderIds, callback, serverEvent)
   }
 
   const deliver = async (
+    label: string,
     selectedProviderIds: string[] | undefined,
     callback: (state: ProviderState) => Promise<void>,
     serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined,
@@ -426,18 +432,21 @@ export function createAnalyticsManager(
     if (destroyed) return
     const event = serverEvent?.()
     if (event) forward(event)
+    let reached = 0
     for (const state of providerStates.values()) {
       if (!state.active) continue
       if (!hasRequiredConsent(consent, state.plugin.requiredConsent)) continue
       if (selectedProviderIds && !selectedProviderIds.includes(state.plugin.id)) {
         continue
       }
+      reached += 1
       await callback(state)
     }
+    if (!reached) debugLog(labelTopic(label), undefined, `${label} reached no provider`)
   }
 
   const identifyProviders = (traits: UserTraits, only?: string[]) =>
-    trackAgainstProviders(only, async (state) => {
+    trackAgainstProviders('identify', only, async (state) => {
       await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx), traits)
     })
 
@@ -591,6 +600,7 @@ export function createAnalyticsManager(
     async page(payload = {}, pageOptions = {}) {
       const page = { ...getWindowLocation(), ...payload, id: createEventId() }
       await trackAgainstProviders(
+        'page',
         pageOptions.only,
         async (state) => {
           await call(state, 'page', (p, ctx) => p.page?.(page, ctx), page)
@@ -609,6 +619,7 @@ export function createAnalyticsManager(
         !(optionsInput.requireAnalyticsConsent && !consent?.analytics) &&
         !(optionsInput.requireMarketingConsent && !consent?.marketing)
       await trackAgainstProviders(
+        name,
         optionsInput.only,
         async (state) => {
           if (allowed()) await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)
@@ -650,14 +661,14 @@ export function createAnalyticsManager(
       }
     },
     async group(groupId, traits = {}) {
-      await trackAgainstProviders(undefined, async (state) => {
+      await trackAgainstProviders('group', undefined, async (state) => {
         await call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx), groupId, traits)
       })
     },
     async captureError(error, errorContext = {}) {
       if (!errorsEnabled) return
       const captured = { source: 'manual' as const, ...errorContext }
-      await trackAgainstProviders(undefined, async (state) => {
+      await trackAgainstProviders('captureError', undefined, async (state) => {
         await call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx), error)
       })
     },
