@@ -19,9 +19,11 @@ export default [
   ['angular', 'dist/angular.js', '2.5 kB'],
   ['providers/ga4', 'dist/providers/ga4.js', '1.8 kB'],
   ['providers/meta', 'dist/providers/meta.js', '2.5 kB'],
+  ['providers/tiktok', 'dist/providers/tiktok.js', '2 kB'],
   ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.2 kB'],
   ['providers/posthog', 'dist/providers/posthog.js', '1.2 kB'],
   ['providers/sentry', 'dist/providers/sentry.js', '1.2 kB'],
   ['server', 'dist/server/index.js', '2.5 kB'],
   ['server/meta', 'dist/server/meta.js', '1.5 kB'],
+  ['server/tiktok', 'dist/server/tiktok.js', '1.4 kB'],
 ].map(([name, path, limit]) => ({ name, path, limit, modifyEsbuildConfig }))

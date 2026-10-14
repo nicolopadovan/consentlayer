@@ -20,6 +20,7 @@ export default defineConfig({
     'server/index': 'src/server/index.ts',
     'server/ga4': 'src/server/ga4.ts',
     'server/meta': 'src/server/meta.ts',
+    'server/tiktok': 'src/server/tiktok.ts',
     testing: 'src/testing.ts',
     next: 'src/next.tsx',
     vue: 'src/vue.ts',

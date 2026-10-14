@@ -137,6 +137,10 @@
       "types": "./dist/server/meta.d.ts",
       "import": "./dist/server/meta.js"
     },
+    "./server/tiktok": {
+      "types": "./dist/server/tiktok.d.ts",
+      "import": "./dist/server/tiktok.js"
+    },
     "./sentry/server": {
       "types": "./dist/sentry/server.d.ts",
       "import": "./dist/sentry/server.js"

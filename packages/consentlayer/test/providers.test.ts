@@ -7,6 +7,7 @@ import { hotjar } from '../src/providers/hotjar'
 import { meta } from '../src/providers/meta'
 import { posthog } from '../src/providers/posthog'
 import { sentry } from '../src/providers/sentry'
+import { tiktok } from '../src/providers/tiktok'
 
 describe('providers', () => {
   it('turns a provider off when its id is unset, but still rejects a malformed one', async () => {
@@ -292,5 +293,90 @@ describe('contentsquare', () => {
     expect(document.cookie).not.toContain('_cs_optout')
     manager.destroy()
     history.pushState({}, '', '/')
+  })
+})
+
+describe('tiktok', () => {
+  const denied = { preferences: false, analytics: false, marketing: false }
+  const runBootstrap = () => {
+    const win = window as unknown as Record<string, unknown>
+    for (const key of ['ttq', 'TiktokAnalyticsObject', '__consentlayerTikTokPixelInitialized']) delete win[key]
+    const append = document.head.appendChild.bind(document.head)
+    return vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
+      if (node instanceof HTMLScriptElement && !node.src) window.eval(node.text)
+      return append(node)
+    })
+  }
+  const queued = () => Array.from(window.ttq as unknown as unknown[][])
+
+  it('is off without a pixel id', () => {
+    expect(Object.keys(tiktok({ pixelId: undefined }))).toEqual(['id', 'setup'])
+    expect(Object.keys(tiktok({ pixelId: ' ' }))).toEqual(['id', 'setup'])
+  })
+
+  it('loads after consent, matches, tracks with the event id and stays off after a withdrawal', async () => {
+    const append = runBootstrap()
+    const manager = createAnalyticsManager({ providers: [tiktok({ pixelId: 'CABC123' })], consent: denied })
+    await manager.boot()
+    expect(window.ttq).toBeUndefined()
+    expect(document.querySelector('script[src*="analytics.tiktok.com"]')).toBeNull()
+
+    await manager.updateConsent({ ...denied, marketing: true })
+    expect(
+      document.querySelector('script[src="https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=CABC123&lib=ttq"]'),
+    ).not.toBeNull()
+    expect((window.ttq as unknown as { _i: Record<string, unknown> })._i).toHaveProperty('CABC123')
+    await manager.identify('u1', { email: ' Ada@Example.com', phone: '+1 213-373-4253' })
+    await manager.page()
+    await manager.track(
+      'purchase',
+      { transaction_id: 'o1', value: 10, currency: 'EUR', items: [{ item_id: 'sku', item_name: 'Mug', price: 5, quantity: 2 }] },
+      { eventId: 'evt-1', providers: { tiktok: { description: 'mugs' } } },
+    )
+    await manager.track('share', {}, { eventId: 'evt-2' })
+    await manager.updateConsent(denied)
+    await manager.updateConsent({ ...denied, marketing: true })
+    await manager.page()
+    append.mockRestore()
+
+    expect(queued()).toEqual([
+      ['grantConsent'],
+      ['identify', { email: 'ada@example.com', phone_number: '+12133734253', external_id: 'u1' }],
+      ['page'],
+      [
+        'track',
+        'Purchase',
+        {
+          value: 10,
+          currency: 'EUR',
+          order_id: 'o1',
+          content_ids: ['sku'],
+          contents: [{ content_id: 'sku', content_name: 'Mug', price: 5, quantity: 2 }],
+          content_type: 'product',
+          num_items: 2,
+          description: 'mugs',
+        },
+        { event_id: 'evt-1' },
+      ],
+      ['track', 'share', {}, { event_id: 'evt-2' }],
+      ['revokeConsent'],
+      ['revokeConsent'],
+    ])
+    manager.destroy()
+  })
+
+  it('holds consent before ttq.load when it loads before consent', async () => {
+    const append = runBootstrap()
+    const manager = createAnalyticsManager({
+      providers: [tiktok({ pixelId: 'CABC123', loadBeforeConsent: true })],
+      consent: denied,
+    })
+    await manager.boot()
+    const bootstrap = (append.mock.calls[0]?.[0] as HTMLScriptElement).text
+    append.mockRestore()
+    expect(bootstrap.indexOf('ttq.holdConsent()')).toBeGreaterThan(-1)
+    expect(bootstrap.indexOf('ttq.holdConsent()')).toBeLessThan(bootstrap.indexOf('ttq.load("CABC123")'))
+    expect(queued()).toEqual([['holdConsent']])
+    manager.destroy()
   })
 })

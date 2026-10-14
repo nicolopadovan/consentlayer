@@ -6,6 +6,7 @@ import { createAnalyticsHandler, sendServerEvent } from '../src/server'
 import { ga4Server } from '../src/server/ga4'
 import { assertSameOrigin, parseJsonWithLimit } from '../src/server/http'
 import { metaCapi } from '../src/server/meta'
+import { tiktokEvents } from '../src/server/tiktok'
 
 const sha256 = (input: string) => createHash('sha256').update(input).digest('hex')
 
@@ -186,5 +187,72 @@ describe('server destinations', () => {
     )
     expect(results).toMatchObject([{ id: 'ga4', ok: false }])
     expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
+  it('forwards a browser event to the TikTok Events API with the browser event id and hashed identity', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ code: 0, message: 'OK' }))
+    const POST = createAnalyticsHandler({
+      destinations: [tiktokEvents({ pixelId: 'CABC123', accessToken: 'token', testEventCode: 'TEST1', fetchImpl })],
+    })
+    const body = {
+      id: 'evt-1',
+      name: 'add_to_cart',
+      url: 'https://shop.example/p',
+      consent: granted,
+      params: { value: 9.2, currency: 'USD', items: [{ item_id: 'sku' }] },
+      identity: { email: ' Ada@Example.com', phone: '+1 213 373 4253', userId: 'u1' },
+    }
+    const headers = { cookie: '_ttp=ttp-1; ttclid=click-1', 'user-agent': 'UA', 'x-forwarded-for': '1.2.3.4' }
+    expect((await POST(post(body, headers))).status).toBe(204)
+    expect((await POST(post({ ...body, name: 'page_view' }, headers))).status).toBe(204)
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchImpl.mock.calls[0] ?? []
+    expect(url).toBe('https://business-api.tiktok.com/open_api/v1.3/event/track/')
+    expect(init?.headers).toEqual({ 'Access-Token': 'token', 'Content-Type': 'application/json' })
+    expect(sentBody(fetchImpl)).toMatchObject({
+      event_source: 'web',
+      event_source_id: 'CABC123',
+      test_event_code: 'TEST1',
+      data: [
+        {
+          event: 'AddToCart',
+          event_id: 'evt-1',
+          user: {
+            email: sha256('ada@example.com'),
+            phone: sha256('+12133734253'),
+            external_id: sha256('u1'),
+            ip: '1.2.3.4',
+            user_agent: 'UA',
+            ttp: 'ttp-1',
+            ttclid: 'click-1',
+          },
+          properties: {
+            value: 9.2,
+            currency: 'USD',
+            content_ids: ['sku'],
+            content_type: 'product',
+            contents: [{ content_id: 'sku', quantity: 1 }],
+          },
+          page: { url: 'https://shop.example/p' },
+        },
+      ],
+    })
+  })
+
+  it('fails when TikTok answers with a non-zero code, and warns when only one credential is set', async () => {
+    const tiktok = tiktokEvents({
+      pixelId: 'CABC123',
+      accessToken: 'token',
+      fetchImpl: vi.fn<typeof fetch>().mockResolvedValue(Response.json({ code: 40001, message: 'Invalid token' })),
+    })
+    const [result] = await sendServerEvent({ name: 'lead', consent: granted }, { destinations: [tiktok] })
+    expect(String(result?.error)).toMatch('TikTok Events API 40001: Invalid token')
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    expect(tiktokEvents({ pixelId: 'CABC123', accessToken: undefined })).toBeUndefined()
+    expect(tiktokEvents({ pixelId: '', accessToken: '' })).toBeUndefined()
+    expect(warn.mock.calls).toEqual([['[consentlayer] tiktokEvents is off: set both pixelId and accessToken.']])
+    warn.mockRestore()
   })
 })

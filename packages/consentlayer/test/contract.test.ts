@@ -15,7 +15,8 @@ const plugins: Record<string, () => AnalyticsPlugin> = {
   'meta with loadBeforeConsent': () => meta({ pixelId: '123456789012345', loadBeforeConsent: true }),
   contentsquare: () => contentsquare({ tagId: 'abc123def4567' }),
   hotjar: () => hotjar({ siteId: 1, version: 6 }),
-  tiktok: () => tiktok(),
+  tiktok: () => tiktok({ pixelId: 'CABC123' }),
+  'tiktok with loadBeforeConsent': () => tiktok({ pixelId: 'CABC123', loadBeforeConsent: true }),
   vercel: () => vercel({ trackEvent: () => undefined }),
 }
 
@@ -23,7 +24,7 @@ describe('plugin contract', () => {
   beforeEach(() => {
     document.head.innerHTML = ''
     for (const key of Object.keys(window)) {
-      if (/^(__consentlayer|__acm|fbq|_fbq|gtag|dataLayer|hj|_hjSettings|_uxa)/.test(key)) {
+      if (/^(__consentlayer|__acm|fbq|_fbq|gtag|dataLayer|hj|_hjSettings|_uxa|ttq|TiktokAnalyticsObject)/.test(key)) {
         delete (window as unknown as Record<string, unknown>)[key]
       }
     }
