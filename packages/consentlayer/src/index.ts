@@ -58,6 +58,7 @@ export type {
   ProviderConsentRequirement,
   ServerEvent,
   StandardEvents,
+  StoredConsent,
   TrackEventOptions,
   UserIdentity,
   UserTraits,
