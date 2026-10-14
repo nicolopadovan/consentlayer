@@ -37,7 +37,9 @@ export function ConsentBanner({ privacyPolicyUrl }: { privacyPolicyUrl?: string 
           </label>
         ))}
         <div className="consent-actions">
-          <button type="button" onClick={consent.closeDialog}>Close</button>
+          <button type="button" onClick={consent.closeDialog}>
+            Close
+          </button>
           <button type="button" className="primary" onClick={() => void consent.savePreferences()}>
             Save
           </button>
@@ -52,11 +54,20 @@ export function ConsentBanner({ privacyPolicyUrl }: { privacyPolicyUrl?: string 
       <h2 id="consent-banner-title">Cookies</h2>
       <p>
         We use cookies to run this site and, with your consent, for preferences, analytics and marketing.
-        {privacyPolicyUrl && <> <a href={privacyPolicyUrl}>Privacy policy</a></>}
+        {privacyPolicyUrl && (
+          <>
+            {' '}
+            <a href={privacyPolicyUrl}>Privacy policy</a>
+          </>
+        )}
       </p>
       <div className="consent-actions">
-        <button type="button" onClick={() => void consent.rejectNonEssential()}>Reject non-essential</button>
-        <button type="button" onClick={consent.openDialog}>Customize</button>
+        <button type="button" onClick={() => void consent.rejectNonEssential()}>
+          Reject non-essential
+        </button>
+        <button type="button" onClick={consent.openDialog}>
+          Customize
+        </button>
         <button type="button" className="primary" onClick={() => void consent.acceptAll()}>
           Accept all
         </button>

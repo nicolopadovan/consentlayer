@@ -1,6 +1,6 @@
 ---
 title: Consent adapters
-description: "Adapters connect ConsentLayer to other consent systems: IAB TCF, Shopify Customer Privacy and Google Consent Mode."
+description: 'Adapters connect ConsentLayer to other consent systems: IAB TCF, Shopify Customer Privacy and Google Consent Mode.'
 ---
 
 A consent adapter keeps ConsentLayer's consent in sync with another consent
@@ -25,11 +25,11 @@ createAnalytics({
 Each adapter is a named export of its own entry point,
 `consentlayer/adapters/<name>`.
 
-| Adapter | Factory | Reads the choice | Writes the choice |
-|---|---|---|---|
-| [IAB TCF](/guides/adapters/tcf/) | `tcf()` | From the TCF CMP | No |
-| [Shopify Customer Privacy](/guides/adapters/shopify/) | `shopifyCustomerPrivacy()` | From Shopify | To Shopify |
-| [Google Consent Mode](/guides/adapters/google-consent-mode/) | `googleConsentMode()` | No | To Google tags, as Consent Mode signals |
+| Adapter                                                      | Factory                    | Reads the choice | Writes the choice                       |
+| ------------------------------------------------------------ | -------------------------- | ---------------- | --------------------------------------- |
+| [IAB TCF](/guides/adapters/tcf/)                             | `tcf()`                    | From the TCF CMP | No                                      |
+| [Shopify Customer Privacy](/guides/adapters/shopify/)        | `shopifyCustomerPrivacy()` | From Shopify     | To Shopify                              |
+| [Google Consent Mode](/guides/adapters/google-consent-mode/) | `googleConsentMode()`      | No               | To Google tags, as Consent Mode signals |
 
 ## Order
 

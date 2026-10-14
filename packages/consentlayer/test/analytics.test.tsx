@@ -94,7 +94,7 @@ describe('createAnalytics', () => {
     analytics.destroy()
   })
 
-  it('drops the previous user\'s email when a different user is identified', async () => {
+  it("drops the previous user's email when a different user is identified", async () => {
     const analytics = createAnalytics()
     await analytics.identify('alice', { email: 'alice@example.com' })
     expect(localStorage.getItem('consentlayer_user_identity')).toBeNull()
@@ -105,10 +105,7 @@ describe('createAnalytics', () => {
   })
 
   it('merges an update made before bootstrap into stored consent', async () => {
-    localStorage.setItem(
-      'consentlayer_consent',
-      JSON.stringify(granted),
-    )
+    localStorage.setItem('consentlayer_consent', JSON.stringify(granted))
     const analytics = createAnalytics()
     await analytics.consent.update({ preferences: false })
     expect(analytics.consent.getConsent()).toEqual({ ...granted, preferences: false })
@@ -139,11 +136,7 @@ describe('createAnalytics', () => {
 
     await analytics.consent.update({ marketing: true })
     await waitFor(() =>
-      expect(ga4.identify).toHaveBeenLastCalledWith(
-        { userId: 'u1', email: 'a@example.com' },
-        {},
-        expect.anything(),
-      ),
+      expect(ga4.identify).toHaveBeenLastCalledWith({ userId: 'u1', email: 'a@example.com' }, {}, expect.anything()),
     )
     expect(JSON.parse(localStorage.getItem('consentlayer_user_identity') ?? '{}')).toEqual({
       userId: 'u1',
@@ -151,9 +144,7 @@ describe('createAnalytics', () => {
     })
 
     await analytics.consent.update({ marketing: false })
-    await waitFor(() =>
-      expect(ga4.identify).toHaveBeenLastCalledWith({ userId: 'u1' }, {}, expect.anything()),
-    )
+    await waitFor(() => expect(ga4.identify).toHaveBeenLastCalledWith({ userId: 'u1' }, {}, expect.anything()))
     expect(JSON.parse(localStorage.getItem('consentlayer_user_identity') ?? '{}')).toEqual({ userId: 'u1' })
 
     await analytics.consent.update({ marketing: true })
@@ -210,7 +201,10 @@ describe('createAnalytics', () => {
     void pixel.consent?.(off)
     void pixel.consent?.({ ...on, identity: {} })
     void pixel.track?.(event('purchase', {}), { ...on, identity: {} })
-    expect(fbq.mock.calls).toEqual([['consent', 'revoke'], ['consent', 'revoke']])
+    expect(fbq.mock.calls).toEqual([
+      ['consent', 'revoke'],
+      ['consent', 'revoke'],
+    ])
   })
 
   it('delivers calls made before boot once providers are active', async () => {
@@ -279,10 +273,9 @@ describe('event translation', () => {
     expect(toMetaEvent(event('search', { search_term: 'boots' })).params).toEqual({
       search_string: 'boots',
     })
-    expect(
-      toMetaEvent(event('view_item', productParams({ id: 'p1', variantId: 'v1' }))).params
-        .content_ids,
-    ).toEqual(['v1'])
+    expect(toMetaEvent(event('view_item', productParams({ id: 'p1', variantId: 'v1' }))).params.content_ids).toEqual([
+      'v1',
+    ])
     expect(toMetaEvent(event('schedule', {})).name).toBe('Schedule')
     expect(toMetaEvent(event('Donate', {})).method).toBe('track')
     expect(toMetaEvent(event('consentlayer.ui_click', { ui_target: 'Buy' }))).toEqual({
@@ -304,9 +297,11 @@ describe('event translation', () => {
       { id: 'b', price: { amount: 3, currencyCode: 'EUR' } },
     ]
     expect(cartParams({ lines })).toMatchObject({ value: 13, currency: 'EUR' })
-    expect(
-      orderParams({ orderId: 'o1', value: 13, currency: 'EUR', coupon: null, lines }),
-    ).toMatchObject({ transaction_id: 'o1', coupon: undefined, items: [{ item_id: 'a' }, { item_id: 'b' }] })
+    expect(orderParams({ orderId: 'o1', value: 13, currency: 'EUR', coupon: null, lines })).toMatchObject({
+      transaction_id: 'o1',
+      coupon: undefined,
+      items: [{ item_id: 'a' }, { item_id: 'b' }],
+    })
   })
 })
 
@@ -318,7 +313,11 @@ describe('AnalyticsProvider', () => {
     function Probe() {
       const { consent } = useConsent()
       const instance = useAnalytics()
-      return <pre data-testid="probe">{String(instance === analytics)} {JSON.stringify(consent)}</pre>
+      return (
+        <pre data-testid="probe">
+          {String(instance === analytics)} {JSON.stringify(consent)}
+        </pre>
+      )
     }
 
     const { rerender } = render(
@@ -343,7 +342,11 @@ describe('AnalyticsProvider', () => {
     const analytics = createAnalytics()
     function Probe() {
       const { consent } = useConsent()
-      return <pre data-testid="outside">{String(useAnalytics() === analytics)} {String(consent?.analytics)}</pre>
+      return (
+        <pre data-testid="outside">
+          {String(useAnalytics() === analytics)} {String(consent?.analytics)}
+        </pre>
+      )
     }
     render(<Probe />)
     await act(() => analytics.consent.update({ analytics: true }))
@@ -487,7 +490,10 @@ describe('withdrawal and failure paths', () => {
 
   it('stops auto-tracking events once analytics is withdrawn', async () => {
     const cookieless = spyProvider('cookieless', 'none')
-    const analytics = createAnalytics({ providers: [cookieless], autoTracking: { scroll: false, timeOnPage: false, pageViews: false } })
+    const analytics = createAnalytics({
+      providers: [cookieless],
+      autoTracking: { scroll: false, timeOnPage: false, pageViews: false },
+    })
     await analytics.consent.update(granted)
     await analytics.boot()
     const button = document.body.appendChild(document.createElement('button'))

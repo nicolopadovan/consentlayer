@@ -1,10 +1,7 @@
 import { createAnalyticsManager } from './analytics-manager'
 import { createConsentEngine } from './consent-engine'
 import { configureNames, getNames, withLegacy, type NamesInput } from './names'
-import {
-  createLocalStorageConsentStorage,
-  createLocalStorageIdentityStorage,
-} from './storage'
+import { createLocalStorageConsentStorage, createLocalStorageIdentityStorage } from './storage'
 import type {
   Analytics,
   AnalyticsManagerOptions,
@@ -15,10 +12,7 @@ import type {
 import { assertHttpsOrRelativeUrl } from './validation'
 
 /** Options for `createAnalytics`. */
-export type AnalyticsOptions = Omit<
-  AnalyticsManagerOptions,
-  'consent' | 'consentEngine'
-> & {
+export type AnalyticsOptions = Omit<AnalyticsManagerOptions, 'consent' | 'consentEngine'> & {
   /** Storage, CMP integrations (e.g. Shopify Customer Privacy) and broadcast. Defaults to localStorage. */
   consent?: Omit<ConsentEngineOptions, 'debug' | 'categories' | 'onError'>
   /** Your own categories, declared in `ConsentCategories`. Stored, broadcast and sent to the server like the built-in ones. */
@@ -37,10 +31,9 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
   const { consent: consentOptions, categories, names, ...managerOptions } = options
   configureNames(names)
 
-  const consentEndpoint =
-    options.server?.consentEndpoint
-      ? assertHttpsOrRelativeUrl(options.server.consentEndpoint, 'server.consentEndpoint')
-      : undefined
+  const consentEndpoint = options.server?.consentEndpoint
+    ? assertHttpsOrRelativeUrl(options.server.consentEndpoint, 'server.consentEndpoint')
+    : undefined
   const recorder: ConsentIntegrationAdapter = {
     id: 'consent-endpoint',
     async apply(consent) {

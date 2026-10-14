@@ -38,9 +38,7 @@ export function metaCapi(options: {
       })
       const email = event.identity?.email?.trim().toLowerCase()
       const phone = event.identity?.phone && `+${event.identity.phone.replace(/\D/g, '')}`
-      const url = new URL(
-        `https://graph.facebook.com/${options.apiVersion ?? 'v26.0'}/${pixelId}/events`,
-      )
+      const url = new URL(`https://graph.facebook.com/${options.apiVersion ?? 'v26.0'}/${pixelId}/events`)
       url.searchParams.set('access_token', accessToken)
       if (options.testEventCode) url.searchParams.set('test_event_code', options.testEventCode)
       const response = await fetchImpl(url.href, {
@@ -54,9 +52,7 @@ export function metaCapi(options: {
               event_id: event.id,
               event_source_url: event.url,
               action_source: 'website',
-              custom_data: Object.fromEntries(
-                Object.entries(params).filter(([, value]) => isPlainValue(value)),
-              ),
+              custom_data: Object.fromEntries(Object.entries(params).filter(([, value]) => isPlainValue(value))),
               user_data: {
                 client_ip_address: request?.ip,
                 client_user_agent: request?.userAgent,

@@ -9,7 +9,9 @@ const escapeAttribute = (value: unknown) => String(value).replace(/[&"<>]/g, (ch
 
 const attributes = (attrs: Record<string, unknown>) =>
   Object.entries(attrs)
-    .filter(([name, value]) => /^[\w:-]+$/.test(name) && value != null && value !== false && typeof value !== 'function')
+    .filter(
+      ([name, value]) => /^[\w:-]+$/.test(name) && value != null && value !== false && typeof value !== 'function',
+    )
     .map(([name, value]) => (value === true ? name : `${name}="${escapeAttribute(value)}"`))
     .join(' ')
 

@@ -82,7 +82,11 @@ describe('analytics manager', () => {
     await manager.updateConsent(denied)
     await manager.updateConsent({ ...denied, analytics: true })
     expect(calls.filter((call) => call.startsWith('late'))).toEqual([
-      'late.consent', 'late.load', 'late.consent', 'late.teardown', 'late.consent',
+      'late.consent',
+      'late.load',
+      'late.consent',
+      'late.teardown',
+      'late.consent',
     ])
   })
 
@@ -173,15 +177,10 @@ describe('analytics manager', () => {
     expect(trackedEvents).toContain('consentlayer.ui_click')
     expect(trackedEvents).toContain('consentlayer.scroll_depth')
     expect(trackedEvents).toContain('consentlayer.time_on_page')
-    expect(
-      trackedEvents.filter(
-        (eventName) => eventName === 'consentlayer.page_session_start',
-      )
-        .length,
-    ).toBeGreaterThan(1)
-    expect(
-      eventPayloads.find((payload) => payload.depth === 100),
-    ).toBeDefined()
+    expect(trackedEvents.filter((eventName) => eventName === 'consentlayer.page_session_start').length).toBeGreaterThan(
+      1,
+    )
+    expect(eventPayloads.find((payload) => payload.depth === 100)).toBeDefined()
   })
 
   it('holds calls until a deferred load runs, then delivers them in order', async () => {

@@ -43,11 +43,15 @@ export function consentModeSignals(options: GoogleConsentModeOptions = {}) {
   const { regions = [], waitForUpdate, urlPassthrough, adsDataRedaction } = options
   for (const { region } of regions) {
     if (!region.length || !region.every((code) => REGION.test(code))) {
-      throw new Error(`[consentlayer] googleConsentMode regions: ${JSON.stringify(region)} is not a list of ISO 3166-2 codes such as 'US' or 'US-CA'`)
+      throw new Error(
+        `[consentlayer] googleConsentMode regions: ${JSON.stringify(region)} is not a list of ISO 3166-2 codes such as 'US' or 'US-CA'`,
+      )
     }
   }
   if (waitForUpdate !== undefined && !(Number.isInteger(waitForUpdate) && waitForUpdate >= 0)) {
-    throw new Error(`[consentlayer] googleConsentMode waitForUpdate must be a whole number of milliseconds, received ${waitForUpdate}`)
+    throw new Error(
+      `[consentlayer] googleConsentMode waitForUpdate must be a whole number of milliseconds, received ${waitForUpdate}`,
+    )
   }
   const wait = waitForUpdate === undefined ? {} : { wait_for_update: waitForUpdate }
   let defaulted = false

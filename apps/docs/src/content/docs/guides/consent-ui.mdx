@@ -35,21 +35,21 @@ provider; elsewhere it throws
 `useAnalytics()` and `useConsent()`, it has no fallback to the most recent
 instance.
 
-| Field | Type | Behaviour |
-|---|---|---|
-| `ready` | `boolean` | `false` until `analytics.consent.bootstrap()` has settled. Render nothing while it is `false`, so that returning visitors don't see the banner flash. |
-| `error` | `string \| null` | The rejection reason, converted to a string, if `bootstrap()` rejected. The banner is then shown as if no consent were stored. |
-| `bannerVisible` | `boolean` | After bootstrap, `true` when no consent is stored or the stored choice is [stale](#asking-again), and the provider's `autoShowBanner` prop is `true` (the default). |
-| `dialogVisible` | `boolean` | Whether the settings dialog is open. Initially `false`. |
-| `categories` | `readonly ConsentCategory[]` | The categories the dialog shows, from `analytics.consent.categories`: the built-in ones, then your custom ones. |
-| `prefs` | `Record<ConsentCategory, boolean>` | The dialog's draft, one entry per category in `analytics.consent.categories`. Initialised from the stored consent, all `false` when there is none. |
-| `setPrefs(next)` | `(next) => void` | Replaces the draft without saving it. |
-| `gpc` | `boolean` | Whether the visitor's [Global Privacy Control](#global-privacy-control) signal is honored. Use it to tell the visitor so. |
-| `acceptAll()` | `() => Promise<void>` | Grants every category, then hides the banner and the dialog. While `gpc` is `true`, `marketing` stays denied. |
-| `rejectNonEssential()` | `() => Promise<void>` | Denies every category, then hides both. |
-| `savePreferences()` | `() => Promise<void>` | Saves `prefs`, then hides both. |
-| `openDialog()`, `closeDialog()` | `() => void` | Show or hide the dialog. |
-| `showBanner()`, `hideBanner()` | `() => void` | Show or hide the banner. |
+| Field                           | Type                               | Behaviour                                                                                                                                                           |
+| ------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ready`                         | `boolean`                          | `false` until `analytics.consent.bootstrap()` has settled. Render nothing while it is `false`, so that returning visitors don't see the banner flash.               |
+| `error`                         | `string \| null`                   | The rejection reason, converted to a string, if `bootstrap()` rejected. The banner is then shown as if no consent were stored.                                      |
+| `bannerVisible`                 | `boolean`                          | After bootstrap, `true` when no consent is stored or the stored choice is [stale](#asking-again), and the provider's `autoShowBanner` prop is `true` (the default). |
+| `dialogVisible`                 | `boolean`                          | Whether the settings dialog is open. Initially `false`.                                                                                                             |
+| `categories`                    | `readonly ConsentCategory[]`       | The categories the dialog shows, from `analytics.consent.categories`: the built-in ones, then your custom ones.                                                     |
+| `prefs`                         | `Record<ConsentCategory, boolean>` | The dialog's draft, one entry per category in `analytics.consent.categories`. Initialised from the stored consent, all `false` when there is none.                  |
+| `setPrefs(next)`                | `(next) => void`                   | Replaces the draft without saving it.                                                                                                                               |
+| `gpc`                           | `boolean`                          | Whether the visitor's [Global Privacy Control](#global-privacy-control) signal is honored. Use it to tell the visitor so.                                           |
+| `acceptAll()`                   | `() => Promise<void>`              | Grants every category, then hides the banner and the dialog. While `gpc` is `true`, `marketing` stays denied.                                                       |
+| `rejectNonEssential()`          | `() => Promise<void>`              | Denies every category, then hides both.                                                                                                                             |
+| `savePreferences()`             | `() => Promise<void>`              | Saves `prefs`, then hides both.                                                                                                                                     |
+| `openDialog()`, `closeDialog()` | `() => void`                       | Show or hide the dialog.                                                                                                                                            |
+| `showBanner()`, `hideBanner()`  | `() => void`                       | Show or hide the banner.                                                                                                                                            |
 
 The three saving actions call `analytics.consent.setConsent()` and hide the
 banner and dialog only once it resolves, which is after the consent adapters
@@ -116,10 +116,10 @@ to again, such as a new purpose or a new recipient of their data. Raise the
 minor version for edits that need no new consent, such as a new contact
 address:
 
-| Change | Visitors asked again | New records cite |
-|---|---|---|
-| `'3.1'` to `'3.2'` | No | `'3.2'` |
-| `'3.2'` to `'4.0'` | Yes | `'4.0'` |
+| Change             | Visitors asked again | New records cite |
+| ------------------ | -------------------- | ---------------- |
+| `'3.1'` to `'3.2'` | No                   | `'3.2'`          |
+| `'3.2'` to `'4.0'` | Yes                  | `'4.0'`          |
 
 A choice made under `'3.1'` stays valid under `'3.2'`, and its record keeps
 citing `'3.1'`, the version the visitor agreed to. A version without a `.`,
@@ -131,10 +131,10 @@ effect. When `bootstrap()` finds a stale choice, `bannerVisible` becomes
 `true` and `analytics.consent.isStale()` returns `true`. What the stale choice
 means until the visitor answers depends on `onStale`:
 
-| `onStale` | Consent until the visitor chooses | Providers |
-|---|---|---|
-| `'discard'` (default) | `null`, as for a first visit | Only those with `requiredConsent: 'none'` run. |
-| `'keep'` | The stale choice | Unchanged. The banner is shown on top. |
+| `onStale`             | Consent until the visitor chooses | Providers                                      |
+| --------------------- | --------------------------------- | ---------------------------------------------- |
+| `'discard'` (default) | `null`, as for a first visit      | Only those with `requiredConsent: 'none'` run. |
+| `'keep'`              | The stale choice                  | Unchanged. The banner is shown on top.         |
 
 With `'keep'`, `prefs` starts from the stale choice, so a visitor who confirms
 it without changes stores the same choice again. That confirmation counts as a
@@ -173,7 +173,9 @@ the `marketing` category off unless the visitor switches it on:
 while the signal is honored, so your banner can say so:
 
 ```tsx
-{gpc && <p>Your browser's Global Privacy Control signal is on, so marketing is off.</p>}
+{
+  gpc && <p>Your browser's Global Privacy Control signal is on, so marketing is off.</p>
+}
 ```
 
 To ignore the signal, set `gpc: false`:

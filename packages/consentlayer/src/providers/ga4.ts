@@ -60,7 +60,10 @@ export function ga4(options: Ga4Options) {
   const configure = () => {
     const configured = setFlag('Ga4Configured', getFlag<Record<string, boolean>>('Ga4Configured') ?? {})
     if (configured[measurementId]) return
-    gtag('config', measurementId, { send_page_view: false, ...(serverContainerUrl && { server_container_url: serverContainerUrl }) })
+    gtag('config', measurementId, {
+      send_page_view: false,
+      ...(serverContainerUrl && { server_container_url: serverContainerUrl }),
+    })
     configured[measurementId] = true
   }
   const applyIdentity = (identity: UserIdentity) => {
@@ -88,9 +91,7 @@ export function ga4(options: Ga4Options) {
     },
     load({ emitError }) {
       if (typeof window === 'undefined') return
-      loadScript(
-        `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`,
-      ).catch(() =>
+      loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`).catch(() =>
         emitError({
           scope: 'provider-script-load',
           message: `Failed to load GA4 gtag.js for measurement ID ${measurementId}`,

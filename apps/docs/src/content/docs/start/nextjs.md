@@ -234,12 +234,12 @@ request bodies and URL query parameters excluded, and does nothing when `dsn`
 is `undefined`. `onRequestError` is `@sentry/nextjs`'s `captureRequestError`.
 Server errors are not gated by consent, since they carry no personal data.
 
-| Option | Type | Default |
-|---|---|---|
-| `dsn` | `string \| undefined` | Required. `undefined` disables Sentry. |
-| `environment` | `string` | Sentry's default |
-| `release` | `string` | Sentry's default |
-| `tracesSampleRate` | `number` | Tracing off |
+| Option             | Type                  | Default                                |
+| ------------------ | --------------------- | -------------------------------------- |
+| `dsn`              | `string \| undefined` | Required. `undefined` disables Sentry. |
+| `environment`      | `string`              | Sentry's default                       |
+| `release`          | `string`              | Sentry's default                       |
+| `tracesSampleRate` | `number`              | Tracing off                            |
 
 Then wrap your Next.js configuration with `withSentryConfig`, which
 `consentlayer/sentry/next` re-exports unchanged from `@sentry/nextjs/config`.
@@ -281,9 +281,7 @@ import { createAnalyticsHandler } from 'consentlayer/server'
 import { metaCapi } from 'consentlayer/server/meta'
 
 export const POST = createAnalyticsHandler({
-  destinations: [
-    metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN }),
-  ],
+  destinations: [metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN })],
   onError: console.error,
 })
 ```

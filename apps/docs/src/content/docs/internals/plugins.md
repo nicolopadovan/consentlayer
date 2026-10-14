@@ -40,38 +40,38 @@ interface AnalyticsPlugin {
 }
 ```
 
-| Field | Meaning |
-|---|---|
-| `id` | Unique per instance. It is the key for `only`, `activeProviders` and the `providerId` passed to `onError`. Registering a different object with an `id` already in use keeps the first and reports a `provider-setup` error; registering the same object again does nothing. |
-| `requiredConsent` | Default `'none'`: the plugin is active from boot, before the visitor chooses. A category name (`preferences`, `analytics`, `marketing`, a custom category or `sale_of_data`) requires that category to be `true`. A function is called only once consent is known; before that the plugin is not allowed. |
-| `loadBeforeConsent` | Run `load` at boot even if the plugin is not yet allowed. It still receives no events until it is. |
-| `defer` | Delay `load` by a number of milliseconds, until the browser is idle (`'idle'`, with a 5 second cap), or until the first `pointerdown`, `keydown`, `scroll` or `touchstart` (`'interaction'`). Outside the browser it is due at once. |
+| Field               | Meaning                                                                                                                                                                                                                                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                | Unique per instance. It is the key for `only`, `activeProviders` and the `providerId` passed to `onError`. Registering a different object with an `id` already in use keeps the first and reports a `provider-setup` error; registering the same object again does nothing.                               |
+| `requiredConsent`   | Default `'none'`: the plugin is active from boot, before the visitor chooses. A category name (`preferences`, `analytics`, `marketing`, a custom category or `sale_of_data`) requires that category to be `true`. A function is called only once consent is known; before that the plugin is not allowed. |
+| `loadBeforeConsent` | Run `load` at boot even if the plugin is not yet allowed. It still receives no events until it is.                                                                                                                                                                                                        |
+| `defer`             | Delay `load` by a number of milliseconds, until the browser is idle (`'idle'`, with a 5 second cap), or until the first `pointerdown`, `keydown`, `scroll` or `touchstart` (`'interaction'`). Outside the browser it is due at once.                                                                      |
 
 ### Hooks
 
 Every hook receives a `PluginContext` as its last argument, built fresh for
 each call:
 
-| `ctx` field | Value |
-|---|---|
-| `consent` | The current `ConsentState`, or `null` before the visitor has chosen |
-| `identity` | `userId`, plus `email` and `phone` only with marketing consent |
-| `debug` | Whether the `debug` option is on |
-| `log` | Logs a message under the `providers` debug topic, attributed to this plugin |
+| `ctx` field | Value                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------- |
+| `consent`   | The current `ConsentState`, or `null` before the visitor has chosen                   |
+| `identity`  | `userId`, plus `email` and `phone` only with marketing consent                        |
+| `debug`     | Whether the `debug` option is on                                                      |
+| `log`       | Logs a message under the `providers` debug topic, attributed to this plugin           |
 | `emitError` | Reports an `AnalyticsError` to `onError`; `providerId` defaults to this plugin's `id` |
 
-| Hook | When it runs | Arguments before `ctx` |
-|---|---|---|
-| `setup` | Once, whatever the consent: when the instance is created in the browser, or, if `enabled` was false then or the provider was registered later, on the first lifecycle pass after boot. Must not touch the network or set cookies. | none |
-| `consent` | On every lifecycle pass (boot, each consent change, each registration after boot), whether or not the plugin is allowed, before `load`. | none |
-| `load` | Once, on the first pass where the plugin is allowed, or at boot with `loadBeforeConsent`; with `defer`, when the timing is due. | none |
-| `page` | On `page()` while active. | `PageEvent`: `url`, `path`, `title`, `id` |
-| `track` | On `track()` while active, if the call's `requireAnalyticsConsent` and `requireMarketingConsent` are met. | `AnalyticsEventPayload`: `id`, `name`, `params`, `options` |
-| `identify` | On `identify()` while active; once on activation if an identity is known; after a marketing change while the visitor has an email or phone (see below). | `identity`, `traits` without `email` and `phone` |
-| `reset` | On `reset()`, for every plugin whose `setup` has run, active or not. | none |
-| `group` | On `group()` while active. | `groupId`, `traits` |
-| `error` | On `captureError()` and on uncaught errors while active, unless `errors: false`. | `error`, `ErrorContext`: `level`, `tags`, `extra`, `source` |
-| `teardown` | When an active plugin stops being allowed, when it is unregistered, and on `destroy()`. | none |
+| Hook       | When it runs                                                                                                                                                                                                                      | Arguments before `ctx`                                      |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `setup`    | Once, whatever the consent: when the instance is created in the browser, or, if `enabled` was false then or the provider was registered later, on the first lifecycle pass after boot. Must not touch the network or set cookies. | none                                                        |
+| `consent`  | On every lifecycle pass (boot, each consent change, each registration after boot), whether or not the plugin is allowed, before `load`.                                                                                           | none                                                        |
+| `load`     | Once, on the first pass where the plugin is allowed, or at boot with `loadBeforeConsent`; with `defer`, when the timing is due.                                                                                                   | none                                                        |
+| `page`     | On `page()` while active.                                                                                                                                                                                                         | `PageEvent`: `url`, `path`, `title`, `id`                   |
+| `track`    | On `track()` while active, if the call's `requireAnalyticsConsent` and `requireMarketingConsent` are met.                                                                                                                         | `AnalyticsEventPayload`: `id`, `name`, `params`, `options`  |
+| `identify` | On `identify()` while active; once on activation if an identity is known; after a marketing change while the visitor has an email or phone (see below).                                                                           | `identity`, `traits` without `email` and `phone`            |
+| `reset`    | On `reset()`, for every plugin whose `setup` has run, active or not.                                                                                                                                                              | none                                                        |
+| `group`    | On `group()` while active.                                                                                                                                                                                                        | `groupId`, `traits`                                         |
+| `error`    | On `captureError()` and on uncaught errors while active, unless `errors: false`.                                                                                                                                                  | `error`, `ErrorContext`: `level`, `tags`, `extra`, `source` |
+| `teardown` | When an active plugin stops being allowed, when it is unregistered, and on `destroy()`.                                                                                                                                           | none                                                        |
 
 <details>
 <summary>What a marketing change triggers</summary>
@@ -79,11 +79,11 @@ each call:
 These calls run after the lifecycle pass for the change, and only when the
 visitor has an email or phone and marketing consent actually changed:
 
-| Change | Plugins | Hook |
-|---|---|---|
-| Marketing withdrawn | Active | `identify` with `userId` only, so the SDK can drop the contact details |
-| Marketing withdrawn | Set up but not active | `reset` |
-| Marketing granted | Active before the change and still active | `identify` with email and phone |
+| Change              | Plugins                                   | Hook                                                                   |
+| ------------------- | ----------------------------------------- | ---------------------------------------------------------------------- |
+| Marketing withdrawn | Active                                    | `identify` with `userId` only, so the SDK can drop the contact details |
+| Marketing withdrawn | Set up but not active                     | `reset`                                                                |
+| Marketing granted   | Active before the change and still active | `identify` with email and phone                                        |
 
 </details>
 
@@ -102,11 +102,11 @@ must leave the SDK in a state that `consent` can turn back on.
 All three are exported from `consentlayer` and defined in
 `src/core/plugin.ts` and `src/core/names.ts`.
 
-| Export | What it does |
-|---|---|
+| Export                         | What it does                                                                                                                                                                             |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `loadScript(src, attributes?)` | Appends `<script async src>` to `<head>` with the given attributes. Resolves on `load`; on `error` removes the element and rejects with `Failed to load <src>`, so a later call retries. |
-| `setFlag(name, value)` | Sets `window.__<prefix><name>`, and the legacy `__acm<name>` when `names.legacy` is on. Returns `value`. Use it to mark one-time global setup. |
-| `getFlag(name)` | Reads that flag, falling back to the legacy name when `names.legacy` is on. |
+| `setFlag(name, value)`         | Sets `window.__<prefix><name>`, and the legacy `__acm<name>` when `names.legacy` is on. Returns `value`. Use it to mark one-time global setup.                                           |
+| `getFlag(name)`                | Reads that flag, falling back to the legacy name when `names.legacy` is on.                                                                                                              |
 
 <details>
 <summary><code>loadScript</code> deduplication</summary>
@@ -195,8 +195,7 @@ time.
 import { definePlugin } from 'consentlayer'
 
 export function beaconLogger(endpoint: string) {
-  const send = (body: Record<string, unknown>) =>
-    navigator.sendBeacon(endpoint, JSON.stringify(body))
+  const send = (body: Record<string, unknown>) => navigator.sendBeacon(endpoint, JSON.stringify(body))
 
   return definePlugin({
     id: 'beacon-logger',

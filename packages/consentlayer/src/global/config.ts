@@ -94,7 +94,14 @@ export function readConfig(global: GlobalConfig | undefined, script: HTMLOrSVGSc
 
 /** Creates the instance and its consent controller from a `GlobalConfig`, starts them and sends a page view per URL. */
 export function createGlobal(config: GlobalConfig) {
-  const { providers = {}, adapters: adapterOptions = {}, boot, autoShowBanner, openConsentGlobalKey, ...options } = config
+  const {
+    providers = {},
+    adapters: adapterOptions = {},
+    boot,
+    autoShowBanner,
+    openConsentGlobalKey,
+    ...options
+  } = config
   const plugins: AnalyticsPlugin[] = []
   const adapters = [...(options.consent?.adapters ?? [])]
   for (const [name, providerOptions] of Object.entries(providers)) {

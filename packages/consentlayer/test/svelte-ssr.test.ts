@@ -15,9 +15,9 @@ describe('MetaPixelNoscript for Svelte', () => {
 
 describe('GtmNoscript for Svelte', () => {
   it('renders the iframe only when enabled with an ID', () => {
-    expect(render(GtmNoscript, { props: { containerId: 'GTM-ABC123', enabled: true, loading: 'lazy' } }).body).toContain(
-      'loading="lazy" src="https://www.googletagmanager.com/ns.html?id=GTM-ABC123"',
-    )
+    expect(
+      render(GtmNoscript, { props: { containerId: 'GTM-ABC123', enabled: true, loading: 'lazy' } }).body,
+    ).toContain('loading="lazy" src="https://www.googletagmanager.com/ns.html?id=GTM-ABC123"')
     expect(render(GtmNoscript, { props: { containerId: 'GTM-ABC123' } }).body).not.toContain('googletagmanager')
   })
 })

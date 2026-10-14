@@ -1,6 +1,6 @@
 ---
 title: Vercel Analytics
-description: "vercel() forwards events to Vercel Analytics, which needs no consent."
+description: 'vercel() forwards events to Vercel Analytics, which needs no consent.'
 ---
 
 `vercel()` from `consentlayer/providers/vercel` forwards events to
@@ -15,8 +15,8 @@ vercel({ trackEvent: track })
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
+| Option       | Type                                                                                   | Default  | Description                       |
+| ------------ | -------------------------------------------------------------------------------------- | -------- | --------------------------------- |
 | `trackEvent` | `(name: string, payload: Record<string, string \| number \| boolean \| null>) => void` | Required | `track` from `@vercel/analytics`. |
 
 ## How it works

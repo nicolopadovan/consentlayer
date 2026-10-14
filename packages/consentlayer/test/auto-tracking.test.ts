@@ -126,18 +126,10 @@ describe('granular auto-tracking', () => {
     manager.enableAutoTracking({ timeOnPage: { intervals: [10, 60] } })
 
     await vi.advanceTimersByTimeAsync(10000)
-    expect(
-      events
-        .filter((e) => e.name === 'consentlayer.time_on_page')
-        .map((e) => e.params.seconds),
-    ).toEqual([10])
+    expect(events.filter((e) => e.name === 'consentlayer.time_on_page').map((e) => e.params.seconds)).toEqual([10])
 
     await vi.advanceTimersByTimeAsync(50000)
-    expect(
-      events
-        .filter((e) => e.name === 'consentlayer.time_on_page')
-        .map((e) => e.params.seconds),
-    ).toEqual([10, 60])
+    expect(events.filter((e) => e.name === 'consentlayer.time_on_page').map((e) => e.params.seconds)).toEqual([10, 60])
   })
 
   it('suppresses page_session_start when pageViews is false', async () => {
@@ -147,9 +139,7 @@ describe('granular auto-tracking', () => {
 
     manager.enableAutoTracking({ pageViews: false })
 
-    expect(
-      events.find((e) => e.name === 'consentlayer.page_session_start'),
-    ).toBeUndefined()
+    expect(events.find((e) => e.name === 'consentlayer.page_session_start')).toBeUndefined()
   })
 
   it('turns on only the kinds an object names, else every kind it does not turn off', async () => {

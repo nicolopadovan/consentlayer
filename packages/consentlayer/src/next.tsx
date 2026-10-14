@@ -10,7 +10,8 @@ function RouteKey({ onChange }: { onChange: (routeKey: string) => void }) {
   const pagesRouter = useRouter()
   const pathname: string | null = usePathname()
   const searchParams: URLSearchParams | null = useSearchParams()
-  const routeKey = pathname === null || pagesRouter?.isReady === false ? null : `${pathname}?${searchParams?.toString() ?? ''}`
+  const routeKey =
+    pathname === null || pagesRouter?.isReady === false ? null : `${pathname}?${searchParams?.toString() ?? ''}`
   useEffect(() => {
     if (routeKey !== null) onChange(routeKey)
   }, [onChange, routeKey])

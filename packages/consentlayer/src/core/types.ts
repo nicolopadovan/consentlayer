@@ -14,10 +14,7 @@ export type ConsentState = Record<ConsentCategory, boolean> & {
 }
 
 /** What a plugin needs before it runs: a category, `'none'`, or a custom check. */
-export type ProviderConsentRequirement =
-  | keyof ConsentState
-  | 'none'
-  | ((consent: ConsentState | null) => boolean)
+export type ProviderConsentRequirement = keyof ConsentState | 'none' | ((consent: ConsentState | null) => boolean)
 
 /** Who the visitor is, once known. Stored only with analytics or marketing consent. */
 export type UserIdentity = {
@@ -33,12 +30,7 @@ export type UserTraits = Record<string, unknown> & {
 }
 
 /** Where a consent change came from. */
-export type ConsentChangeSource =
-  | 'bootstrap'
-  | 'storage'
-  | 'adapter'
-  | 'imperative'
-  | 'unknown'
+export type ConsentChangeSource = 'bootstrap' | 'storage' | 'adapter' | 'imperative' | 'unknown'
 
 /** DOM event names and window globals that announce consent changes to other scripts. */
 export type ConsentBroadcastConfig = {
@@ -75,9 +67,7 @@ export interface ConsentIntegrationAdapter {
   id: string
   bootstrap?(): Promise<ConsentState | null> | ConsentState | null
   apply?(consent: ConsentState): Promise<void> | void
-  subscribe?(
-    onConsent: (consent: ConsentState) => void,
-  ): (() => void) | void
+  subscribe?(onConsent: (consent: ConsentState) => void): (() => void) | void
   /** Runs when the engine is created and after every consent change, whatever its source. */
   observe?(consent: ConsentState | null): void
 }
@@ -354,9 +344,7 @@ export type ErrorContext = {
  */
 export type LoadTiming = false | 'idle' | 'interaction' | number
 
-type Hook<Args extends unknown[] = []> = (
-  ...args: [...Args, PluginContext]
-) => Promise<void> | void
+type Hook<Args extends unknown[] = []> = (...args: [...Args, PluginContext]) => Promise<void> | void
 
 /**
  * A provider. The manager decides when each hook runs:
@@ -398,11 +386,7 @@ export interface AnalyticsManager {
   getConsent: () => ConsentState | null
   /** `only` limits which providers receive it. */
   page: (payload?: PageViewPayload, options?: { only?: string[] }) => Promise<void>
-  track: <Name extends string>(
-    name: Name,
-    params?: EventParams<Name>,
-    options?: TrackEventOptions,
-  ) => Promise<void>
+  track: <Name extends string>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>
   identify: (userId?: string, traits?: UserTraits) => Promise<void>
   reset: () => Promise<void>
   group: (groupId: string, traits?: Record<string, unknown>) => Promise<void>
@@ -421,9 +405,6 @@ export type ConsentApi = Omit<ConsentEngine, 'destroy'> & {
 }
 
 /** The instance `createAnalytics` returns. */
-export type Analytics = Omit<
-  AnalyticsManager,
-  'updateConsent' | 'getConsent' | 'enableAutoTracking'
-> & {
+export type Analytics = Omit<AnalyticsManager, 'updateConsent' | 'getConsent' | 'enableAutoTracking'> & {
   consent: ConsentApi
 }

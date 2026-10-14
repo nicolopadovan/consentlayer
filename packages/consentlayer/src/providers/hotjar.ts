@@ -35,15 +35,14 @@ function ensureHotjar(options: { siteId: number; version: number }): void {
   window.hj =
     window.hj ??
     ((...args: unknown[]) => {
-      ;(window.hj as unknown as { q?: unknown[] }).q =
-        (window.hj as unknown as { q?: unknown[] }).q ?? []
+      ;(window.hj as unknown as { q?: unknown[] }).q = (window.hj as unknown as { q?: unknown[] }).q ?? []
       ;(window.hj as unknown as { q: unknown[] }).q.push(args)
     })
   window._hjSettings = { hjid: options.siteId, hjsv: options.version }
 
-  void loadScript(
-    `https://static.hotjar.com/c/hotjar-${options.siteId}.js?sv=${options.version}`,
-  ).catch(() => undefined)
+  void loadScript(`https://static.hotjar.com/c/hotjar-${options.siteId}.js?sv=${options.version}`).catch(
+    () => undefined,
+  )
   setFlag('HotjarInitialized', true)
 }
 

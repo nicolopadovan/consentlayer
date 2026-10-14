@@ -3,10 +3,7 @@ import { sanitizeVercelPayload } from '../core/utils'
 
 /** Options for `vercel`: pass `track` from `@vercel/analytics` as `trackEvent`. */
 export type VercelOptions = {
-  trackEvent: (
-    name: string,
-    payload: Record<string, string | number | boolean | null>,
-  ) => void
+  trackEvent: (name: string, payload: Record<string, string | number | boolean | null>) => void
 }
 
 /** Vercel Analytics is cookieless, so it runs without consent. */

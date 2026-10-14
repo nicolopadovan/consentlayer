@@ -36,19 +36,16 @@ import { ga4 } from 'consentlayer/providers/ga4'
 import { meta } from 'consentlayer/providers/meta'
 
 export const analytics = createAnalytics({
-  providers: [
-    ga4({ measurementId: 'G-…' }),
-    meta({ pixelId: '…', loadBeforeConsent: false }),
-  ],
+  providers: [ga4({ measurementId: 'G-…' }), meta({ pixelId: '…', loadBeforeConsent: false })],
   server: { endpoint: '/api/analytics' }, // optional; see Server
   autoTracking: { clicks: true, scroll: true },
-  names: { prefix: 'consentlayer' },               // replaces configureNames()
+  names: { prefix: 'consentlayer' }, // replaces configureNames()
 })
 
 analytics.track('sign_up', { method: 'google' })
 analytics.identify('user_123', { email, plan: 'pro' })
-analytics.reset()                           // on logout
-analytics.page()                            // usually automatic
+analytics.reset() // on logout
+analytics.page() // usually automatic
 analytics.consent.update({ analytics: true, marketing: false })
 ```
 
@@ -64,7 +61,7 @@ that aren't theirs:
 ```ts
 analytics.track('purchase', params, {
   providers: { meta: { content_category: 'shoes' } }, // merged into Meta's params
-  only: ['ga4', 'meta'],                    // optional destination filter
+  only: ['ga4', 'meta'], // optional destination filter
 })
 ```
 
@@ -76,11 +73,11 @@ Standard event names follow GA4's naming because it is the most structured.
 Each provider translates what it understands. Anything else is sent as a
 custom event, or dropped if the provider has no custom events.
 
-| Pack | Events |
-|---|---|
-| Core | `page_view`, `sign_up`, `login`, `search`, `lead`, `share`, `contact` |
+| Pack                     | Events                                                                                                                                                               |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core                     | `page_view`, `sign_up`, `login`, `search`, `lead`, `share`, `contact`                                                                                                |
 | Ecommerce (`/ecommerce`) | `view_item`, `view_item_list`, `add_to_cart`, `remove_from_cart`, `add_to_wishlist`, `begin_checkout`, `add_payment_info`, `add_shipping_info`, `purchase`, `refund` |
-| SaaS | `trial_started`, `subscription_started`, `subscription_cancelled`, plus `group(id, traits)` |
+| SaaS                     | `trial_started`, `subscription_started`, `subscription_cancelled`, plus `group(id, traits)`                                                                          |
 
 All standard events are typed in core (types cost nothing at runtime), so
 there is no `/saas` subpath. Ecommerce events carry GA4's `items[]` shape
@@ -91,14 +88,14 @@ builders rather than `trackX()` functions, so every event goes through
 
 Example translations:
 
-| Standard | GA4 | Meta | PostHog |
-|---|---|---|---|
-| `view_item` | `view_item` | `ViewContent` | `view_item` |
-| `add_to_cart` | `add_to_cart` | `AddToCart` | `add_to_cart` |
-| `purchase` | `purchase` | `Purchase` | `purchase` |
-| `sign_up` | `sign_up` | `CompleteRegistration` | `sign_up` |
-| `lead` | `generate_lead` | `Lead` | `lead` |
-| `search` | `search` | `Search` | `search` |
+| Standard      | GA4             | Meta                   | PostHog       |
+| ------------- | --------------- | ---------------------- | ------------- |
+| `view_item`   | `view_item`     | `ViewContent`          | `view_item`   |
+| `add_to_cart` | `add_to_cart`   | `AddToCart`            | `add_to_cart` |
+| `purchase`    | `purchase`      | `Purchase`             | `purchase`    |
+| `sign_up`     | `sign_up`       | `CompleteRegistration` | `sign_up`     |
+| `lead`        | `generate_lead` | `Lead`                 | `lead`        |
+| `search`      | `search`        | `Search`               | `search`      |
 
 Every event gets an `eventId`. The browser and the server use the same ID so
 providers that dedupe (Meta) count it once.
@@ -220,16 +217,16 @@ Each destination follows its vendor's recommended setup (decided
 
 ## Built-in providers
 
-| Provider | Browser | Server | Notes |
-|---|---|---|---|
-| GA4 | ✓ | ✓ Measurement Protocol | consent mode |
-| Meta Pixel | ✓ | ✓ CAPI | consent mode; sets consent before `init` |
-| PostHog | ✓ | later | cookieless until analytics consent; replaces hand-written PostHog adapters |
-| Sentry | ✓ | ✓ Next instrumentation | errors without consent or personal data; Replay, tracing and the user after analytics consent |
-| Hotjar | ✓ | — | gains `teardown` |
-| Shopify | ✓ | — | analytics + Customer Privacy sync |
-| TikTok | ✓ (loads the pixel) | later | today it only forwards consent to an SDK the app loads |
-| Vercel Analytics | ✓ | — | cookieless: `requiredConsent: 'none'` |
+| Provider         | Browser             | Server                 | Notes                                                                                         |
+| ---------------- | ------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| GA4              | ✓                   | ✓ Measurement Protocol | consent mode                                                                                  |
+| Meta Pixel       | ✓                   | ✓ CAPI                 | consent mode; sets consent before `init`                                                      |
+| PostHog          | ✓                   | later                  | cookieless until analytics consent; replaces hand-written PostHog adapters                    |
+| Sentry           | ✓                   | ✓ Next instrumentation | errors without consent or personal data; Replay, tracing and the user after analytics consent |
+| Hotjar           | ✓                   | —                      | gains `teardown`                                                                              |
+| Shopify          | ✓                   | —                      | analytics + Customer Privacy sync                                                             |
+| TikTok           | ✓ (loads the pixel) | later                  | today it only forwards consent to an SDK the app loads                                        |
+| Vercel Analytics | ✓                   | —                      | cookieless: `requiredConsent: 'none'`                                                         |
 
 ## Stages
 
@@ -255,14 +252,14 @@ Each stage ships as its own release candidate with a migration-guide section.
 
 ## Migration (summary)
 
-| Today | v1 |
-|---|---|
-| `createAnalyticsManager` + `registerProvider` / module singletons | `createAnalytics({ providers })` |
-| `createGa4Adapter`, `createMetaAdapter`, … | `ga4()`, `meta()`, … |
-| `trackEvent('ViewContent', …)`, `trackViewContent()` | `track('view_item', productParams(product))` with `/ecommerce` |
-| `saveIdentity({ email })` | `identify(userId?, { email })` |
-| `sendMetaCapiEvent`, `sendGa4MeasurementEvent` + a hand-written route | `createAnalyticsHandler({ destinations })` |
-| Custom `ProviderAdapter`, such as one for PostHog | `definePlugin()` or the built-in `posthog()` |
+| Today                                                                 | v1                                                             |
+| --------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `createAnalyticsManager` + `registerProvider` / module singletons     | `createAnalytics({ providers })`                               |
+| `createGa4Adapter`, `createMetaAdapter`, …                            | `ga4()`, `meta()`, …                                           |
+| `trackEvent('ViewContent', …)`, `trackViewContent()`                  | `track('view_item', productParams(product))` with `/ecommerce` |
+| `saveIdentity({ email })`                                             | `identify(userId?, { email })`                                 |
+| `sendMetaCapiEvent`, `sendGa4MeasurementEvent` + a hand-written route | `createAnalyticsHandler({ destinations })`                     |
+| Custom `ProviderAdapter`, such as one for PostHog                     | `definePlugin()` or the built-in `posthog()`                   |
 
 ## Out of scope
 

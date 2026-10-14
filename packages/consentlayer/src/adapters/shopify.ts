@@ -1,17 +1,11 @@
 import { loadScript } from '../core/plugin'
-import type {
-  ConsentIntegrationAdapter,
-  ConsentState,
-} from '../core/types'
+import type { ConsentIntegrationAdapter, ConsentState } from '../core/types'
 
 declare global {
   interface Window {
     Shopify?: {
       customerPrivacy?: ShopifyCustomerPrivacy
-      loadFeatures?: (
-        features: Array<{ name: string; version: string }>,
-        callback: (error?: unknown) => void,
-      ) => void
+      loadFeatures?: (features: Array<{ name: string; version: string }>, callback: (error?: unknown) => void) => void
     }
   }
 }
@@ -67,26 +61,17 @@ function coerceShopifyConsent(value: unknown, fallback = false): boolean {
   return fallback
 }
 
-async function ensureCustomerPrivacyFeature(
-  win: Window,
-  loadFeature: boolean,
-  headless: boolean,
-): Promise<void> {
+async function ensureCustomerPrivacyFeature(win: Window, loadFeature: boolean, headless: boolean): Promise<void> {
   if (!loadFeature) return
   if (headless && !win.Shopify?.customerPrivacy) await loadScript(getShopifyCustomerPrivacyScriptUrl())
   if (!win.Shopify?.loadFeatures) return
   await new Promise<void>((resolve) => {
-    win.Shopify?.loadFeatures?.(
-      [{ name: 'consent-tracking-api', version: '0.1' }],
-      () => resolve(),
-    )
+    win.Shopify?.loadFeatures?.([{ name: 'consent-tracking-api', version: '0.1' }], () => resolve())
   })
 }
 
 /** Syncs consent with Shopify's Customer Privacy API, so Shopify and the store analytics agree. */
-export function shopifyCustomerPrivacy(
-  options: ShopifyCustomerPrivacyOptions = {},
-): ConsentIntegrationAdapter {
+export function shopifyCustomerPrivacy(options: ShopifyCustomerPrivacyOptions = {}): ConsentIntegrationAdapter {
   const doc = options.document ?? (typeof document !== 'undefined' ? document : undefined)
   const win = options.window ?? (typeof window !== 'undefined' ? window : undefined)
   const headless = Boolean(options.headlessStorefront?.storefrontAccessToken)
@@ -99,17 +84,13 @@ export function shopifyCustomerPrivacy(
       await ensureCustomerPrivacyFeature(win, options.loadFeature ?? true, headless)
       const explicit = win.Shopify?.customerPrivacy?.currentVisitorConsent?.()
       if (!explicit) return null
-      const hasAnyExplicit = Object.values(explicit).some(
-        (value) => typeof value === 'string' && value.length > 0,
-      )
+      const hasAnyExplicit = Object.values(explicit).some((value) => typeof value === 'string' && value.length > 0)
       if (!hasAnyExplicit) return null
       return {
         preferences: coerceShopifyConsent(explicit.preferences),
         analytics: coerceShopifyConsent(explicit.analytics),
         marketing: coerceShopifyConsent(explicit.marketing),
-        ...(explicit.sale_of_data
-          ? { sale_of_data: coerceShopifyConsent(explicit.sale_of_data) }
-          : {}),
+        ...(explicit.sale_of_data ? { sale_of_data: coerceShopifyConsent(explicit.sale_of_data) } : {}),
       }
     },
     async apply(consent) {
@@ -119,9 +100,7 @@ export function shopifyCustomerPrivacy(
         preferences: consent.preferences,
         analytics: consent.analytics,
         marketing: consent.marketing,
-        ...(typeof consent.sale_of_data === 'boolean'
-          ? { sale_of_data: consent.sale_of_data }
-          : {}),
+        ...(typeof consent.sale_of_data === 'boolean' ? { sale_of_data: consent.sale_of_data } : {}),
         ...(headless
           ? {
               headlessStorefront: true,
@@ -147,9 +126,7 @@ export function shopifyCustomerPrivacy(
           marketing: Boolean(detail?.marketingAllowed),
           analytics: Boolean(detail?.analyticsAllowed),
           preferences: Boolean(detail?.preferencesAllowed),
-          ...(typeof detail?.saleOfDataAllowed === 'boolean'
-            ? { sale_of_data: detail.saleOfDataAllowed }
-            : {}),
+          ...(typeof detail?.saleOfDataAllowed === 'boolean' ? { sale_of_data: detail.saleOfDataAllowed } : {}),
         }
         onConsent(next)
       }

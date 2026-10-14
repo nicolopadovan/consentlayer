@@ -1,6 +1,6 @@
 ---
 title: Sentry
-description: "sentry() reports errors to Sentry without personal data, with Replay and tracing after analytics consent."
+description: 'sentry() reports errors to Sentry without personal data, with Replay and tracing after analytics consent.'
 ---
 
 `sentry()` from `consentlayer/providers/sentry` reports errors to Sentry. It is
@@ -44,15 +44,15 @@ collection settings; see [Server errors](/start/nextjs/#server-errors).
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `dsn` | `string \| undefined` | Required | The project DSN. |
-| `environment` | `string` | None | Passed to `Sentry.init`. |
-| `release` | `string` | None | Passed to `Sentry.init`. |
-| `replay` | `boolean \| { sessionSampleRate?: number; onErrorSampleRate?: number }` | `false` | Session Replay after analytics consent. `true` uses a session sample rate of `0.1` and an on-error sample rate of `1`. |
-| `tracing` | `boolean \| { sampleRate?: number }` | `false` | Performance tracing after analytics consent. `true` uses a sample rate of `1`. |
-| `tunnel` | `string` | None | Sends envelopes to this URL instead of the DSN host. See [Sentry](#reverse-proxy). |
-| `defer` | `false \| 'idle' \| 'interaction' \| number` | `false` | See [Loading SDKs later](/guides/providers/#loading-sdks-later). |
+| Option        | Type                                                                    | Default  | Description                                                                                                            |
+| ------------- | ----------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `dsn`         | `string \| undefined`                                                   | Required | The project DSN.                                                                                                       |
+| `environment` | `string`                                                                | None     | Passed to `Sentry.init`.                                                                                               |
+| `release`     | `string`                                                                | None     | Passed to `Sentry.init`.                                                                                               |
+| `replay`      | `boolean \| { sessionSampleRate?: number; onErrorSampleRate?: number }` | `false`  | Session Replay after analytics consent. `true` uses a session sample rate of `0.1` and an on-error sample rate of `1`. |
+| `tracing`     | `boolean \| { sampleRate?: number }`                                    | `false`  | Performance tracing after analytics consent. `true` uses a sample rate of `1`.                                         |
+| `tunnel`      | `string`                                                                | None     | Sends envelopes to this URL instead of the DSN host. See [Sentry](#reverse-proxy).                                     |
+| `defer`       | `false \| 'idle' \| 'interaction' \| number`                            | `false`  | See [Loading SDKs later](/guides/providers/#loading-sdks-later).                                                       |
 
 ## Reverse proxy
 

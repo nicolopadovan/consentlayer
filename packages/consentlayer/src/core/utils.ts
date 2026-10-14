@@ -23,26 +23,19 @@ export function normalizeConsent(
 ): ConsentState | null {
   if (!consent) return null
   return {
-    ...(Object.fromEntries(
-      categories.map((category) => [category, Boolean(consent[category])]),
-    ) as Record<ConsentCategory, boolean>),
-    ...(typeof consent.sale_of_data === 'boolean'
-      ? { sale_of_data: consent.sale_of_data }
-      : {}),
+    ...(Object.fromEntries(categories.map((category) => [category, Boolean(consent[category])])) as Record<
+      ConsentCategory,
+      boolean
+    >),
+    ...(typeof consent.sale_of_data === 'boolean' ? { sale_of_data: consent.sale_of_data } : {}),
   }
 }
 
-export function equalConsent(
-  left: ConsentState | null,
-  right: ConsentState | null,
-): boolean {
+export function equalConsent(left: ConsentState | null, right: ConsentState | null): boolean {
   return JSON.stringify(left) === JSON.stringify(right)
 }
 
-export function hasRequiredConsent(
-  consent: ConsentState | null,
-  required?: ProviderConsentRequirement,
-): boolean {
+export function hasRequiredConsent(consent: ConsentState | null, required?: ProviderConsentRequirement): boolean {
   if (!required || required === 'none') return true
   if (!consent) return false
   if (typeof required === 'function') return required(consent)
@@ -99,11 +92,7 @@ export function sanitizeVercelPayload(
   const sanitized: Record<string, string | number | boolean | null> = {}
   for (const [key, value] of Object.entries(params)) {
     if (value == null) sanitized[key] = null
-    else if (
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean'
-    ) {
+    else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       sanitized[key] = value
     } else if (value instanceof Date) {
       sanitized[key] = value.toISOString()
@@ -112,10 +101,7 @@ export function sanitizeVercelPayload(
   return sanitized
 }
 
-export function broadcastConsent(
-  consent: ConsentState,
-  config: ConsentBroadcastConfig = {},
-): void {
+export function broadcastConsent(consent: ConsentState, config: ConsentBroadcastConfig = {}): void {
   const doc = config.document ?? (typeof document !== 'undefined' ? document : undefined)
   const win = config.window ?? (typeof window !== 'undefined' ? window : undefined)
   if (win) {

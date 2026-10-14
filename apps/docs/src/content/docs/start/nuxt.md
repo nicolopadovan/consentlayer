@@ -46,10 +46,7 @@ import { meta } from 'consentlayer/providers/meta'
 export default defineConsentLayerConfig(() => {
   const config = useRuntimeConfig().public
   return {
-    providers: [
-      ga4({ measurementId: config.ga4MeasurementId }),
-      meta({ pixelId: String(config.facebookPixelId) }),
-    ],
+    providers: [ga4({ measurementId: config.ga4MeasurementId }), meta({ pixelId: String(config.facebookPixelId) })],
     autoTracking: true,
   }
 })
@@ -81,13 +78,13 @@ export default defineNuxtConfig({
 })
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `page` | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details. |
-| `boot` | `{ mode?, timeoutMs? }` | `{ mode: 'immediate' }` | When providers start. See [Boot timing](/start/react/#boot-timing). |
-| `autoShowBanner` | `boolean` | `true` | Whether `bannerVisible` becomes `true` when there is no stored choice. |
-| `openConsentGlobalKey` | `string` | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog from outside Vue. |
-| `captureErrors` | `boolean` | `true` | Reports component errors. See [Report errors](#5-report-errors). |
+| Option                 | Type                      | Default                         | Description                                                            |
+| ---------------------- | ------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
+| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                     |
+| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start. See [Boot timing](/start/react/#boot-timing).    |
+| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice. |
+| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside Vue. |
+| `captureErrors`        | `boolean`                 | `true`                          | Reports component errors. See [Report errors](#5-report-errors).       |
 
 ## 3. Add the banner
 

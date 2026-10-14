@@ -8,9 +8,9 @@ static site, a server-rendered page, or a CMS that lets you add code to the
 page head. Two files ship in the `consentlayer` package for this, each a
 single minified script:
 
-| File | What it does |
-|---|---|
-| `dist/consentlayer.global.js` | Creates the instance and its consent controller from your configuration, with every browser provider included, and sends page views. |
+| File                                 | What it does                                                                                                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dist/consentlayer.global.js`        | Creates the instance and its consent controller from your configuration, with every browser provider included, and sends page views.                   |
 | `dist/consentlayer-banner.global.js` | Renders a consent banner and a settings dialog on that controller. Optional: leave it out to [build your own](/start/javascript/#2-render-the-banner). |
 
 ## 1. Add the scripts
@@ -66,22 +66,22 @@ keys are the options of
 `boot`, `autoShowBanner` and `openConsentGlobalKey`. `banner` configures the
 [banner](#3-the-banner).
 
-| Name in `providers` | Provider | Notes |
-|---|---|---|
-| `ga4` | `ga4()` | |
-| `meta` | `meta()` | |
-| `tiktok` | `tiktok()` | |
-| `contentsquare` | `contentsquare()` | |
-| `hotjar` | `hotjar()` | Deprecated, like the npm provider. |
-| `posthog` | `posthog()` | Loads PostHog from its CDN; see [PostHog and Sentry](#posthog-and-sentry). |
-| `sentry` | `sentry()` | Loads Sentry from its CDN; see [PostHog and Sentry](#posthog-and-sentry). |
-| `vercel` | `vercel()` | `trackEvent` defaults to `window.va`, set by the Vercel Analytics script. |
+| Name in `providers` | Provider          | Notes                                                                      |
+| ------------------- | ----------------- | -------------------------------------------------------------------------- |
+| `ga4`               | `ga4()`           |                                                                            |
+| `meta`              | `meta()`          |                                                                            |
+| `tiktok`            | `tiktok()`        |                                                                            |
+| `contentsquare`     | `contentsquare()` |                                                                            |
+| `hotjar`            | `hotjar()`        | Deprecated, like the npm provider.                                         |
+| `posthog`           | `posthog()`       | Loads PostHog from its CDN; see [PostHog and Sentry](#posthog-and-sentry). |
+| `sentry`            | `sentry()`        | Loads Sentry from its CDN; see [PostHog and Sentry](#posthog-and-sentry).  |
+| `vercel`            | `vercel()`        | `trackEvent` defaults to `window.va`, set by the Vercel Analytics script.  |
 
-| Name in `adapters` | Adapter | Notes |
-|---|---|---|
-| `googleConsentMode` | `googleConsentMode()` | |
-| `shopify` | `shopifyCustomerPrivacy()` | |
-| `tcf` | `tcf()` | See [IAB TCF](#iab-tcf). |
+| Name in `adapters`  | Adapter                    | Notes                    |
+| ------------------- | -------------------------- | ------------------------ |
+| `googleConsentMode` | `googleConsentMode()`      |                          |
+| `shopify`           | `shopifyCustomerPrivacy()` |                          |
+| `tcf`               | `tcf()`                    | See [IAB TCF](#iab-tcf). |
 
 ```html
 <script>
@@ -106,28 +106,28 @@ An unknown name logs `[consentlayer] Unknown provider "<name>".` or
 ></script>
 ```
 
-| Attribute | Sets |
-|---|---|
-| `data-ga4` | `ga4.measurementId` |
-| `data-gtm` | `gtm.containerId` |
-| `data-meta-pixel` | `meta.pixelId` |
-| `data-tiktok-pixel` | `tiktok.pixelId` |
-| `data-contentsquare-tag` | `contentsquare.tagId` |
-| `data-hotjar-site` | `hotjar.siteId` |
-| `data-hotjar-version` | `hotjar.version` |
-| `data-posthog-key` | `posthog.apiKey` |
-| `data-posthog-host` | `posthog.apiHost` |
-| `data-posthog-recording` | `posthog.recording` |
-| `data-sentry-dsn` | `sentry.dsn` |
-| `data-sentry-environment` | `sentry.environment` |
-| `data-sentry-replay` | `sentry.replay` |
-| `data-sentry-tracing` | `sentry.tracing` |
-| `data-google-consent-mode` | The Google Consent Mode adapter, with no options |
-| `data-shopify` | The Shopify Customer Privacy adapter, with no options |
-| `data-tcf` | The IAB TCF adapter, with no options |
-| `data-vercel` | `vercel()`, with no options |
-| `data-auto-tracking` | `autoTracking` |
-| `data-debug` | `debug` |
+| Attribute                  | Sets                                                  |
+| -------------------------- | ----------------------------------------------------- |
+| `data-ga4`                 | `ga4.measurementId`                                   |
+| `data-gtm`                 | `gtm.containerId`                                     |
+| `data-meta-pixel`          | `meta.pixelId`                                        |
+| `data-tiktok-pixel`        | `tiktok.pixelId`                                      |
+| `data-contentsquare-tag`   | `contentsquare.tagId`                                 |
+| `data-hotjar-site`         | `hotjar.siteId`                                       |
+| `data-hotjar-version`      | `hotjar.version`                                      |
+| `data-posthog-key`         | `posthog.apiKey`                                      |
+| `data-posthog-host`        | `posthog.apiHost`                                     |
+| `data-posthog-recording`   | `posthog.recording`                                   |
+| `data-sentry-dsn`          | `sentry.dsn`                                          |
+| `data-sentry-environment`  | `sentry.environment`                                  |
+| `data-sentry-replay`       | `sentry.replay`                                       |
+| `data-sentry-tracing`      | `sentry.tracing`                                      |
+| `data-google-consent-mode` | The Google Consent Mode adapter, with no options      |
+| `data-shopify`             | The Shopify Customer Privacy adapter, with no options |
+| `data-tcf`                 | The IAB TCF adapter, with no options                  |
+| `data-vercel`              | `vercel()`, with no options                           |
+| `data-auto-tracking`       | `autoTracking`                                        |
+| `data-debug`               | `debug`                                               |
 
 An attribute that sets a boolean is `true` when present, unless its value is
 `"false"`. You can combine both ways: an attribute wins over the same option in
@@ -214,26 +214,26 @@ banner's script tag. An attribute wins.
 ></script>
 ```
 
-| `text` key | `data-` attribute | Default |
-|---|---|---|
-| `title` | `data-text-title` | Cookies |
-| `message` | `data-text-message` | We use cookies to run this site and, with your consent, for preferences, analytics and marketing. |
-| `privacyPolicy` | `data-text-privacy-policy` | Privacy policy |
-| `gpc` | `data-text-gpc` | Your browser's Global Privacy Control signal is on, so marketing is off unless you switch it on. |
-| `rejectNonEssential` | `data-text-reject-non-essential` | Reject non-essential |
-| `customize` | `data-text-customize` | Customize |
-| `acceptAll` | `data-text-accept-all` | Accept all |
-| `settingsTitle` | `data-text-settings-title` | Cookie settings |
-| `necessaryLabel` | `data-text-necessary-label` | Necessary |
-| `necessaryDescription` | `data-text-necessary-description` | Needed for the site to work, such as remembering this choice. Always on. |
-| `preferencesLabel` | `data-text-preferences-label` | Preferences |
-| `preferencesDescription` | `data-text-preferences-description` | Remember settings such as language or region. |
-| `analyticsLabel` | `data-text-analytics-label` | Analytics |
-| `analyticsDescription` | `data-text-analytics-description` | Help us understand how the site is used. |
-| `marketingLabel` | `data-text-marketing-label` | Marketing |
-| `marketingDescription` | `data-text-marketing-description` | Measure our ads and show relevant ones on other sites. |
-| `close` | `data-text-close` | Close |
-| `save` | `data-text-save` | Save |
+| `text` key               | `data-` attribute                   | Default                                                                                           |
+| ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `title`                  | `data-text-title`                   | Cookies                                                                                           |
+| `message`                | `data-text-message`                 | We use cookies to run this site and, with your consent, for preferences, analytics and marketing. |
+| `privacyPolicy`          | `data-text-privacy-policy`          | Privacy policy                                                                                    |
+| `gpc`                    | `data-text-gpc`                     | Your browser's Global Privacy Control signal is on, so marketing is off unless you switch it on.  |
+| `rejectNonEssential`     | `data-text-reject-non-essential`    | Reject non-essential                                                                              |
+| `customize`              | `data-text-customize`               | Customize                                                                                         |
+| `acceptAll`              | `data-text-accept-all`              | Accept all                                                                                        |
+| `settingsTitle`          | `data-text-settings-title`          | Cookie settings                                                                                   |
+| `necessaryLabel`         | `data-text-necessary-label`         | Necessary                                                                                         |
+| `necessaryDescription`   | `data-text-necessary-description`   | Needed for the site to work, such as remembering this choice. Always on.                          |
+| `preferencesLabel`       | `data-text-preferences-label`       | Preferences                                                                                       |
+| `preferencesDescription` | `data-text-preferences-description` | Remember settings such as language or region.                                                     |
+| `analyticsLabel`         | `data-text-analytics-label`         | Analytics                                                                                         |
+| `analyticsDescription`   | `data-text-analytics-description`   | Help us understand how the site is used.                                                          |
+| `marketingLabel`         | `data-text-marketing-label`         | Marketing                                                                                         |
+| `marketingDescription`   | `data-text-marketing-description`   | Measure our ads and show relevant ones on other sites.                                            |
+| `close`                  | `data-text-close`                   | Close                                                                                             |
+| `save`                   | `data-text-save`                    | Save                                                                                              |
 
 The privacy policy link is shown only when `privacyPolicyUrl` is set. The
 `gpc` line is shown under the message only while the visitor's browser sends
@@ -256,18 +256,18 @@ ancestor of `<body>`:
 }
 ```
 
-| Property | Default |
-|---|---|
-| `--consentlayer-background` | `#fff` |
-| `--consentlayer-color` | `#111827` |
-| `--consentlayer-border` | `#e5e7eb` |
-| `--consentlayer-radius` | `.75rem` |
-| `--consentlayer-button-radius` | `.5rem` |
-| `--consentlayer-accent` | `#111827`, for the primary buttons, checkboxes and focus ring |
-| `--consentlayer-accent-color` | `#fff`, the text on primary buttons |
-| `--consentlayer-font` | `.95rem/1.45 system-ui, sans-serif` |
-| `--consentlayer-backdrop` | `rgb(0 0 0 / .3)`, behind the dialog |
-| `--consentlayer-z-index` | `1000` |
+| Property                       | Default                                                       |
+| ------------------------------ | ------------------------------------------------------------- |
+| `--consentlayer-background`    | `#fff`                                                        |
+| `--consentlayer-color`         | `#111827`                                                     |
+| `--consentlayer-border`        | `#e5e7eb`                                                     |
+| `--consentlayer-radius`        | `.75rem`                                                      |
+| `--consentlayer-button-radius` | `.5rem`                                                       |
+| `--consentlayer-accent`        | `#111827`, for the primary buttons, checkboxes and focus ring |
+| `--consentlayer-accent-color`  | `#fff`, the text on primary buttons                           |
+| `--consentlayer-font`          | `.95rem/1.45 system-ui, sans-serif`                           |
+| `--consentlayer-backdrop`      | `rgb(0 0 0 / .3)`, behind the dialog                          |
+| `--consentlayer-z-index`       | `1000`                                                        |
 
 For more, target the `.consentlayer-banner` and `.consentlayer-dialog`
 classes.
@@ -301,16 +301,16 @@ Add the CDN that serves ConsentLayer, `https://cdn.jsdelivr.net` or
 `https://unpkg.com`, to `script-src`, along with the hosts of the providers
 you use:
 
-| Provider | `script-src` |
-|---|---|
-| GA4 | `https://www.googletagmanager.com` |
-| Meta Pixel | `https://connect.facebook.net` |
-| TikTok Pixel | `https://analytics.tiktok.com` |
-| Contentsquare | `https://t.contentsquare.net` |
-| Hotjar | `https://static.hotjar.com` |
-| Shopify Customer Privacy | `https://cdn.shopify.com` |
-| PostHog | `https://*.posthog.com`, or your reverse proxy |
-| Sentry | `https://browser.sentry-cdn.com` |
+| Provider                 | `script-src`                                   |
+| ------------------------ | ---------------------------------------------- |
+| GA4                      | `https://www.googletagmanager.com`             |
+| Meta Pixel               | `https://connect.facebook.net`                 |
+| TikTok Pixel             | `https://analytics.tiktok.com`                 |
+| Contentsquare            | `https://t.contentsquare.net`                  |
+| Hotjar                   | `https://static.hotjar.com`                    |
+| Shopify Customer Privacy | `https://cdn.shopify.com`                      |
+| PostHog                  | `https://*.posthog.com`, or your reverse proxy |
+| Sentry                   | `https://browser.sentry-cdn.com`               |
 
 The banner injects a `<style>` element. With a nonce-based `style-src`, put
 the nonce on the banner's script tag: the banner copies it to the style.

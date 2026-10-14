@@ -1,6 +1,6 @@
 ---
 title: Hotjar (deprecated)
-description: "hotjar() loads Hotjar after analytics consent. Deprecated: Hotjar accounts are moving to Contentsquare."
+description: 'hotjar() loads Hotjar after analytics consent. Deprecated: Hotjar accounts are moving to Contentsquare.'
 ---
 
 `hotjar()` from `consentlayer/providers/hotjar` loads Hotjar once `analytics`
@@ -10,11 +10,11 @@ once yours has.
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `siteId` | `number \| string \| undefined` | Required | The Hotjar site ID, as a number or a string of digits. |
-| `version` | `number \| string \| undefined` | Required | The snippet version, `hjsv`, as a number or a string of digits. |
-| `reloadOnRevoke` | `boolean` | `false` | Reloads the page when analytics consent is withdrawn. |
+| Option           | Type                            | Default  | Description                                                     |
+| ---------------- | ------------------------------- | -------- | --------------------------------------------------------------- |
+| `siteId`         | `number \| string \| undefined` | Required | The Hotjar site ID, as a number or a string of digits.          |
+| `version`        | `number \| string \| undefined` | Required | The snippet version, `hjsv`, as a number or a string of digits. |
+| `reloadOnRevoke` | `boolean`                       | `false`  | Reloads the page when analytics consent is withdrawn.           |
 
 An unset, empty or whitespace-only `siteId` or `version` turns the provider
 off. Surrounding whitespace is trimmed. Any other value that is not a positive

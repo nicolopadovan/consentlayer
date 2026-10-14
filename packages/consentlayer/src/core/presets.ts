@@ -12,9 +12,7 @@ export function createEnvConfig(env: EnvConfigInput) {
   }
 
   return {
-    runtimeEnabled:
-      env.NODE_ENV === 'production' ||
-      env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
+    runtimeEnabled: env.NODE_ENV === 'production' || env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
     debug: env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true',
     ga4: {
       measurementId: env.NEXT_PUBLIC_GA4_MEASUREMENT_ID,

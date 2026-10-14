@@ -37,11 +37,11 @@ changes, and starts a new page session. Call it again after every client-side
 navigation; on a site where every navigation loads a new page, the call above
 is enough.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `boot` | `{ mode?, timeoutMs? }` | `{ mode: 'immediate' }` | When providers start. See [Boot timing](/start/react/#boot-timing). |
-| `autoShowBanner` | `boolean` | `true` | Whether `bannerVisible` becomes `true` when there is no stored choice. |
-| `openConsentGlobalKey` | `string` | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog, set by `start()`. |
+| Option                 | Type                    | Default                      | Description                                                             |
+| ---------------------- | ----------------------- | ---------------------------- | ----------------------------------------------------------------------- |
+| `boot`                 | `{ mode?, timeoutMs? }` | `{ mode: 'immediate' }`      | When providers start. See [Boot timing](/start/react/#boot-timing).     |
+| `autoShowBanner`       | `boolean`               | `true`                       | Whether `bannerVisible` becomes `true` when there is no stored choice.  |
+| `openConsentGlobalKey` | `string`                | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog, set by `start()`. |
 
 ## 2. Render the banner
 

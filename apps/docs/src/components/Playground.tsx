@@ -24,9 +24,7 @@ const subscribe = (listener: () => void) => {
 }
 
 const consentLabel = (consent: ConsentState | null) =>
-  consent
-    ? analytics.consent.categories.map((key) => `${key} ${consent[key] ? '✓' : '✗'}`).join(', ')
-    : 'no choice yet'
+  consent ? analytics.consent.categories.map((key) => `${key} ${consent[key] ? '✓' : '✗'}`).join(', ') : 'no choice yet'
 
 function logger(id: string, requiredConsent: ProviderConsentRequirement) {
   return definePlugin({
@@ -84,7 +82,11 @@ function Controls() {
 }
 
 function Log() {
-  const rows = useSyncExternalStore(subscribe, () => entries, () => entries)
+  const rows = useSyncExternalStore(
+    subscribe,
+    () => entries,
+    () => entries,
+  )
   return (
     <ol className="pg-log" aria-live="polite">
       {rows.map((entry) => (

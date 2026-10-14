@@ -8,9 +8,8 @@ export default function HomePage() {
         <p>Reusable analytics and consent package demo.</p>
         <h1>Analytics and Consent Manager</h1>
         <p>
-          This app proves the package can be installed into a separate Next
-          codebase with lazy boot, consent-first orchestration, optional
-          noscript support, and app-local server tracking routes.
+          This app proves the package can be installed into a separate Next codebase with lazy boot, consent-first
+          orchestration, optional noscript support, and app-local server tracking routes.
         </p>
         <div className="button-row">
           <Link className="button" href="/">

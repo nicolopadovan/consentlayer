@@ -23,11 +23,11 @@ follow GA4's conventions. The names below are declared in the
 is sent as a custom event with free-form params (`Record<string, unknown>`).
 Standard events also accept additional params beyond their declared ones.
 
-| Use | Events |
-|---|---|
-| Any app | `sign_up`, `login`, `search`, `lead`, `share`, `contact` |
+| Use       | Events                                                                                                                                                               |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any app   | `sign_up`, `login`, `search`, `lead`, `share`, `contact`                                                                                                             |
 | Ecommerce | `view_item`, `view_item_list`, `add_to_cart`, `remove_from_cart`, `add_to_wishlist`, `begin_checkout`, `add_payment_info`, `add_shipping_info`, `purchase`, `refund` |
-| SaaS | `trial_started`, `subscription_started`, `subscription_cancelled` |
+| SaaS      | `trial_started`, `subscription_started`, `subscription_cancelled`                                                                                                    |
 
 ```ts
 analytics.track('sign_up', { method: 'google' })
@@ -102,11 +102,11 @@ analytics.track('begin_checkout', cartParams(cart))
 analytics.track('purchase', orderParams(order))
 ```
 
-| Helper | For | `value` | `currency` |
-|---|---|---|---|
-| `productParams(product)` | `view_item`, `add_to_cart`, `remove_from_cart`, `add_to_wishlist` | `price.amount` × `quantity` (quantity defaults to 1); omitted without a price | `price.currencyCode` |
-| `cartParams(cart)` | `begin_checkout`, `add_payment_info`, `add_shipping_info` | `subtotal.amount`, or the sum of price × quantity over the lines | `subtotal.currencyCode`, else the first line's |
-| `orderParams(order)` | `purchase` | `order.value` | `order.currency` |
+| Helper                   | For                                                               | `value`                                                                       | `currency`                                     |
+| ------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------- |
+| `productParams(product)` | `view_item`, `add_to_cart`, `remove_from_cart`, `add_to_wishlist` | `price.amount` × `quantity` (quantity defaults to 1); omitted without a price | `price.currencyCode`                           |
+| `cartParams(cart)`       | `begin_checkout`, `add_payment_info`, `add_shipping_info`         | `subtotal.amount`, or the sum of price × quantity over the lines              | `subtotal.currencyCode`, else the first line's |
+| `orderParams(order)`     | `purchase`                                                        | `order.value`                                                                 | `order.currency`                               |
 
 `orderParams` also maps `orderId` to `transaction_id` and passes `tax`,
 `shipping` and `coupon` through.
@@ -153,34 +153,34 @@ its own.
 GA4, Meta and TikTok rename standard events to their own vocabulary. Every
 other provider receives the name you passed to `track()`.
 
-| Standard event | GA4 | Meta | TikTok |
-|---|---|---|---|
-| `view_item` | `view_item` | `ViewContent` | `ViewContent` |
-| `add_to_cart` | `add_to_cart` | `AddToCart` | `AddToCart` |
-| `add_to_wishlist` | `add_to_wishlist` | `AddToWishlist` | `AddToWishlist` |
-| `begin_checkout` | `begin_checkout` | `InitiateCheckout` | `InitiateCheckout` |
-| `add_payment_info` | `add_payment_info` | `AddPaymentInfo` | `AddPaymentInfo` |
-| `purchase` | `purchase` | `Purchase` | `Purchase` |
-| `sign_up` | `sign_up` | `CompleteRegistration` | `CompleteRegistration` |
-| `lead` | `generate_lead` | `Lead` | `Lead` |
-| `search` | `search` | `Search` | `Search` |
-| `contact` | `contact` | `Contact` | `Contact` |
-| `trial_started` | `trial_started` | `StartTrial` | `StartTrial` |
-| `subscription_started` | `subscription_started` | `Subscribe` | `Subscribe` |
-| `customize_product`, `schedule`, `submit_application`, `find_location`, `donate` | unchanged | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`, `Donate` | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`; `donate` unchanged |
-| Any other name | Characters other than letters, digits and `_` replaced with `_` | Sent with `fbq('track')` if it is already one of Meta's standard event names, otherwise with `fbq('trackCustom')` under the original name | Unchanged, as a custom event |
+| Standard event                                                                   | GA4                                                             | Meta                                                                                                                                      | TikTok                                                                                  |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `view_item`                                                                      | `view_item`                                                     | `ViewContent`                                                                                                                             | `ViewContent`                                                                           |
+| `add_to_cart`                                                                    | `add_to_cart`                                                   | `AddToCart`                                                                                                                               | `AddToCart`                                                                             |
+| `add_to_wishlist`                                                                | `add_to_wishlist`                                               | `AddToWishlist`                                                                                                                           | `AddToWishlist`                                                                         |
+| `begin_checkout`                                                                 | `begin_checkout`                                                | `InitiateCheckout`                                                                                                                        | `InitiateCheckout`                                                                      |
+| `add_payment_info`                                                               | `add_payment_info`                                              | `AddPaymentInfo`                                                                                                                          | `AddPaymentInfo`                                                                        |
+| `purchase`                                                                       | `purchase`                                                      | `Purchase`                                                                                                                                | `Purchase`                                                                              |
+| `sign_up`                                                                        | `sign_up`                                                       | `CompleteRegistration`                                                                                                                    | `CompleteRegistration`                                                                  |
+| `lead`                                                                           | `generate_lead`                                                 | `Lead`                                                                                                                                    | `Lead`                                                                                  |
+| `search`                                                                         | `search`                                                        | `Search`                                                                                                                                  | `Search`                                                                                |
+| `contact`                                                                        | `contact`                                                       | `Contact`                                                                                                                                 | `Contact`                                                                               |
+| `trial_started`                                                                  | `trial_started`                                                 | `StartTrial`                                                                                                                              | `StartTrial`                                                                            |
+| `subscription_started`                                                           | `subscription_started`                                          | `Subscribe`                                                                                                                               | `Subscribe`                                                                             |
+| `customize_product`, `schedule`, `submit_application`, `find_location`, `donate` | unchanged                                                       | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`, `Donate`                                                             | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`; `donate` unchanged |
+| Any other name                                                                   | Characters other than letters, digits and `_` replaced with `_` | Sent with `fbq('track')` if it is already one of Meta's standard event names, otherwise with `fbq('trackCustom')` under the original name | Unchanged, as a custom event                                                            |
 
 The params each provider sends differ as follows:
 
-| Provider | Call | Params |
-|---|---|---|
-| GA4 | `gtag('event', name, params)` | The event params, merged with `providers.ga4` |
-| Meta Pixel | `fbq('track' \| 'trackCustom', name, params, { eventID })` | Translated as described below, merged with `providers.meta` |
-| TikTok Pixel | `ttq.track(name, params, { event_id })` | Translated as described below, merged with `providers.tiktok` |
-| PostHog | `posthog.capture(name, params)` | The event params, merged with `providers.posthog` |
-| Vercel | The `trackEvent` function you pass | Top-level strings, numbers, booleans and `null`; `undefined` becomes `null`, a `Date` becomes an ISO string, and every other value is dropped |
-| Contentsquare | `_uxa.push(['trackPageEvent', name])` | None. `purchase` instead creates and sends an ecommerce transaction with `transaction_id`, `value` and `currency` as `id`, `revenue` and `currency` |
-| Hotjar | `hj('event', name)` | None |
+| Provider      | Call                                                       | Params                                                                                                                                              |
+| ------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GA4           | `gtag('event', name, params)`                              | The event params, merged with `providers.ga4`                                                                                                       |
+| Meta Pixel    | `fbq('track' \| 'trackCustom', name, params, { eventID })` | Translated as described below, merged with `providers.meta`                                                                                         |
+| TikTok Pixel  | `ttq.track(name, params, { event_id })`                    | Translated as described below, merged with `providers.tiktok`                                                                                       |
+| PostHog       | `posthog.capture(name, params)`                            | The event params, merged with `providers.posthog`                                                                                                   |
+| Vercel        | The `trackEvent` function you pass                         | Top-level strings, numbers, booleans and `null`; `undefined` becomes `null`, a `Date` becomes an ISO string, and every other value is dropped       |
+| Contentsquare | `_uxa.push(['trackPageEvent', name])`                      | None. `purchase` instead creates and sends an ecommerce transaction with `transaction_id`, `value` and `currency` as `id`, `revenue` and `currency` |
+| Hotjar        | `hj('event', name)`                                        | None                                                                                                                                                |
 
 Sentry receives no events, only errors from `captureError()`.
 
@@ -226,13 +226,13 @@ analytics.track('purchase', params, {
 })
 ```
 
-| Option | Type | Behaviour |
-|---|---|---|
-| `eventId` | `string` | ID shared by the browser and server events so destinations can deduplicate them; Meta receives it as `eventID` and the Conversions API as `event_id`. Defaults to `crypto.randomUUID()`. |
-| `only` | `string[]` | Provider IDs that receive the event. Other providers skip it. |
-| `providers` | `Record<string, Record<string, unknown>>` | Extra params for one provider, keyed by provider ID and merged over the event params. Read by GA4, Meta and PostHog, and by the Meta Conversions API on the server. |
-| `requireAnalyticsConsent` | `boolean` | Drops the event, for providers and the server endpoint alike, unless analytics is granted when it is delivered. |
-| `requireMarketingConsent` | `boolean` | The same, for marketing. |
+| Option                    | Type                                      | Behaviour                                                                                                                                                                                |
+| ------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `eventId`                 | `string`                                  | ID shared by the browser and server events so destinations can deduplicate them; Meta receives it as `eventID` and the Conversions API as `event_id`. Defaults to `crypto.randomUUID()`. |
+| `only`                    | `string[]`                                | Provider IDs that receive the event. Other providers skip it.                                                                                                                            |
+| `providers`               | `Record<string, Record<string, unknown>>` | Extra params for one provider, keyed by provider ID and merged over the event params. Read by GA4, Meta and PostHog, and by the Meta Conversions API on the server.                      |
+| `requireAnalyticsConsent` | `boolean`                                 | Drops the event, for providers and the server endpoint alike, unless analytics is granted when it is delivered.                                                                          |
+| `requireMarketingConsent` | `boolean`                                 | The same, for marketing.                                                                                                                                                                 |
 
 ## Identity
 
@@ -272,30 +272,30 @@ await analytics.reset()
   holds 100 calls; later ones are dropped and a single `queue-full` error is
   reported to `onError`.
 
-| Provider | User ID | Email and phone (marketing granted) |
-|---|---|---|
-| GA4 | `gtag('set', { user_id })` | `gtag('set', 'user_data', { email, phone_number })`. Requires [user-provided data collection](https://support.google.com/analytics/answer/14077171) to be enabled in GA4 admin. |
-| Meta Pixel | `external_id` in advanced matching | `em` and `ph` in advanced matching. The pixel accepts these only in `fbq('init')`, so it receives the identity known when it loads, usually none on a first visit. |
-| Meta Conversions API | `external_id`, SHA-256 hashed, on every event | `em` and `ph`, SHA-256 hashed, on every event |
-| PostHog | `posthog.identify(userId, traits)`, while analytics is granted | `email` added to the person properties |
-| Sentry | `Sentry.setUser({ id })`, while analytics is granted | `email` |
-| Contentsquare | `identify` | Not sent |
-| Hotjar | `hj('identify', userId, traits)` | `email` as an attribute, only with a user ID |
-| Vercel | Not sent | Not sent |
+| Provider             | User ID                                                        | Email and phone (marketing granted)                                                                                                                                             |
+| -------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GA4                  | `gtag('set', { user_id })`                                     | `gtag('set', 'user_data', { email, phone_number })`. Requires [user-provided data collection](https://support.google.com/analytics/answer/14077171) to be enabled in GA4 admin. |
+| Meta Pixel           | `external_id` in advanced matching                             | `em` and `ph` in advanced matching. The pixel accepts these only in `fbq('init')`, so it receives the identity known when it loads, usually none on a first visit.              |
+| Meta Conversions API | `external_id`, SHA-256 hashed, on every event                  | `em` and `ph`, SHA-256 hashed, on every event                                                                                                                                   |
+| PostHog              | `posthog.identify(userId, traits)`, while analytics is granted | `email` added to the person properties                                                                                                                                          |
+| Sentry               | `Sentry.setUser({ id })`, while analytics is granted           | `email`                                                                                                                                                                         |
+| Contentsquare        | `identify`                                                     | Not sent                                                                                                                                                                        |
+| Hotjar               | `hj('identify', userId, traits)`                               | `email` as an attribute, only with a user ID                                                                                                                                    |
+| Vercel               | Not sent                                                       | Not sent                                                                                                                                                                        |
 
 ### Logging out
 
 `reset()` clears the identity in memory and in storage, then calls `reset` on
 every provider that has been set up, whatever the current consent:
 
-| Provider | Effect of `reset()` |
-|---|---|
-| GA4 | Sets `user_id` to `null` and `user_data` to `{}` |
-| PostHog | Calls `posthog.reset()` and reapplies the current consent |
-| Sentry | Calls `Sentry.setUser(null)` |
-| Contentsquare | Sends `resetIdentity` |
-| Hotjar | Identifies as anonymous with `hj('identify', null, {})` |
-| Meta Pixel | No effect |
+| Provider      | Effect of `reset()`                                       |
+| ------------- | --------------------------------------------------------- |
+| GA4           | Sets `user_id` to `null` and `user_data` to `{}`          |
+| PostHog       | Calls `posthog.reset()` and reapplies the current consent |
+| Sentry        | Calls `Sentry.setUser(null)`                              |
+| Contentsquare | Sends `resetIdentity`                                     |
+| Hotjar        | Identifies as anonymous with `hj('identify', null, {})`   |
+| Meta Pixel    | No effect                                                 |
 
 Two vendors cannot fully forget a user without a page load:
 
@@ -326,15 +326,15 @@ const unsubscribe = analytics.consent.subscribe(({ consent }) => {
 })
 ```
 
-| Member | Behaviour |
-|---|---|
-| `categories` | Every category the visitor can toggle: `preferences`, `analytics` and `marketing`, followed by your [custom categories](/guides/consent-ui/#custom-categories). |
-| `getConsent()` | The current `ConsentState`, or `null` until the visitor has chosen. |
-| `isStale()` | Whether the stored choice is too old or was made under another policy version, so the visitor is asked again. See [Asking again](/guides/consent-ui/#asking-again). |
-| `update(partial)` | Waits for `bootstrap()`, then merges `partial` into the current state. Categories left out keep their value; unset categories are denied. |
+| Member                | Behaviour                                                                                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `categories`          | Every category the visitor can toggle: `preferences`, `analytics` and `marketing`, followed by your [custom categories](/guides/consent-ui/#custom-categories).                  |
+| `getConsent()`        | The current `ConsentState`, or `null` until the visitor has chosen.                                                                                                              |
+| `isStale()`           | Whether the stored choice is too old or was made under another policy version, so the visitor is asked again. See [Asking again](/guides/consent-ui/#asking-again).              |
+| `update(partial)`     | Waits for `bootstrap()`, then merges `partial` into the current state. Categories left out keep their value; unset categories are denied.                                        |
 | `setConsent(consent)` | Replaces the whole state. Throws a `TypeError` (`[consentlayer] consent must have boolean preferences, analytics and marketing, received …`) unless every category is a boolean. |
-| `bootstrap()` | Reads the stored consent, or asks the consent adapters when nothing is stored. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you. |
-| `subscribe(listener)` | Calls `listener({ consent })` after every change and returns an unsubscribe function. |
+| `bootstrap()`         | Reads the stored consent, or asks the consent adapters when nothing is stored. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you.           |
+| `subscribe(listener)` | Calls `listener({ consent })` after every change and returns an unsubscribe function.                                                                                            |
 
 A change that leaves the state unchanged is ignored. `update()` and
 `setConsent()` store the new state, broadcast it to other scripts (see

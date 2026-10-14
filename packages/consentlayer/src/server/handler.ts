@@ -34,9 +34,7 @@ export async function sendServerEvent(
       event.consent[destination.requiredConsent] === true &&
       (!event.only || event.only.includes(destination.id)),
   )
-  const results = await Promise.allSettled(
-    targets.map((destination) => destination.send(event, options.request)),
-  )
+  const results = await Promise.allSettled(targets.map((destination) => destination.send(event, options.request)))
   return targets.map((destination, index) => {
     const result = results[index]
     return result?.status === 'rejected'
@@ -57,8 +55,7 @@ export function requestInfo(request: Request): ServerRequestInfo {
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
-const isOptional = (value: unknown, check: (value: unknown) => boolean) =>
-  value === undefined || check(value)
+const isOptional = (value: unknown, check: (value: unknown) => boolean) => value === undefined || check(value)
 const isString = (value: unknown) => typeof value === 'string'
 const isStringArray = (value: unknown) => Array.isArray(value) && value.every(isString)
 
@@ -79,8 +76,7 @@ function parseServerEvent(body: unknown): ServerEvent {
     isOptional(body.only, isStringArray) &&
     isOptional(
       body.identity,
-      (identity) =>
-        isObject(identity) && Object.values(identity).every((value) => isOptional(value, isString)),
+      (identity) => isObject(identity) && Object.values(identity).every((value) => isOptional(value, isString)),
     )
   if (!valid) throw Object.assign(new Error('Invalid event'), { status: 400 })
   return body as ServerEvent
@@ -104,7 +100,8 @@ export function createAnalyticsHandler(options: {
     try {
       if (options.consentCookie?.secret) assertSecret(options.consentCookie.secret)
       assertSameOrigin(request, { requireHeader: true })
-      if (!destinations.length) return new Response(null, { status: 204, headers: { 'consentlayer-forwarding': 'off' } })
+      if (!destinations.length)
+        return new Response(null, { status: 204, headers: { 'consentlayer-forwarding': 'off' } })
       const event = parseServerEvent(await parseJsonWithLimit(request, ANALYTICS_MAX_BODY))
       const proof = options.consentCookie && (await readConsentCookie(request, options.consentCookie))
       if (options.consentCookie) {

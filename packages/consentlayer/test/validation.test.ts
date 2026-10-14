@@ -28,16 +28,10 @@ describe('validation helpers', () => {
   })
 
   it('accepts https URLs and relative paths, rejects http/javascript', () => {
-    expect(assertHttpsOrRelativeUrl('https://api.example.com/track', 'endpoint')).toBe(
-      'https://api.example.com/track',
-    )
+    expect(assertHttpsOrRelativeUrl('https://api.example.com/track', 'endpoint')).toBe('https://api.example.com/track')
     expect(assertHttpsOrRelativeUrl('/api/track', 'endpoint')).toBe('/api/track')
-    expect(() =>
-      assertHttpsOrRelativeUrl('http://insecure.example.com', 'endpoint'),
-    ).toThrow(/endpoint/)
-    expect(() =>
-      assertHttpsOrRelativeUrl('javascript:alert(1)', 'endpoint'),
-    ).toThrow(/endpoint/)
+    expect(() => assertHttpsOrRelativeUrl('http://insecure.example.com', 'endpoint')).toThrow(/endpoint/)
+    expect(() => assertHttpsOrRelativeUrl('javascript:alert(1)', 'endpoint')).toThrow(/endpoint/)
   })
 
   it('validates emails and phones', () => {
@@ -54,13 +48,12 @@ describe('validation helpers', () => {
 
 describe('normalizeIdentity', () => {
   it('keeps valid email/phone and drops invalid values silently', () => {
-    expect(
-      normalizeIdentity({ email: 'User@Example.com', phone: '+39 333 123 4567' }),
-    ).toEqual({ email: 'user@example.com', phone: '+393331234567' })
+    expect(normalizeIdentity({ email: 'User@Example.com', phone: '+39 333 123 4567' })).toEqual({
+      email: 'user@example.com',
+      phone: '+393331234567',
+    })
 
-    expect(
-      normalizeIdentity({ email: 'not-an-email', phone: 'abc' }),
-    ).toEqual({})
+    expect(normalizeIdentity({ email: 'not-an-email', phone: 'abc' })).toEqual({})
 
     expect(normalizeIdentity({ userId: 'user-1' })).toEqual({
       userId: 'user-1',
@@ -70,16 +63,14 @@ describe('normalizeIdentity', () => {
 
 describe('adapter construction', () => {
   it('throws at construction when GA4 measurement id is invalid', () => {
-    expect(() => ga4({ measurementId: 'oops' })).toThrow(
-      /GA4 measurement ID/,
-    )
+    expect(() => ga4({ measurementId: 'oops' })).toThrow(/GA4 measurement ID/)
   })
 
   it('throws at construction when Meta pixel id or the server endpoint is invalid', () => {
     expect(() => meta({ pixelId: 'oops' })).toThrow(/Meta Pixel ID/)
-    expect(() =>
-      createAnalyticsManager({ server: { endpoint: 'http://insecure.example.com' } }),
-    ).toThrow(/server\.endpoint/)
+    expect(() => createAnalyticsManager({ server: { endpoint: 'http://insecure.example.com' } })).toThrow(
+      /server\.endpoint/,
+    )
   })
 })
 
@@ -117,12 +108,7 @@ describe('onError plumbing', () => {
     const onError = vi.fn()
     const provider = {
       id: 'async-loader',
-      setup: (context: {
-        emitError: (e: {
-          scope: 'provider-script-load'
-          message: string
-        }) => void
-      }) => {
+      setup: (context: { emitError: (e: { scope: 'provider-script-load'; message: string }) => void }) => {
         context.emitError({
           scope: 'provider-script-load',
           message: 'cdn unreachable',

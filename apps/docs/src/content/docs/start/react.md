@@ -59,12 +59,12 @@ each event to every active provider, or only to the provider IDs listed in
 that turns kinds on enables only those: `{ clicks: { mode: 'attribute' } }`
 sends clicks alone, while `{ scroll: false }` keeps every kind but scroll.
 
-| Option | Default | Event | Params |
-|---|---|---|---|
-| `pageViews` | `true` | `consentlayer.page_session_start`, on start and on every route change | `session_id` |
-| `clicks` | `{ mode: 'all', attribute: 'data-track' }` | `consentlayer.ui_click`, for clicks on `button`, `[role="button"]`, `a`, `input[type="submit"]` and `input[type="button"]` | `ui_target`, `ui_element`, `ui_id`, `path`, `session_id` |
-| `scroll` | `{ thresholds: [25, 50, 75, 100] }` | `consentlayer.scroll_depth`, once per threshold and page session | `depth`, `session_id` |
-| `timeOnPage` | `{ intervals: [5, 15, 30, 60, 120] }` | `consentlayer.time_on_page`, after each interval in seconds | `seconds`, `session_id` |
+| Option       | Default                                    | Event                                                                                                                      | Params                                                   |
+| ------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `pageViews`  | `true`                                     | `consentlayer.page_session_start`, on start and on every route change                                                      | `session_id`                                             |
+| `clicks`     | `{ mode: 'all', attribute: 'data-track' }` | `consentlayer.ui_click`, for clicks on `button`, `[role="button"]`, `a`, `input[type="submit"]` and `input[type="button"]` | `ui_target`, `ui_element`, `ui_id`, `path`, `session_id` |
+| `scroll`     | `{ thresholds: [25, 50, 75, 100] }`        | `consentlayer.scroll_depth`, once per threshold and page session                                                           | `depth`, `session_id`                                    |
+| `timeOnPage` | `{ intervals: [5, 15, 30, 60, 120] }`      | `consentlayer.time_on_page`, after each interval in seconds                                                                | `seconds`, `session_id`                                  |
 
 With `clicks: { mode: 'attribute' }`, only elements carrying the attribute
 are tracked. `ui_target` is the first non-empty value of the attribute,
@@ -80,7 +80,9 @@ Pass `enabled` and `debug` from the environment in the same way:
 
 ```ts
 export const analytics = createAnalytics({
-  providers: [/* … */],
+  providers: [
+    /* … */
+  ],
   enabled: import.meta.env.PROD || import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
   debug: import.meta.env.VITE_ANALYTICS_DEBUG === 'true',
 })
@@ -152,14 +154,14 @@ On mount, `<AnalyticsProvider>` performs these steps:
    and calls `analytics.newPageSession()`, which restarts the auto-tracking
    scroll and time counters when auto-tracking is on.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `analytics` | `Analytics` | Required | The instance from `createAnalytics()`. |
-| `routeKey` | `string \| null` | `'default'` | Changes on every navigation; a page view is sent once per value. `null` holds page views until the route is known. |
-| `page` | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details. |
-| `boot` | `{ mode?, timeoutMs? }` | `{ mode: 'immediate' }` | When providers start. Read once, on mount. See [Boot timing](#boot-timing). |
-| `autoShowBanner` | `boolean` | `true` | Whether `bannerVisible` becomes `true` when there is no stored choice. |
-| `openConsentGlobalKey` | `string` | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog from outside React. |
+| Prop                   | Type                      | Default                         | Description                                                                                                        |
+| ---------------------- | ------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `analytics`            | `Analytics`               | Required                        | The instance from `createAnalytics()`.                                                                             |
+| `routeKey`             | `string \| null`          | `'default'`                     | Changes on every navigation; a page view is sent once per value. `null` holds page views until the route is known. |
+| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                                                                 |
+| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start. Read once, on mount. See [Boot timing](#boot-timing).                                        |
+| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice.                                             |
+| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside React.                                           |
 
 <details>
 <summary>Meta Pixel and GTM without JavaScript</summary>
@@ -213,16 +215,16 @@ on the instance and renders `fallback`:
 ```tsx
 import { ErrorBoundary } from 'consentlayer/react'
 
-<ErrorBoundary fallback={<p>Could not load the cart.</p>} tags={{ area: 'cart' }}>
+;<ErrorBoundary fallback={<p>Could not load the cart.</p>} tags={{ area: 'cart' }}>
   <Cart />
 </ErrorBoundary>
 ```
 
-| Prop | Type | Description |
-|---|---|---|
-| `fallback` | `ReactNode \| (({ error, reset }) => ReactNode)` | Rendered after an error. `reset()` clears the error and renders the children again. |
-| `tags` | `Record<string, string>` | Attached to the reported error. |
-| `analytics` | `Analytics` | The instance to report to. Defaults to the one from `<AnalyticsProvider>`, then to the most recently created instance. |
+| Prop        | Type                                             | Description                                                                                                            |
+| ----------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `fallback`  | `ReactNode \| (({ error, reset }) => ReactNode)` | Rendered after an error. `reset()` clears the error and renders the children again.                                    |
+| `tags`      | `Record<string, string>`                         | Attached to the reported error.                                                                                        |
+| `analytics` | `Analytics`                                      | The instance to report to. Defaults to the one from `<AnalyticsProvider>`, then to the most recently created instance. |
 
 `captureError` delivers errors to the providers that implement error
 reporting, Sentry and PostHog, while their consent requirement is met. Add
@@ -243,11 +245,11 @@ provider setup off the critical rendering path, boot when the browser is idle:
 <AnalyticsProvider analytics={analytics} boot={{ mode: 'idle', timeoutMs: 3000 }}>
 ```
 
-| `mode` | Providers boot |
-|---|---|
-| `'immediate'` (default) | In the provider's mount effect. |
-| `'idle'` | In a `requestIdleCallback` callback, with `timeoutMs` (default 3000) as its deadline. Where `requestIdleCallback` is unavailable, after a `setTimeout` of `timeoutMs` (default 1500). |
-| `'manual'` | When you call `analytics.boot()`. |
+| `mode`                  | Providers boot                                                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `'immediate'` (default) | In the provider's mount effect.                                                                                                                                                       |
+| `'idle'`                | In a `requestIdleCallback` callback, with `timeoutMs` (default 3000) as its deadline. Where `requestIdleCallback` is unavailable, after a `setTimeout` of `timeoutMs` (default 1500). |
+| `'manual'`              | When you call `analytics.boot()`.                                                                                                                                                     |
 
 The `boot` prop is read once, on mount; later changes have no effect. Page
 views, events, identity calls and errors issued before boot are held, up to

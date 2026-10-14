@@ -83,7 +83,17 @@ export default defineConfig({
         },
         { label: 'API reference', items: ['reference/api'] },
         { label: 'How it works', items: [{ autogenerate: { directory: 'internals' } }] },
-        { label: 'Help', items: ['guides/migrating-to-v1', 'guides/troubleshooting', 'guides/roadmap', 'guides/changelog', 'guides/contributing', 'guides/legal'] },
+        {
+          label: 'Help',
+          items: [
+            'guides/migrating-to-v1',
+            'guides/troubleshooting',
+            'guides/roadmap',
+            'guides/changelog',
+            'guides/contributing',
+            'guides/legal',
+          ],
+        },
       ],
     }),
   ],

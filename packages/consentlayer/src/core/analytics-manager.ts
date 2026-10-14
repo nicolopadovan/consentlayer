@@ -34,10 +34,7 @@ type ProviderState = {
   backlog?: Array<() => Promise<unknown>>
 }
 
-type HookName = Exclude<
-  keyof AnalyticsPlugin,
-  'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer'
->
+type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer'>
 
 const LIFECYCLE_HOOKS = new Set<HookName>(['setup', 'consent', 'load', 'teardown'])
 const HOOK_TOPICS: Record<HookName, DebugTopic> = {
@@ -75,13 +72,7 @@ function whenDue(timing: Exclude<LoadTiming, false>): Promise<void> {
   })
 }
 
-const DEFAULT_CLICK_SELECTORS = [
-  'button',
-  '[role="button"]',
-  'a',
-  'input[type="submit"]',
-  'input[type="button"]',
-]
+const DEFAULT_CLICK_SELECTORS = ['button', '[role="button"]', 'a', 'input[type="submit"]', 'input[type="button"]']
 const DEFAULT_CLICK_ATTRIBUTE = 'data-track'
 const DEFAULT_SCROLL_THRESHOLDS = [25, 50, 75, 100]
 const DEFAULT_TIME_INTERVALS = [5, 15, 30, 60, 120]
@@ -100,9 +91,7 @@ type ResolvedAutoTracking = {
   pageViews: boolean
 }
 
-function resolveAutoTracking(
-  config: AutoTrackingConfig | undefined,
-): ResolvedAutoTracking {
+function resolveAutoTracking(config: AutoTrackingConfig | undefined): ResolvedAutoTracking {
   const { clicks, scroll, timeOnPage, pageViews } = config ?? {}
   const named = [clicks, scroll, timeOnPage, pageViews].some((kind) => kind != null && kind !== false)
   const on = (kind: unknown) => (kind == null ? !named : kind !== false)
@@ -128,9 +117,7 @@ function resolveAutoTracking(
   }
 }
 
-export function createAnalyticsManager(
-  options: AnalyticsManagerOptions = {},
-): AnalyticsManager {
+export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): AnalyticsManager {
   const debugLog = createDebugLog(options.debug)
   const listeners = new Set<(snapshot: AnalyticsManagerStateSnapshot) => void>()
   const providerStates = new Map<string, ProviderState>()
@@ -138,8 +125,7 @@ export function createAnalyticsManager(
   let consent = options.consent ?? options.consentEngine?.getConsent() ?? null
   const stored = identityStorage.read()
   let identity: UserIdentity = stored.userId ? { userId: stored.userId } : {}
-  let storedContact: UserIdentity | undefined =
-    stored.email || stored.phone ? stored : undefined
+  let storedContact: UserIdentity | undefined = stored.email || stored.phone ? stored : undefined
   const settleStoredContact = () => {
     if (!storedContact || !consent) return
     if (consent.marketing && identity.userId === storedContact.userId) {
@@ -168,9 +154,7 @@ export function createAnalyticsManager(
   const snapshot = (): AnalyticsManagerStateSnapshot => ({
     booted,
     consent,
-    activeProviders: [...providerStates.values()]
-      .filter((state) => state.active)
-      .map((state) => state.plugin.id),
+    activeProviders: [...providerStates.values()].filter((state) => state.active).map((state) => state.plugin.id),
   })
 
   let currentSnapshot = snapshot()
@@ -214,18 +198,15 @@ export function createAnalyticsManager(
     }
   }
 
-  const providerEmitError =
-    (providerId: string) => (error: AnalyticsError) =>
-      emitError({ ...error, providerId: error.providerId ?? providerId })
+  const providerEmitError = (providerId: string) => (error: AnalyticsError) =>
+    emitError({ ...error, providerId: error.providerId ?? providerId })
 
-  let serverEndpoint =
-    options.server?.endpoint
-      ? assertHttpsOrRelativeUrl(options.server.endpoint, 'server.endpoint')
-      : undefined
-  const consentEndpoint =
-    options.server?.consentEndpoint
-      ? assertHttpsOrRelativeUrl(options.server.consentEndpoint, 'server.consentEndpoint')
-      : undefined
+  let serverEndpoint = options.server?.endpoint
+    ? assertHttpsOrRelativeUrl(options.server.endpoint, 'server.endpoint')
+    : undefined
+  const consentEndpoint = options.server?.consentEndpoint
+    ? assertHttpsOrRelativeUrl(options.server.consentEndpoint, 'server.consentEndpoint')
+    : undefined
   let restoring = false
 
   const restoreConsentCookie = () => {
@@ -240,7 +221,11 @@ export function createAnalyticsManager(
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
       })
       .catch((cause: unknown) =>
-        emitError({ scope: 'server-forward', message: `Restoring the consent cookie at ${consentEndpoint} failed`, cause }),
+        emitError({
+          scope: 'server-forward',
+          message: `Restoring the consent cookie at ${consentEndpoint} failed`,
+          cause,
+        }),
       )
   }
 
@@ -382,9 +367,7 @@ export function createAnalyticsManager(
       await evaluateProvider(state)
     }
     if (options.autoTracking && booted && evaluated?.analytics) {
-      api.enableAutoTracking(
-        options.autoTracking === true ? undefined : options.autoTracking,
-      )
+      api.enableAutoTracking(options.autoTracking === true ? undefined : options.autoTracking)
     }
     notify()
   }
@@ -452,10 +435,7 @@ export function createAnalyticsManager(
     const sessionId = pageSessionIdCounter
 
     if (autoTracking.pageViews) {
-      void autoTrack(
-        getNames().autoTrackingEvents.pageSessionStart,
-        { session_id: sessionId },
-      )
+      void autoTrack(getNames().autoTrackingEvents.pageSessionStart, { session_id: sessionId })
     }
 
     if (activeScrollHandler) {
@@ -471,10 +451,7 @@ export function createAnalyticsManager(
       const emitDepth = (threshold: number) => {
         if (emitted.has(threshold)) return
         emitted.add(threshold)
-        void autoTrack(
-          getNames().autoTrackingEvents.scrollDepth,
-          { depth: threshold, session_id: sessionId },
-        )
+        void autoTrack(getNames().autoTrackingEvents.scrollDepth, { depth: threshold, session_id: sessionId })
       }
 
       activeScrollHandler = () => {
@@ -503,10 +480,7 @@ export function createAnalyticsManager(
         if (!Number.isFinite(seconds) || seconds <= 0) continue
         const handle = window.setTimeout(() => {
           if (sessionId !== pageSessionIdCounter) return
-          void autoTrack(
-            getNames().autoTrackingEvents.timeOnPage,
-            { seconds, session_id: sessionId },
-          )
+          void autoTrack(getNames().autoTrackingEvents.timeOnPage, { seconds, session_id: sessionId })
         }, seconds * 1000)
         timeouts.push(handle)
       }
@@ -528,12 +502,9 @@ export function createAnalyticsManager(
   const reportedErrors = new WeakSet<object>()
   const onWindowError = (event: ErrorEvent) =>
     void api.captureError(event.error ?? event.message, { source: 'global', level: 'fatal' })
-  const onRejection = (event: PromiseRejectionEvent) =>
-    void api.captureError(event.reason, { source: 'global' })
+  const onRejection = (event: PromiseRejectionEvent) => void api.captureError(event.reason, { source: 'global' })
   const globalHandlers =
-    errorsEnabled &&
-    isBrowser() &&
-    !(typeof options.errors === 'object' && options.errors.globalHandlers === false)
+    errorsEnabled && isBrowser() && !(typeof options.errors === 'object' && options.errors.globalHandlers === false)
 
   const api: AnalyticsManager = {
     async boot() {
@@ -563,9 +534,7 @@ export function createAnalyticsManager(
     async updateConsent(nextConsent) {
       const hadMarketing = Boolean(consent?.marketing)
       const hadContact = Boolean(identity.email || identity.phone)
-      const wasActive = [...providerStates.values()]
-        .filter((state) => state.active)
-        .map((state) => state.plugin.id)
+      const wasActive = [...providerStates.values()].filter((state) => state.active).map((state) => state.plugin.id)
       consent = nextConsent
       if (!nextConsent) storedContact = undefined
       settleStoredContact()
@@ -610,7 +579,8 @@ export function createAnalyticsManager(
         name,
         optionsInput.only,
         async (state) =>
-          allowed() && (await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)),
+          allowed() &&
+          (await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)),
         () =>
           allowed()
             ? {
@@ -633,9 +603,7 @@ export function createAnalyticsManager(
       persistIdentity()
       if (!ready) identifyQueued = true
       await identifyProviders(
-        Object.fromEntries(
-          Object.entries(traits).filter(([key]) => key !== 'email' && key !== 'phone'),
-        ),
+        Object.fromEntries(Object.entries(traits).filter(([key]) => key !== 'email' && key !== 'phone')),
       )
     },
     async reset() {

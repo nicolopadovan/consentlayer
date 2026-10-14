@@ -20,8 +20,7 @@ turns forwarding off, and anything else throws when the instance is created.
 
 An event is posted when all of the following hold at delivery time:
 
-1. The instance has booted. Earlier calls wait in the pre-boot queue (up to
-   100) and are posted as it drains.
+1. The instance has booted. Earlier calls wait in the pre-boot queue (up to 100) and are posted as it drains.
 2. Analytics or marketing consent is granted. The route decides per
    destination which category it needs.
 3. For `track`, the call's own `requireAnalyticsConsent` and
@@ -71,13 +70,13 @@ For `track('add_to_cart', params, options)`:
 For `page()`, the body has `id`, `name: "page_view"`, `url`, `only` (if
 passed), `consent` and `identity`, and no `params` or `providers`.
 
-| Field | Source |
-|---|---|
-| `id` | The event ID shared with browser providers: `options.eventId`, or a new `crypto.randomUUID()` |
-| `url` | `location.href` at send time; for `page`, the page's `url` |
-| `only`, `providers` | The call's options; omitted when not set |
-| `consent` | The current consent, including custom categories and `sale_of_data` when set |
-| `identity` | `{}`, `{ userId }`, or, with marketing consent, also `email` and `phone` (see [Consent](/internals/consent/#identity-storage)) |
+| Field               | Source                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `id`                | The event ID shared with browser providers: `options.eventId`, or a new `crypto.randomUUID()`                                  |
+| `url`               | `location.href` at send time; for `page`, the page's `url`                                                                     |
+| `only`, `providers` | The call's options; omitted when not set                                                                                       |
+| `consent`           | The current consent, including custom categories and `sale_of_data` when set                                                   |
+| `identity`          | `{}`, `{ userId }`, or, with marketing consent, also `email` and `phone` (see [Consent](/internals/consent/#identity-storage)) |
 
 The browser never sends `clientId`. The route reads GA4's `_ga` cookie
 instead.
@@ -221,36 +220,38 @@ requires marketing consent and accepts browser events. It sends:
 
 ```json
 {
-  "data": [{
-    "event_name": "AddToCart",
-    "event_time": 1760353200,
-    "event_id": "6f1c2a9e-…",
-    "event_source_url": "https://shop.example/products/mug",
-    "action_source": "website",
-    "custom_data": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_category": "mugs" },
-    "user_data": {
-      "client_ip_address": "203.0.113.7",
-      "client_user_agent": "Mozilla/5.0 …",
-      "fbp": "fb.1.1760000000000.123456789",
-      "fbc": "fb.1.1760000000000.AbCdEf",
-      "em": "<sha256>",
-      "ph": "<sha256>",
-      "external_id": "<sha256>"
+  "data": [
+    {
+      "event_name": "AddToCart",
+      "event_time": 1760353200,
+      "event_id": "6f1c2a9e-…",
+      "event_source_url": "https://shop.example/products/mug",
+      "action_source": "website",
+      "custom_data": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_category": "mugs" },
+      "user_data": {
+        "client_ip_address": "203.0.113.7",
+        "client_user_agent": "Mozilla/5.0 …",
+        "fbp": "fb.1.1760000000000.123456789",
+        "fbc": "fb.1.1760000000000.AbCdEf",
+        "em": "<sha256>",
+        "ph": "<sha256>",
+        "external_id": "<sha256>"
+      }
     }
-  }]
+  ]
 }
 ```
 
-| Field | Source |
-|---|---|
-| `event_name`, `custom_data` | The same translation as the pixel (`toMetaEvent`, see [Events](/guides/events/)), with `providers.meta` merged in. Values other than strings, numbers, booleans, `null`, arrays and plain objects, such as a `Date` or a class instance, are dropped. |
-| `event_time` | The server clock, in seconds |
-| `event_id`, `event_source_url` | The event's `id` and `url` |
-| `client_ip_address`, `client_user_agent` | The request info from step 8 |
-| `fbp`, `fbc` | The `_fbp` and `_fbc` cookies set by the pixel, if present |
-| `em` | The email, trimmed and lowercased; sent only if valid |
-| `ph` | The phone reduced to digits; sent only if it is a valid E.164 number; hashed without the `+` |
-| `external_id` | The user ID, hashed as is |
+| Field                                    | Source                                                                                                                                                                                                                                                |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `event_name`, `custom_data`              | The same translation as the pixel (`toMetaEvent`, see [Events](/guides/events/)), with `providers.meta` merged in. Values other than strings, numbers, booleans, `null`, arrays and plain objects, such as a `Date` or a class instance, are dropped. |
+| `event_time`                             | The server clock, in seconds                                                                                                                                                                                                                          |
+| `event_id`, `event_source_url`           | The event's `id` and `url`                                                                                                                                                                                                                            |
+| `client_ip_address`, `client_user_agent` | The request info from step 8                                                                                                                                                                                                                          |
+| `fbp`, `fbc`                             | The `_fbp` and `_fbc` cookies set by the pixel, if present                                                                                                                                                                                            |
+| `em`                                     | The email, trimmed and lowercased; sent only if valid                                                                                                                                                                                                 |
+| `ph`                                     | The phone reduced to digits; sent only if it is a valid E.164 number; hashed without the `+`                                                                                                                                                          |
+| `external_id`                            | The user ID, hashed as is                                                                                                                                                                                                                             |
 
 Through the route, the event only reaches `metaCapi` with marketing consent,
 which is also when the browser includes email and phone. Fields that end up
@@ -274,35 +275,37 @@ headers `Access-Token: <accessToken>` and `Content-Type: application/json`
   "event_source": "web",
   "event_source_id": "<pixelId>",
   "test_event_code": "<testEventCode>",
-  "data": [{
-    "event": "AddToCart",
-    "event_time": 1760353200,
-    "event_id": "6f1c2a9e-…",
-    "user": {
-      "email": "<sha256>",
-      "phone": "<sha256>",
-      "external_id": "<sha256>",
-      "ip": "203.0.113.7",
-      "user_agent": "Mozilla/5.0 …",
-      "ttp": "…",
-      "ttclid": "…"
-    },
-    "properties": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_type": "product" },
-    "page": { "url": "https://shop.example/products/mug" }
-  }]
+  "data": [
+    {
+      "event": "AddToCart",
+      "event_time": 1760353200,
+      "event_id": "6f1c2a9e-…",
+      "user": {
+        "email": "<sha256>",
+        "phone": "<sha256>",
+        "external_id": "<sha256>",
+        "ip": "203.0.113.7",
+        "user_agent": "Mozilla/5.0 …",
+        "ttp": "…",
+        "ttclid": "…"
+      },
+      "properties": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_type": "product" },
+      "page": { "url": "https://shop.example/products/mug" }
+    }
+  ]
 }
 ```
 
-| Field | Source |
-|---|---|
-| `event`, `properties` | The same translation as the pixel (`toTikTokEvent`, see [Events](/guides/events/)), with `providers.tiktok` merged in |
-| `event_time` | The server clock, in seconds |
-| `event_id`, `page.url` | The event's `id` and `url` |
-| `ip`, `user_agent` | The request info from step 8 |
-| `ttp`, `ttclid` | The `_ttp` and `ttclid` cookies, if present |
-| `email` | The email, trimmed and lowercased; sent only if valid |
-| `phone` | The phone reduced to digits with a leading `+`; sent only if it is a valid E.164 number; hashed including the `+`, as TikTok requires |
-| `external_id` | The user ID, hashed as is |
+| Field                  | Source                                                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `event`, `properties`  | The same translation as the pixel (`toTikTokEvent`, see [Events](/guides/events/)), with `providers.tiktok` merged in                 |
+| `event_time`           | The server clock, in seconds                                                                                                          |
+| `event_id`, `page.url` | The event's `id` and `url`                                                                                                            |
+| `ip`, `user_agent`     | The request info from step 8                                                                                                          |
+| `ttp`, `ttclid`        | The `_ttp` and `ttclid` cookies, if present                                                                                           |
+| `email`                | The email, trimmed and lowercased; sent only if valid                                                                                 |
+| `phone`                | The phone reduced to digits with a leading `+`; sent only if it is a valid E.164 number; hashed including the `+`, as TikTok requires |
+| `external_id`          | The user ID, hashed as is                                                                                                             |
 
 Fields that end up `undefined` are omitted from the JSON. TikTok answers
 HTTP 200 with `{ code, message, request_id, data }`, and `code` is `0` on
@@ -329,14 +332,14 @@ requires analytics consent. It sends:
 }
 ```
 
-| Field | Source |
-|---|---|
-| `client_id` | `event.clientId`, else the last two segments of the `_ga` cookie: `GA1.1.111.222` → `111.222` |
-| `user_id` | `identity.userId`, not hashed |
-| `user_data` | Only with marketing consent. The email trimmed and lowercased; the phone reduced to digits with a leading `+`. Each is sent only if valid, using the same checks as Meta, and hashed including the `+`, as Google requires. Omitted when empty. |
-| `consent` | Both keys `GRANTED` with marketing consent, otherwise `DENIED` |
-| `events[0].name` | `ga4EventName(name)`, the same rule as gtag: `lead` → `generate_lead`, other invalid characters → `_` |
-| `events[0].params` | `params`, with `providers.ga4` merged in |
+| Field              | Source                                                                                                                                                                                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client_id`        | `event.clientId`, else the last two segments of the `_ga` cookie: `GA1.1.111.222` → `111.222`                                                                                                                                                   |
+| `user_id`          | `identity.userId`, not hashed                                                                                                                                                                                                                   |
+| `user_data`        | Only with marketing consent. The email trimmed and lowercased; the phone reduced to digits with a leading `+`. Each is sent only if valid, using the same checks as Meta, and hashed including the `+`, as Google requires. Omitted when empty. |
+| `consent`          | Both keys `GRANTED` with marketing consent, otherwise `DENIED`                                                                                                                                                                                  |
+| `events[0].name`   | `ga4EventName(name)`, the same rule as gtag: `lead` → `generate_lead`, other invalid characters → `_`                                                                                                                                           |
+| `events[0].params` | `params`, with `providers.ga4` merged in                                                                                                                                                                                                        |
 
 Without a client ID it throws `ga4Server needs event.clientId or the _ga cookie`,
 because GA4 cannot attribute the event to a visitor. A non-2xx response throws
@@ -359,11 +362,11 @@ send the digest as lowercase hex. Empty values are neither hashed nor sent.
 
 ## Status codes
 
-| Status | When |
-|---|---|
-| `204` | Accepted; sent to every destination consent allows. Failures go to `onError`. With `consentlayer-forwarding: off` when there is no destination, and `consentlayer-consent: missing` when `consentCookie` is set and no valid cookie was sent. |
-| `400` | No body, invalid JSON, or the event failed validation |
-| `403` | `Origin` or `Referer` from another origin, neither header present, or a malformed `Referer` |
-| `413` | Body larger than 16 KB |
-| `415` | `content-type` does not contain `application/json` |
-| `500` | Any other error; it is passed to `onError` |
+| Status | When                                                                                                                                                                                                                                          |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `204`  | Accepted; sent to every destination consent allows. Failures go to `onError`. With `consentlayer-forwarding: off` when there is no destination, and `consentlayer-consent: missing` when `consentCookie` is set and no valid cookie was sent. |
+| `400`  | No body, invalid JSON, or the event failed validation                                                                                                                                                                                         |
+| `403`  | `Origin` or `Referer` from another origin, neither header present, or a malformed `Referer`                                                                                                                                                   |
+| `413`  | Body larger than 16 KB                                                                                                                                                                                                                        |
+| `415`  | `content-type` does not contain `application/json`                                                                                                                                                                                            |
+| `500`  | Any other error; it is passed to `onError`                                                                                                                                                                                                    |

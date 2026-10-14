@@ -26,8 +26,12 @@
     <button type="button" id="navigate">Navigate with history.pushState</button>
     <button type="button" id="settings">Cookie settings</button>
     <script>
-      document.getElementById('sign-up').addEventListener('click', () => ConsentLayer.track('sign_up', { method: 'email' }))
-      document.getElementById('navigate').addEventListener('click', () => history.pushState({}, '', `?page=${Date.now()}`))
+      document
+        .getElementById('sign-up')
+        .addEventListener('click', () => ConsentLayer.track('sign_up', { method: 'email' }))
+      document
+        .getElementById('navigate')
+        .addEventListener('click', () => history.pushState({}, '', `?page=${Date.now()}`))
       document.getElementById('settings').addEventListener('click', () => CONSENTLAYER_openConsent())
     </script>
   </body>

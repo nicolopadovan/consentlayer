@@ -48,19 +48,19 @@ caused it, and the original error as `cause`.
 
 ### Error scopes
 
-| Scope | Raised when |
-|---|---|
-| `provider-setup` | A plugin's `setup` hook threw, or two plugins use the same `id` |
-| `provider-load` | A plugin's `load` hook threw |
-| `provider-script-load` | A provider's script failed to download |
-| `provider-consent` | A plugin's `consent` hook threw |
-| `provider-page`, `provider-track` | A plugin's `page` or `track` hook threw |
-| `provider-identify` | A plugin's `identify`, `reset` or `group` hook threw |
-| `provider-error` | A plugin's `error` hook threw while reporting an error |
-| `provider-teardown` | A plugin's `teardown` hook threw on withdrawal |
-| `consent-adapter` | A consent adapter, or the `server.consentEndpoint` request, failed |
-| `server-forward` | Forwarding an event to `server.endpoint` failed |
-| `queue-full` | More than 100 calls were waiting, and later ones were dropped |
+| Scope                             | Raised when                                                        |
+| --------------------------------- | ------------------------------------------------------------------ |
+| `provider-setup`                  | A plugin's `setup` hook threw, or two plugins use the same `id`    |
+| `provider-load`                   | A plugin's `load` hook threw                                       |
+| `provider-script-load`            | A provider's script failed to download                             |
+| `provider-consent`                | A plugin's `consent` hook threw                                    |
+| `provider-page`, `provider-track` | A plugin's `page` or `track` hook threw                            |
+| `provider-identify`               | A plugin's `identify`, `reset` or `group` hook threw               |
+| `provider-error`                  | A plugin's `error` hook threw while reporting an error             |
+| `provider-teardown`               | A plugin's `teardown` hook threw on withdrawal                     |
+| `consent-adapter`                 | A consent adapter, or the `server.consentEndpoint` request, failed |
+| `server-forward`                  | Forwarding an event to `server.endpoint` failed                    |
+| `queue-full`                      | More than 100 calls were waiting, and later ones were dropped      |
 
 A hook failure has the message `` `<provider id>.<hook> failed` ``, for example
 `ga4.load failed`, with the thrown error as `cause`.
@@ -70,12 +70,12 @@ A hook failure has the message `` `<provider id>.<hook> failed` ``, for example
 The configuration is validated when the instance or the provider is created,
 so an invalid value fails at import time rather than silently sending nothing.
 
-| Message | Cause and fix |
-|---|---|
-| `[consentlayer] Invalid GA4 measurement ID: expected format "G-XXXXXXXX", received ...` | `ga4({ measurementId })` must be `G-` followed by 4 to 16 uppercase letters or digits. A missing or empty value does not throw: the provider is turned off, and `debug: true` logs `ga4 is off: measurementId is not set.` |
-| `[consentlayer] Invalid Meta Pixel ID: expected 8-20 digit numeric string, received ...` | `meta({ pixelId })` must be the numeric pixel ID, not the dataset name |
-| `[consentlayer] server.endpoint must be an HTTPS URL or a relative path starting with "/", received ...` | Use a relative path such as `/api/analytics`, or an `https://` URL. `undefined` or `''` does not throw: forwarding is off. |
-| `[consentlayer] server.consentEndpoint must be an HTTPS URL or a relative path starting with "/", received ...` | The same rule applies to the consent records endpoint |
+| Message                                                                                                         | Cause and fix                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[consentlayer] Invalid GA4 measurement ID: expected format "G-XXXXXXXX", received ...`                         | `ga4({ measurementId })` must be `G-` followed by 4 to 16 uppercase letters or digits. A missing or empty value does not throw: the provider is turned off, and `debug: true` logs `ga4 is off: measurementId is not set.` |
+| `[consentlayer] Invalid Meta Pixel ID: expected 8-20 digit numeric string, received ...`                        | `meta({ pixelId })` must be the numeric pixel ID, not the dataset name                                                                                                                                                     |
+| `[consentlayer] server.endpoint must be an HTTPS URL or a relative path starting with "/", received ...`        | Use a relative path such as `/api/analytics`, or an `https://` URL. `undefined` or `''` does not throw: forwarding is off.                                                                                                 |
+| `[consentlayer] server.consentEndpoint must be an HTTPS URL or a relative path starting with "/", received ...` | The same rule applies to the consent records endpoint                                                                                                                                                                      |
 
 In Next.js, only variables prefixed with `NEXT_PUBLIC_` reach the browser
 bundle. A measurement ID read from `process.env.GA4_ID` in client code is
@@ -257,14 +257,14 @@ Sending purchase to /api/analytics failed
 Its `cause` is `HTTP <status>` when the route answered with an error status.
 The route answers with an empty body, so the status code is the only clue:
 
-| Status | Cause and fix |
-|---|---|
-| 403 | The `Origin` header is missing, or neither `Origin` nor `Referer` matches the origin of the request URL. Behind a proxy that rewrites the host or protocol, the request URL the route sees must keep the public origin |
-| 415 | The request's `Content-Type` is not `application/json` |
-| 400 | The body is empty, is not valid JSON, or is not an event: `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing` |
-| 413 | The body is larger than 16 KB |
-| 500 | The route threw; the error is passed to the handler's `onError` |
-| 204 | The route accepted the event. A vendor that rejected it is reported to `onError`, not in the status |
+| Status | Cause and fix                                                                                                                                                                                                          |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 403    | The `Origin` header is missing, or neither `Origin` nor `Referer` matches the origin of the request URL. Behind a proxy that rewrites the host or protocol, the request URL the route sees must keep the public origin |
+| 415    | The request's `Content-Type` is not `application/json`                                                                                                                                                                 |
+| 400    | The body is empty, is not valid JSON, or is not an event: `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing`                                            |
+| 413    | The body is larger than 16 KB                                                                                                                                                                                          |
+| 500    | The route threw; the error is passed to the handler's `onError`                                                                                                                                                        |
+| 204    | The route accepted the event. A vendor that rejected it is reported to `onError`, not in the status                                                                                                                    |
 
 A 204 does not mean the vendor received the event. Pass `onError` to
 `createAnalyticsHandler()` and check your server logs:

@@ -170,7 +170,9 @@ describe('banner', () => {
     expect(dialog.open).toBe(true)
     expect(dialog.getAttribute('aria-labelledby')).toBe('consentlayer-dialog-title')
     expect(document.querySelector<HTMLElement>('.consentlayer-banner')!.hidden).toBe(false)
-    const analyticsToggle = [...dialog.querySelectorAll('label')].find((label) => label.textContent?.startsWith('Analytics'))!
+    const analyticsToggle = [...dialog.querySelectorAll('label')].find((label) =>
+      label.textContent?.startsWith('Analytics'),
+    )!
     analyticsToggle.querySelector('input')!.click()
     await click('dialog', 'Save')
     expect(analytics.consent.getConsent()).toMatchObject({ preferences: false, analytics: true, marketing: false })

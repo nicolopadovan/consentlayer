@@ -93,7 +93,10 @@ describe('posthog', () => {
     })
     const fresh = await import('../src/providers/posthog')
     const manager = await start(fresh.posthog({ apiKey: 'phc_test', recording: true }))
-    expect(ph.init.mock.calls[0]?.[1]).toMatchObject({ advanced_disable_flags: false, advanced_disable_feature_flags: true })
+    expect(ph.init.mock.calls[0]?.[1]).toMatchObject({
+      advanced_disable_flags: false,
+      advanced_disable_feature_flags: true,
+    })
     expect(recorderLoaded).not.toHaveBeenCalled()
     await manager.updateConsent(granted)
     expect(recorderLoaded).toHaveBeenCalledTimes(1)
@@ -122,7 +125,9 @@ describe('posthog', () => {
 
 describe('sentry', () => {
   it('passes the plugin contract', async () => {
-    expect(await checkPlugin(sentry({ dsn: 'https://k@o1.ingest.sentry.io/1', replay: true, tracing: true }))).toEqual([])
+    expect(await checkPlugin(sentry({ dsn: 'https://k@o1.ingest.sentry.io/1', replay: true, tracing: true }))).toEqual(
+      [],
+    )
   })
 
   it('reports errors without personal data before consent', async () => {

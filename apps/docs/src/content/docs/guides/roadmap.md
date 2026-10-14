@@ -29,12 +29,12 @@ planned components are first-party banners and settings dialogs built on the
 UI libraries applications already use, so they match the rest of the
 interface:
 
-| Library | Planned component |
-|---|---|
-| [shadcn/ui](https://ui.shadcn.com) | A banner and dialog added with the shadcn CLI from a ConsentLayer registry, as source you own and restyle. The first to come. |
-| shadcn-vue, shadcn-svelte and solid-ui | The same component for Vue, Svelte and Solid. |
-| MUI, Mantine and Chakra UI | Components for React applications built on them. |
-| Vuetify, Angular Material and others | Components for the main UI library of each framework, added as there is demand. |
+| Library                                | Planned component                                                                                                             |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| [shadcn/ui](https://ui.shadcn.com)     | A banner and dialog added with the shadcn CLI from a ConsentLayer registry, as source you own and restyle. The first to come. |
+| shadcn-vue, shadcn-svelte and solid-ui | The same component for Vue, Svelte and Solid.                                                                                 |
+| MUI, Mantine and Chakra UI             | Components for React applications built on them.                                                                              |
+| Vuetify, Angular Material and others   | Components for the main UI library of each framework, added as there is demand.                                               |
 
 ### Adapters for consent platforms
 
@@ -51,13 +51,13 @@ categories directly.
 Sites built without a JavaScript build step can't install an npm package. The
 planned ports set ConsentLayer up where those sites add code:
 
-| Platform | Planned port |
-|---|---|
-| WordPress | A plugin that loads the [script tag](/start/script-tag/) and takes the configuration in the WordPress admin. |
-| Webflow | A snippet for the site's custom code settings. |
-| Framer, Squarespace and Wix | A snippet for each platform's custom code settings. |
-| Shopify themes | A theme app extension. In a headless storefront, `shopifyCustomerPrivacy()` already keeps Shopify's consent in sync. |
-| Google Tag Manager | A community template that loads the script tag from a GTM container. |
+| Platform                    | Planned port                                                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| WordPress                   | A plugin that loads the [script tag](/start/script-tag/) and takes the configuration in the WordPress admin.         |
+| Webflow                     | A snippet for the site's custom code settings.                                                                       |
+| Framer, Squarespace and Wix | A snippet for each platform's custom code settings.                                                                  |
+| Shopify themes              | A theme app extension. In a headless storefront, `shopifyCustomerPrivacy()` already keeps Shopify's consent in sync. |
+| Google Tag Manager          | A community template that loads the script tag from a GTM container.                                                 |
 
 ### Privacy laws beyond the GDPR
 
@@ -67,27 +67,27 @@ have not been legally reviewed; see the [legal notice](/guides/legal/).
 Other laws work differently, and the planned jurisdiction presets set the
 consent model, the defaults and the signals to honor per visitor region:
 
-| Law | Planned |
-|---|---|
-| US state laws, such as California's CCPA and CPRA | An opt-out model: tracking until the visitor opts out of the sale or sharing of their data, through a "Do Not Sell or Share" choice or [Global Privacy Control](/guides/consent-ui/#global-privacy-control), which ConsentLayer already reads. |
-| UK GDPR and PECR | A preset for the UK's opt-in rules. |
-| Switzerland's Federal Act on Data Protection | A preset for Swiss requirements. |
-| France, CNIL guidance | A preset for the CNIL's recommendations on cookies, such as how long a choice is kept. |
-| Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each, after the ones above. |
+| Law                                                | Planned                                                                                                                                                                                                                                        |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US state laws, such as California's CCPA and CPRA  | An opt-out model: tracking until the visitor opts out of the sale or sharing of their data, through a "Do Not Sell or Share" choice or [Global Privacy Control](/guides/consent-ui/#global-privacy-control), which ConsentLayer already reads. |
+| UK GDPR and PECR                                   | A preset for the UK's opt-in rules.                                                                                                                                                                                                            |
+| Switzerland's Federal Act on Data Protection       | A preset for Swiss requirements.                                                                                                                                                                                                               |
+| France, CNIL guidance                              | A preset for the CNIL's recommendations on cookies, such as how long a choice is kept.                                                                                                                                                         |
+| Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each, after the ones above.                                                                                                                                                                                                        |
 
 ## Under consideration
 
 The following are not supported today. They are being considered, with no
 commitment either way.
 
-| Feature | Today |
-|---|---|
-| Google Ads | No provider. [`googleConsentMode()`](/guides/adapters/google-consent-mode/) sends it Consent Mode signals, but nothing loads the Google Ads tag or sends conversions. |
-| Microsoft Clarity | No provider. Write one with [`definePlugin()`](/internals/plugins/). |
-| PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys. |
-| A setup CLI, after 1.0 | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed; the other providers load their vendor's script in the browser. |
-| A hosted consent service | Consent records are stored in your own database through a [store](/guides/consent-records/#stores). |
-| Retention helpers | A `ConsentStore` only appends. Deleting old records is your application's job; see [Retention and deletion](/guides/consent-records/#retention-and-deletion). |
+| Feature                           | Today                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Ads                        | No provider. [`googleConsentMode()`](/guides/adapters/google-consent-mode/) sends it Consent Mode signals, but nothing loads the Google Ads tag or sends conversions.                                                                                                                                                                                                                  |
+| Microsoft Clarity                 | No provider. Write one with [`definePlugin()`](/internals/plugins/).                                                                                                                                                                                                                                                                                                                   |
+| PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys.                                                                                                                                                                                                                                                      |
+| A setup CLI, after 1.0            | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed; the other providers load their vendor's script in the browser. |
+| A hosted consent service          | Consent records are stored in your own database through a [store](/guides/consent-records/#stores).                                                                                                                                                                                                                                                                                    |
+| Retention helpers                 | A `ConsentStore` only appends. Deleting old records is your application's job; see [Retention and deletion](/guides/consent-records/#retention-and-deletion).                                                                                                                                                                                                                          |
 
 ## Known gaps
 
@@ -119,4 +119,3 @@ such tags after your bundle, or set the defaults yourself in an inline script
 before them.
 
 </details>
-

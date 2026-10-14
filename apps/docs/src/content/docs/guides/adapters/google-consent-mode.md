@@ -31,12 +31,12 @@ once.
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `regions` | `GoogleConsentModeRegion[]` | `[]` | Categories that count as granted before a choice in the listed regions. See [Region defaults](#region-defaults). |
-| `waitForUpdate` | `number` | None | Milliseconds Google tags wait for a consent update before sending, as `wait_for_update` in each default. A whole number, `0` or more. |
-| `urlPassthrough` | `boolean` | `false` | `gtag('set', 'url_passthrough', true)`: passes ad click IDs through links while `ad_storage` is denied. |
-| `adsDataRedaction` | `boolean` | `false` | `gtag('set', 'ads_data_redaction', true)`: redacts ad click data while `ad_storage` is denied. |
+| Option             | Type                        | Default | Description                                                                                                                           |
+| ------------------ | --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `regions`          | `GoogleConsentModeRegion[]` | `[]`    | Categories that count as granted before a choice in the listed regions. See [Region defaults](#region-defaults).                      |
+| `waitForUpdate`    | `number`                    | None    | Milliseconds Google tags wait for a consent update before sending, as `wait_for_update` in each default. A whole number, `0` or more. |
+| `urlPassthrough`   | `boolean`                   | `false` | `gtag('set', 'url_passthrough', true)`: passes ad click IDs through links while `ad_storage` is denied.                               |
+| `adsDataRedaction` | `boolean`                   | `false` | `gtag('set', 'ads_data_redaction', true)`: redacts ad click data while `ad_storage` is denied.                                        |
 
 ## Signals
 
@@ -48,12 +48,12 @@ the adapter creates `window.dataLayer` and `window.gtag` and sets the defaults:
 has a choice, from the banner, storage, another tab or another adapter, each
 change sends `gtag('consent', 'update')` with this mapping:
 
-| Consent Mode signal | Granted when |
-|---|---|
-| `analytics_storage` | `analytics` is granted |
-| `ad_storage`, `ad_user_data`, `ad_personalization` | `marketing` is granted |
-| `functionality_storage` | `preferences` is granted |
-| `security_storage` | Always |
+| Consent Mode signal                                | Granted when             |
+| -------------------------------------------------- | ------------------------ |
+| `analytics_storage`                                | `analytics` is granted   |
+| `ad_storage`, `ad_user_data`, `ad_personalization` | `marketing` is granted   |
+| `functionality_storage`                            | `preferences` is granted |
+| `security_storage`                                 | Always                   |
 
 A Google tag that runs before your bundle, such as a Google Tag Manager snippet
 at the top of `<head>`, still runs before the defaults exist. Load such tags

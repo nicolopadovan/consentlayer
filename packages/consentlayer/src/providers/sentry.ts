@@ -40,8 +40,9 @@ export function sentry(options: SentryOptions) {
     sdk.setUser(granted() && userId ? { id: userId, email: latest?.identity.email } : null)
     if (replay) {
       if (!granted()) await replayIntegration?.stop()
-      else if (replayIntegration) replayIntegration.startBuffering() // ponytail: a regrant buffers for errors only; sessions resume next page load
-      else sdk.addIntegration((replayIntegration = (await import('./sentry-replay')).replayIntegration() ))
+      else if (replayIntegration)
+        replayIntegration.startBuffering() // ponytail: a regrant buffers for errors only; sessions resume next page load
+      else sdk.addIntegration((replayIntegration = (await import('./sentry-replay')).replayIntegration()))
     }
     if (tracing && granted() && !tracingAdded) {
       tracingAdded = true

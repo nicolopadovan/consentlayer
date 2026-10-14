@@ -41,7 +41,10 @@ const MAX_AGE = 400 * 24 * 60 * 60
 
 const encoder = new TextEncoder()
 const toBase64Url = (bytes: Uint8Array) =>
-  btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
 const fromBase64Url = (value: string) =>
   Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), (char) => char.charCodeAt(0))
 
@@ -65,10 +68,7 @@ async function sign(proof: ConsentProof, secret: string): Promise<string> {
 }
 
 /** The verified proof from the request's consent cookie, or `null` if it is missing or tampered with. */
-export async function readConsentCookie(
-  request: Request,
-  options: ConsentCookieOptions,
-): Promise<ConsentProof | null> {
+export async function readConsentCookie(request: Request, options: ConsentCookieOptions): Promise<ConsentProof | null> {
   const value = parseCookieHeader(request.headers.get('cookie') ?? '')[options.cookie ?? DEFAULT_COOKIE]
   const [payload, signature] = value?.split('.') ?? []
   if (!payload || !signature) return null

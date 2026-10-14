@@ -146,9 +146,7 @@ export const MetaPixelNoscript = defineComponent({
   props: { pixelId: { type: String, default: undefined }, enabled: Boolean },
   setup(props, { attrs }) {
     return () =>
-      props.enabled && props.pixelId
-        ? h('noscript', { innerHTML: metaNoscriptImg(props.pixelId, attrs) })
-        : null
+      props.enabled && props.pixelId ? h('noscript', { innerHTML: metaNoscriptImg(props.pixelId, attrs) }) : null
   },
 })
 

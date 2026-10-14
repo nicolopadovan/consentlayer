@@ -34,7 +34,12 @@ describe('debug', () => {
     await run({ events: true, only: ['ga4'], logger: (entry) => entries.push(entry) })
     expect(debug).not.toHaveBeenCalled()
     expect(entries.map((entry) => entry.message)).toEqual(['ga4.page', 'ga4.track'])
-    expect(entries[1]).toEqual({ topic: 'events', provider: 'ga4', message: 'ga4.track', data: ['sign_up', { method: 'email' }] })
+    expect(entries[1]).toEqual({
+      topic: 'events',
+      provider: 'ga4',
+      message: 'ga4.track',
+      data: ['sign_up', { method: 'email' }],
+    })
   })
 
   it('logs every topic but the ones set to false', async () => {

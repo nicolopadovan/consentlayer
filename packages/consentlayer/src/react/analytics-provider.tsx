@@ -1,21 +1,7 @@
 'use client'
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-} from 'react'
-import type {
-  Analytics,
-  ConsentApi,
-  ConsentState,
-  LazyBootConfig,
-  PageViewPayload,
-} from '../core/types'
+import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
+import type { Analytics, ConsentApi, ConsentState, LazyBootConfig, PageViewPayload } from '../core/types'
 import { latestAnalytics } from '../core/create-analytics'
 import {
   createConsentController,
@@ -53,7 +39,9 @@ export function AnalyticsProvider({
   autoShowBanner,
   openConsentGlobalKey,
 }: AnalyticsProviderProps) {
-  const [controller] = useState(() => createConsentController(analytics, { boot, autoShowBanner, openConsentGlobalKey }))
+  const [controller] = useState(() =>
+    createConsentController(analytics, { boot, autoShowBanner, openConsentGlobalKey }),
+  )
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot)
   const value = useMemo<ConsentControllerValue>(() => ({ ...controller.actions, ...state }), [controller, state])
 
@@ -62,9 +50,7 @@ export function AnalyticsProvider({
 
   return (
     <AnalyticsContext.Provider value={analytics}>
-      <ConsentControllerContext.Provider value={value}>
-        {children}
-      </ConsentControllerContext.Provider>
+      <ConsentControllerContext.Provider value={value}>{children}</ConsentControllerContext.Provider>
     </AnalyticsContext.Provider>
   )
 }

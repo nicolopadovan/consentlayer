@@ -4,7 +4,14 @@ import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import { createAnalytics } from '../src/core/create-analytics'
 import type { AnalyticsPlugin } from '../src/core/types'
 import { renderToString } from 'vue/server-renderer'
-import { consentLayer, GtmNoscript, MetaPixelNoscript, useAnalytics, useConsent, useConsentController } from '../src/vue'
+import {
+  consentLayer,
+  GtmNoscript,
+  MetaPixelNoscript,
+  useAnalytics,
+  useConsent,
+  useConsentController,
+} from '../src/vue'
 
 const spyProvider = (id: string) =>
   ({ id, requiredConsent: 'analytics', page: vi.fn(), track: vi.fn() }) satisfies AnalyticsPlugin
@@ -60,7 +67,10 @@ describe('consentlayer/vue', () => {
     const Page = defineComponent({ render: () => h('p') })
     const router = createRouter({
       history: createMemoryHistory(),
-      routes: [{ path: '/', component: Page }, { path: '/shop', component: Page }],
+      routes: [
+        { path: '/', component: Page },
+        { path: '/shop', component: Page },
+      ],
     })
     void router.push('/')
     const { app } = mount(defineComponent({ render: () => h(RouterView) }), (app) => {
@@ -105,7 +115,15 @@ describe('consentlayer/vue', () => {
   it('falls back to the latest instance outside the plugin', () => {
     const analytics = createAnalytics({ providers: [] })
     let found: unknown
-    mount(defineComponent({ setup: () => { found = useAnalytics(); return () => null } }), () => {})
+    mount(
+      defineComponent({
+        setup: () => {
+          found = useAnalytics()
+          return () => null
+        },
+      }),
+      () => {},
+    )
     expect(found).toBe(analytics)
     analytics.destroy()
   })
@@ -113,17 +131,21 @@ describe('consentlayer/vue', () => {
 
 describe('MetaPixelNoscript for Vue', () => {
   it('renders the pixel only when enabled with an ID', async () => {
-    const render = (props: Record<string, unknown>) => renderToString(createSSRApp({ render: () => h(MetaPixelNoscript, props) }))
+    const render = (props: Record<string, unknown>) =>
+      renderToString(createSSRApp({ render: () => h(MetaPixelNoscript, props) }))
     expect(await render({ pixelId: '123', enabled: true, loading: 'lazy' })).toBe(
       '<noscript><img height="1" width="1" style="display:none" loading="lazy" alt="" src="https://www.facebook.com/tr?id=123&amp;ev=PageView&amp;noscript=1"></noscript>',
     )
-    expect(await render({ pixelId: '123', enabled: true, title: '"><script>' })).toContain('title="&quot;&gt;&lt;script&gt;"')
+    expect(await render({ pixelId: '123', enabled: true, title: '"><script>' })).toContain(
+      'title="&quot;&gt;&lt;script&gt;"',
+    )
     expect(await render({ pixelId: '123' })).toBe('<!---->')
     expect(await render({ pixelId: undefined, enabled: true })).toBe('<!---->')
   })
 
   it('renders the GTM iframe only when enabled with an ID', async () => {
-    const render = (props: Record<string, unknown>) => renderToString(createSSRApp({ render: () => h(GtmNoscript, props) }))
+    const render = (props: Record<string, unknown>) =>
+      renderToString(createSSRApp({ render: () => h(GtmNoscript, props) }))
     expect(await render({ containerId: 'GTM-ABC123', enabled: true, loading: 'lazy' })).toBe(
       '<noscript><iframe title="Google Tag Manager" height="0" width="0" style="display:none;visibility:hidden" loading="lazy" src="https://www.googletagmanager.com/ns.html?id=GTM-ABC123"></iframe></noscript>',
     )

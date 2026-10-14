@@ -90,9 +90,7 @@ describe('server destinations', () => {
     })
     expect((await POST(post({ name: 'x' }))).status).toBe(400)
     expect((await POST(post({ name: 'x', consent: granted }, { origin: 'https://evil.example' }))).status).toBe(403)
-    expect(
-      (await POST(post({ name: 'x', consent: { ...granted, marketing: false } }))).status,
-    ).toBe(204)
+    expect((await POST(post({ name: 'x', consent: { ...granted, marketing: false } }))).status).toBe(204)
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 
@@ -160,10 +158,19 @@ describe('server destinations', () => {
   it('forwards browser events to a server-side GTM container as Measurement Protocol requests', async () => {
     const fetchImpl = okFetch()
     const POST = createAnalyticsHandler({
-      destinations: [sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: 'G-ABC123', apiSecret: 's', fetchImpl })],
+      destinations: [
+        sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: 'G-ABC123', apiSecret: 's', fetchImpl }),
+      ],
     })
-    await POST(post({ name: 'page_view', url: 'https://shop.example/a', consent: { ...granted, marketing: false } }, { cookie: '_ga=GA1.1.111.222' }))
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe('https://sgtm.example.com/mp/collect?measurement_id=G-ABC123&api_secret=s')
+    await POST(
+      post(
+        { name: 'page_view', url: 'https://shop.example/a', consent: { ...granted, marketing: false } },
+        { cookie: '_ga=GA1.1.111.222' },
+      ),
+    )
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe(
+      'https://sgtm.example.com/mp/collect?measurement_id=G-ABC123&api_secret=s',
+    )
     expect(sentBody(fetchImpl)).toEqual({
       client_id: '111.222',
       consent: { ad_user_data: 'DENIED', ad_personalization: 'DENIED' },
@@ -183,7 +190,12 @@ describe('server destinations', () => {
     const fetchImpl = okFetch()
     const ga = ga4Server({ measurementId: 'G-ABC123', apiSecret: 's', fetchImpl })
     const results = await sendServerEvent(
-      { name: 'lead', params: { value: 5 }, consent: { ...granted, marketing: false }, identity: { userId: 'u1', email: 'a@b.co' } },
+      {
+        name: 'lead',
+        params: { value: 5 },
+        consent: { ...granted, marketing: false },
+        identity: { userId: 'u1', email: 'a@b.co' },
+      },
       { destinations: [ga], request: { cookies: { _ga: 'GA1.1.111.222' } } },
     )
     expect(results).toEqual([{ id: 'ga4', ok: true }])

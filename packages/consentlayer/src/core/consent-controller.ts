@@ -1,11 +1,5 @@
 import { withLegacy } from './names'
-import type {
-  Analytics,
-  ConsentCategory,
-  ConsentState,
-  LazyBootConfig,
-  PageViewPayload,
-} from './types'
+import type { Analytics, ConsentCategory, ConsentState, LazyBootConfig, PageViewPayload } from './types'
 
 export type Prefs = Record<ConsentCategory, boolean>
 
@@ -61,10 +55,7 @@ function scheduleBoot(analytics: Analytics, boot: LazyBootConfig | undefined): (
     return () => undefined
   }
   if ('requestIdleCallback' in window) {
-    const handle = window.requestIdleCallback(
-      () => void analytics.boot(),
-      { timeout: boot?.timeoutMs ?? 3000 },
-    )
+    const handle = window.requestIdleCallback(() => void analytics.boot(), { timeout: boot?.timeoutMs ?? 3000 })
     return () => window.cancelIdleCallback?.(handle)
   }
   const timeout = globalThis.setTimeout(() => void analytics.boot(), boot?.timeoutMs ?? 1500)
@@ -79,10 +70,7 @@ export function createConsentController(
   const engine = analytics.consent
   const all = (granted: boolean | ((category: ConsentCategory) => boolean)) =>
     Object.fromEntries(
-      engine.categories.map((category) => [
-        category,
-        typeof granted === 'function' ? granted(category) : granted,
-      ]),
+      engine.categories.map((category) => [category, typeof granted === 'function' ? granted(category) : granted]),
     ) as Prefs
   let state: ConsentControllerState = {
     ready: false,

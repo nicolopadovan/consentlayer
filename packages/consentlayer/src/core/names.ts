@@ -56,13 +56,8 @@ let current = derive(DEFAULT_PREFIX, false)
  * that sets up analytics.
  */
 export function configureNames(input: NamesInput = {}): Names {
-  const base = derive(
-    input.prefix ?? DEFAULT_PREFIX,
-    input.legacy ?? false,
-  )
-  const overrides = Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== undefined),
-  )
+  const base = derive(input.prefix ?? DEFAULT_PREFIX, input.legacy ?? false)
+  const overrides = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined))
   current = {
     ...base,
     ...overrides,
@@ -92,9 +87,7 @@ export function legacyStorageKeysFor(key: string): string[] {
 }
 
 /** The configured name, plus the legacy one while `legacy` is on. */
-export function withLegacy(
-  pick: (names: Names) => string,
-): string[] {
+export function withLegacy(pick: (names: Names) => string): string[] {
   const name = pick(current)
   const old = pick(legacyNames)
   return current.legacy && old !== name ? [name, old] : [name]
@@ -106,8 +99,7 @@ type FlagWindow = Record<string, unknown>
 export function getFlag<T>(name: string): T | undefined {
   if (typeof window === 'undefined') return undefined
   const win = window as unknown as FlagWindow
-  return (win[`__${current.prefix}${name}`] ??
-    (current.legacy ? win[`__${legacyNames.prefix}${name}`] : undefined)) as
+  return (win[`__${current.prefix}${name}`] ?? (current.legacy ? win[`__${legacyNames.prefix}${name}`] : undefined)) as
     | T
     | undefined
 }

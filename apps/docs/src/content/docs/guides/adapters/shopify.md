@@ -1,6 +1,6 @@
 ---
 title: Shopify Customer Privacy
-description: "shopifyCustomerPrivacy() keeps ConsentLayer and Shopify’s Customer Privacy API in agreement."
+description: 'shopifyCustomerPrivacy() keeps ConsentLayer and Shopify’s Customer Privacy API in agreement.'
 ---
 
 `shopifyCustomerPrivacy()` keeps the instance and Shopify's
@@ -31,13 +31,13 @@ ignored; on a headless storefront it is set and the headless options apply.
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `loadFeature` | `boolean` | `true` | Before reading or writing consent, loads Shopify's Customer Privacy script on a headless storefront (when `storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing), then calls `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])` when available. `false` skips both. |
-| `headlessStorefront` | `{ checkoutRootDomain?, storefrontRootDomain?, storefrontAccessToken? }` | None | Required off Shopify-hosted themes. Applies only once `storefrontAccessToken` is set, so you can pass the environment variable directly; then passed to `setTrackingConsent` with `headlessStorefront: true`. |
-| `canBootstrap` | `() => boolean` | None | Returning `false` skips reading Shopify's existing choice at bootstrap. |
-| `document` | `Document` | The global `document` | The document to listen on. |
-| `window` | `Window` | The global `window` | The window that holds `Shopify`. |
+| Option               | Type                                                                     | Default               | Description                                                                                                                                                                                                                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loadFeature`        | `boolean`                                                                | `true`                | Before reading or writing consent, loads Shopify's Customer Privacy script on a headless storefront (when `storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing), then calls `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])` when available. `false` skips both. |
+| `headlessStorefront` | `{ checkoutRootDomain?, storefrontRootDomain?, storefrontAccessToken? }` | None                  | Required off Shopify-hosted themes. Applies only once `storefrontAccessToken` is set, so you can pass the environment variable directly; then passed to `setTrackingConsent` with `headlessStorefront: true`.                                                                                                 |
+| `canBootstrap`       | `() => boolean`                                                          | None                  | Returning `false` skips reading Shopify's existing choice at bootstrap.                                                                                                                                                                                                                                       |
+| `document`           | `Document`                                                               | The global `document` | The document to listen on.                                                                                                                                                                                                                                                                                    |
+| `window`             | `Window`                                                                 | The global `window`   | The window that holds `Shopify`.                                                                                                                                                                                                                                                                              |
 
 Shopify reports consent as strings. `granted`, `allow`, `accepted`, `yes` and
 `true` (case-insensitive) map to `true`; any other value maps to `false`. If

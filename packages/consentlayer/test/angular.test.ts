@@ -5,7 +5,13 @@ import { TestBed } from '@angular/core/testing'
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing'
 import { provideRouter, Router } from '@angular/router'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { injectConsent, injectConsentController, provideConsentLayer, provideGtmNoscript, provideMetaPixelNoscript } from '../src/angular'
+import {
+  injectConsent,
+  injectConsentController,
+  provideConsentLayer,
+  provideGtmNoscript,
+  provideMetaPixelNoscript,
+} from '../src/angular'
 import { createAnalytics } from '../src/core/create-analytics'
 import type { AnalyticsPlugin } from '../src/core/types'
 
@@ -72,7 +78,10 @@ describe('consentlayer/angular', () => {
 
     await router.navigateByUrl('/shop?page=2')
     await settle()
-    expect(ga4.page).toHaveBeenLastCalledWith(expect.objectContaining({ path: '/shop?page=2', title: 'Shop' }), expect.anything())
+    expect(ga4.page).toHaveBeenLastCalledWith(
+      expect.objectContaining({ path: '/shop?page=2', title: 'Shop' }),
+      expect.anything(),
+    )
     await router.navigateByUrl('/shop?page=2#reviews')
     await settle()
     expect(ga4.page).toHaveBeenCalledTimes(2)

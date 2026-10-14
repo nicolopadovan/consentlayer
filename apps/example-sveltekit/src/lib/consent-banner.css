@@ -10,7 +10,9 @@
   background: #fff;
   color: #111827;
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.12);
-  font: 0.95rem/1.45 system-ui, sans-serif;
+  font:
+    0.95rem/1.45 system-ui,
+    sans-serif;
 }
 .consent-banner {
   inset: auto 1rem 1rem;
@@ -29,11 +31,27 @@
   color: inherit;
   font-size: 1.1rem;
 }
-.consent-banner p { margin: 0; }
-.consent-banner a { color: inherit; }
-.consent-dialog label { display: flex; gap: 0.6rem; align-items: start; }
-.consent-dialog input { margin-top: 0.3rem; accent-color: #111827; }
-.consent-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+.consent-banner p {
+  margin: 0;
+}
+.consent-banner a {
+  color: inherit;
+}
+.consent-dialog label {
+  display: flex;
+  gap: 0.6rem;
+  align-items: start;
+}
+.consent-dialog input {
+  margin-top: 0.3rem;
+  accent-color: #111827;
+}
+.consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
 .consent-actions button {
   padding: 0.5rem 0.9rem;
   border: 1px solid #e5e7eb;
@@ -43,4 +61,8 @@
   font: inherit;
   cursor: pointer;
 }
-.consent-actions .primary { border-color: #111827; background: #111827; color: #fff; }
+.consent-actions .primary {
+  border-color: #111827;
+  background: #111827;
+  color: #fff;
+}

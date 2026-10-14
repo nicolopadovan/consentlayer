@@ -4,7 +4,14 @@ import { render } from 'solid-js/web'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import type { Analytics, AnalyticsPlugin } from '../src/core/types'
-import { AnalyticsProvider, ErrorBoundary, GtmNoscript, MetaPixelNoscript, useConsent, useConsentController } from '../src/solid'
+import {
+  AnalyticsProvider,
+  ErrorBoundary,
+  GtmNoscript,
+  MetaPixelNoscript,
+  useConsent,
+  useConsentController,
+} from '../src/solid'
 import { AnalyticsProvider as SolidStartAnalyticsProvider } from '../src/solidstart'
 
 const spyProvider = (id: string) =>
@@ -143,7 +150,9 @@ describe('consentlayer/solid', () => {
     )
     expect(document.querySelector('noscript')).toBeNull()
     setEnabled(true)
-    expect(document.querySelector('noscript')!.innerHTML).toContain('src="https://www.googletagmanager.com/ns.html?id=GTM-ABC123"')
+    expect(document.querySelector('noscript')!.innerHTML).toContain(
+      'src="https://www.googletagmanager.com/ns.html?id=GTM-ABC123"',
+    )
     dispose()
   })
 })

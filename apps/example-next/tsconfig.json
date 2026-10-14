@@ -3,12 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "consentlayer": [
-        "../../packages/consentlayer/src/index.ts"
-      ],
-      "consentlayer/*": [
-        "../../packages/consentlayer/src/*"
-      ]
+      "consentlayer": ["../../packages/consentlayer/src/index.ts"],
+      "consentlayer/*": ["../../packages/consentlayer/src/*"]
     },
     "plugins": [{ "name": "next" }]
   },

@@ -18,17 +18,17 @@ are [consent adapters](/guides/adapters/) instead.
 Each provider is a named export of its own entry point,
 `consentlayer/providers/<name>`, so importing one never bundles another.
 
-| Provider | Factory | Required consent | Required options |
-|---|---|---|---|
-| [GA4](/guides/providers/ga4/) | `ga4()` from `consentlayer/providers/ga4` | `analytics` | `measurementId` |
-| [Meta Pixel](/guides/providers/meta/) | `meta()` from `consentlayer/providers/meta` | `marketing` | `pixelId` |
-| [Google Tag Manager](/guides/providers/gtm/) | `gtm()` from `consentlayer/providers/gtm` | `'none'`, or `requiredConsent` | `containerId` |
-| [PostHog](/guides/providers/posthog/) | `posthog()` from `consentlayer/providers/posthog` | `'none'`; `analytics` with `cookieless: false` | `apiKey` |
-| [Sentry](/guides/providers/sentry/) | `sentry()` from `consentlayer/providers/sentry` | `'none'` | `dsn` |
-| [Contentsquare](/guides/providers/contentsquare/) | `contentsquare()` from `consentlayer/providers/contentsquare` | `analytics` | `tagId` |
-| [Vercel Analytics](/guides/providers/vercel/) | `vercel()` from `consentlayer/providers/vercel` | `'none'` | `trackEvent` |
-| [TikTok Pixel](/guides/providers/tiktok/) | `tiktok()` from `consentlayer/providers/tiktok` | `marketing` | `pixelId` |
-| [Hotjar (deprecated)](/guides/providers/hotjar/) | `hotjar()` from `consentlayer/providers/hotjar` | `analytics` | `siteId`, `version` |
+| Provider                                          | Factory                                                       | Required consent                               | Required options    |
+| ------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------- | ------------------- |
+| [GA4](/guides/providers/ga4/)                     | `ga4()` from `consentlayer/providers/ga4`                     | `analytics`                                    | `measurementId`     |
+| [Meta Pixel](/guides/providers/meta/)             | `meta()` from `consentlayer/providers/meta`                   | `marketing`                                    | `pixelId`           |
+| [Google Tag Manager](/guides/providers/gtm/)      | `gtm()` from `consentlayer/providers/gtm`                     | `'none'`, or `requiredConsent`                 | `containerId`       |
+| [PostHog](/guides/providers/posthog/)             | `posthog()` from `consentlayer/providers/posthog`             | `'none'`; `analytics` with `cookieless: false` | `apiKey`            |
+| [Sentry](/guides/providers/sentry/)               | `sentry()` from `consentlayer/providers/sentry`               | `'none'`                                       | `dsn`               |
+| [Contentsquare](/guides/providers/contentsquare/) | `contentsquare()` from `consentlayer/providers/contentsquare` | `analytics`                                    | `tagId`             |
+| [Vercel Analytics](/guides/providers/vercel/)     | `vercel()` from `consentlayer/providers/vercel`               | `'none'`                                       | `trackEvent`        |
+| [TikTok Pixel](/guides/providers/tiktok/)         | `tiktok()` from `consentlayer/providers/tiktok`               | `marketing`                                    | `pixelId`           |
+| [Hotjar (deprecated)](/guides/providers/hotjar/)  | `hotjar()` from `consentlayer/providers/hotjar`               | `analytics`                                    | `siteId`, `version` |
 
 The ID options of GA4, Meta, TikTok, PostHog, Sentry, Contentsquare and Hotjar may be
 `undefined` or empty: the provider is then turned off, and with `debug: true`
@@ -60,12 +60,12 @@ Event names follow GA4 and each provider translates them to its own; see
 until after its consent requirement is met. A [custom plugin](/internals/plugins/)
 can set the same `defer` field.
 
-| Value | Loads |
-|---|---|
-| `false` (default) | Immediately. |
-| `'idle'` | In a `requestIdleCallback` with a 5,000 ms timeout, or after `setTimeout(…, 1)` where it is unavailable. |
-| `'interaction'` | On the first `pointerdown`, `keydown`, `scroll` or `touchstart` event on `window`. |
-| `number` | After that many milliseconds. |
+| Value             | Loads                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `false` (default) | Immediately.                                                                                             |
+| `'idle'`          | In a `requestIdleCallback` with a 5,000 ms timeout, or after `setTimeout(…, 1)` where it is unavailable. |
+| `'interaction'`   | On the first `pointerdown`, `keydown`, `scroll` or `touchstart` event on `window`.                       |
+| `number`          | After that many milliseconds.                                                                            |
 
 Calls made to the provider in the meantime are held in order and delivered
 once it has loaded. At most 100 calls are held per provider; later ones are
@@ -110,11 +110,11 @@ ConsentLayer also reports the window's `error` events, with level `fatal`,
 and `unhandledrejection` events. Like every other call, errors captured before
 `boot()` are queued, up to 100 calls, and delivered once it completes.
 
-| `createAnalytics` option | Effect |
-|---|---|
-| `errors: true` (default) | `captureError` and the window handlers. |
-| `errors: { globalHandlers: false }` | `captureError` only. |
-| `errors: false` | No error reporting; `captureError` does nothing. |
+| `createAnalytics` option            | Effect                                           |
+| ----------------------------------- | ------------------------------------------------ |
+| `errors: true` (default)            | `captureError` and the window handlers.          |
+| `errors: { globalHandlers: false }` | `captureError` only.                             |
+| `errors: false`                     | No error reporting; `captureError` does nothing. |
 
 In React, wrap the tree in `ErrorBoundary` from `consentlayer/react`; see
 [Report errors](/start/react/#4-report-errors). In Next.js, also export

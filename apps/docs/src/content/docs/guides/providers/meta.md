@@ -1,6 +1,6 @@
 ---
 title: Meta Pixel
-description: "meta() loads the Meta Pixel after marketing consent and shares event IDs with the Conversions API."
+description: 'meta() loads the Meta Pixel after marketing consent and shares event IDs with the Conversions API.'
 ---
 
 `meta()` from `consentlayer/providers/meta` loads the Meta Pixel and sends page
@@ -14,11 +14,11 @@ meta({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID })
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | Required | The 8 to 20 digit pixel ID. |
-| `locale` | `string` | `'en_US'` | The locale segment of the `fbevents.js` URL. |
-| `loadBeforeConsent` | `boolean` | `false` | Loads the pixel at boot with `fbq('consent', 'revoke')`. See [Loading before consent](/guides/providers/#loading-before-consent). |
+| Option              | Type                  | Default   | Description                                                                                                                       |
+| ------------------- | --------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `pixelId`           | `string \| undefined` | Required  | The 8 to 20 digit pixel ID.                                                                                                       |
+| `locale`            | `string`              | `'en_US'` | The locale segment of the `fbevents.js` URL.                                                                                      |
+| `loadBeforeConsent` | `boolean`             | `false`   | Loads the pixel at boot with `fbq('consent', 'revoke')`. See [Loading before consent](/guides/providers/#loading-before-consent). |
 
 ## How it works
 

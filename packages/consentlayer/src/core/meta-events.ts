@@ -28,8 +28,7 @@ export function toMetaEvent(event: AnalyticsEventPayload): {
   name: string
   params: Record<string, unknown>
 } {
-  const standard =
-    META_EVENT_NAMES[event.name] ?? (META_STANDARD.has(event.name) ? event.name : undefined)
+  const standard = META_EVENT_NAMES[event.name] ?? (META_STANDARD.has(event.name) ? event.name : undefined)
   const { items, search_term, ...rest } = event.params as {
     items?: EcommerceItem[]
     search_term?: string

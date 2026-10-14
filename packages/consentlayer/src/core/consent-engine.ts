@@ -7,22 +7,13 @@ import type {
   ConsentState,
   StoredConsent,
 } from './types'
-import {
-  BUILT_IN_CATEGORIES,
-  broadcastConsent,
-  createDebugLog,
-  equalConsent,
-  normalizeConsent,
-} from './utils'
+import { BUILT_IN_CATEGORIES, broadcastConsent, createDebugLog, equalConsent, normalizeConsent } from './utils'
 import { assertValidConsent } from './validation'
 
-export function createConsentEngine(
-  options: ConsentEngineOptions = {},
-): ConsentEngine {
+export function createConsentEngine(options: ConsentEngineOptions = {}): ConsentEngine {
   const debugLog = createDebugLog(options.debug)
   const categories = [...BUILT_IN_CATEGORIES, ...(options.categories ?? [])]
-  const normalize = (consent: Partial<ConsentState> | null | undefined) =>
-    normalizeConsent(consent, categories)
+  const normalize = (consent: Partial<ConsentState> | null | undefined) => normalizeConsent(consent, categories)
   let current = normalize(options.initialConsent)
   const listeners = new Set<(snapshot: ConsentEngineSnapshot) => void>()
   const cleanup = new Set<() => void>()
@@ -134,43 +125,43 @@ export function createConsentEngine(
   }
 
   const runBootstrap = async () => {
-      const record = storage?.read() ?? null
-      const stored = normalize(record?.consent)
-      stale = stored !== null && isStaleRecord(record!)
-      if (stale) debugLog('consent', undefined, 'stored consent is stale', record)
-      if (stored && (!stale || options.onStale === 'keep')) {
-        await commit(stored, 'bootstrap', {
-          persist: false,
-          applyAdapters: false,
-        })
-        return current
-      }
-
-      for (const adapter of adapters) {
-        if (!adapter.bootstrap) continue
-        let next: ConsentState | null
-        try {
-          next = normalize(await adapter.bootstrap())
-        } catch (cause) {
-          options.onError?.({
-            scope: 'consent-adapter',
-            providerId: adapter.id,
-            message: `Consent adapter "${adapter.id}" failed to read consent`,
-            cause,
-          })
-          continue
-        }
-        if (!next) continue
-        await commit(next, 'bootstrap', {
-          persist: true,
-          applyAdapters: false,
-          excludeAdapter: adapter,
-        })
-        return current
-      }
-
-      notify()
+    const record = storage?.read() ?? null
+    const stored = normalize(record?.consent)
+    stale = stored !== null && isStaleRecord(record!)
+    if (stale) debugLog('consent', undefined, 'stored consent is stale', record)
+    if (stored && (!stale || options.onStale === 'keep')) {
+      await commit(stored, 'bootstrap', {
+        persist: false,
+        applyAdapters: false,
+      })
       return current
+    }
+
+    for (const adapter of adapters) {
+      if (!adapter.bootstrap) continue
+      let next: ConsentState | null
+      try {
+        next = normalize(await adapter.bootstrap())
+      } catch (cause) {
+        options.onError?.({
+          scope: 'consent-adapter',
+          providerId: adapter.id,
+          message: `Consent adapter "${adapter.id}" failed to read consent`,
+          cause,
+        })
+        continue
+      }
+      if (!next) continue
+      await commit(next, 'bootstrap', {
+        persist: true,
+        applyAdapters: false,
+        excludeAdapter: adapter,
+      })
+      return current
+    }
+
+    notify()
+    return current
   }
 
   return {

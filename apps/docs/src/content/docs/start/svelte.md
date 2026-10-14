@@ -99,13 +99,13 @@ the first render in the browser.
 state is reactive properties, so read `consent.bannerVisible` directly;
 destructuring it reads the value once.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `analytics` | `Analytics` | Required | The instance from `createAnalytics()`. |
-| `page` | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details. |
-| `boot` | `{ mode?, timeoutMs? }` | `{ mode: 'immediate' }` | When providers start. |
-| `autoShowBanner` | `boolean` | `true` | Whether `bannerVisible` becomes `true` when there is no stored choice. |
-| `openConsentGlobalKey` | `string` | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog from outside Svelte. |
+| Option                 | Type                      | Default                         | Description                                                               |
+| ---------------------- | ------------------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| `analytics`            | `Analytics`               | Required                        | The instance from `createAnalytics()`.                                    |
+| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                        |
+| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start.                                                     |
+| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice.    |
+| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside Svelte. |
 
 ## 3. Add the banner
 

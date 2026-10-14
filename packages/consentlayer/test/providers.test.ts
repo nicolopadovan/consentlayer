@@ -163,9 +163,7 @@ describe('providers', () => {
     append.mockRestore()
     expect(document.head.querySelector('[data-consentlayer="meta-pixel-bootstrap"]')).toBeNull()
     expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeGreaterThan(-1)
-    expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeLessThan(
-      bootstrap.indexOf("fbq('init'"),
-    )
+    expect(bootstrap.indexOf("fbq('consent', 'revoke')")).toBeLessThan(bootstrap.indexOf("fbq('init'"))
   })
 
   it('configures GA4 only once analytics is granted', async () => {
@@ -192,10 +190,21 @@ describe('providers', () => {
 
 describe('ga4 consent mode', () => {
   const entries = () =>
-    (window.dataLayer ?? []).map((entry) => Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date)))
+    (window.dataLayer ?? []).map((entry) =>
+      Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date)),
+    )
   beforeEach(() => {
     const win = window as unknown as Record<string, unknown>
-    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured', '__consentlayerGoogleConsentMode', '__acmGoogleConsentMode', '__consentlayerBuiltInConsentMode', '__consentlayerGtmLoaded']) delete win[key]
+    for (const key of [
+      'dataLayer',
+      'gtag',
+      '__consentlayerGa4Configured',
+      '__consentlayerGoogleConsentMode',
+      '__acmGoogleConsentMode',
+      '__consentlayerBuiltInConsentMode',
+      '__consentlayerGtmLoaded',
+    ])
+      delete win[key]
   })
 
   it('sets the Consent Mode defaults when the manager is created, before boot', async () => {
@@ -228,10 +237,21 @@ describe('ga4 consent mode', () => {
     await analytics.boot()
     await analytics.identify('u1')
     await analytics.page({ path: '/a', url: 'https://example.com/a', title: 'A' })
-    const denied = { ad_user_data: 'denied', ad_personalization: 'denied', ad_storage: 'denied', analytics_storage: 'denied', functionality_storage: 'denied', security_storage: 'granted' }
+    const denied = {
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      ad_storage: 'denied',
+      analytics_storage: 'denied',
+      functionality_storage: 'denied',
+      security_storage: 'granted',
+    }
     expect(entries()).toEqual([
       ['consent', 'default', { ...denied, wait_for_update: 500 }],
-      ['consent', 'default', { ...denied, analytics_storage: 'granted', wait_for_update: 500, region: ['US', 'US-CA'] }],
+      [
+        'consent',
+        'default',
+        { ...denied, analytics_storage: 'granted', wait_for_update: 500, region: ['US', 'US-CA'] },
+      ],
       ['set', 'url_passthrough', true],
       ['set', 'ads_data_redaction', true],
       ['js'],
@@ -254,7 +274,9 @@ describe('ga4 consent mode', () => {
 
   it('sends Consent Mode without GA4 and rejects invalid settings', () => {
     googleConsentMode().observe!({ preferences: true, analytics: false, marketing: true })
-    expect(entries().map(([command, type, signals]) => [command, type, (signals as { ad_storage: string }).ad_storage])).toEqual([
+    expect(
+      entries().map(([command, type, signals]) => [command, type, (signals as { ad_storage: string }).ad_storage]),
+    ).toEqual([
       ['consent', 'default', 'denied'],
       ['consent', 'update', 'granted'],
     ])
@@ -282,18 +304,35 @@ describe('ga4 consent mode', () => {
         ? Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date))
         : { ...(entry as object), 'gtm.start': undefined },
     )
-    const denied = { ad_user_data: 'denied', ad_personalization: 'denied', ad_storage: 'denied', analytics_storage: 'denied', functionality_storage: 'denied', security_storage: 'granted' }
+    const denied = {
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      ad_storage: 'denied',
+      analytics_storage: 'denied',
+      functionality_storage: 'denied',
+      security_storage: 'granted',
+    }
     expect(log).toEqual([
       ['consent', 'default', denied],
       ['js'],
       { event: 'gtm.js', 'gtm.start': undefined },
-      { event: 'page_view', page_location: 'https://example.com/a', page_path: '/a', page_title: 'A', 'gtm.start': undefined },
+      {
+        event: 'page_view',
+        page_location: 'https://example.com/a',
+        page_path: '/a',
+        page_title: 'A',
+        'gtm.start': undefined,
+      },
       { event: 'sign_up', method: 'email', plan: 'pro', 'gtm.start': undefined },
       ['consent', 'update', { ...denied, analytics_storage: 'granted' }],
       ['config', 'G-GTM123', { send_page_view: false, server_container_url: 'https://sgtm.example.com' }],
       ['set', { user_id: 'u1' }],
       ['set', 'user_data', {}],
-      { event: 'consentlayer_consent', consent: expect.objectContaining({ analytics: true, marketing: false }) as unknown, 'gtm.start': undefined },
+      {
+        event: 'consentlayer_consent',
+        consent: expect.objectContaining({ analytics: true, marketing: false }) as unknown,
+        'gtm.start': undefined,
+      },
       { event: 'consentlayer_identify', user_id: 'u1', 'gtm.start': undefined },
       ['set', { user_id: null }],
       ['set', 'user_data', {}],
@@ -304,7 +343,9 @@ describe('ga4 consent mode', () => {
   })
 
   it('gtm waits for its requiredConsent and rejects a malformed container ID', async () => {
-    const manager = createAnalyticsManager({ providers: [gtm({ containerId: 'GTM-WAIT12', requiredConsent: 'analytics' })] })
+    const manager = createAnalyticsManager({
+      providers: [gtm({ containerId: 'GTM-WAIT12', requiredConsent: 'analytics' })],
+    })
     await manager.boot()
     expect(document.querySelector('script[src*="GTM-WAIT12"]')).toBeNull()
     await manager.updateConsent({ preferences: false, analytics: true, marketing: false })
@@ -400,7 +441,12 @@ describe('tiktok', () => {
     await manager.page()
     await manager.track(
       'purchase',
-      { transaction_id: 'o1', value: 10, currency: 'EUR', items: [{ item_id: 'sku', item_name: 'Mug', price: 5, quantity: 2 }] },
+      {
+        transaction_id: 'o1',
+        value: 10,
+        currency: 'EUR',
+        items: [{ item_id: 'sku', item_name: 'Mug', price: 5, quantity: 2 }],
+      },
       { eventId: 'evt-1', providers: { tiktok: { description: 'mugs' } } },
     )
     await manager.track('share', {}, { eventId: 'evt-2' })

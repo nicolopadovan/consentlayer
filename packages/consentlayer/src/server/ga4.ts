@@ -17,7 +17,8 @@ export function ga4Server(options: {
   const measurementId = options.measurementId?.trim()
   const apiSecret = options.apiSecret?.trim()
   if (!measurementId || !apiSecret) {
-    if (measurementId || apiSecret) console.warn('[consentlayer] ga4Server is off: set both measurementId and apiSecret.')
+    if (measurementId || apiSecret)
+      console.warn('[consentlayer] ga4Server is off: set both measurementId and apiSecret.')
     return undefined
   }
   const fetchImpl = options.fetchImpl ?? globalThis.fetch
@@ -26,6 +27,11 @@ export function ga4Server(options: {
     requiredConsent: 'analytics',
     forwardBrowserEvents: false,
     send: (event, request) =>
-      sendMeasurementProtocol({ url: collectUrl(measurementId, apiSecret), sender: 'ga4Server', receiver: 'GA4 Measurement Protocol' }, event, request, fetchImpl),
+      sendMeasurementProtocol(
+        { url: collectUrl(measurementId, apiSecret), sender: 'ga4Server', receiver: 'GA4 Measurement Protocol' },
+        event,
+        request,
+        fetchImpl,
+      ),
   }
 }

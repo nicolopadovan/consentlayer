@@ -49,7 +49,10 @@ background:var(--consentlayer-accent,#111827);color:var(--consentlayer-accent-co
 .consentlayer-banner :focus-visible,.consentlayer-dialog :focus-visible{outline:2px solid var(--consentlayer-accent,#111827);outline-offset:2px}`
 
 /** Merges `window.ConsentLayer.banner` with the banner script's `data-privacy-policy-url` and `data-text-*` attributes; an attribute wins. */
-export function readBannerConfig(global: BannerConfig | undefined, script: HTMLOrSVGScriptElement | null): BannerConfig {
+export function readBannerConfig(
+  global: BannerConfig | undefined,
+  script: HTMLOrSVGScriptElement | null,
+): BannerConfig {
   const text: Record<string, string> = { ...global?.text }
   let privacyPolicyUrl = global?.privacyPolicyUrl
   const dataset = script instanceof HTMLScriptElement ? script.dataset : {}
@@ -69,7 +72,11 @@ function element(tag: string, attributes: Record<string, string> = {}, ...childr
 }
 
 /** Renders the banner and the settings dialog from `controller`'s state. Returns a function that removes them. */
-export function mountBanner(controller: ConsentController, { privacyPolicyUrl, text: overrides }: BannerConfig = {}, nonce = '') {
+export function mountBanner(
+  controller: ConsentController,
+  { privacyPolicyUrl, text: overrides }: BannerConfig = {},
+  nonce = '',
+) {
   const text: typeof defaultText & Record<string, string | undefined> = { ...defaultText, ...overrides }
   const button = (label: string, action: Exclude<keyof ConsentControllerActions, 'setPrefs'>, primary = false) => {
     const node = element('button', { type: 'button', ...(primary && { class: 'consentlayer-primary' }) }, label)
@@ -85,7 +92,12 @@ export function mountBanner(controller: ConsentController, { privacyPolicyUrl, t
     'section',
     { class: 'consentlayer-banner', role: 'dialog', 'aria-labelledby': 'consentlayer-banner-title', hidden: '' },
     element('h2', { id: 'consentlayer-banner-title' }, text.title),
-    element('p', {}, text.message, ...(privacyPolicyUrl ? [' ', element('a', { href: privacyPolicyUrl }, text.privacyPolicy)] : [])),
+    element(
+      'p',
+      {},
+      text.message,
+      ...(privacyPolicyUrl ? [' ', element('a', { href: privacyPolicyUrl }, text.privacyPolicy)] : []),
+    ),
     ...(controller.getSnapshot().gpc ? [element('p', { class: 'consentlayer-gpc' }, text.gpc)] : []),
     actions(
       button(text.rejectNonEssential, 'rejectNonEssential'),

@@ -17,49 +17,33 @@ see the [legal notice](/guides/legal/).
 ## Install the package
 
 <Tabs syncKey="pkg">
-  <TabItem label="pnpm">
-    ```bash
-    pnpm add consentlayer
-    ```
-  </TabItem>
-  <TabItem label="npm">
-    ```bash
-    npm install consentlayer
-    ```
-  </TabItem>
-  <TabItem label="yarn">
-    ```bash
-    yarn add consentlayer
-    ```
-  </TabItem>
-  <TabItem label="bun">
-    ```bash
-    bun add consentlayer
-    ```
-  </TabItem>
+  <TabItem label="pnpm">```bash pnpm add consentlayer ```</TabItem>
+  <TabItem label="npm">```bash npm install consentlayer ```</TabItem>
+  <TabItem label="yarn">```bash yarn add consentlayer ```</TabItem>
+  <TabItem label="bun">```bash bun add consentlayer ```</TabItem>
 </Tabs>
 
 ConsentLayer has no runtime dependencies.
 
 ## System requirements
 
-| Environment | Requirement |
-|---|---|
-| Node.js | 22 or later. The server entry points use the global `fetch` and Web Crypto (`crypto.subtle`, `crypto.randomUUID`) APIs. |
-| Edge runtimes | Any runtime with `fetch` and Web Crypto, such as the Next.js Edge runtime. |
-| Browsers | Chrome and Edge 94, Firefox 93, Safari and iOS Safari 15.4, or later. The package is compiled to ES2022, and CI checks its code and syntax against these versions. Your bundler transpiles it if you target older browsers. |
-| React | 18.3 or 19, only for `consentlayer/react` and `consentlayer/next`. |
-| Next.js | 15 or 16, only for `consentlayer/next`, in the App Router or the Pages Router. |
-| Vue | 3.5.17 or later, only for `consentlayer/vue` and `consentlayer/nuxt`. |
-| Nuxt | 4, only for `consentlayer/nuxt`. |
-| Svelte | 5.14.3 or later, only for `consentlayer/svelte` and `consentlayer/sveltekit`. |
-| SvelteKit | Only for `consentlayer/sveltekit`, which imports `$app/navigation`. Tested with SvelteKit 3. |
-| Solid | 1.9 or later, only for `consentlayer/solid` and `consentlayer/solidstart`. |
-| Solid Router | 0.16 or 1.x, only for `consentlayer/solidstart`, with or without SolidStart. Tested with SolidStart 2. |
-| Angular | 20 or later, only for `consentlayer/angular`. The Angular Router is optional. |
-| PostHog | `posthog-js` 1.438 or later, only for `consentlayer/providers/posthog`. |
-| Sentry | `@sentry/browser` 11 or later, only for `consentlayer/providers/sentry`; `@sentry/nextjs` 11 for `consentlayer/sentry/server` and `consentlayer/sentry/next`. |
-| TypeScript | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`. |
+| Environment   | Requirement                                                                                                                                                                                                                 |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js       | 22 or later. The server entry points use the global `fetch` and Web Crypto (`crypto.subtle`, `crypto.randomUUID`) APIs.                                                                                                     |
+| Edge runtimes | Any runtime with `fetch` and Web Crypto, such as the Next.js Edge runtime.                                                                                                                                                  |
+| Browsers      | Chrome and Edge 94, Firefox 93, Safari and iOS Safari 15.4, or later. The package is compiled to ES2022, and CI checks its code and syntax against these versions. Your bundler transpiles it if you target older browsers. |
+| React         | 18.3 or 19, only for `consentlayer/react` and `consentlayer/next`.                                                                                                                                                          |
+| Next.js       | 15 or 16, only for `consentlayer/next`, in the App Router or the Pages Router.                                                                                                                                              |
+| Vue           | 3.5.17 or later, only for `consentlayer/vue` and `consentlayer/nuxt`.                                                                                                                                                       |
+| Nuxt          | 4, only for `consentlayer/nuxt`.                                                                                                                                                                                            |
+| Svelte        | 5.14.3 or later, only for `consentlayer/svelte` and `consentlayer/sveltekit`.                                                                                                                                               |
+| SvelteKit     | Only for `consentlayer/sveltekit`, which imports `$app/navigation`. Tested with SvelteKit 3.                                                                                                                                |
+| Solid         | 1.9 or later, only for `consentlayer/solid` and `consentlayer/solidstart`.                                                                                                                                                  |
+| Solid Router  | 0.16 or 1.x, only for `consentlayer/solidstart`, with or without SolidStart. Tested with SolidStart 2.                                                                                                                      |
+| Angular       | 20 or later, only for `consentlayer/angular`. The Angular Router is optional.                                                                                                                                               |
+| PostHog       | `posthog-js` 1.438 or later, only for `consentlayer/providers/posthog`.                                                                                                                                                     |
+| Sentry        | `@sentry/browser` 11 or later, only for `consentlayer/providers/sentry`; `@sentry/nextjs` 11 for `consentlayer/sentry/server` and `consentlayer/sentry/next`.                                                               |
+| TypeScript    | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`.                                                                                                                                             |
 
 Every provider and consent adapter works with every framework binding and
 with the script tag.
@@ -72,19 +56,19 @@ loads the vendor's script from the vendor's CDN at runtime, after consent is
 granted. The Vercel provider takes `track` from `@vercel/analytics`, which you
 install and import yourself.
 
-| Import | Peer dependency |
-|---|---|
-| `consentlayer/react` | `react`, `react-dom` |
-| `consentlayer/next` | `react`, `react-dom`, `next` |
-| `consentlayer/vue` | `vue` |
-| `consentlayer/nuxt` | `vue`, `nuxt` |
-| `consentlayer/svelte`, `consentlayer/sveltekit` | `svelte` |
-| `consentlayer/solid` | `solid-js` |
-| `consentlayer/solidstart` | `solid-js`, `@solidjs/router` |
-| `consentlayer/angular` | `@angular/core`, `@angular/router` |
-| `consentlayer/providers/posthog` | `posthog-js` |
-| `consentlayer/providers/sentry` | `@sentry/browser` |
-| `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs` |
+| Import                                                   | Peer dependency                    |
+| -------------------------------------------------------- | ---------------------------------- |
+| `consentlayer/react`                                     | `react`, `react-dom`               |
+| `consentlayer/next`                                      | `react`, `react-dom`, `next`       |
+| `consentlayer/vue`                                       | `vue`                              |
+| `consentlayer/nuxt`                                      | `vue`, `nuxt`                      |
+| `consentlayer/svelte`, `consentlayer/sveltekit`          | `svelte`                           |
+| `consentlayer/solid`                                     | `solid-js`                         |
+| `consentlayer/solidstart`                                | `solid-js`, `@solidjs/router`      |
+| `consentlayer/angular`                                   | `@angular/core`, `@angular/router` |
+| `consentlayer/providers/posthog`                         | `posthog-js`                       |
+| `consentlayer/providers/sentry`                          | `@sentry/browser`                  |
+| `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs`                   |
 
 ## Module format
 
@@ -96,25 +80,25 @@ features, such as Sentry Session Replay, are split into chunks that are
 loaded with dynamic `import()` when they are first needed. See
 [Reduce bundle size](/guides/bundle-size/).
 
-| Entry point | Exports |
-|---|---|
-| `consentlayer` | `createAnalytics`, `definePlugin`, storage helpers and core types |
-| `consentlayer/react` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript` |
-| `consentlayer/next` | `AnalyticsProvider` for Next.js, which tracks navigation itself |
-| `consentlayer/vue` | The `consentLayer` Vue plugin, composables, `MetaPixelNoscript` and `GtmNoscript` |
-| `consentlayer/nuxt` | The Nuxt module, which sets up `consentlayer/vue` from a config file |
-| `consentlayer/svelte` | `consentLayer` for your root component, the `use*` functions, `MetaPixelNoscript` and `GtmNoscript` |
-| `consentlayer/sveltekit` | The same, with page views on SvelteKit navigation and `handleErrorWith` |
-| `consentlayer/solid` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript` |
-| `consentlayer/solidstart` | The same, with page views on Solid Router navigation |
-| `consentlayer/angular` | `provideConsentLayer`, the `inject*` functions, `provideMetaPixelNoscript` and `provideGtmNoscript` |
-| `consentlayer/providers/<name>` | One provider factory: `ga4`, `gtm`, `meta`, `tiktok`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel` |
-| `consentlayer/adapters/<name>` | One consent adapter: `tcf`, `shopify`, `google-consent-mode` |
-| `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
-| `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores |
-| `consentlayer/server/<name>` | One server destination: `meta`, `tiktok`, `sgtm`, `ga4` |
-| `consentlayer/sentry/server`, `consentlayer/sentry/next` | Sentry configuration for Next.js |
-| `consentlayer/testing` | `checkPlugin` |
+| Entry point                                              | Exports                                                                                                        |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `consentlayer`                                           | `createAnalytics`, `definePlugin`, storage helpers and core types                                              |
+| `consentlayer/react`                                     | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript`                                |
+| `consentlayer/next`                                      | `AnalyticsProvider` for Next.js, which tracks navigation itself                                                |
+| `consentlayer/vue`                                       | The `consentLayer` Vue plugin, composables, `MetaPixelNoscript` and `GtmNoscript`                              |
+| `consentlayer/nuxt`                                      | The Nuxt module, which sets up `consentlayer/vue` from a config file                                           |
+| `consentlayer/svelte`                                    | `consentLayer` for your root component, the `use*` functions, `MetaPixelNoscript` and `GtmNoscript`            |
+| `consentlayer/sveltekit`                                 | The same, with page views on SvelteKit navigation and `handleErrorWith`                                        |
+| `consentlayer/solid`                                     | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript`                                |
+| `consentlayer/solidstart`                                | The same, with page views on Solid Router navigation                                                           |
+| `consentlayer/angular`                                   | `provideConsentLayer`, the `inject*` functions, `provideMetaPixelNoscript` and `provideGtmNoscript`            |
+| `consentlayer/providers/<name>`                          | One provider factory: `ga4`, `gtm`, `meta`, `tiktok`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel` |
+| `consentlayer/adapters/<name>`                           | One consent adapter: `tcf`, `shopify`, `google-consent-mode`                                                   |
+| `consentlayer/ecommerce`                                 | `productParams`, `cartParams`, `orderParams`                                                                   |
+| `consentlayer/server`                                    | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores             |
+| `consentlayer/server/<name>`                             | One server destination: `meta`, `tiktok`, `sgtm`, `ga4`                                                        |
+| `consentlayer/sentry/server`, `consentlayer/sentry/next` | Sentry configuration for Next.js                                                                               |
+| `consentlayer/testing`                                   | `checkPlugin`                                                                                                  |
 
 `consentlayer/react` and `consentlayer/next` start with a `'use client'`
 directive, so you can import them from a React Server Component without adding
@@ -145,18 +129,18 @@ If your site sends a Content Security Policy, allow the scripts ConsentLayer
 injects for the providers you use, and the hosts each vendor's script then
 sends data to. ConsentLayer itself adds no inline scripts.
 
-| Provider | `script-src` | Data hosts |
-|---|---|---|
-| GA4 | `https://www.googletagmanager.com` | [Google's CSP guide](https://developers.google.com/tag-platform/security/guides/csp) |
-| Google Tag Manager | `https://www.googletagmanager.com`, plus the hosts of each tag in the container | [Google's CSP guide](https://developers.google.com/tag-platform/security/guides/csp) |
-| Meta Pixel | `https://connect.facebook.net` | `https://www.facebook.com` in `connect-src` and `img-src` |
-| TikTok Pixel | `https://analytics.tiktok.com` | Not documented by TikTok |
-| Contentsquare | `https://*.contentsquare.net` | [Contentsquare's CSP guide](https://docs.contentsquare.com/en/web/content-security-policy/) |
-| Hotjar | `https://*.hotjar.com` | [Hotjar's CSP guide](https://help.hotjar.com/hc/en-us/articles/36820026388881-Content-Security-Policies) |
-| Shopify Customer Privacy | `https://cdn.shopify.com` | Your checkout domain in `connect-src` |
-| PostHog | Bundled from npm; session recording loads from `https://*.posthog.com` | `https://*.posthog.com` in `connect-src`; see [PostHog's CSP guide](https://posthog.com/docs/advanced/content-security-policy) |
-| Sentry | Bundled from npm | The ingest host of your DSN in `connect-src`; Session Replay also needs `worker-src 'self' blob:` |
-| Vercel Analytics | `'self'` | `'self'` |
+| Provider                 | `script-src`                                                                    | Data hosts                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| GA4                      | `https://www.googletagmanager.com`                                              | [Google's CSP guide](https://developers.google.com/tag-platform/security/guides/csp)                                           |
+| Google Tag Manager       | `https://www.googletagmanager.com`, plus the hosts of each tag in the container | [Google's CSP guide](https://developers.google.com/tag-platform/security/guides/csp)                                           |
+| Meta Pixel               | `https://connect.facebook.net`                                                  | `https://www.facebook.com` in `connect-src` and `img-src`                                                                      |
+| TikTok Pixel             | `https://analytics.tiktok.com`                                                  | Not documented by TikTok                                                                                                       |
+| Contentsquare            | `https://*.contentsquare.net`                                                   | [Contentsquare's CSP guide](https://docs.contentsquare.com/en/web/content-security-policy/)                                    |
+| Hotjar                   | `https://*.hotjar.com`                                                          | [Hotjar's CSP guide](https://help.hotjar.com/hc/en-us/articles/36820026388881-Content-Security-Policies)                       |
+| Shopify Customer Privacy | `https://cdn.shopify.com`                                                       | Your checkout domain in `connect-src`                                                                                          |
+| PostHog                  | Bundled from npm; session recording loads from `https://*.posthog.com`          | `https://*.posthog.com` in `connect-src`; see [PostHog's CSP guide](https://posthog.com/docs/advanced/content-security-policy) |
+| Sentry                   | Bundled from npm                                                                | The ingest host of your DSN in `connect-src`; Session Replay also needs `worker-src 'self' blob:`                              |
+| Vercel Analytics         | `'self'`                                                                        | `'self'`                                                                                                                       |
 
 Google's guide lists more hosts when Google Signals or Ads features are on, and
 the Google Tag Manager container runs whatever its tags inject. Tags such as
@@ -170,11 +154,11 @@ Where a vendor supports it, sending data through your own domain shortens
 the policy, and keeps working when browsers or extensions block the vendor's
 hosts:
 
-| Provider | Option | Policy |
-|---|---|---|
+| Provider                | Option                                                                                                              | Policy                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | GA4, Google Tag Manager | `serverContainerUrl`, with a [server-side GTM](/guides/providers/gtm/#server-side-tagging) container on your domain | Your container's origin in `connect-src` and `img-src`, and in `script-src` when it serves the scripts |
-| PostHog | `apiHost`, pointing to a [reverse proxy](/guides/providers/posthog/#reverse-proxy) | `'self'` or your proxy's origin |
-| Sentry | `tunnel`, a [route on your server](/guides/providers/sentry/#reverse-proxy) | `'self'` in `connect-src` |
+| PostHog                 | `apiHost`, pointing to a [reverse proxy](/guides/providers/posthog/#reverse-proxy)                                  | `'self'` or your proxy's origin                                                                        |
+| Sentry                  | `tunnel`, a [route on your server](/guides/providers/sentry/#reverse-proxy)                                         | `'self'` in `connect-src`                                                                              |
 
 A first-party endpoint is something you run and maintain. ConsentLayer
 doesn't require it, and it doesn't change what consent is needed: data sent

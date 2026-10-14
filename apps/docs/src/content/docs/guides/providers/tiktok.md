@@ -1,6 +1,6 @@
 ---
 title: TikTok Pixel
-description: "tiktok() loads the TikTok Pixel after marketing consent, with TikTok consent mode and event IDs shared with the Events API."
+description: 'tiktok() loads the TikTok Pixel after marketing consent, with TikTok consent mode and event IDs shared with the Events API.'
 ---
 
 `tiktok()` from `consentlayer/providers/tiktok` loads the TikTok Pixel and sends
@@ -14,10 +14,10 @@ tiktok({ pixelId: process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID })
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | Required | The pixel ID from TikTok Events Manager. |
-| `loadBeforeConsent` | `boolean` | `false` | Loads the pixel at boot with `ttq.holdConsent()`. See [Loading before consent](/guides/providers/#loading-before-consent). |
+| Option              | Type                  | Default  | Description                                                                                                                |
+| ------------------- | --------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `pixelId`           | `string \| undefined` | Required | The pixel ID from TikTok Events Manager.                                                                                   |
+| `loadBeforeConsent` | `boolean`             | `false`  | Loads the pixel at boot with `ttq.holdConsent()`. See [Loading before consent](/guides/providers/#loading-before-consent). |
 
 ## How it works
 
@@ -43,11 +43,11 @@ There is no `<noscript>` fallback for TikTok.
 
 TikTok's Pixel Cookie Consent Mode works on the `ttq` queue:
 
-| Call | Effect |
-|---|---|
-| `ttq.holdConsent()` | Events are queued and not shared with TikTok. |
-| `ttq.grantConsent()` | Queued and later events are shared. |
-| `ttq.revokeConsent()` | Nothing is shared, including queued events. |
+| Call                  | Effect                                        |
+| --------------------- | --------------------------------------------- |
+| `ttq.holdConsent()`   | Events are queued and not shared with TikTok. |
+| `ttq.grantConsent()`  | Queued and later events are shared.           |
+| `ttq.revokeConsent()` | Nothing is shared, including queued events.   |
 
 With `loadBeforeConsent: true`, the pixel loads with `holdConsent` and
 `tiktok()` sends nothing until marketing is granted.
@@ -66,8 +66,8 @@ consent is granted again. It resumes after a reload.
 TikTok documents these first-party cookies for the pixel, each kept for 13
 months:
 
-| Cookie | Purpose |
-|---|---|
-| `_ttp` | Identifies the browser across visits. The Events API destination reads it. |
-| `ttcsid`, `ttcsid_<pixelId>` | The session. |
-| `ttclid` | The TikTok click ID from an ad click. The Events API destination reads it. |
+| Cookie                       | Purpose                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| `_ttp`                       | Identifies the browser across visits. The Events API destination reads it. |
+| `ttcsid`, `ttcsid_<pixelId>` | The session.                                                               |
+| `ttclid`                     | The TikTok click ID from an ad click. The Events API destination reads it. |

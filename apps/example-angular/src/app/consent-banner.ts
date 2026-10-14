@@ -26,7 +26,9 @@ const labels: Record<ConsentCategory, { label: string; description: string }> = 
           <h2 id="consent-dialog-title">Cookie settings</h2>
           <label>
             <input type="checkbox" checked disabled />
-            <span><strong>Necessary</strong> Needed for the site to work, such as remembering this choice. Always on.</span>
+            <span
+              ><strong>Necessary</strong> Needed for the site to work, such as remembering this choice. Always on.</span
+            >
           </label>
           @for (key of consent.categories(); track key) {
             <label>

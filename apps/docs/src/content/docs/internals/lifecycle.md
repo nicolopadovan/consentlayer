@@ -67,11 +67,11 @@ recent names apply to the whole page. Create one instance per page.
 `<AnalyticsProvider>` calls `analytics.consent.bootstrap()` in one mount
 effect and schedules `boot()` in another, according to its `boot` prop:
 
-| `boot.mode` | When `boot()` runs |
-|---|---|
-| `'immediate'` (default) | In the mount effect. Also the behaviour whenever `window` is undefined. |
-| `'idle'` | `requestIdleCallback` with `timeout: boot.timeoutMs ?? 3000`. Without that API, `setTimeout` with `boot.timeoutMs ?? 1500`. |
-| `'manual'` | Never. Call `analytics.boot()` yourself. |
+| `boot.mode`             | When `boot()` runs                                                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `'immediate'` (default) | In the mount effect. Also the behaviour whenever `window` is undefined.                                                     |
+| `'idle'`                | `requestIdleCallback` with `timeout: boot.timeoutMs ?? 3000`. Without that API, `setTimeout` with `boot.timeoutMs ?? 1500`. |
+| `'manual'`              | Never. Call `analytics.boot()` yourself.                                                                                    |
 
 Unmounting the provider before an idle boot fires cancels it. The `boot` prop
 is read once, on mount.
@@ -129,11 +129,11 @@ keep the context it received in `consent` and apply it once its SDK exists.
 
 ### `requiredConsent`
 
-| Value | `allowed` when |
-|---|---|
-| omitted or `'none'` | always, including before the visitor has chosen |
-| a category: `'preferences'`, `'analytics'`, `'marketing'`, `'sale_of_data'` or a [custom category](/guides/consent-ui/#custom-categories) | consent is known and that key is `true` |
-| a function `(consent) => boolean` | consent is known and the function returns `true` |
+| Value                                                                                                                                     | `allowed` when                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| omitted or `'none'`                                                                                                                       | always, including before the visitor has chosen  |
+| a category: `'preferences'`, `'analytics'`, `'marketing'`, `'sale_of_data'` or a [custom category](/guides/consent-ui/#custom-categories) | consent is known and that key is `true`          |
+| a function `(consent) => boolean`                                                                                                         | consent is known and the function returns `true` |
 
 Until the visitor has chosen, consent is `null`, and every requirement other
 than `'none'` fails without the function being called. Sentry, Vercel
@@ -154,12 +154,12 @@ Pixel providers expose this as an option, relying on Google Consent Mode and
 
 A provider's `defer` delays `load` without delaying its activation:
 
-| `defer` | `load` runs |
-|---|---|
-| `false` or omitted | immediately, inside the lifecycle pass |
-| a number | after that many milliseconds (`setTimeout`) |
-| `'idle'` | on `requestIdleCallback` with a 5000 ms timeout; `setTimeout(…, 1)` without that API |
-| `'interaction'` | on the first `pointerdown`, `keydown`, `scroll` or `touchstart` on `window` |
+| `defer`            | `load` runs                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| `false` or omitted | immediately, inside the lifecycle pass                                               |
+| a number           | after that many milliseconds (`setTimeout`)                                          |
+| `'idle'`           | on `requestIdleCallback` with a 5000 ms timeout; `setTimeout(…, 1)` without that API |
+| `'interaction'`    | on the first `pointerdown`, `keydown`, `scroll` or `touchstart` on `window`          |
 
 Outside the browser, the timing resolves immediately.
 
@@ -191,13 +191,13 @@ Until `boot()` has finished, `page`, `track`, `identify`, `group` and
 in the `pending` queue, which `boot()` drains in order after its first
 lifecycle pass.
 
-| Detail | Behaviour |
-|---|---|
-| Capacity | 100 calls. The first call beyond that is reported with scope `queue-full`; it and later calls are dropped. |
-| Consent check | Performed when the call is delivered, not when it was made, so queued events reach exactly the providers that the first pass activated. |
-| `identify()` | Updates and persists the identity immediately; only the provider calls are queued. A flag stops the first pass from also sending the identity on activation, so providers receive it once. |
-| `reset()` | Never queued. It runs at once on every provider whose `setup` has run. |
-| `enabled` false or destroyed | The call is dropped before it is queued. |
+| Detail                       | Behaviour                                                                                                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Capacity                     | 100 calls. The first call beyond that is reported with scope `queue-full`; it and later calls are dropped.                                                                                 |
+| Consent check                | Performed when the call is delivered, not when it was made, so queued events reach exactly the providers that the first pass activated.                                                    |
+| `identify()`                 | Updates and persists the identity immediately; only the provider calls are queued. A flag stops the first pass from also sending the identity on activation, so providers receive it once. |
+| `reset()`                    | Never queued. It runs at once on every provider whose `setup` has run.                                                                                                                     |
+| `enabled` false or destroyed | The call is dropped before it is queued.                                                                                                                                                   |
 
 ## Delivering an event
 
@@ -318,12 +318,12 @@ At the end of a pass, if the instance has booted, `autoTracking` is set and
 the consent the pass evaluated grants analytics, `enableAutoTracking` runs.
 It binds once per instance:
 
-| Tracker | Mechanism | Event (default name) |
-|---|---|---|
-| Page session | Sent when tracking starts and on each `newPageSession()`, unless `pageViews: false` | `consentlayer.page_session_start` |
-| Clicks | One `click` listener on `window`; matches `selectors` (mode `'all'`) or the `data-track` attribute (mode `'attribute'`) | `consentlayer.ui_click` |
-| Scroll depth | A passive `scroll` listener; thresholds 25, 50, 75 and 100 percent by default, each sent once per page session | `consentlayer.scroll_depth` |
-| Time on page | One `setTimeout` per interval; 5, 15, 30, 60 and 120 seconds by default | `consentlayer.time_on_page` |
+| Tracker      | Mechanism                                                                                                               | Event (default name)              |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Page session | Sent when tracking starts and on each `newPageSession()`, unless `pageViews: false`                                     | `consentlayer.page_session_start` |
+| Clicks       | One `click` listener on `window`; matches `selectors` (mode `'all'`) or the `data-track` attribute (mode `'attribute'`) | `consentlayer.ui_click`           |
+| Scroll depth | A passive `scroll` listener; thresholds 25, 50, 75 and 100 percent by default, each sent once per page session          | `consentlayer.scroll_depth`       |
+| Time on page | One `setTimeout` per interval; 5, 15, 30, 60 and 120 seconds by default                                                 | `consentlayer.time_on_page`       |
 
 The listeners stay bound if consent is later withdrawn, but every
 auto-tracked event is sent with `requireAnalyticsConsent: true` (and
@@ -353,14 +353,14 @@ inside `call`, which catches synchronous throws and rejected promises and
 passes them to `onError` as an `AnalyticsError`
 `{ scope, providerId?, message, cause? }`:
 
-| Scope | Source |
-|---|---|
+| Scope                                                                                                                           | Source                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | `provider-setup`, `provider-load`, `provider-consent`, `provider-page`, `provider-track`, `provider-error`, `provider-teardown` | That hook threw or rejected. `provider-setup` is also used for a duplicate provider ID. |
-| `provider-identify` | `identify`, `reset` or `group` threw or rejected. |
-| `provider-script-load` | A provider reported a failed script through `emitError`. |
-| `server-forward` | The request to `server.endpoint` failed. |
-| `consent-adapter` | A consent adapter's `bootstrap` or `apply` threw or rejected. |
-| `queue-full` | 100 calls were already waiting for boot or for a deferred `load`. |
+| `provider-identify`                                                                                                             | `identify`, `reset` or `group` threw or rejected.                                       |
+| `provider-script-load`                                                                                                          | A provider reported a failed script through `emitError`.                                |
+| `server-forward`                                                                                                                | The request to `server.endpoint` failed.                                                |
+| `consent-adapter`                                                                                                               | A consent adapter's `bootstrap` or `apply` threw or rejected.                           |
+| `queue-full`                                                                                                                    | 100 calls were already waiting for boot or for a deferred `load`.                       |
 
 If `onError` itself throws inside the manager, the exception is swallowed and
 logged with `console.debug` when `debug` is on.

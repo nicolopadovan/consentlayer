@@ -64,16 +64,16 @@ granted, and an event blocked by `requireAnalyticsConsent` or
 failed request or a non-2xx response is reported to `onError` with scope
 `server-forward`.
 
-| Field | Content |
-|---|---|
-| `id` | The event ID, shared with the browser providers so Meta can deduplicate. |
-| `name` | The event name; `page_view` for `page()`. |
-| `params` | The event params (omitted for page views). |
-| `url` | `location.href` at the time of the call, or the `url` passed to `page()`. |
-| `consent` | The consent the event was collected under, including custom categories. |
-| `identity` | The user ID, plus the email and phone number only with marketing consent. |
-| `only` | The call's `only` option, if set. |
-| `providers` | The call's per-provider params, if set. |
+| Field       | Content                                                                   |
+| ----------- | ------------------------------------------------------------------------- |
+| `id`        | The event ID, shared with the browser providers so Meta can deduplicate.  |
+| `name`      | The event name; `page_view` for `page()`.                                 |
+| `params`    | The event params (omitted for page views).                                |
+| `url`       | `location.href` at the time of the call, or the `url` passed to `page()`. |
+| `consent`   | The consent the event was collected under, including custom categories.   |
+| `identity`  | The user ID, plus the email and phone number only with marketing consent. |
+| `only`      | The call's `only` option, if set.                                         |
+| `providers` | The call's per-provider params, if set.                                   |
 
 ### How the handler processes a request
 
@@ -113,11 +113,11 @@ or later.
 <details>
 <summary>Handler options and body validation</summary>
 
-| Option | Type | Description |
-|---|---|---|
-| `destinations` | `(ServerDestination<true> \| undefined)[]` | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, any destination with `forwardBrowserEvents: false` is skipped at runtime, and `undefined` entries are ignored. |
+| Option          | Type                                               | Description                                                                                                                                                                                                                                                                                               |
+| --------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `destinations`  | `(ServerDestination<true> \| undefined)[]`         | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, any destination with `forwardBrowserEvents: false` is skipped at runtime, and `undefined` entries are ignored.                                                                                                           |
 | `consentCookie` | `{ secret: string \| undefined; cookie?: string }` | Takes consent from the signed cookie set by `createConsentHandler`. With `secret` unset, every event is treated as denied and the handler logs a `console.warn` once when created; a secret shorter than 32 characters makes every request answer `500`. See [Consent records](/guides/consent-records/). |
-| `onError` | `(error: unknown) => void` | Receives destination failures and unexpected errors. |
+| `onError`       | `(error: unknown) => void`                         | Receives destination failures and unexpected errors.                                                                                                                                                                                                                                                      |
 
 An event is valid when:
 
@@ -159,10 +159,10 @@ import { orderParams } from 'consentlayer/ecommerce'
 
 const results = await sendServerEvent(
   {
-    id: order.id,               // the browser purchase event's ID, if there was one
+    id: order.id, // the browser purchase event's ID, if there was one
     name: 'purchase',
     params: orderParams(order),
-    consent: order.consent,     // saved at checkout
+    consent: order.consent, // saved at checkout
     clientId: order.gaClientId, // saved at checkout; required by GA4
     identity: { userId, email },
   },
@@ -218,13 +218,13 @@ Event names and params are translated as in the browser; see
 
 ```ts
 type ServerEvent = {
-  id?: string                 // shared with the browser event for deduplication
+  id?: string // shared with the browser event for deduplication
   name: string
   params?: Record<string, unknown>
-  consent: ConsentState       // the consent the event was collected under
+  consent: ConsentState // the consent the event was collected under
   identity?: { userId?: string; email?: string; phone?: string }
   url?: string
-  clientId?: string           // GA4 client ID; read from the _ga cookie when omitted
+  clientId?: string // GA4 client ID; read from the _ga cookie when omitted
   only?: string[]
   providers?: Record<string, Record<string, unknown>>
 }
@@ -253,13 +253,13 @@ function requestInfo(request: Request): ServerRequestInfo
 accepts browser events, so it can be passed to both `createAnalyticsHandler`
 and `sendServerEvent`. Its `id` is `meta`.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | Required | The pixel ID. |
-| `accessToken` | `string \| undefined` | Required | A Conversions API access token. Server only. |
-| `testEventCode` | `string` | None | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
-| `apiVersion` | `string` | `'v26.0'` | The Graph API version. |
-| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+| Option          | Type                  | Default            | Description                                                                      |
+| --------------- | --------------------- | ------------------ | -------------------------------------------------------------------------------- |
+| `pixelId`       | `string \| undefined` | Required           | The pixel ID.                                                                    |
+| `accessToken`   | `string \| undefined` | Required           | A Conversions API access token. Server only.                                     |
+| `testEventCode` | `string`              | None               | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
+| `apiVersion`    | `string`              | `'v26.0'`          | The Graph API version.                                                           |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` used for the request.                                                |
 
 Both values are trimmed. While `pixelId` or `accessToken` is `undefined`, empty
 or only whitespace, `metaCapi()` returns
@@ -274,19 +274,19 @@ Each event is one `POST` to
 `access_token` (and `test_event_code`, when set) in the query string and a
 single entry in `data`:
 
-| Field | Value |
-|---|---|
-| `event_name` | The Meta name for the event: a standard event where one maps, otherwise the original name. |
-| `event_time` | The send time, in Unix seconds. |
-| `event_id` | The event's `id`, which Meta uses to deduplicate it against the pixel event. |
-| `event_source_url` | The event's `url`. |
-| `action_source` | `website`. |
-| `custom_data` | The translated params, keeping only strings, numbers, booleans, `null`, arrays and plain objects. |
-| `user_data.client_ip_address`, `client_user_agent` | From the request, when there is one. |
-| `user_data.fbp`, `fbc` | The `_fbp` and `_fbc` cookies, when there is a request. |
-| `user_data.em` | The SHA-256 hex digest of the trimmed, lowercased email, if it is a valid address. |
-| `user_data.ph` | The SHA-256 hex digest of the phone number's digits, without `+`, if it is a valid E.164 number. |
-| `user_data.external_id` | The SHA-256 hex digest of the user ID. |
+| Field                                              | Value                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `event_name`                                       | The Meta name for the event: a standard event where one maps, otherwise the original name.        |
+| `event_time`                                       | The send time, in Unix seconds.                                                                   |
+| `event_id`                                         | The event's `id`, which Meta uses to deduplicate it against the pixel event.                      |
+| `event_source_url`                                 | The event's `url`.                                                                                |
+| `action_source`                                    | `website`.                                                                                        |
+| `custom_data`                                      | The translated params, keeping only strings, numbers, booleans, `null`, arrays and plain objects. |
+| `user_data.client_ip_address`, `client_user_agent` | From the request, when there is one.                                                              |
+| `user_data.fbp`, `fbc`                             | The `_fbp` and `_fbc` cookies, when there is a request.                                           |
+| `user_data.em`                                     | The SHA-256 hex digest of the trimmed, lowercased email, if it is a valid address.                |
+| `user_data.ph`                                     | The SHA-256 hex digest of the phone number's digits, without `+`, if it is a valid E.164 number.  |
+| `user_data.external_id`                            | The SHA-256 hex digest of the user ID.                                                            |
 
 A non-2xx response throws `Meta CAPI <status>: <response body>`.
 
@@ -307,12 +307,12 @@ tiktokEvents({
 })
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | Required | The pixel ID, sent as `event_source_id`. |
-| `accessToken` | `string \| undefined` | Required | An Events API access token. Server only. |
-| `testEventCode` | `string` | None | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
-| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+| Option          | Type                  | Default            | Description                                                                      |
+| --------------- | --------------------- | ------------------ | -------------------------------------------------------------------------------- |
+| `pixelId`       | `string \| undefined` | Required           | The pixel ID, sent as `event_source_id`.                                         |
+| `accessToken`   | `string \| undefined` | Required           | An Events API access token. Server only.                                         |
+| `testEventCode` | `string`              | None               | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` used for the request.                                                |
 
 Both values are trimmed. While `pixelId` or `accessToken` is `undefined`, empty
 or only whitespace, `tiktokEvents()` returns `undefined` and the destination
@@ -332,21 +332,21 @@ Each event is one `POST` to
 `https://business-api.tiktok.com/open_api/v1.3/event/track/`, with the
 `Access-Token` header and this body:
 
-| Field | Value |
-|---|---|
-| `event_source` | `web`. |
-| `event_source_id` | The pixel ID. |
-| `test_event_code` | `testEventCode`, when set. |
-| `data[0].event` | The TikTok name for the event: a standard event where one maps, otherwise the original name. |
-| `data[0].event_time` | The send time, in Unix seconds. |
-| `data[0].event_id` | The event's `id`, which TikTok uses to deduplicate it against the pixel event. |
-| `data[0].user.email` | The SHA-256 hex digest of the trimmed, lowercased email, if it is a valid address. |
-| `data[0].user.phone` | The SHA-256 hex digest of the phone number's digits prefixed with `+`, if it is a valid E.164 number. |
-| `data[0].user.external_id` | The SHA-256 hex digest of the user ID. |
-| `data[0].user.ip`, `user_agent` | From the request, when there is one. |
-| `data[0].user.ttp`, `ttclid` | The `_ttp` and `ttclid` cookies, when there is a request. |
-| `data[0].properties` | The translated params, merged with `providers.tiktok`. |
-| `data[0].page.url` | The event's `url`. |
+| Field                           | Value                                                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `event_source`                  | `web`.                                                                                                |
+| `event_source_id`               | The pixel ID.                                                                                         |
+| `test_event_code`               | `testEventCode`, when set.                                                                            |
+| `data[0].event`                 | The TikTok name for the event: a standard event where one maps, otherwise the original name.          |
+| `data[0].event_time`            | The send time, in Unix seconds.                                                                       |
+| `data[0].event_id`              | The event's `id`, which TikTok uses to deduplicate it against the pixel event.                        |
+| `data[0].user.email`            | The SHA-256 hex digest of the trimmed, lowercased email, if it is a valid address.                    |
+| `data[0].user.phone`            | The SHA-256 hex digest of the phone number's digits prefixed with `+`, if it is a valid E.164 number. |
+| `data[0].user.external_id`      | The SHA-256 hex digest of the user ID.                                                                |
+| `data[0].user.ip`, `user_agent` | From the request, when there is one.                                                                  |
+| `data[0].user.ttp`, `ttclid`    | The `_ttp` and `ttclid` cookies, when there is a request.                                             |
+| `data[0].properties`            | The translated params, merged with `providers.tiktok`.                                                |
+| `data[0].page.url`              | The event's `url`.                                                                                    |
 
 TikTok answers HTTP 200 with a `code` that is `0` on success. A non-2xx
 response or a non-zero `code` throws
@@ -360,11 +360,11 @@ response or a non-zero `code` throws
 `forwardBrowserEvents: false`, so it can be passed only to `sendServerEvent`.
 Its `id` is `ga4`.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `measurementId` | `string \| undefined` | Required | The `G-` measurement ID. |
-| `apiSecret` | `string \| undefined` | Required | A Measurement Protocol API secret. Server only. |
-| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+| Option          | Type                  | Default            | Description                                     |
+| --------------- | --------------------- | ------------------ | ----------------------------------------------- |
+| `measurementId` | `string \| undefined` | Required           | The `G-` measurement ID.                        |
+| `apiSecret`     | `string \| undefined` | Required           | A Measurement Protocol API secret. Server only. |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` used for the request.               |
 
 Both values are trimmed. While either is `undefined`, empty or only whitespace,
 `ga4Server()` returns `undefined` and the
@@ -382,14 +382,14 @@ from marketing consent.
 Each event is one `POST` to `https://www.google-analytics.com/mp/collect`,
 with `measurement_id` and `api_secret` in the query string and this body:
 
-| Field | Value |
-|---|---|
-| `client_id` | `event.clientId`, or the client ID from the request's `_ga` cookie. |
-| `user_id` | `event.identity.userId`. |
-| `user_data` | With marketing consent only: `sha256_email_address` (trimmed, lowercased) and `sha256_phone_number` (digits prefixed with `+`), each when valid. Omitted when empty. |
-| `consent` | `ad_user_data` and `ad_personalization`, both `GRANTED` with marketing consent and `DENIED` without it. |
-| `events[0].name` | The event name with every character outside `A–Z`, `a–z`, `0–9` and `_` replaced by `_`; `lead` becomes `generate_lead`. |
-| `events[0].params` | The params merged with `providers.ga4`, plus `page_location` from `event.url` when there is one. |
+| Field              | Value                                                                                                                                                                |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client_id`        | `event.clientId`, or the client ID from the request's `_ga` cookie.                                                                                                  |
+| `user_id`          | `event.identity.userId`.                                                                                                                                             |
+| `user_data`        | With marketing consent only: `sha256_email_address` (trimmed, lowercased) and `sha256_phone_number` (digits prefixed with `+`), each when valid. Omitted when empty. |
+| `consent`          | `ad_user_data` and `ad_personalization`, both `GRANTED` with marketing consent and `DENIED` without it.                                                              |
+| `events[0].name`   | The event name with every character outside `A–Z`, `a–z`, `0–9` and `_` replaced by `_`; `lead` becomes `generate_lead`.                                             |
+| `events[0].params` | The params merged with `providers.ga4`, plus `page_location` from `event.url` when there is one.                                                                     |
 
 Without a client ID, `send` throws `ga4Server needs event.clientId or the _ga
 cookie` before any request is made. A non-2xx response throws
@@ -411,18 +411,16 @@ import { createAnalyticsHandler } from 'consentlayer/server'
 import { sgtm } from 'consentlayer/server/sgtm'
 
 export const POST = createAnalyticsHandler({
-  destinations: [
-    sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: process.env.GA_MEASUREMENT_ID }),
-  ],
+  destinations: [sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: process.env.GA_MEASUREMENT_ID })],
 })
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `url` | `string \| undefined` | Required | The client's endpoint: your tagging server followed by the activation path set in the client, such as `/mp/collect`. HTTPS only. |
-| `measurementId` | `string \| undefined` | Required | Sent as `measurement_id`. |
-| `apiSecret` | `string` | | Sent as `api_secret`, for a client or tag that checks it. |
-| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+| Option          | Type                  | Default            | Description                                                                                                                      |
+| --------------- | --------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `url`           | `string \| undefined` | Required           | The client's endpoint: your tagging server followed by the activation path set in the client, such as `/mp/collect`. HTTPS only. |
+| `measurementId` | `string \| undefined` | Required           | Sent as `measurement_id`.                                                                                                        |
+| `apiSecret`     | `string`              |                    | Sent as `api_secret`, for a client or tag that checks it.                                                                        |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` used for the request.                                                                                                |
 
 While `url` or `measurementId` is unset, `sgtm()` returns `undefined` and the
 destination is off, with a `console.warn` once when only one of them is set.
@@ -446,7 +444,7 @@ A destination is an object implementing `ServerDestination`:
 import type { ServerDestination } from 'consentlayer/server'
 
 const myDestination: ServerDestination<true> = {
-  id: 'mine',                 // matched against `only`
+  id: 'mine', // matched against `only`
   requiredConsent: 'analytics',
   forwardBrowserEvents: true, // false keeps it out of createAnalyticsHandler
   async send(event, request) {

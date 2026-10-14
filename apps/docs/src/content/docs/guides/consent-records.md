@@ -19,14 +19,14 @@ consent the visitor never gave is treated as denied.
 Each choice appends one record. Records are never updated or deleted by
 ConsentLayer.
 
-| Field | Column | Type | Content |
-|---|---|---|---|
-| `consentId` | `consent_id` | `string` | A random UUID identifying the browser. It is kept in the signed cookie, so all of one browser's choices share it. |
-| `createdAt` | `created_at` | `Date` | When the server received the choice. |
-| `consent` | `consent` | `ConsentState` | Every category, such as `{ "preferences": false, "analytics": true, "marketing": false }`, plus `sale_of_data` when it is set. |
-| `policyVersion` | `policy_version` | `string` | The privacy policy version, from the route's options. |
-| `userId` | `user_id` | `string`, optional | The signed-in user, when your `userId` option returns one. |
-| `restored` | `restored` | `boolean` | `true` when the browser sent a choice it had already stored, because its consent cookie was missing. The visitor did not choose at `createdAt`; their original choice is an earlier record under another `consentId`. See [Lost cookie](#the-consent-cookie). |
+| Field           | Column           | Type               | Content                                                                                                                                                                                                                                                       |
+| --------------- | ---------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `consentId`     | `consent_id`     | `string`           | A random UUID identifying the browser. It is kept in the signed cookie, so all of one browser's choices share it.                                                                                                                                             |
+| `createdAt`     | `created_at`     | `Date`             | When the server received the choice.                                                                                                                                                                                                                          |
+| `consent`       | `consent`        | `ConsentState`     | Every category, such as `{ "preferences": false, "analytics": true, "marketing": false }`, plus `sale_of_data` when it is set.                                                                                                                                |
+| `policyVersion` | `policy_version` | `string`           | The privacy policy version, from the route's options.                                                                                                                                                                                                         |
+| `userId`        | `user_id`        | `string`, optional | The signed-in user, when your `userId` option returns one.                                                                                                                                                                                                    |
+| `restored`      | `restored`       | `boolean`          | `true` when the browser sent a choice it had already stored, because its consent cookie was missing. The visitor did not choose at `createdAt`; their original choice is an earlier record under another `consentId`. See [Lost cookie](#the-consent-cookie). |
 
 A choice is recorded when it changes the stored consent: through the banner,
 `analytics.consent.update()` or `setConsent()`, or through a consent
@@ -42,12 +42,12 @@ stored choice, or when a submitted choice is identical to the current one.
 ConsentLayer never deletes a consent record. Every other piece of consent data
 has a fixed lifetime:
 
-| Data | Where | Kept for |
-|---|---|---|
-| Consent records | Your database, through the [store](#stores) | Until you delete them. See [Retention and deletion](#retention-and-deletion). |
-| The consent cookie, `consentlayer_proof` | The visitor's browser | 400 days from the last recorded choice (`Max-Age=34560000`), the longest lifetime browsers allow, or until the visitor clears cookies. |
-| The `consentId` | Inside the consent cookie | As long as the cookie. Each recorded choice reuses the ID from a valid cookie; without one, a new ID is generated. |
-| The visitor's choice | `localStorage`, under `consentlayer_consent` | Until the visitor changes it or clears site data, unless you set [`consent.maxAgeDays`](/guides/consent-ui/#asking-again), after which they are asked again. |
+| Data                                     | Where                                        | Kept for                                                                                                                                                     |
+| ---------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Consent records                          | Your database, through the [store](#stores)  | Until you delete them. See [Retention and deletion](#retention-and-deletion).                                                                                |
+| The consent cookie, `consentlayer_proof` | The visitor's browser                        | 400 days from the last recorded choice (`Max-Age=34560000`), the longest lifetime browsers allow, or until the visitor clears cookies.                       |
+| The `consentId`                          | Inside the consent cookie                    | As long as the cookie. Each recorded choice reuses the ID from a valid cookie; without one, a new ID is generated.                                           |
+| The visitor's choice                     | `localStorage`, under `consentlayer_consent` | Until the visitor changes it or clears site data, unless you set [`consent.maxAgeDays`](/guides/consent-ui/#asking-again), after which they are asked again. |
 
 The cookie and the stored choice expire independently: with the defaults, a
 choice can outlive its cookie. See the lost-cookie case under
@@ -88,9 +88,7 @@ export const analytics = createAnalytics({
 ```ts
 // app/api/analytics/route.ts
 export const POST = createAnalyticsHandler({
-  destinations: [
-    metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN }),
-  ],
+  destinations: [metaCapi({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, accessToken: process.env.META_TOKEN })],
   consentCookie: { secret: process.env.CONSENT_SECRET },
 })
 ```
@@ -105,15 +103,15 @@ response is reported to `onError` with scope `consent-adapter` and provider ID
 <details>
 <summary><code>createConsentHandler</code> options</summary>
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `store` | `ConsentStore` | Required | Where records are appended. |
-| `secret` | `string \| undefined` | Required | The HMAC key, at least 32 characters. |
-| `policyVersion` | `string` | Required | Written to every record and to the cookie. Pass the same value to `createAnalytics({ consent: { policyVersion } })`; a new major version asks visitors again. See [Asking again](/guides/consent-ui/#asking-again). |
-| `categories` | `string[]` | `[]` | Your custom categories, as passed to `createAnalytics({ categories })`. Categories not listed are dropped from the record. |
-| `userId` | `(request: Request) => string \| undefined \| Promise<string \| undefined>` | None | Returns the signed-in user from your session. The request body is never used for it. |
-| `cookie` | `string` | `'consentlayer_proof'` | The cookie name. |
-| `onError` | `(error: unknown) => void` | None | Receives unexpected errors, such as a store failure. |
+| Option          | Type                                                                        | Default                | Description                                                                                                                                                                                                         |
+| --------------- | --------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `store`         | `ConsentStore`                                                              | Required               | Where records are appended.                                                                                                                                                                                         |
+| `secret`        | `string \| undefined`                                                       | Required               | The HMAC key, at least 32 characters.                                                                                                                                                                               |
+| `policyVersion` | `string`                                                                    | Required               | Written to every record and to the cookie. Pass the same value to `createAnalytics({ consent: { policyVersion } })`; a new major version asks visitors again. See [Asking again](/guides/consent-ui/#asking-again). |
+| `categories`    | `string[]`                                                                  | `[]`                   | Your custom categories, as passed to `createAnalytics({ categories })`. Categories not listed are dropped from the record.                                                                                          |
+| `userId`        | `(request: Request) => string \| undefined \| Promise<string \| undefined>` | None                   | Returns the signed-in user from your session. The request body is never used for it.                                                                                                                                |
+| `cookie`        | `string`                                                                    | `'consentlayer_proof'` | The cookie name.                                                                                                                                                                                                    |
+| `onError`       | `(error: unknown) => void`                                                  | None                   | Receives unexpected errors, such as a store failure.                                                                                                                                                                |
 
 </details>
 

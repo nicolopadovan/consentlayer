@@ -10,12 +10,12 @@ This page runs a real ConsentLayer instance in your browser with the
 no vendor integration. Each one only logs the hooks ConsentLayer calls on it,
 so you can observe the provider lifecycle as you grant and withdraw consent.
 
-| Provider ID | `requiredConsent` |
-|---|---|
-| `cookieless` | `'none'`: runs without consent |
-| `product-analytics` | `'analytics'` |
-| `ads-pixel` | `'marketing'` |
-| `support-chat` | `'functional'`, a [custom category](/guides/consent-ui/#custom-categories) |
+| Provider ID         | `requiredConsent`                                                          |
+| ------------------- | -------------------------------------------------------------------------- |
+| `cookieless`        | `'none'`: runs without consent                                             |
+| `product-analytics` | `'analytics'`                                                              |
+| `ads-pixel`         | `'marketing'`                                                              |
+| `support-chat`      | `'functional'`, a [custom category](/guides/consent-ui/#custom-categories) |
 
 Make a choice in the banner, change it with **Cookie settings**, and use the
 buttons to track events and identify a user. The log lists every hook call,

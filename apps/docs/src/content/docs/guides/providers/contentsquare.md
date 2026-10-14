@@ -1,6 +1,6 @@
 ---
 title: Contentsquare
-description: "contentsquare() loads the Contentsquare tag after analytics consent."
+description: 'contentsquare() loads the Contentsquare tag after analytics consent.'
 ---
 
 `contentsquare()` from `consentlayer/providers/contentsquare` loads the
@@ -14,8 +14,8 @@ contentsquare({ tagId: process.env.NEXT_PUBLIC_CONTENTSQUARE_TAG_ID })
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
+| Option  | Type                  | Default  | Description                                                          |
+| ------- | --------------------- | -------- | -------------------------------------------------------------------- |
 | `tagId` | `string \| undefined` | Required | The ID in the tag URL, `https://t.contentsquare.net/uxa/<tagId>.js`. |
 
 ## How it works

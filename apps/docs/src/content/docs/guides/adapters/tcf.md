@@ -41,11 +41,11 @@ always provides a choice, so `bannerVisible` stays `false` there.
 A category is granted when the visitor consented to every purpose mapped to
 it, that is when `tcData.purpose.consents[id]` is `true` for each `id`.
 
-| Category | TCF purposes |
-|---|---|
-| `preferences` | 1 (Store and/or access information on a device) |
-| `analytics` | 1, 8 (Measure content performance) |
-| `marketing` | 1, 2 (Use limited data to select advertising), 3 (Create profiles for personalised advertising), 4 (Use profiles to select personalised advertising), 7 (Measure advertising performance) |
+| Category      | TCF purposes                                                                                                                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `preferences` | 1 (Store and/or access information on a device)                                                                                                                                           |
+| `analytics`   | 1, 8 (Measure content performance)                                                                                                                                                        |
+| `marketing`   | 1, 2 (Use limited data to select advertising), 3 (Create profiles for personalised advertising), 4 (Use profiles to select personalised advertising), 7 (Measure advertising performance) |
 
 Only consent counts. A purpose the CMP reports under legitimate interest, in
 `tcData.purpose.legitimateInterests`, does not grant a category.
@@ -63,10 +63,10 @@ tcf({
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `purposes` | `Partial<Record<ConsentCategory, number[]>>` | The table above | TCF purpose IDs per category, merged over the defaults. |
-| `window` | `Window` | The global `window` | The window that holds `__tcfapi`. |
+| Option     | Type                                         | Default             | Description                                             |
+| ---------- | -------------------------------------------- | ------------------- | ------------------------------------------------------- |
+| `purposes` | `Partial<Record<ConsentCategory, number[]>>` | The table above     | TCF purpose IDs per category, merged over the defaults. |
+| `window`   | `Window`                                     | The global `window` | The window that holds `__tcfapi`.                       |
 
 ## When there is no TCF choice
 

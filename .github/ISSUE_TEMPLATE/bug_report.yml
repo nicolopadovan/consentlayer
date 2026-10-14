@@ -43,5 +43,5 @@ body:
     id: debug
     attributes:
       label: Debug output
-      description: "The console output with `debug: true`."
+      description: 'The console output with `debug: true`.'
       render: text

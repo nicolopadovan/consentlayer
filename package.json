@@ -7,6 +7,8 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "turbo lint",
     "publish:package": "pnpm --filter consentlayer publish",
     "test": "turbo test",

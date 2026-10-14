@@ -138,7 +138,10 @@ export function ErrorBoundary(props: ErrorBoundaryProps): JSX.Element {
   const context = useContext(AnalyticsContext)
   return createComponent(SolidErrorBoundary, {
     fallback: (error: unknown, reset: () => void) => {
-      void (props.analytics ?? context ?? latestAnalytics())?.captureError(error, { source: 'boundary', tags: props.tags })
+      void (props.analytics ?? context ?? latestAnalytics())?.captureError(error, {
+        source: 'boundary',
+        tags: props.tags,
+      })
       return typeof props.fallback === 'function' ? props.fallback(error, reset) : props.fallback
     },
     get children() {

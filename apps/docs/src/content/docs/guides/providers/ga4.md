@@ -1,6 +1,6 @@
 ---
 title: GA4
-description: "ga4() sends page views and events to Google Analytics 4 after analytics consent, with Google Consent Mode v2."
+description: 'ga4() sends page views and events to Google Analytics 4 after analytics consent, with Google Consent Mode v2.'
 ---
 
 `ga4()` from `consentlayer/providers/ga4` loads gtag.js and sends page views
@@ -14,12 +14,12 @@ ga4({ measurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID })
 
 ## Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `measurementId` | `string \| undefined` | Required | The `G-` measurement ID. |
-| `loadBeforeConsent` | `boolean` | `false` | Loads gtag.js at boot with Consent Mode denied. See [Loading before consent](/guides/providers/#loading-before-consent). |
-| `consentMode` | `'basic' \| 'advanced'` | `'basic'` | `'advanced'` loads gtag.js and configures the tag at boot. See [Advanced mode](#advanced-mode). |
-| `serverContainerUrl` | `string` | | Your [server-side GTM](/guides/providers/gtm/#server-side-tagging) tagging server, set as `server_container_url`, so GA4 hits go to it instead of Google. |
+| Option               | Type                    | Default   | Description                                                                                                                                               |
+| -------------------- | ----------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `measurementId`      | `string \| undefined`   | Required  | The `G-` measurement ID.                                                                                                                                  |
+| `loadBeforeConsent`  | `boolean`               | `false`   | Loads gtag.js at boot with Consent Mode denied. See [Loading before consent](/guides/providers/#loading-before-consent).                                  |
+| `consentMode`        | `'basic' \| 'advanced'` | `'basic'` | `'advanced'` loads gtag.js and configures the tag at boot. See [Advanced mode](#advanced-mode).                                                           |
+| `serverContainerUrl` | `string`                |           | Your [server-side GTM](/guides/providers/gtm/#server-side-tagging) tagging server, set as `server_container_url`, so GA4 hits go to it instead of Google. |
 
 ## How it works
 
@@ -31,12 +31,12 @@ before any network request, `ga4()` creates `window.dataLayer` and
 has a choice, each consent change sends `gtag('consent', 'update')` with this
 mapping:
 
-| Consent Mode signal | Granted when |
-|---|---|
-| `analytics_storage` | `analytics` is granted |
-| `ad_storage`, `ad_user_data`, `ad_personalization` | `marketing` is granted |
-| `functionality_storage` | `preferences` is granted |
-| `security_storage` | Always |
+| Consent Mode signal                                | Granted when             |
+| -------------------------------------------------- | ------------------------ |
+| `analytics_storage`                                | `analytics` is granted   |
+| `ad_storage`, `ad_user_data`, `ad_personalization` | `marketing` is granted   |
+| `functionality_storage`                            | `preferences` is granted |
+| `security_storage`                                 | Always                   |
 
 `gtag('config', measurementId, { send_page_view: false })` runs once, after
 analytics consent is first granted, so GA4 never sends a hit before it. Page

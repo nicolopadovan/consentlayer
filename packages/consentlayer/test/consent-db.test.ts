@@ -42,9 +42,13 @@ describe('consent handler', () => {
     const { records, handler } = setup()
     const first = await handler(post('/api/consent', { consent: granted }))
     expect(first.status).toBe(204)
-    expect(first.headers.get('set-cookie')).toMatch(/^consentlayer_proof=.+; Path=\/; Max-Age=\d+; HttpOnly; SameSite=Lax; Secure$/)
+    expect(first.headers.get('set-cookie')).toMatch(
+      /^consentlayer_proof=.+; Path=\/; Max-Age=\d+; HttpOnly; SameSite=Lax; Secure$/,
+    )
 
-    const second = await handler(post('/api/consent', { consent: { ...denied, extra: true }, restored: true }, cookieOf(first)))
+    const second = await handler(
+      post('/api/consent', { consent: { ...denied, extra: true }, restored: true }, cookieOf(first)),
+    )
     const { consentId } = records[0]
     expect(consentId).toMatch(/^[\w-]{36}$/)
     expect(records.map(({ createdAt, ...rest }) => [createdAt instanceof Date, rest])).toEqual([
@@ -79,7 +83,9 @@ describe('consent handler', () => {
       destinations: [{ id: 'meta', requiredConsent: 'marketing', forwardBrowserEvents: true, send }],
       consentCookie: { secret: undefined },
     })
-    expect(warn).toHaveBeenCalledWith('[consentlayer] consentCookie.secret is not set: every event is treated as denied.')
+    expect(warn).toHaveBeenCalledWith(
+      '[consentlayer] consentCookie.secret is not set: every event is treated as denied.',
+    )
     expect((await analytics(post('/api/analytics', { name: 'x', consent: granted }))).status).toBe(204)
     expect(send).not.toHaveBeenCalled()
     warn.mockRestore()
@@ -158,7 +164,9 @@ describe('consent stores', () => {
     const sql = vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => Promise.resolve([strings, values]))
     await postgresStore(sql).append(record)
     const [strings, ...values] = sql.mock.calls[0]
-    expect(strings.join('?')).toMatch(/^insert into consent_records \(consent_id, created_at, consent, policy_version, user_id, restored\)/)
+    expect(strings.join('?')).toMatch(
+      /^insert into consent_records \(consent_id, created_at, consent, policy_version, user_id, restored\)/,
+    )
     expect(values).toEqual(['c1', '2026-10-13T10:00:00.000Z', JSON.stringify(granted), 'v1', null, false])
   })
 

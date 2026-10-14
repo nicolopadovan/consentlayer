@@ -1,10 +1,4 @@
-import type {
-  ConsentState,
-  ConsentStorageAdapter,
-  StoredConsent,
-  IdentityStorageAdapter,
-  UserIdentity,
-} from './types'
+import type { ConsentState, ConsentStorageAdapter, StoredConsent, IdentityStorageAdapter, UserIdentity } from './types'
 import { legacyStorageKeysFor } from './names'
 import { isBrowser, normalizeIdentity, safeJsonParse } from './utils'
 
@@ -17,9 +11,7 @@ export type LocalStorageAdapterOptions = {
 }
 
 /** Consent in localStorage, synced across tabs. Never throws when storage is blocked or full. */
-export function createLocalStorageConsentStorage(
-  options: LocalStorageAdapterOptions,
-): ConsentStorageAdapter {
+export function createLocalStorageConsentStorage(options: LocalStorageAdapterOptions): ConsentStorageAdapter {
   return {
     read() {
       return withStorage(
@@ -31,10 +23,7 @@ export function createLocalStorageConsentStorage(
     write(record) {
       withStorage(
         options,
-        (storage) =>
-          record
-            ? storage.setItem(options.key, JSON.stringify(record))
-            : storage.removeItem(options.key),
+        (storage) => (record ? storage.setItem(options.key, JSON.stringify(record)) : storage.removeItem(options.key)),
         undefined,
       )
     },
@@ -54,15 +43,12 @@ export function createLocalStorageConsentStorage(
 }
 
 /** Visitor identity in localStorage. Never throws when storage is blocked or full. */
-export function createLocalStorageIdentityStorage(
-  options: LocalStorageAdapterOptions,
-): IdentityStorageAdapter {
+export function createLocalStorageIdentityStorage(options: LocalStorageAdapterOptions): IdentityStorageAdapter {
   return {
     read() {
       return withStorage(
         options,
-        (storage) =>
-          normalizeIdentity(safeJsonParse<UserIdentity>(readMigrating(storage, options)) ?? {}),
+        (storage) => normalizeIdentity(safeJsonParse<UserIdentity>(readMigrating(storage, options)) ?? {}),
         {},
       )
     },
@@ -88,9 +74,7 @@ export function createLocalStorageIdentityStorage(
 }
 
 /** Consent kept in memory only, e.g. for tests or when you store it yourself. */
-export function createMemoryConsentStorage(
-  initial: ConsentState | null = null,
-): ConsentStorageAdapter {
+export function createMemoryConsentStorage(initial: ConsentState | null = null): ConsentStorageAdapter {
   let value = toRecord(initial)
   const listeners = new Set<() => void>()
   return {
@@ -113,9 +97,7 @@ export function createMemoryConsentStorage(
 }
 
 /** Identity kept in memory only. */
-export function createMemoryIdentityStorage(
-  initial: UserIdentity = {},
-): IdentityStorageAdapter {
+export function createMemoryIdentityStorage(initial: UserIdentity = {}): IdentityStorageAdapter {
   let value = normalizeIdentity(initial)
   return {
     read() {
@@ -153,11 +135,7 @@ function readMigrating(
 }
 
 /** Blocked storage (sandboxed iframes, "block all cookies") and a full quota throw; consent then lives in memory only. */
-function withStorage<T>(
-  options: LocalStorageAdapterOptions,
-  run: (storage: Storage) => T,
-  fallback: T,
-): T {
+function withStorage<T>(options: LocalStorageAdapterOptions, run: (storage: Storage) => T, fallback: T): T {
   try {
     const storage = options.storage ?? (isBrowser() ? window.localStorage : undefined)
     return storage ? run(storage) : fallback

@@ -31,12 +31,12 @@ broadcast and sent to the server exactly like the built-in ones.
 Every value entering the engine is normalised (`normalizeConsent` in
 `src/core/utils.ts`):
 
-| Input | Result |
-|---|---|
-| A known category | Coerced with `Boolean()`; a missing category becomes `false`. |
-| `sale_of_data` | Kept only if it is a real boolean; otherwise removed. |
-| Any other key | Removed. |
-| `null` or `undefined` | `null`. |
+| Input                 | Result                                                        |
+| --------------------- | ------------------------------------------------------------- |
+| A known category      | Coerced with `Boolean()`; a missing category becomes `false`. |
+| `sale_of_data`        | Kept only if it is a real boolean; otherwise removed.         |
+| Any other key         | Removed.                                                      |
+| `null` or `undefined` | `null`.                                                       |
 
 `null` means the visitor has not chosen yet. It is not the same as "all
 denied": while consent is `null`, the banner is shown and only providers
@@ -52,11 +52,11 @@ the storage key and reload the page.
 same promise. `<AnalyticsProvider>` calls it on mount. It tries these sources in order and stops at the first that yields
 a value:
 
-| Step | Source | Written to storage | Broadcast | Adapters applied |
-|---|---|---|---|---|
-| 1 | The storage adapter, by default `localStorage["consentlayer_consent"]`, unless the choice there is [stale](#stale-choices) | no (already stored) | yes | none |
-| 2 | Each adapter's `bootstrap()`, in the order given, awaited one at a time | yes | yes | none |
-| 3 | Nothing found: the engine keeps `initialConsent` (default `null`) | no | no | none |
+| Step | Source                                                                                                                     | Written to storage  | Broadcast | Adapters applied |
+| ---- | -------------------------------------------------------------------------------------------------------------------------- | ------------------- | --------- | ---------------- |
+| 1    | The storage adapter, by default `localStorage["consentlayer_consent"]`, unless the choice there is [stale](#stale-choices) | no (already stored) | yes       | none             |
+| 2    | Each adapter's `bootstrap()`, in the order given, awaited one at a time                                                    | yes                 | yes       | none             |
+| 3    | Nothing found: the engine keeps `initialConsent` (default `null`)                                                          | no                  | no        | none             |
 
 Until bootstrap resolves, the engine holds `consent.initialConsent`, and the
 manager starts from the same value. If step 1 or 2 yields a value equal to the
@@ -100,10 +100,10 @@ ignored: it is written, broadcast and applied to every adapter like a change.
 
 ## Set vs update
 
-| Call | What it commits |
-|---|---|
-| `consent.setConsent(state)` | `state` exactly, after validation. Rejects with a `TypeError` if any category is missing or not a boolean. |
-| `consent.update(partial)` | Awaits `bootstrap()`, then commits every category set to `false`, overlaid with the current consent, overlaid with `partial`. |
+| Call                        | What it commits                                                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `consent.setConsent(state)` | `state` exactly, after validation. Rejects with a `TypeError` if any category is missing or not a boolean.                    |
+| `consent.update(partial)`   | Awaits `bootstrap()`, then commits every category set to `false`, overlaid with the current consent, overlaid with `partial`. |
 
 `update({ analytics: true })` on a first visit therefore commits
 `{ preferences: false, analytics: true, marketing: false }`, and on a visitor
@@ -138,23 +138,23 @@ with scope `consent-adapter`, its `providerId`, and the message
 `Consent adapter "<id>" failed to apply consent`; the other adapters still
 run.
 
-| Source of the change | Written to storage | Broadcast | Adapters applied |
-|---|---|---|---|
-| `setConsent`, `update` or a consent UI action | yes | yes | all |
-| An adapter's `subscribe` callback | yes | yes | all except that adapter |
-| Bootstrap from storage | no | yes | none |
-| Bootstrap from an adapter | yes | yes | none |
-| Another tab (`storage` event) | no | yes | none |
+| Source of the change                          | Written to storage | Broadcast | Adapters applied        |
+| --------------------------------------------- | ------------------ | --------- | ----------------------- |
+| `setConsent`, `update` or a consent UI action | yes                | yes       | all                     |
+| An adapter's `subscribe` callback             | yes                | yes       | all except that adapter |
+| Bootstrap from storage                        | no                 | yes       | none                    |
+| Bootstrap from an adapter                     | yes                | yes       | none                    |
+| Another tab (`storage` event)                 | no                 | yes       | none                    |
 
 ## Broadcast
 
 Each committed change is published on two channels, for code that does not
 hold the analytics instance, such as a tag manager or an inline script:
 
-| Channel | Default name | Value |
-|---|---|---|
-| DOM event dispatched on `document` | `consentlayer:consent` | `CustomEvent` whose `detail` is the consent |
-| Window global | `window.CONSENTLAYER_CONSENT` | The consent object |
+| Channel                            | Default name                  | Value                                       |
+| ---------------------------------- | ----------------------------- | ------------------------------------------- |
+| DOM event dispatched on `document` | `consentlayer:consent`        | `CustomEvent` whose `detail` is the consent |
+| Window global                      | `window.CONSENTLAYER_CONSENT` | The consent object                          |
 
 With `names.legacy` on, both are also published under the pre-1.0 names
 `acm:consent` and `window.ACM_CONSENT`. The names derive from `names.prefix`
@@ -195,12 +195,12 @@ interface ConsentIntegrationAdapter {
 }
 ```
 
-| Part | When it runs | Purpose |
-|---|---|---|
-| `bootstrap` | During bootstrap, only if storage holds no value and no earlier adapter returned one | Read a choice the external platform already has |
-| `apply` | After every committed change except those from storage, bootstrap, or this adapter's own `subscribe` | Push the choice to the external platform |
-| `subscribe` | Once, when the engine is created | Receive choices made in the external platform |
-| `observe` | Once when the engine is created, with the current consent (`null` before a choice), then on every notify, whatever the change's source | Mirror the choice somewhere that has no consent of its own, such as Google's Consent Mode signals |
+| Part        | When it runs                                                                                                                           | Purpose                                                                                           |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `bootstrap` | During bootstrap, only if storage holds no value and no earlier adapter returned one                                                   | Read a choice the external platform already has                                                   |
+| `apply`     | After every committed change except those from storage, bootstrap, or this adapter's own `subscribe`                                   | Push the choice to the external platform                                                          |
+| `subscribe` | Once, when the engine is created                                                                                                       | Receive choices made in the external platform                                                     |
+| `observe`   | Once when the engine is created, with the current consent (`null` before a choice), then on every notify, whatever the change's source | Mirror the choice somewhere that has no consent of its own, such as Google's Consent Mode signals |
 
 Pass adapters with `createAnalytics({ consent: { adapters: [...] } })`.
 An `observe` that throws is reported to `onError` with scope
@@ -223,16 +223,16 @@ is reported with scope `consent-adapter`. See
 keeps Shopify's consent state and ConsentLayer's in step. Its adapter ID is
 `shopify-customer-privacy`.
 
-| Part | Behaviour |
-|---|---|
+| Part        | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bootstrap` | Returns `null` if `canBootstrap()` returns false. Unless `loadFeature: false`, first loads Shopify's Customer Privacy script when `headlessStorefront.storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing, then awaits `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`. Reads `Shopify.customerPrivacy.currentVisitorConsent()` and returns `null` if it is missing or every value is empty, which means the visitor has not chosen. Otherwise maps the values as below. |
-| `apply` | Loads the feature in the same way, then calls `setTrackingConsent({ preferences, analytics, marketing, sale_of_data? })`. With `headlessStorefront.storefrontAccessToken` set, it adds `headlessStorefront: true` and your `checkoutRootDomain`, `storefrontRootDomain` and `storefrontAccessToken`, which Shopify requires outside its hosted themes. It resolves when Shopify calls back, or immediately when `setTrackingConsent` is missing. |
-| `subscribe` | Listens for Shopify's `visitorConsentCollected` DOM event and maps `preferencesAllowed`, `analyticsAllowed`, `marketingAllowed` and `saleOfDataAllowed` to the matching categories. |
+| `apply`     | Loads the feature in the same way, then calls `setTrackingConsent({ preferences, analytics, marketing, sale_of_data? })`. With `headlessStorefront.storefrontAccessToken` set, it adds `headlessStorefront: true` and your `checkoutRootDomain`, `storefrontRootDomain` and `storefrontAccessToken`, which Shopify requires outside its hosted themes. It resolves when Shopify calls back, or immediately when `setTrackingConsent` is missing.                                                                       |
+| `subscribe` | Listens for Shopify's `visitorConsentCollected` DOM event and maps `preferencesAllowed`, `analyticsAllowed`, `marketingAllowed` and `saleOfDataAllowed` to the matching categories.                                                                                                                                                                                                                                                                                                                                    |
 
-| Shopify value | Becomes |
-|---|---|
-| `true`, `'yes'`, `'granted'`, `'allow'`, `'accepted'`, `'true'` (case-insensitive) | `true` |
-| `false`, `'no'`, `'denied'`, `'reject'`, `'refused'`, `'false'`, empty or unknown | `false` |
+| Shopify value                                                                      | Becomes |
+| ---------------------------------------------------------------------------------- | ------- |
+| `true`, `'yes'`, `'granted'`, `'allow'`, `'accepted'`, `'true'` (case-insensitive) | `true`  |
+| `false`, `'no'`, `'denied'`, `'reject'`, `'refused'`, `'false'`, empty or unknown  | `false` |
 
 `sale_of_data` is included only when Shopify returns a non-empty value for it,
 so an undecided visitor leaves it unset. When ConsentLayer's own `apply`
@@ -245,11 +245,11 @@ occurs.
 `tcf()` from `consentlayer/adapters/tcf` reads consent from the
 IAB TCF v2 CMP on the page. Its adapter ID is `tcf`.
 
-| Part | Behaviour |
-|---|---|
+| Part        | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bootstrap` | Returns `null` if `window.__tcfapi` is missing. Otherwise calls `__tcfapi('addEventListener', 2, callback)`, takes the first callback, removes the listener with `removeEventListener` and its `listenerId`, and returns `null` unless the call succeeded and `gdprApplies` is `true`. Otherwise maps `purpose.consents` as in the [mapping table](/guides/adapters/tcf/#purposes-and-categories), including while the CMP shows its interface (`eventStatus: 'cmpuishown'`), when no purpose has consent yet. |
-| `apply` | None. TCF has no command for writing consent back to the CMP. |
-| `subscribe` | Adds a listener the same way and maps every callback with `gdprApplies: true`; the others are ignored. The returned function removes the listener, or removes it as soon as the CMP reports its `listenerId` if that has not happened yet. |
+| `apply`     | None. TCF has no command for writing consent back to the CMP.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `subscribe` | Adds a listener the same way and maps every callback with `gdprApplies: true`; the others are ignored. The returned function removes the listener, or removes it as soon as the CMP reports its `listenerId` if that has not happened yet.                                                                                                                                                                                                                                                                     |
 
 ### Google Consent Mode
 
@@ -257,10 +257,10 @@ IAB TCF v2 CMP on the page. Its adapter ID is `tcf`.
 the choice to Google tags. Its adapter ID is `google-consent-mode`, and it has
 only `observe`.
 
-| Call | Behaviour |
-|---|---|
+| Call  | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | First | Creates `window.dataLayer` and `window.gtag` if absent and sets the `__consentlayerGoogleConsentMode` window flag, which tells `ga4()` to skip its own Consent Mode calls. Calls `gtag('consent', 'default', …)` with every signal denied except `security_storage`, then one `default` per `regions` entry, then the `url_passthrough` and `ads_data_redaction` settings that are on. If the consent is not `null`, continues as below. |
-| Later | Calls `gtag('consent', 'update', …)` with the [signal mapping](/guides/adapters/google-consent-mode/#signals). While consent is `null` and no update was sent yet, nothing is sent, so the defaults stay in force. |
+| Later | Calls `gtag('consent', 'update', …)` with the [signal mapping](/guides/adapters/google-consent-mode/#signals). While consent is `null` and no update was sent yet, nothing is sent, so the defaults stay in force.                                                                                                                                                                                                                       |
 
 ## Identity storage
 
@@ -268,19 +268,19 @@ only `observe`.
 part of it to `localStorage["consentlayer_user_identity"]`. What is shared
 with providers and what is persisted depends on consent:
 
-| Consent | Shared with providers | Persisted |
-|---|---|---|
+| Consent                                                | Shared with providers                                 | Persisted                   |
+| ------------------------------------------------------ | ----------------------------------------------------- | --------------------------- |
 | Not chosen yet, or analytics and marketing both denied | `userId` only, and only with providers allowed to run | nothing; the key is removed |
-| Analytics granted, marketing denied | `userId` | `{ userId }` |
-| Marketing granted | `userId`, `email`, `phone` | `{ userId, email, phone }` |
+| Analytics granted, marketing denied                    | `userId`                                              | `{ userId }`                |
+| Marketing granted                                      | `userId`, `email`, `phone`                            | `{ userId, email, phone }`  |
 
 The identity is normalised on the way in (`normalizeIdentity` in
 `src/core/utils.ts`):
 
-| Field | Normalisation |
-|---|---|
-| `email` | Trimmed and lowercased; kept only if it has the form `name@domain.tld` with no whitespace. |
-| `phone` | Spaces, dashes, dots and parentheses removed; kept only if it is an E.164 number, with or without the leading `+`. |
+| Field    | Normalisation                                                                                                                                               |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `email`  | Trimmed and lowercased; kept only if it has the form `name@domain.tld` with no whitespace.                                                                  |
+| `phone`  | Spaces, dashes, dots and parentheses removed; kept only if it is an E.164 number, with or without the leading `+`.                                          |
 | `userId` | Converted to a string. A `userId` different from the current one replaces the whole identity, so a previous visitor's contact details are not carried over. |
 
 On the next page load, the stored `userId` is used immediately. A stored
@@ -290,11 +290,11 @@ otherwise it is discarded.
 
 On a consent change:
 
-| Change | Effect on identity |
-|---|---|
-| Marketing withdrawn | Email and phone are removed from memory and storage. If they were set, active providers receive `identify` again with only `userId`, and providers that have run `setup` but are now inactive receive `reset`. |
-| Marketing granted | If an email or phone is held in memory, the providers that were already active receive `identify` with the full identity. Newly activated providers receive it on activation. |
-| Analytics and marketing both denied | The storage key is removed. |
+| Change                              | Effect on identity                                                                                                                                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Marketing withdrawn                 | Email and phone are removed from memory and storage. If they were set, active providers receive `identify` again with only `userId`, and providers that have run `setup` but are now inactive receive `reset`. |
+| Marketing granted                   | If an email or phone is held in memory, the providers that were already active receive `identify` with the full identity. Newly activated providers receive it on activation.                                  |
+| Analytics and marketing both denied | The storage key is removed.                                                                                                                                                                                    |
 
 `analytics.reset()` clears the identity from memory and storage and calls
 `reset` on every provider whose `setup` has run, whatever the consent.
@@ -304,11 +304,11 @@ On a consent change:
 `useConsentController()`'s actions all call `setConsent`, await it, and then
 hide both the banner and the preferences dialog:
 
-| Action | Commits |
-|---|---|
-| `acceptAll()` | Every category in `analytics.consent.categories` set to `true` |
-| `rejectNonEssential()` | Every category set to `false` |
-| `savePreferences()` | The dialog's toggles (`prefs`) as set |
+| Action                 | Commits                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| `acceptAll()`          | Every category in `analytics.consent.categories` set to `true` |
+| `rejectNonEssential()` | Every category set to `false`                                  |
+| `savePreferences()`    | The dialog's toggles (`prefs`) as set                          |
 
 Rejecting is a real choice: it is stored, so the banner does not return, and
 only providers that need no consent keep running. None of these actions sets
@@ -325,12 +325,12 @@ stored choice is known.
 
 When bootstrap settles:
 
-| Result | Banner | Dialog toggles |
-|---|---|---|
-| A choice was found | hidden | set from the choice |
-| A stale choice was kept (`onStale: 'keep'`) | shown if `autoShowBanner` | set from the choice |
-| No choice | shown if `autoShowBanner` (default `true`) | all `false` |
-| Bootstrap rejected | shown if `autoShowBanner`; `error` holds the message | all `false` |
+| Result                                      | Banner                                               | Dialog toggles      |
+| ------------------------------------------- | ---------------------------------------------------- | ------------------- |
+| A choice was found                          | hidden                                               | set from the choice |
+| A stale choice was kept (`onStale: 'keep'`) | shown if `autoShowBanner`                            | set from the choice |
+| No choice                                   | shown if `autoShowBanner` (default `true`)           | all `false`         |
+| Bootstrap rejected                          | shown if `autoShowBanner`; `error` holds the message | all `false`         |
 
 The toggles also follow every later consent change. `<AnalyticsProvider>`
 defines `window.CONSENTLAYER_openConsent()` (or the name passed as

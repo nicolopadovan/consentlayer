@@ -14,15 +14,15 @@ how to change them with the `names` option of `createAnalytics()`, and how
 Every name derives from a single prefix, `consentlayer` by default. In the
 table, `PREFIX` is the prefix in upper case.
 
-| Name | Default | Derived as | Override |
-|---|---|---|---|
-| Consent storage key | `consentlayer_consent` | `<prefix>_consent` | `consentStorageKey` |
-| Identity storage key | `consentlayer_user_identity` | `<prefix>_user_identity` | `identityStorageKey` |
-| Consent DOM event | `consentlayer:consent` | `<prefix>:consent` | `consentEventName` |
-| Consent global | `window.CONSENTLAYER_CONSENT` | `PREFIX_CONSENT` | `consentGlobalKey` |
-| Open-settings global | `window.CONSENTLAYER_openConsent()` | `PREFIX_openConsent` | `openConsentGlobalKey` |
-| Auto-tracking events | `consentlayer.page_session_start`, `consentlayer.scroll_depth`, `consentlayer.time_on_page`, `consentlayer.ui_click` | `<prefix>.<event>` | `autoTrackingEvents.pageSessionStart`, `.scrollDepth`, `.timeOnPage`, `.uiClick` |
-| Provider flags | `window.__consentlayerMetaPixelInitialized` and similar | `__<prefix><Flag>` | Prefix only |
+| Name                 | Default                                                                                                              | Derived as               | Override                                                                         |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------- |
+| Consent storage key  | `consentlayer_consent`                                                                                               | `<prefix>_consent`       | `consentStorageKey`                                                              |
+| Identity storage key | `consentlayer_user_identity`                                                                                         | `<prefix>_user_identity` | `identityStorageKey`                                                             |
+| Consent DOM event    | `consentlayer:consent`                                                                                               | `<prefix>:consent`       | `consentEventName`                                                               |
+| Consent global       | `window.CONSENTLAYER_CONSENT`                                                                                        | `PREFIX_CONSENT`         | `consentGlobalKey`                                                               |
+| Open-settings global | `window.CONSENTLAYER_openConsent()`                                                                                  | `PREFIX_openConsent`     | `openConsentGlobalKey`                                                           |
+| Auto-tracking events | `consentlayer.page_session_start`, `consentlayer.scroll_depth`, `consentlayer.time_on_page`, `consentlayer.ui_click` | `<prefix>.<event>`       | `autoTrackingEvents.pageSessionStart`, `.scrollDepth`, `.timeOnPage`, `.uiClick` |
+| Provider flags       | `window.__consentlayerMetaPixelInitialized` and similar                                                              | `__<prefix><Flag>`       | Prefix only                                                                      |
 
 Whenever the consent state changes, including when stored consent is first
 read, ConsentLayer sets the consent global to the new `ConsentState` and
@@ -49,7 +49,7 @@ Pass `names` to `createAnalytics()`. Every name you omit is derived from
 createAnalytics({
   providers,
   names: {
-    prefix: 'shop',                 // shop_consent, shop:consent, SHOP_CONSENT, …
+    prefix: 'shop', // shop_consent, shop:consent, SHOP_CONSENT, …
     consentStorageKey: 'my_consent',
     autoTrackingEvents: { uiClick: 'click' },
   },
@@ -88,12 +88,12 @@ first ones:
 1.0.0-rc.2, used the prefix `acm`. With `names: { legacy: true }`,
 ConsentLayer reads the old names alongside the new ones:
 
-| Name | Behaviour with `legacy: true` |
-|---|---|
-| Storage keys | When the consent or identity key has no value, the value under `acm_consent` or `acm_user_identity` is moved to the new key on first read and the old key is removed. New values are written only to the new keys. |
-| DOM event and globals | `acm:consent` is dispatched, and `ACM_CONSENT` and `ACM_openConsent` are set, alongside the new names. |
-| Provider flags | Read from `__consentlayer*`, falling back to `__acm*`, and written to both. |
-| Auto-tracking events | No fallback. `acm.*` events are now sent as `consentlayer.*`. |
+| Name                  | Behaviour with `legacy: true`                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Storage keys          | When the consent or identity key has no value, the value under `acm_consent` or `acm_user_identity` is moved to the new key on first read and the old key is removed. New values are written only to the new keys. |
+| DOM event and globals | `acm:consent` is dispatched, and `ACM_CONSENT` and `ACM_openConsent` are set, alongside the new names.                                                                                                             |
+| Provider flags        | Read from `__consentlayer*`, falling back to `__acm*`, and written to both.                                                                                                                                        |
+| Auto-tracking events  | No fallback. `acm.*` events are now sent as `consentlayer.*`.                                                                                                                                                      |
 
 Update dashboards and filters that match the old auto-tracking event names,
 or keep the old names with `autoTrackingEvents`. Setting `prefix: 'acm'`

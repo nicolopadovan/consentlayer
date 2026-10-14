@@ -10,10 +10,19 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
     const config = await findPath('~/consentlayer.config')
-    if (!config) throw new Error('consentlayer/nuxt needs app/consentlayer.config.ts, exporting defineConsentLayerConfig(() => options)')
+    if (!config)
+      throw new Error(
+        'consentlayer/nuxt needs app/consentlayer.config.ts, exporting defineConsentLayerConfig(() => options)',
+      )
 
-    addTemplate({ filename: 'consentlayer.config.mjs', getContents: () => `export { default } from ${JSON.stringify(config)}` })
-    addTemplate({ filename: 'consentlayer.options.mjs', getContents: () => `export default ${JSON.stringify(options)}` })
+    addTemplate({
+      filename: 'consentlayer.config.mjs',
+      getContents: () => `export { default } from ${JSON.stringify(config)}`,
+    })
+    addTemplate({
+      filename: 'consentlayer.options.mjs',
+      getContents: () => `export default ${JSON.stringify(options)}`,
+    })
     nuxt.options.build.transpile.push(resolver.resolve('.'))
     addPlugin(resolver.resolve('./plugin'))
     addImports([

@@ -8,27 +8,27 @@ entry gives the signature, the options with their types and defaults, the
 return value and the errors it throws. Options are optional unless marked
 **Required**. The guides explain when to use each part.
 
-| Entry point | Exports |
-|---|---|
-| [`consentlayer`](#consentlayer) | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types |
-| [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript`, `GtmNoscript` |
-| [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for Next.js |
-| [`consentlayer/vue`](#consentlayervue) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript` |
-| [`consentlayer/nuxt`](#consentlayernuxt) | The Nuxt module, which auto-imports `defineConsentLayerConfig` |
-| [`consentlayer/svelte`](#consentlayersvelte) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript` |
-| [`consentlayer/sveltekit`](#consentlayersveltekit) | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte` |
-| [`consentlayer/solid`](#consentlayersolid) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript` |
-| [`consentlayer/solidstart`](#consentlayersolidstart) | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid` |
-| [`consentlayer/angular`](#consentlayerangular) | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript`, `provideGtmNoscript` |
-| [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify and IAB TCF consent adapters |
-| [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
-| [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
-| [`consentlayer/server/meta`](#consentlayerservermeta) | `metaCapi` |
-| [`consentlayer/server/tiktok`](#consentlayerservertiktok) | `tiktokEvents` |
-| [`consentlayer/server/ga4`](#consentlayerserverga4) | `ga4Server` |
-| [`consentlayer/sentry/server`](#consentlayersentryserver) | `sentryInstrumentation` |
-| [`consentlayer/sentry/next`](#consentlayersentrynext) | `withSentryConfig` |
-| [`consentlayer/testing`](#consentlayertesting) | `checkPlugin` |
+| Entry point                                               | Exports                                                                                                                                             |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`consentlayer`](#consentlayer)                           | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types          |
+| [`consentlayer/react`](#consentlayerreact)                | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript`, `GtmNoscript` |
+| [`consentlayer/next`](#consentlayernext)                  | `AnalyticsProvider` for Next.js                                                                                                                     |
+| [`consentlayer/vue`](#consentlayervue)                    | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                            |
+| [`consentlayer/nuxt`](#consentlayernuxt)                  | The Nuxt module, which auto-imports `defineConsentLayerConfig`                                                                                      |
+| [`consentlayer/svelte`](#consentlayersvelte)              | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                            |
+| [`consentlayer/sveltekit`](#consentlayersveltekit)        | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte`                                                                            |
+| [`consentlayer/solid`](#consentlayersolid)                | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript`                      |
+| [`consentlayer/solidstart`](#consentlayersolidstart)      | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid`                                                                          |
+| [`consentlayer/angular`](#consentlayerangular)            | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript`, `provideGtmNoscript`              |
+| [`consentlayer/providers/*`](#consentlayerproviders)      | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify and IAB TCF consent adapters                         |
+| [`consentlayer/ecommerce`](#consentlayerecommerce)        | `productParams`, `cartParams`, `orderParams`, `toItem`                                                                                              |
+| [`consentlayer/server`](#consentlayerserver)              | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores                             |
+| [`consentlayer/server/meta`](#consentlayerservermeta)     | `metaCapi`                                                                                                                                          |
+| [`consentlayer/server/tiktok`](#consentlayerservertiktok) | `tiktokEvents`                                                                                                                                      |
+| [`consentlayer/server/ga4`](#consentlayerserverga4)       | `ga4Server`                                                                                                                                         |
+| [`consentlayer/sentry/server`](#consentlayersentryserver) | `sentryInstrumentation`                                                                                                                             |
+| [`consentlayer/sentry/next`](#consentlayersentrynext)     | `withSentryConfig`                                                                                                                                  |
+| [`consentlayer/testing`](#consentlayertesting)            | `checkPlugin`                                                                                                                                       |
 
 ## `consentlayer`
 
@@ -43,19 +43,19 @@ import { createAnalytics } from 'consentlayer'
 function createAnalytics(options?: AnalyticsOptions): Analytics
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `providers` | `AnalyticsPlugin[]` | `[]` | The providers to run. See [Providers](/guides/providers/). |
-| `categories` | `(keyof ConsentCategories)[]` | `[]` | Custom consent categories, added after `preferences`, `analytics` and `marketing`. See [Custom categories](#custom-categories). |
-| `consent` | [`ConsentOptions`](#consent-options) | | Consent storage, adapters and broadcast. |
-| `names` | [`NamesInput`](#names) | | Storage keys, globals and DOM event names. See [Names](/guides/names/). |
-| `autoTracking` | `boolean \| AutoTrackingConfig` | `false` | Automatic page session, click, scroll and time-on-page events. See [`autoTracking`](#autotracking). |
-| `server` | `{ endpoint?: string; consentEndpoint?: string }` | | Server routes. See [`server`](#server). |
-| `errors` | `boolean \| { globalHandlers?: boolean }` | `true` | `false` disables `captureError` and the global handlers. `{ globalHandlers: false }` keeps `captureError` but does not listen to the window's `error` and `unhandledrejection` events. |
-| `enabled` | `boolean \| (() => boolean)` | `true` | When `false`, or when the function returns `false`, no provider runs and calls are dropped. The function is evaluated on every call. |
-| `debug` | `boolean \| DebugOptions` | `false` | Logs what ConsentLayer does. See [`debug`](#debug). |
-| `onError` | `(error: AnalyticsError) => void` | | Receives every [`AnalyticsError`](#analyticserror), including consent adapter errors. Exceptions it throws are swallowed. |
-| `identityStorage` | `IdentityStorageAdapter` | `localStorage`, under `names.identityStorageKey` | Where the user identity is kept. |
+| Option            | Type                                              | Default                                          | Description                                                                                                                                                                            |
+| ----------------- | ------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `providers`       | `AnalyticsPlugin[]`                               | `[]`                                             | The providers to run. See [Providers](/guides/providers/).                                                                                                                             |
+| `categories`      | `(keyof ConsentCategories)[]`                     | `[]`                                             | Custom consent categories, added after `preferences`, `analytics` and `marketing`. See [Custom categories](#custom-categories).                                                        |
+| `consent`         | [`ConsentOptions`](#consent-options)              |                                                  | Consent storage, adapters and broadcast.                                                                                                                                               |
+| `names`           | [`NamesInput`](#names)                            |                                                  | Storage keys, globals and DOM event names. See [Names](/guides/names/).                                                                                                                |
+| `autoTracking`    | `boolean \| AutoTrackingConfig`                   | `false`                                          | Automatic page session, click, scroll and time-on-page events. See [`autoTracking`](#autotracking).                                                                                    |
+| `server`          | `{ endpoint?: string; consentEndpoint?: string }` |                                                  | Server routes. See [`server`](#server).                                                                                                                                                |
+| `errors`          | `boolean \| { globalHandlers?: boolean }`         | `true`                                           | `false` disables `captureError` and the global handlers. `{ globalHandlers: false }` keeps `captureError` but does not listen to the window's `error` and `unhandledrejection` events. |
+| `enabled`         | `boolean \| (() => boolean)`                      | `true`                                           | When `false`, or when the function returns `false`, no provider runs and calls are dropped. The function is evaluated on every call.                                                   |
+| `debug`           | `boolean \| DebugOptions`                         | `false`                                          | Logs what ConsentLayer does. See [`debug`](#debug).                                                                                                                                    |
+| `onError`         | `(error: AnalyticsError) => void`                 |                                                  | Receives every [`AnalyticsError`](#analyticserror), including consent adapter errors. Exceptions it throws are swallowed.                                                              |
+| `identityStorage` | `IdentityStorageAdapter`                          | `localStorage`, under `names.identityStorageKey` | Where the user identity is kept.                                                                                                                                                       |
 
 **Returns** an [`Analytics`](#the-analytics-instance) instance.
 
@@ -103,16 +103,16 @@ type AnalyticsOptions = {
 
 `createAnalytics({ consent: { … } })`:
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `storage` | `ConsentStorageAdapter` | `localStorage`, under `names.consentStorageKey` | Where the choice is stored. See [Storage adapters](#storage-adapters). |
-| `adapters` | `ConsentIntegrationAdapter[]` | `[]` | External consent platforms to sync with, such as [`tcf()`](#tcfoptions), [`shopifyCustomerPrivacy()`](#shopifycustomerprivacyoptions) or [`googleConsentMode()`](#googleconsentmodeoptions). |
-| `initialConsent` | `ConsentState \| null` | `null` | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one. |
-| `broadcast` | `ConsentBroadcastConfig` | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set. |
-| `maxAgeDays` | `number` | None | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`. |
-| `policyVersion` | `string` | None | A stored choice made under another major version, the part before the first `.`, or under none, is stale: `'3.1'` to `'3.2'` keeps choices, `'3.2'` to `'4.0'` asks again. Surrounding whitespace is trimmed; `''` counts as unset. Pass the same value as to [`createConsentHandler()`](#createconsenthandleroptions). |
-| `onStale` | `'discard' \| 'keep'` | `'discard'` | What a stale choice means until the visitor chooses again. `'discard'` treats it as no choice: consent is `null` and only `'none'` providers run. `'keep'` keeps it in force. Either way the banner is shown. See [Asking again](/guides/consent-ui/#asking-again). |
-| `gpc` | `boolean` | `true` | Honors the browser's Global Privacy Control signal: while `navigator.globalPrivacyControl` is `true`, `acceptAll()` leaves `marketing` denied. `false` ignores the signal. See [Global Privacy Control](/guides/consent-ui/#global-privacy-control). |
+| Option           | Type                          | Default                                                                    | Description                                                                                                                                                                                                                                                                                                             |
+| ---------------- | ----------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`        | `ConsentStorageAdapter`       | `localStorage`, under `names.consentStorageKey`                            | Where the choice is stored. See [Storage adapters](#storage-adapters).                                                                                                                                                                                                                                                  |
+| `adapters`       | `ConsentIntegrationAdapter[]` | `[]`                                                                       | External consent platforms to sync with, such as [`tcf()`](#tcfoptions), [`shopifyCustomerPrivacy()`](#shopifycustomerprivacyoptions) or [`googleConsentMode()`](#googleconsentmodeoptions).                                                                                                                            |
+| `initialConsent` | `ConsentState \| null`        | `null`                                                                     | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one.                                                                                                                                                                                                                             |
+| `broadcast`      | `ConsentBroadcastConfig`      | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set.                                                                                                                                                                                                                    |
+| `maxAgeDays`     | `number`                      | None                                                                       | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`.                                                                                             |
+| `policyVersion`  | `string`                      | None                                                                       | A stored choice made under another major version, the part before the first `.`, or under none, is stale: `'3.1'` to `'3.2'` keeps choices, `'3.2'` to `'4.0'` asks again. Surrounding whitespace is trimmed; `''` counts as unset. Pass the same value as to [`createConsentHandler()`](#createconsenthandleroptions). |
+| `onStale`        | `'discard' \| 'keep'`         | `'discard'`                                                                | What a stale choice means until the visitor chooses again. `'discard'` treats it as no choice: consent is `null` and only `'none'` providers run. `'keep'` keeps it in force. Either way the banner is shown. See [Asking again](/guides/consent-ui/#asking-again).                                                     |
+| `gpc`            | `boolean`                     | `true`                                                                     | Honors the browser's Global Privacy Control signal: while `navigator.globalPrivacyControl` is `true`, `acceptAll()` leaves `marketing` denied. `false` ignores the signal. See [Global Privacy Control](/guides/consent-ui/#global-privacy-control).                                                                    |
 
 Custom categories and the error callback are set with the top-level
 `categories` and `onError`; passing them inside `consent` is a type error.
@@ -143,16 +143,16 @@ enables every kind it does not set to `false`, the same rule as
 analytics consent is granted, and are sent with `requireAnalyticsConsent: true`.
 Their names are listed in [Names](/guides/names/).
 
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `pageViews` | `boolean` | `true` | Sends `pageSessionStart` with `{ session_id }` at the start of each page session. |
-| `clicks` | `boolean \| AutoTrackingClickConfig` | enabled | Sends `uiClick` with `{ ui_target, ui_element, ui_id, path, session_id }`. |
-| `clicks.mode` | `'all' \| 'attribute'` | `'all'` | `'all'` tracks elements matching `selectors`; `'attribute'` tracks only elements that have `attribute`. |
-| `clicks.attribute` | `string` | `'data-track'` | Its value is used as `ui_target`, before `aria-label`, `name` and the first 80 characters of the text. |
-| `clicks.selectors` | `string[]` | `['button', '[role="button"]', 'a', 'input[type="submit"]', 'input[type="button"]']` | Elements tracked in `'all'` mode. |
-| `scroll` | `boolean \| { thresholds?: number[] }` | `[25, 50, 75, 100]` | Scroll depths, in percent, that each send `scrollDepth` with `{ depth, session_id }` once per page session. `100` fires at 95%. |
-| `timeOnPage` | `boolean \| { intervals?: number[] }` | `[5, 15, 30, 60, 120]` | Seconds on the page that each send `timeOnPage` with `{ seconds, session_id }`. |
-| `only` | `string[]` | every provider | Sends automatic events only to these provider IDs. |
+| Field              | Type                                   | Default                                                                              | Description                                                                                                                     |
+| ------------------ | -------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `pageViews`        | `boolean`                              | `true`                                                                               | Sends `pageSessionStart` with `{ session_id }` at the start of each page session.                                               |
+| `clicks`           | `boolean \| AutoTrackingClickConfig`   | enabled                                                                              | Sends `uiClick` with `{ ui_target, ui_element, ui_id, path, session_id }`.                                                      |
+| `clicks.mode`      | `'all' \| 'attribute'`                 | `'all'`                                                                              | `'all'` tracks elements matching `selectors`; `'attribute'` tracks only elements that have `attribute`.                         |
+| `clicks.attribute` | `string`                               | `'data-track'`                                                                       | Its value is used as `ui_target`, before `aria-label`, `name` and the first 80 characters of the text.                          |
+| `clicks.selectors` | `string[]`                             | `['button', '[role="button"]', 'a', 'input[type="submit"]', 'input[type="button"]']` | Elements tracked in `'all'` mode.                                                                                               |
+| `scroll`           | `boolean \| { thresholds?: number[] }` | `[25, 50, 75, 100]`                                                                  | Scroll depths, in percent, that each send `scrollDepth` with `{ depth, session_id }` once per page session. `100` fires at 95%. |
+| `timeOnPage`       | `boolean \| { intervals?: number[] }`  | `[5, 15, 30, 60, 120]`                                                               | Seconds on the page that each send `timeOnPage` with `{ seconds, session_id }`.                                                 |
+| `only`             | `string[]`                             | every provider                                                                       | Sends automatic events only to these provider IDs.                                                                              |
 
 #### `debug`
 
@@ -166,22 +166,22 @@ createAnalytics({
 })
 ```
 
-| Topic | Logs |
-|---|---|
-| `consent` | Each consent change, with its source, and a stored choice found stale. |
-| `events` | Each page view, `track`, `identify`, `group` and `reset`, once per provider that receives it, with its payload: `ga4.track sign_up {method: 'email'}`. Also a call that reaches no provider, is held until boot, or is dropped because `enabled` is `false`. |
-| `providers` | `boot`, and each provider's `setup`, `consent`, `load` and `teardown`, including `ga4 is off: measurementId is not set.` |
-| `errors` | Every [`AnalyticsError`](#analyticserror), and each provider a `captureError` call reaches, or that it reaches none. |
+| Topic       | Logs                                                                                                                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `consent`   | Each consent change, with its source, and a stored choice found stale.                                                                                                                                                                                       |
+| `events`    | Each page view, `track`, `identify`, `group` and `reset`, once per provider that receives it, with its payload: `ga4.track sign_up {method: 'email'}`. Also a call that reaches no provider, is held until boot, or is dropped because `enabled` is `false`. |
+| `providers` | `boot`, and each provider's `setup`, `consent`, `load` and `teardown`, including `ga4 is off: measurementId is not set.`                                                                                                                                     |
+| `errors`    | Every [`AnalyticsError`](#analyticserror), and each provider a `captureError` call reaches, or that it reaches none.                                                                                                                                         |
 
 Topics set to `true` are logged. When no topic is `true`, every topic is
 logged except those set to `false`, so `{ events: false }` logs everything but
 events.
 
-| Field | Type | Description |
-|---|---|---|
-| `consent`, `events`, `providers`, `errors` | `boolean` | Turns a topic on or off. |
-| `only` | `string[]` | Drops entries about providers whose `id` is not listed. Entries about no provider, such as consent changes, are kept. |
-| `logger` | `(entry: DebugEntry) => void` | Receives each entry in place of `console.debug`. |
+| Field                                      | Type                          | Description                                                                                                           |
+| ------------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `consent`, `events`, `providers`, `errors` | `boolean`                     | Turns a topic on or off.                                                                                              |
+| `only`                                     | `string[]`                    | Drops entries about providers whose `id` is not listed. Entries about no provider, such as consent changes, are kept. |
+| `logger`                                   | `(entry: DebugEntry) => void` | Receives each entry in place of `console.debug`.                                                                      |
 
 ```ts
 type DebugEntry = {
@@ -196,9 +196,9 @@ The types are exported as `DebugOptions`, `DebugEntry` and `DebugTopic`.
 
 #### `server`
 
-| Option | Type | Description |
-|---|---|---|
-| `server.endpoint` | `string` | Also posts every `track` and `page` call, as a [`ServerEvent`](#serverevent), to this route while analytics or marketing consent is granted. Uses `fetch` with `keepalive`, or `navigator.sendBeacon` where `fetch` is missing. Failures are reported with scope `server-forward`. Stops for the page load when the route answers with `consentlayer-forwarding: off`. See [`createAnalyticsHandler`](#createanalyticshandleroptions). |
+| Option                   | Type     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `server.endpoint`        | `string` | Also posts every `track` and `page` call, as a [`ServerEvent`](#serverevent), to this route while analytics or marketing consent is granted. Uses `fetch` with `keepalive`, or `navigator.sendBeacon` where `fetch` is missing. Failures are reported with scope `server-forward`. Stops for the page load when the route answers with `consentlayer-forwarding: off`. See [`createAnalyticsHandler`](#createanalyticshandleroptions).          |
 | `server.consentEndpoint` | `string` | Posts `{ consent }` to this route on every consent change, except a choice read back from storage. Failures are reported with scope `consent-adapter` and provider ID `consent-endpoint`. When the `server.endpoint` route answers `consentlayer-consent: missing`, also posts `{ consent, restored: true }` once per page load; a failure is reported with scope `server-forward`. See [`createConsentHandler`](#createconsenthandleroptions). |
 
 Both must be `https:` URLs or paths starting with `/`. `undefined` or `''`
@@ -208,21 +208,21 @@ turns the option off.
 
 `createAnalytics()` returns an object of type `Analytics`.
 
-| Member | Signature | Description |
-|---|---|---|
-| `boot` | `() => Promise<void>` | Installs the global error handlers, starts the providers that consent allows and delivers the calls queued before. Runs once; later calls do nothing. `<AnalyticsProvider>` calls it for you. |
-| `track` | `<Name extends string>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>` | Sends an event. Params of the [standard events](#standardevents) are typed. See [Events and identity](/guides/events/). |
-| `page` | `(payload?: PageViewPayload, options?: { only?: string[] }) => Promise<void>` | Sends a page view. `payload` is merged over `{ url: location.href, path: location.pathname + location.search, title: document.title }`. |
-| `identify` | `(userId?: string, traits?: UserTraits) => Promise<void>` | Sets the user ID and traits. A different `userId` replaces the previous identity. See [Identity](#identity). |
-| `reset` | `() => Promise<void>` | Forgets the identity, clears identity storage and calls each provider's `reset`. |
-| `group` | `(groupId: string, traits?: Record<string, unknown>) => Promise<void>` | Associates the user with a group, such as a company. |
-| `captureError` | `(error: unknown, context?: ErrorContext) => Promise<void>` | Sends an error to the providers that implement `error`. `context.source` defaults to `'manual'`. An error object is sent once; later calls with it do nothing. Does nothing when `errors` is `false`. |
-| `newPageSession` | `() => void` | Restarts the automatic page session: a new `session_id`, scroll depths and timers. Does nothing until auto-tracking has started. `<AnalyticsProvider>` calls it when `routeKey` changes. |
-| `registerProvider` | `(plugin: AnalyticsPlugin) => () => void` | Adds a provider after creation and runs it through the lifecycle if the instance has booted. Returns a function that tears it down and removes it. |
-| `getSnapshot` | `() => AnalyticsManagerStateSnapshot` | Returns `{ booted, consent, activeProviders }`. |
-| `subscribe` | `(listener: (snapshot: AnalyticsManagerStateSnapshot) => void) => () => void` | Calls `listener` after each lifecycle pass. Returns an unsubscribe function. |
-| `destroy` | `() => void` | Tears down every provider, removes the listeners and handlers and stops the consent engine. |
-| `consent` | [`ConsentApi`](#analyticsconsent) | Reads and changes consent. |
+| Member             | Signature                                                                                                     | Description                                                                                                                                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `boot`             | `() => Promise<void>`                                                                                         | Installs the global error handlers, starts the providers that consent allows and delivers the calls queued before. Runs once; later calls do nothing. `<AnalyticsProvider>` calls it for you.         |
+| `track`            | `<Name extends string>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>` | Sends an event. Params of the [standard events](#standardevents) are typed. See [Events and identity](/guides/events/).                                                                               |
+| `page`             | `(payload?: PageViewPayload, options?: { only?: string[] }) => Promise<void>`                                 | Sends a page view. `payload` is merged over `{ url: location.href, path: location.pathname + location.search, title: document.title }`.                                                               |
+| `identify`         | `(userId?: string, traits?: UserTraits) => Promise<void>`                                                     | Sets the user ID and traits. A different `userId` replaces the previous identity. See [Identity](#identity).                                                                                          |
+| `reset`            | `() => Promise<void>`                                                                                         | Forgets the identity, clears identity storage and calls each provider's `reset`.                                                                                                                      |
+| `group`            | `(groupId: string, traits?: Record<string, unknown>) => Promise<void>`                                        | Associates the user with a group, such as a company.                                                                                                                                                  |
+| `captureError`     | `(error: unknown, context?: ErrorContext) => Promise<void>`                                                   | Sends an error to the providers that implement `error`. `context.source` defaults to `'manual'`. An error object is sent once; later calls with it do nothing. Does nothing when `errors` is `false`. |
+| `newPageSession`   | `() => void`                                                                                                  | Restarts the automatic page session: a new `session_id`, scroll depths and timers. Does nothing until auto-tracking has started. `<AnalyticsProvider>` calls it when `routeKey` changes.              |
+| `registerProvider` | `(plugin: AnalyticsPlugin) => () => void`                                                                     | Adds a provider after creation and runs it through the lifecycle if the instance has booted. Returns a function that tears it down and removes it.                                                    |
+| `getSnapshot`      | `() => AnalyticsManagerStateSnapshot`                                                                         | Returns `{ booted, consent, activeProviders }`.                                                                                                                                                       |
+| `subscribe`        | `(listener: (snapshot: AnalyticsManagerStateSnapshot) => void) => () => void`                                 | Calls `listener` after each lifecycle pass. Returns an unsubscribe function.                                                                                                                          |
+| `destroy`          | `() => void`                                                                                                  | Tears down every provider, removes the listeners and handlers and stops the consent engine.                                                                                                           |
+| `consent`          | [`ConsentApi`](#analyticsconsent)                                                                             | Reads and changes consent.                                                                                                                                                                            |
 
 Before `boot()` resolves, `track`, `page`, `identify`, `group` and
 `captureError` calls are queued, up to 100. Later calls are dropped and
@@ -234,13 +234,13 @@ scope `provider-setup`.
 
 #### `TrackEventOptions`
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `eventId` | `string` | `crypto.randomUUID()` | The event ID, shared with the server so providers can deduplicate. |
-| `only` | `string[]` | every provider | Sends only to these provider IDs, in the browser and on the server. |
-| `providers` | `Record<string, Record<string, unknown>>` | | Extra params merged into what one provider sends, keyed by provider ID. |
-| `requireAnalyticsConsent` | `boolean` | `false` | Drops the event, in the browser and on the server, unless analytics is granted. |
-| `requireMarketingConsent` | `boolean` | `false` | Drops the event unless marketing is granted. |
+| Option                    | Type                                      | Default               | Description                                                                     |
+| ------------------------- | ----------------------------------------- | --------------------- | ------------------------------------------------------------------------------- |
+| `eventId`                 | `string`                                  | `crypto.randomUUID()` | The event ID, shared with the server so providers can deduplicate.              |
+| `only`                    | `string[]`                                | every provider        | Sends only to these provider IDs, in the browser and on the server.             |
+| `providers`               | `Record<string, Record<string, unknown>>` |                       | Extra params merged into what one provider sends, keyed by provider ID.         |
+| `requireAnalyticsConsent` | `boolean`                                 | `false`               | Drops the event, in the browser and on the server, unless analytics is granted. |
+| `requireMarketingConsent` | `boolean`                                 | `false`               | Drops the event unless marketing is granted.                                    |
 
 #### Identity
 
@@ -254,16 +254,16 @@ provider's `identify` hook.
 
 #### `analytics.consent`
 
-| Member | Signature | Description |
-|---|---|---|
-| `categories` | `readonly ConsentCategory[]` | Every category: `preferences`, `analytics`, `marketing`, then the custom ones. |
-| `bootstrap` | `() => Promise<ConsentState \| null>` | Reads the stored choice, else asks each adapter's `bootstrap` in order and stores the first answer. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you. |
-| `gpc` | `boolean` | `true` when `navigator.globalPrivacyControl` is `true` and the `gpc` option is not `false`. Read once, when the instance is created. |
-| `getConsent` | `() => ConsentState \| null` | The current choice, or `null` before the visitor has made one. |
-| `isStale` | `() => boolean` | Whether `bootstrap()` found a stored choice that is too old or was made under another major `policyVersion`. `false` again once the visitor chooses. |
-| `setConsent` | `(consent: ConsentState, source?: ConsentChangeSource) => Promise<void>` | Replaces the whole choice, stores it, broadcasts it and applies it to every adapter. `source` defaults to `'imperative'`. An identical choice is ignored, unless the stored one is stale: then it is stored again with the current date and `policyVersion`, and applied to every adapter, so `server.consentEndpoint` records it. |
-| `update` | `(partial: Partial<ConsentState>) => Promise<void>` | Awaits `bootstrap()`, then merges `partial` over the current choice. Categories that have never been set are denied. |
-| `subscribe` | `(listener: (snapshot: { consent: ConsentState \| null }) => void) => () => void` | Calls `listener` on every change. Returns an unsubscribe function. |
+| Member       | Signature                                                                         | Description                                                                                                                                                                                                                                                                                                                        |
+| ------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `categories` | `readonly ConsentCategory[]`                                                      | Every category: `preferences`, `analytics`, `marketing`, then the custom ones.                                                                                                                                                                                                                                                     |
+| `bootstrap`  | `() => Promise<ConsentState \| null>`                                             | Reads the stored choice, else asks each adapter's `bootstrap` in order and stores the first answer. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you.                                                                                                                                        |
+| `gpc`        | `boolean`                                                                         | `true` when `navigator.globalPrivacyControl` is `true` and the `gpc` option is not `false`. Read once, when the instance is created.                                                                                                                                                                                               |
+| `getConsent` | `() => ConsentState \| null`                                                      | The current choice, or `null` before the visitor has made one.                                                                                                                                                                                                                                                                     |
+| `isStale`    | `() => boolean`                                                                   | Whether `bootstrap()` found a stored choice that is too old or was made under another major `policyVersion`. `false` again once the visitor chooses.                                                                                                                                                                               |
+| `setConsent` | `(consent: ConsentState, source?: ConsentChangeSource) => Promise<void>`          | Replaces the whole choice, stores it, broadcasts it and applies it to every adapter. `source` defaults to `'imperative'`. An identical choice is ignored, unless the stored one is stale: then it is stored again with the current date and `policyVersion`, and applied to every adapter, so `server.consentEndpoint` records it. |
+| `update`     | `(partial: Partial<ConsentState>) => Promise<void>`                               | Awaits `bootstrap()`, then merges `partial` over the current choice. Categories that have never been set are denied.                                                                                                                                                                                                               |
+| `subscribe`  | `(listener: (snapshot: { consent: ConsentState \| null }) => void) => () => void` | Calls `listener` on every change. Returns an unsubscribe function.                                                                                                                                                                                                                                                                 |
 
 **Errors.** `setConsent` and `update` reject with a `TypeError` when a category
 is not a boolean, or when `sale_of_data` is present and not a boolean.
@@ -275,21 +275,21 @@ framework binding: it bootstraps consent, schedules boot, sends page views and
 keeps the state of a consent banner and settings dialog. See
 [JavaScript and Astro](/start/javascript/).
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | As on [`<AnalyticsProvider>`](#analyticsprovider). |
-| `autoShowBanner` | `boolean` | `true` | As on `<AnalyticsProvider>`. |
-| `openConsentGlobalKey` | `string` | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. Set by `start()`. |
+| Option                 | Type             | Default                                                                  | Description                                        |
+| ---------------------- | ---------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
+| `boot`                 | `LazyBootConfig` | `{ mode: 'immediate' }`                                                  | As on [`<AnalyticsProvider>`](#analyticsprovider). |
+| `autoShowBanner`       | `boolean`        | `true`                                                                   | As on `<AnalyticsProvider>`.                       |
+| `openConsentGlobalKey` | `string`         | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. Set by `start()`.     |
 
 It returns a `ConsentController`:
 
-| Field | Type | Description |
-|---|---|---|
-| `start` | `() => () => void` | Bootstraps consent, schedules boot and starts sending page views. Returns a function that stops it. |
-| `setRoute` | `(routeKey: string \| null, page?: PageViewPayload) => void` | Sends a page view to each active provider when `routeKey` changes, and to providers that become active later. A change after the first key starts a new page session. `null` holds page views; `page` overrides their `url`, `path` or `title`. |
-| `getSnapshot` | `() => ConsentControllerState` | `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and `prefs`, as in [`useConsentController()`](#useconsentcontroller). |
-| `subscribe` | `(listener: () => void) => () => void` | Calls `listener` after each state change. Returns an unsubscribe function. |
-| `actions` | `ConsentControllerActions` | `setPrefs`, `showBanner`, `hideBanner`, `openDialog`, `closeDialog`, `acceptAll`, `rejectNonEssential` and `savePreferences`, as in `useConsentController()`. |
+| Field         | Type                                                         | Description                                                                                                                                                                                                                                     |
+| ------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start`       | `() => () => void`                                           | Bootstraps consent, schedules boot and starts sending page views. Returns a function that stops it.                                                                                                                                             |
+| `setRoute`    | `(routeKey: string \| null, page?: PageViewPayload) => void` | Sends a page view to each active provider when `routeKey` changes, and to providers that become active later. A change after the first key starts a new page session. `null` holds page views; `page` overrides their `url`, `path` or `title`. |
+| `getSnapshot` | `() => ConsentControllerState`                               | `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and `prefs`, as in [`useConsentController()`](#useconsentcontroller).                                                                                                   |
+| `subscribe`   | `(listener: () => void) => () => void`                       | Calls `listener` after each state change. Returns an unsubscribe function.                                                                                                                                                                      |
+| `actions`     | `ConsentControllerActions`                                   | `setPrefs`, `showBanner`, `hideBanner`, `openDialog`, `closeDialog`, `acceptAll`, `rejectNonEssential` and `savePreferences`, as in `useConsentController()`.                                                                                   |
 
 The types `ConsentControllerOptions`, `ConsentControllerState` and
 `ConsentControllerActions` are exported too.
@@ -311,10 +311,10 @@ Appends `<script async src>` to `<head>` once per URL.
 function loadScript(src: string, attributes?: Record<string, string>): Promise<void>
 ```
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `src` | `string` | | **Required.** Resolved against `document.baseURI`. |
-| `attributes` | `Record<string, string>` | `{}` | Attributes set on the script element. |
+| Parameter    | Type                     | Default | Description                                        |
+| ------------ | ------------------------ | ------- | -------------------------------------------------- |
+| `src`        | `string`                 |         | **Required.** Resolved against `document.baseURI`. |
+| `attributes` | `Record<string, string>` | `{}`    | Attributes set on the script element.              |
 
 **Returns** a promise that resolves when the script has loaded. It resolves
 immediately outside the browser, or when a script with the same URL is already
@@ -375,37 +375,37 @@ function createEnvConfig(env: Record<string, string | undefined>): {
 }
 ```
 
-| Variable | Read into |
-|---|---|
-| `NODE_ENV`, `NEXT_PUBLIC_ENABLE_ANALYTICS` | `runtimeEnabled`: `true` when `NODE_ENV` is `production` or `NEXT_PUBLIC_ENABLE_ANALYTICS` is `'true'` |
-| `NEXT_PUBLIC_ANALYTICS_DEBUG` | `debug`: `true` when `'true'` |
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | `ga4.measurementId` |
-| `NEXT_PUBLIC_HOTJAR_SITE_ID`, `NEXT_PUBLIC_HOTJAR_VERSION` | `hotjar.siteId`, `hotjar.version`, parsed as numbers; `undefined` when missing or not finite |
-| `NEXT_PUBLIC_FACEBOOK_PIXEL_ID` | `meta.pixelId` |
-| `NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT` | `meta.noscriptEnabled`: `true` when `'true'` |
-| `NEXT_PUBLIC_SHOPIFY_STORE_ID`, `NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN`, `NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN` | `shopify.storeId`, `shopify.storefrontDomain`, `shopify.storefrontAccessToken` |
-| `META_TOKEN`, `FACEBOOK_TEST_EVENT_CODE`, `GA4_API_SECRET` | `server.metaToken`, `server.facebookTestEventCode`, `server.ga4ApiSecret` |
+| Variable                                                                                                      | Read into                                                                                              |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `NODE_ENV`, `NEXT_PUBLIC_ENABLE_ANALYTICS`                                                                    | `runtimeEnabled`: `true` when `NODE_ENV` is `production` or `NEXT_PUBLIC_ENABLE_ANALYTICS` is `'true'` |
+| `NEXT_PUBLIC_ANALYTICS_DEBUG`                                                                                 | `debug`: `true` when `'true'`                                                                          |
+| `NEXT_PUBLIC_GA4_MEASUREMENT_ID`                                                                              | `ga4.measurementId`                                                                                    |
+| `NEXT_PUBLIC_HOTJAR_SITE_ID`, `NEXT_PUBLIC_HOTJAR_VERSION`                                                    | `hotjar.siteId`, `hotjar.version`, parsed as numbers; `undefined` when missing or not finite           |
+| `NEXT_PUBLIC_FACEBOOK_PIXEL_ID`                                                                               | `meta.pixelId`                                                                                         |
+| `NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT`                                                                         | `meta.noscriptEnabled`: `true` when `'true'`                                                           |
+| `NEXT_PUBLIC_SHOPIFY_STORE_ID`, `NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN`, `NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN` | `shopify.storeId`, `shopify.storefrontDomain`, `shopify.storefrontAccessToken`                         |
+| `META_TOKEN`, `FACEBOOK_TEST_EVENT_CODE`, `GA4_API_SECRET`                                                    | `server.metaToken`, `server.facebookTestEventCode`, `server.ga4ApiSecret`                              |
 
 </details>
 
 ### Storage adapters
 
-| Function | Returns | Description |
-|---|---|---|
-| `createLocalStorageConsentStorage(options)` | `ConsentStorageAdapter` | The `StoredConsent` record as JSON in `localStorage`. A value stored before 1.0, the bare `ConsentState`, is read as a record without a date. `subscribe` listens for `storage` events, so changes in other tabs apply. |
-| `createLocalStorageIdentityStorage(options)` | `IdentityStorageAdapter` | The identity as JSON in `localStorage`. |
-| `createMemoryConsentStorage(initial?)` | `ConsentStorageAdapter` | Consent in memory. `initial` defaults to `null`. |
-| `createMemoryIdentityStorage(initial?)` | `IdentityStorageAdapter` | The identity in memory. `initial` defaults to `{}`. |
+| Function                                     | Returns                  | Description                                                                                                                                                                                                             |
+| -------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createLocalStorageConsentStorage(options)`  | `ConsentStorageAdapter`  | The `StoredConsent` record as JSON in `localStorage`. A value stored before 1.0, the bare `ConsentState`, is read as a record without a date. `subscribe` listens for `storage` events, so changes in other tabs apply. |
+| `createLocalStorageIdentityStorage(options)` | `IdentityStorageAdapter` | The identity as JSON in `localStorage`.                                                                                                                                                                                 |
+| `createMemoryConsentStorage(initial?)`       | `ConsentStorageAdapter`  | Consent in memory. `initial` defaults to `null`.                                                                                                                                                                        |
+| `createMemoryIdentityStorage(initial?)`      | `IdentityStorageAdapter` | The identity in memory. `initial` defaults to `{}`.                                                                                                                                                                     |
 
 The `localStorage` adapters never throw: when storage is blocked or full, reads
 return `null` (consent) or `{}` (identity) and writes are skipped.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `key` | `string` | | **Required.** The storage key. |
+| Option       | Type       | Default                                                                    | Description                                           |
+| ------------ | ---------- | -------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `key`        | `string`   |                                                                            | **Required.** The storage key.                        |
 | `legacyKeys` | `string[]` | the `acm_*` key, when `names.legacy` is on and `key` is the configured one | Keys whose value is moved to `key` on the first read. |
-| `storage` | `Storage` | `window.localStorage` | The `Storage` object to use. |
-| `window` | `Window` | `window` | The window whose `storage` events are observed. |
+| `storage`    | `Storage`  | `window.localStorage`                                                      | The `Storage` object to use.                          |
+| `window`     | `Window`   | `window`                                                                   | The window whose `storage` events are observed.       |
 
 <details>
 <summary>Adapter interfaces</summary>
@@ -453,19 +453,19 @@ interface ConsentIntegrationAdapter {
 `getNames()` returns. Every name not given derives from `prefix`. See
 [Names](/guides/names/).
 
-| Field | Type | Default |
-|---|---|---|
-| `prefix` | `string` | `'consentlayer'` |
-| `legacy` | `boolean` | `false`. When `true`, the `acm` names are also read and written. |
-| `consentStorageKey` | `string` | `` `${prefix}_consent` `` |
-| `identityStorageKey` | `string` | `` `${prefix}_user_identity` `` |
-| `consentEventName` | `string` | `` `${prefix}:consent` `` |
-| `consentGlobalKey` | `string` | `` `${PREFIX}_CONSENT` `` (upper case) |
-| `openConsentGlobalKey` | `string` | `` `${PREFIX}_openConsent` `` (upper-case prefix) |
-| `autoTrackingEvents.pageSessionStart` | `string` | `` `${prefix}.page_session_start` `` |
-| `autoTrackingEvents.scrollDepth` | `string` | `` `${prefix}.scroll_depth` `` |
-| `autoTrackingEvents.timeOnPage` | `string` | `` `${prefix}.time_on_page` `` |
-| `autoTrackingEvents.uiClick` | `string` | `` `${prefix}.ui_click` `` |
+| Field                                 | Type      | Default                                                          |
+| ------------------------------------- | --------- | ---------------------------------------------------------------- |
+| `prefix`                              | `string`  | `'consentlayer'`                                                 |
+| `legacy`                              | `boolean` | `false`. When `true`, the `acm` names are also read and written. |
+| `consentStorageKey`                   | `string`  | `` `${prefix}_consent` ``                                        |
+| `identityStorageKey`                  | `string`  | `` `${prefix}_user_identity` ``                                  |
+| `consentEventName`                    | `string`  | `` `${prefix}:consent` ``                                        |
+| `consentGlobalKey`                    | `string`  | `` `${PREFIX}_CONSENT` `` (upper case)                           |
+| `openConsentGlobalKey`                | `string`  | `` `${PREFIX}_openConsent` `` (upper-case prefix)                |
+| `autoTrackingEvents.pageSessionStart` | `string`  | `` `${prefix}.page_session_start` ``                             |
+| `autoTrackingEvents.scrollDepth`      | `string`  | `` `${prefix}.scroll_depth` ``                                   |
+| `autoTrackingEvents.timeOnPage`       | `string`  | `` `${prefix}.time_on_page` ``                                   |
+| `autoTrackingEvents.uiClick`          | `string`  | `` `${prefix}.ui_click` ``                                       |
 
 <details>
 <summary>Type signatures</summary>
@@ -623,17 +623,17 @@ What `createAnalytics({ server: { endpoint } })` posts, and what
 [`sendServerEvent`](#sendservereventevent-options) takes. Also exported from
 `consentlayer/server`.
 
-| Field | Type | Description |
-|---|---|---|
-| `name` | `string` | **Required.** The event name; `page_view` for page views. |
-| `consent` | `ConsentState` | **Required.** The consent the event was collected under. |
-| `id` | `string` | The browser event's ID, for deduplication. |
-| `params` | `Record<string, unknown>` | The event params. |
-| `identity` | `UserIdentity` | The user. The browser includes `email` and `phone` only with marketing consent. |
-| `url` | `string` | The page URL. |
-| `clientId` | `string` | The GA4 client ID. `ga4Server` reads it from the `_ga` cookie when omitted. |
-| `only` | `string[]` | Sends only to these destination IDs. |
-| `providers` | `Record<string, Record<string, unknown>>` | Extra params per destination ID. |
+| Field       | Type                                      | Description                                                                     |
+| ----------- | ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `name`      | `string`                                  | **Required.** The event name; `page_view` for page views.                       |
+| `consent`   | `ConsentState`                            | **Required.** The consent the event was collected under.                        |
+| `id`        | `string`                                  | The browser event's ID, for deduplication.                                      |
+| `params`    | `Record<string, unknown>`                 | The event params.                                                               |
+| `identity`  | `UserIdentity`                            | The user. The browser includes `email` and `phone` only with marketing consent. |
+| `url`       | `string`                                  | The page URL.                                                                   |
+| `clientId`  | `string`                                  | The GA4 client ID. `ga4Server` reads it from the `_ga` cookie when omitted.     |
+| `only`      | `string[]`                                | Sends only to these destination IDs.                                            |
+| `providers` | `Record<string, Record<string, unknown>>` | Extra params per destination ID.                                                |
 
 ### `AnalyticsPlugin`
 
@@ -647,32 +647,32 @@ hook is reported to `onError` and does not affect other providers. See
 [Writing a plugin](/internals/plugins/) and the
 [lifecycle](/internals/lifecycle/).
 
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `id` | `string` | | **Required.** Unique per instance. Used by `only` and `providers`. |
-| `requiredConsent` | `ProviderConsentRequirement` | `'none'` | A category, `'none'`, or `(consent: ConsentState \| null) => boolean`. |
-| `loadBeforeConsent` | `boolean` | `false` | Runs `load` at boot, before consent; the provider relies on its own consent mode. |
-| `defer` | `LoadTiming` | `false` | When `load` runs once allowed: `false` immediately, `'idle'` on `requestIdleCallback` (5000 ms timeout), `'interaction'` on the first `pointerdown`, `keydown`, `scroll` or `touchstart`, or a number of milliseconds. Up to 100 calls are held meanwhile and delivered after `load`. |
-| `setup` | `(ctx) => void \| Promise<void>` | | Runs when the instance is created in the browser, before boot. Must not use the network or set cookies. |
-| `load` | `(ctx) => void \| Promise<void>` | | Injects scripts. Runs once. |
-| `consent` | `(ctx) => void \| Promise<void>` | | Applies `ctx.consent`. |
-| `page` | `(page: PageEvent, ctx) => void \| Promise<void>` | | A page view. `PageEvent` is `PageViewPayload & { id: string }`. |
-| `track` | `(event: AnalyticsEventPayload, ctx) => void \| Promise<void>` | | An event: `{ id, name, params, options }`. |
-| `identify` | `(identity: UserIdentity, traits: UserTraits, ctx) => void \| Promise<void>` | | The user's identity, filtered by consent. |
-| `reset` | `(ctx) => void \| Promise<void>` | | Forget the user. |
-| `group` | `(groupId: string, traits: Record<string, unknown>, ctx) => void \| Promise<void>` | | A group association. |
-| `error` | `(error: unknown, context: ErrorContext, ctx) => void \| Promise<void>` | | Errors from `captureError` and the global handlers. |
-| `teardown` | `(ctx) => void \| Promise<void>` | | Stop sending and remove cookies where possible. |
+| Field               | Type                                                                               | Default  | Description                                                                                                                                                                                                                                                                           |
+| ------------------- | ---------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                | `string`                                                                           |          | **Required.** Unique per instance. Used by `only` and `providers`.                                                                                                                                                                                                                    |
+| `requiredConsent`   | `ProviderConsentRequirement`                                                       | `'none'` | A category, `'none'`, or `(consent: ConsentState \| null) => boolean`.                                                                                                                                                                                                                |
+| `loadBeforeConsent` | `boolean`                                                                          | `false`  | Runs `load` at boot, before consent; the provider relies on its own consent mode.                                                                                                                                                                                                     |
+| `defer`             | `LoadTiming`                                                                       | `false`  | When `load` runs once allowed: `false` immediately, `'idle'` on `requestIdleCallback` (5000 ms timeout), `'interaction'` on the first `pointerdown`, `keydown`, `scroll` or `touchstart`, or a number of milliseconds. Up to 100 calls are held meanwhile and delivered after `load`. |
+| `setup`             | `(ctx) => void \| Promise<void>`                                                   |          | Runs when the instance is created in the browser, before boot. Must not use the network or set cookies.                                                                                                                                                                               |
+| `load`              | `(ctx) => void \| Promise<void>`                                                   |          | Injects scripts. Runs once.                                                                                                                                                                                                                                                           |
+| `consent`           | `(ctx) => void \| Promise<void>`                                                   |          | Applies `ctx.consent`.                                                                                                                                                                                                                                                                |
+| `page`              | `(page: PageEvent, ctx) => void \| Promise<void>`                                  |          | A page view. `PageEvent` is `PageViewPayload & { id: string }`.                                                                                                                                                                                                                       |
+| `track`             | `(event: AnalyticsEventPayload, ctx) => void \| Promise<void>`                     |          | An event: `{ id, name, params, options }`.                                                                                                                                                                                                                                            |
+| `identify`          | `(identity: UserIdentity, traits: UserTraits, ctx) => void \| Promise<void>`       |          | The user's identity, filtered by consent.                                                                                                                                                                                                                                             |
+| `reset`             | `(ctx) => void \| Promise<void>`                                                   |          | Forget the user.                                                                                                                                                                                                                                                                      |
+| `group`             | `(groupId: string, traits: Record<string, unknown>, ctx) => void \| Promise<void>` |          | A group association.                                                                                                                                                                                                                                                                  |
+| `error`             | `(error: unknown, context: ErrorContext, ctx) => void \| Promise<void>`            |          | Errors from `captureError` and the global handlers.                                                                                                                                                                                                                                   |
+| `teardown`          | `(ctx) => void \| Promise<void>`                                                   |          | Stop sending and remove cookies where possible.                                                                                                                                                                                                                                       |
 
 #### `PluginContext`
 
-| Field | Type | Description |
-|---|---|---|
-| `consent` | `ConsentState \| null` | The current consent. |
-| `identity` | `UserIdentity` | The identity, with `email` and `phone` only under marketing consent. |
-| `debug` | `boolean` | Whether the instance's `debug` option is on. |
-| `log` | `(message: string, ...data: unknown[]) => void` | Logs under the `providers` [`debug`](#debug) topic, attributed to the plugin. |
-| `emitError` | `(error: AnalyticsError) => void` | Reports an error; `providerId` defaults to the plugin's `id`. |
+| Field       | Type                                            | Description                                                                   |
+| ----------- | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| `consent`   | `ConsentState \| null`                          | The current consent.                                                          |
+| `identity`  | `UserIdentity`                                  | The identity, with `email` and `phone` only under marketing consent.          |
+| `debug`     | `boolean`                                       | Whether the instance's `debug` option is on.                                  |
+| `log`       | `(message: string, ...data: unknown[]) => void` | Logs under the `providers` [`debug`](#debug) topic, attributed to the plugin. |
+| `emitError` | `(error: AnalyticsError) => void`               | Reports an error; `providerId` defaults to the plugin's `id`.                 |
 
 ### `AnalyticsError`
 
@@ -690,14 +690,14 @@ type AnalyticsError = {
 type AnalyticsErrorHandler = (error: AnalyticsError) => void
 ```
 
-| `scope` | Raised when |
-|---|---|
-| `provider-setup`, `provider-load`, `provider-consent`, `provider-page`, `provider-track`, `provider-error`, `provider-teardown` | The plugin hook of that name throws. `provider-setup` is also raised for a duplicate provider ID. |
-| `provider-identify` | The `identify`, `reset` or `group` hook throws. |
-| `provider-script-load` | A provider's vendor script fails to load. |
-| `server-forward` | Posting to `server.endpoint` fails or returns a non-2xx status. |
-| `consent-adapter` | An adapter's `bootstrap` or `apply` throws, including the `server.consentEndpoint` recorder. After a failed `bootstrap`, the next adapter is asked. |
-| `queue-full` | 100 calls are already waiting for boot or for a deferred `load`. |
+| `scope`                                                                                                                         | Raised when                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provider-setup`, `provider-load`, `provider-consent`, `provider-page`, `provider-track`, `provider-error`, `provider-teardown` | The plugin hook of that name throws. `provider-setup` is also raised for a duplicate provider ID.                                                   |
+| `provider-identify`                                                                                                             | The `identify`, `reset` or `group` hook throws.                                                                                                     |
+| `provider-script-load`                                                                                                          | A provider's vendor script fails to load.                                                                                                           |
+| `server-forward`                                                                                                                | Posting to `server.endpoint` fails or returns a non-2xx status.                                                                                     |
+| `consent-adapter`                                                                                                               | An adapter's `bootstrap` or `apply` throws, including the `server.consentEndpoint` recorder. After a failed `bootstrap`, the next adapter is asked. |
+| `queue-full`                                                                                                                    | 100 calls are already waiting for boot or for a deferred `load`.                                                                                    |
 
 <details>
 <summary>All exported types</summary>
@@ -727,17 +727,17 @@ Requires `react` and `react-dom` 18.3 or 19. The entry point starts with a
 Bootstraps consent, boots the instance, sends a page view on each navigation
 and provides the state for [`useConsentController()`](#useconsentcontroller).
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `analytics` | `Analytics` | | **Required.** The instance. |
-| `children` | `ReactNode` | | **Required.** |
-| `routeKey` | `string \| null` | `'default'` | Identifies the current route. Each active provider receives one page view per key, including providers that become active later on the same route. A new key also starts a new page session, except the first key after `null`. `null` holds page views until the route is known. In Next.js, use [`consentlayer/next`](#consentlayernext), which sets it for you. |
-| `page` | `PageViewPayload` | | Overrides the page view's `url`, `path` or `title`. |
-| `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | When to call `analytics.boot()`. Read once, on mount. |
-| `boot.mode` | `'immediate' \| 'idle' \| 'manual'` | `'immediate'` | `'idle'` waits for `requestIdleCallback`; `'manual'` leaves the call to you. |
-| `boot.timeoutMs` | `number` | `3000`, or `1500` without `requestIdleCallback` | In `'idle'` mode, the `requestIdleCallback` timeout, or the `setTimeout` delay where it is unavailable. |
-| `autoShowBanner` | `boolean` | `true` | Sets `bannerVisible` when no choice is stored, the stored choice is stale, or bootstrap fails. |
-| `openConsentGlobalKey` | `string` | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | A window function with this name opens the settings dialog. |
+| Prop                   | Type                                | Default                                                                  | Description                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------- | ----------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `analytics`            | `Analytics`                         |                                                                          | **Required.** The instance.                                                                                                                                                                                                                                                                                                                                        |
+| `children`             | `ReactNode`                         |                                                                          | **Required.**                                                                                                                                                                                                                                                                                                                                                      |
+| `routeKey`             | `string \| null`                    | `'default'`                                                              | Identifies the current route. Each active provider receives one page view per key, including providers that become active later on the same route. A new key also starts a new page session, except the first key after `null`. `null` holds page views until the route is known. In Next.js, use [`consentlayer/next`](#consentlayernext), which sets it for you. |
+| `page`                 | `PageViewPayload`                   |                                                                          | Overrides the page view's `url`, `path` or `title`.                                                                                                                                                                                                                                                                                                                |
+| `boot`                 | `LazyBootConfig`                    | `{ mode: 'immediate' }`                                                  | When to call `analytics.boot()`. Read once, on mount.                                                                                                                                                                                                                                                                                                              |
+| `boot.mode`            | `'immediate' \| 'idle' \| 'manual'` | `'immediate'`                                                            | `'idle'` waits for `requestIdleCallback`; `'manual'` leaves the call to you.                                                                                                                                                                                                                                                                                       |
+| `boot.timeoutMs`       | `number`                            | `3000`, or `1500` without `requestIdleCallback`                          | In `'idle'` mode, the `requestIdleCallback` timeout, or the `setTimeout` delay where it is unavailable.                                                                                                                                                                                                                                                            |
+| `autoShowBanner`       | `boolean`                           | `true`                                                                   | Sets `bannerVisible` when no choice is stored, the stored choice is stale, or bootstrap fails.                                                                                                                                                                                                                                                                     |
+| `openConsentGlobalKey` | `string`                            | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | A window function with this name opens the settings dialog.                                                                                                                                                                                                                                                                                                        |
 
 The props type is exported as `AnalyticsProviderProps`.
 
@@ -775,21 +775,21 @@ function useConsent(): {
 State and actions for building a consent banner and settings dialog. See
 [Consent UI](/guides/consent-ui/).
 
-| Field | Type | Description |
-|---|---|---|
-| `ready` | `boolean` | `true` once `bootstrap()` has settled. |
-| `error` | `string \| null` | The bootstrap error, converted with `String()`, or `null`. |
-| `bannerVisible` | `boolean` | Whether the banner should render. |
-| `showBanner`, `hideBanner` | `() => void` | Set `bannerVisible`. |
-| `dialogVisible` | `boolean` | Whether the settings dialog should render. |
-| `openDialog`, `closeDialog` | `() => void` | Set `dialogVisible`. |
-| `categories` | `readonly ConsentCategory[]` | The categories the dialog shows, from `analytics.consent.categories`. |
-| `prefs` | `Record<ConsentCategory, boolean>` | The dialog's toggles, one per category; kept in sync with the current consent. |
-| `setPrefs` | `(next: Record<ConsentCategory, boolean>) => void` | Changes the toggles without saving them. |
-| `gpc` | `boolean` | Whether the Global Privacy Control signal is honored, from `analytics.consent.gpc`. |
-| `acceptAll` | `() => Promise<void>` | Grants every category, except `marketing` while `gpc` is `true`. |
-| `rejectNonEssential` | `() => Promise<void>` | Denies every category. |
-| `savePreferences` | `() => Promise<void>` | Saves `prefs`. |
+| Field                       | Type                                               | Description                                                                         |
+| --------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `ready`                     | `boolean`                                          | `true` once `bootstrap()` has settled.                                              |
+| `error`                     | `string \| null`                                   | The bootstrap error, converted with `String()`, or `null`.                          |
+| `bannerVisible`             | `boolean`                                          | Whether the banner should render.                                                   |
+| `showBanner`, `hideBanner`  | `() => void`                                       | Set `bannerVisible`.                                                                |
+| `dialogVisible`             | `boolean`                                          | Whether the settings dialog should render.                                          |
+| `openDialog`, `closeDialog` | `() => void`                                       | Set `dialogVisible`.                                                                |
+| `categories`                | `readonly ConsentCategory[]`                       | The categories the dialog shows, from `analytics.consent.categories`.               |
+| `prefs`                     | `Record<ConsentCategory, boolean>`                 | The dialog's toggles, one per category; kept in sync with the current consent.      |
+| `setPrefs`                  | `(next: Record<ConsentCategory, boolean>) => void` | Changes the toggles without saving them.                                            |
+| `gpc`                       | `boolean`                                          | Whether the Global Privacy Control signal is honored, from `analytics.consent.gpc`. |
+| `acceptAll`                 | `() => Promise<void>`                              | Grants every category, except `marketing` while `gpc` is `true`.                    |
+| `rejectNonEssential`        | `() => Promise<void>`                              | Denies every category.                                                              |
+| `savePreferences`           | `() => Promise<void>`                              | Saves `prefs`.                                                                      |
 
 `acceptAll`, `rejectNonEssential` and `savePreferences` call `setConsent` and
 then hide the banner and the dialog.
@@ -801,12 +801,12 @@ then hide the banner and the dialog.
 Renders `fallback` when a descendant throws during rendering, and sends the
 error through `captureError` with `source: 'boundary'`.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `fallback` | `ReactNode \| ((props: { error: unknown; reset: () => void }) => ReactNode)` | | **Required.** `reset()` clears the error and renders `children` again. |
-| `children` | `ReactNode` | | **Required.** |
-| `analytics` | `Analytics` | the `<AnalyticsProvider>` instance, else the latest `createAnalytics()` instance | The instance that receives the error. |
-| `tags` | `Record<string, string>` | | Passed as `context.tags`. |
+| Prop        | Type                                                                         | Default                                                                          | Description                                                            |
+| ----------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `fallback`  | `ReactNode \| ((props: { error: unknown; reset: () => void }) => ReactNode)` |                                                                                  | **Required.** `reset()` clears the error and renders `children` again. |
+| `children`  | `ReactNode`                                                                  |                                                                                  | **Required.**                                                          |
+| `analytics` | `Analytics`                                                                  | the `<AnalyticsProvider>` instance, else the latest `createAnalytics()` instance | The instance that receives the error.                                  |
+| `tags`      | `Record<string, string>`                                                     |                                                                                  | Passed as `context.tags`.                                              |
 
 The props type is exported as `ErrorBoundaryProps`.
 
@@ -823,10 +823,10 @@ function createGlobalError(
 ): (props: { error: Error & { digest?: string }; reset: () => void }) => JSX.Element
 ```
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `analytics` | `Analytics` | | **Required.** |
-| `render` | `(props: { error: unknown; reset: () => void }) => ReactNode` | A heading, "Something went wrong.", and a "Try again" button that calls `reset` | The page body. |
+| Parameter   | Type                                                          | Default                                                                         | Description    |
+| ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------- |
+| `analytics` | `Analytics`                                                   |                                                                                 | **Required.**  |
+| `render`    | `(props: { error: unknown; reset: () => void }) => ReactNode` | A heading, "Something went wrong.", and a "Try again" button that calls `reset` | The page body. |
 
 **Returns** a component that renders `<html lang="en"><body>` around
 `render`. On mount it calls `analytics.consent.bootstrap()`, then
@@ -847,11 +847,11 @@ Renders Meta's `<noscript>` PageView pixel. It fires only for visitors without
 JavaScript, who never see the consent banner, so it tracks them without
 consent. Render it only where that is lawful.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | | **Required.** Renders nothing while `undefined` or empty. |
-| `enabled` | `boolean` | `undefined` | Renders nothing unless `true`. |
-| other `<img>` props | `ComponentPropsWithoutRef<'img'>` | `width` and `height` `1`, `style.display` `'none'` | Passed to the image. `alt` is always `''`. |
+| Prop                | Type                              | Default                                            | Description                                               |
+| ------------------- | --------------------------------- | -------------------------------------------------- | --------------------------------------------------------- |
+| `pixelId`           | `string \| undefined`             |                                                    | **Required.** Renders nothing while `undefined` or empty. |
+| `enabled`           | `boolean`                         | `undefined`                                        | Renders nothing unless `true`.                            |
+| other `<img>` props | `ComponentPropsWithoutRef<'img'>` | `width` and `height` `1`, `style.display` `'none'` | Passed to the image. `alt` is always `''`.                |
 
 ### `<GtmNoscript>`
 
@@ -860,11 +860,11 @@ for visitors without JavaScript. Those visitors never see the consent banner,
 so its tags run without consent. Render it only where that is lawful, at the
 start of `<body>`.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `containerId` | `string \| undefined` | | **Required.** Renders nothing while `undefined` or empty. |
-| `enabled` | `boolean` | `undefined` | Renders nothing unless `true`. |
-| other `<iframe>` props | `ComponentPropsWithoutRef<'iframe'>` | `title` `'Google Tag Manager'`, `width` and `height` `0`, hidden | Passed to the iframe. |
+| Prop                   | Type                                 | Default                                                          | Description                                               |
+| ---------------------- | ------------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------- |
+| `containerId`          | `string \| undefined`                |                                                                  | **Required.** Renders nothing while `undefined` or empty. |
+| `enabled`              | `boolean`                            | `undefined`                                                      | Renders nothing unless `true`.                            |
+| other `<iframe>` props | `ComponentPropsWithoutRef<'iframe'>` | `title` `'Google Tag Manager'`, `width` and `height` `0`, hidden | Passed to the iframe.                                     |
 
 ## `consentlayer/next`
 
@@ -906,15 +906,15 @@ consent UI state to every component. In the browser, it also bootstraps
 consent, schedules boot, sends page views and wraps `app.config.errorHandler`.
 On the server, it only provides them. `app.unmount()` stops it.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `analytics` | `Analytics` | | **Required.** The instance. |
-| `router` | `RouterLike` | | Sends a page view after every successful navigation, once per path and query string; the hash is ignored. A new path or query string also starts a new page session. Without it, one page view is sent for the page load. |
-| `page` | `PageViewPayload` | | Overrides the page view's `url`, `path` or `title`. |
-| `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | As on [`<AnalyticsProvider>`](#analyticsprovider). |
-| `autoShowBanner` | `boolean` | `true` | As on `<AnalyticsProvider>`. |
-| `openConsentGlobalKey` | `string` | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. |
-| `captureErrors` | `boolean` | `true` | Sends errors reaching `app.config.errorHandler` through `captureError` with `source: 'boundary'` and a `vue_info` tag, then calls the handler set before the plugin, else `console.error`. |
+| Option                 | Type              | Default                                                                  | Description                                                                                                                                                                                                               |
+| ---------------------- | ----------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `analytics`            | `Analytics`       |                                                                          | **Required.** The instance.                                                                                                                                                                                               |
+| `router`               | `RouterLike`      |                                                                          | Sends a page view after every successful navigation, once per path and query string; the hash is ignored. A new path or query string also starts a new page session. Without it, one page view is sent for the page load. |
+| `page`                 | `PageViewPayload` |                                                                          | Overrides the page view's `url`, `path` or `title`.                                                                                                                                                                       |
+| `boot`                 | `LazyBootConfig`  | `{ mode: 'immediate' }`                                                  | As on [`<AnalyticsProvider>`](#analyticsprovider).                                                                                                                                                                        |
+| `autoShowBanner`       | `boolean`         | `true`                                                                   | As on `<AnalyticsProvider>`.                                                                                                                                                                                              |
+| `openConsentGlobalKey` | `string`          | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`.                                                                                                                                                                                              |
+| `captureErrors`        | `boolean`         | `true`                                                                   | Sends errors reaching `app.config.errorHandler` through `captureError` with `source: 'boundary'` and a `vue_info` tag, then calls the handler set before the plugin, else `console.error`.                                |
 
 The options type is exported as `ConsentLayerOptions`, and the router type as
 `RouterLike`.
@@ -1017,14 +1017,14 @@ one that calls it, and returns the state. Once that component is mounted, it
 bootstraps consent, schedules boot and sends page views; when it is destroyed,
 it stops. On the server it only provides them.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `analytics` | `Analytics` | | **Required.** The instance. |
-| `afterNavigate` | `AfterNavigateLike` | | A function shaped like SvelteKit's `afterNavigate`. Sends a page view after the first render and every navigation, once per path and query string; the hash is ignored. A new path or query string also starts a new page session. Without it, one page view is sent for the page load. |
-| `page` | `PageViewPayload` | | Overrides the page view's `url`, `path` or `title`. |
-| `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | As on [`<AnalyticsProvider>`](#analyticsprovider). |
-| `autoShowBanner` | `boolean` | `true` | As on `<AnalyticsProvider>`. |
-| `openConsentGlobalKey` | `string` | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. |
+| Option                 | Type                | Default                                                                  | Description                                                                                                                                                                                                                                                                             |
+| ---------------------- | ------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `analytics`            | `Analytics`         |                                                                          | **Required.** The instance.                                                                                                                                                                                                                                                             |
+| `afterNavigate`        | `AfterNavigateLike` |                                                                          | A function shaped like SvelteKit's `afterNavigate`. Sends a page view after the first render and every navigation, once per path and query string; the hash is ignored. A new path or query string also starts a new page session. Without it, one page view is sent for the page load. |
+| `page`                 | `PageViewPayload`   |                                                                          | Overrides the page view's `url`, `path` or `title`.                                                                                                                                                                                                                                     |
+| `boot`                 | `LazyBootConfig`    | `{ mode: 'immediate' }`                                                  | As on [`<AnalyticsProvider>`](#analyticsprovider).                                                                                                                                                                                                                                      |
+| `autoShowBanner`       | `boolean`           | `true`                                                                   | As on `<AnalyticsProvider>`.                                                                                                                                                                                                                                                            |
+| `openConsentGlobalKey` | `string`            | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`.                                                                                                                                                                                                                                                            |
 
 The options type is exported as `ConsentLayerOptions`, and the navigation type
 as `AfterNavigateLike`:
@@ -1164,12 +1164,12 @@ with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
 Solid's `<ErrorBoundary>`, which also sends the error through `captureError`
 with `source: 'boundary'`.
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `fallback` | `JSX.Element \| ((error: unknown, reset: () => void) => JSX.Element)` | | **Required.** `reset()` clears the error and renders `children` again. |
-| `children` | `JSX.Element` | | |
-| `analytics` | `Analytics` | the `<AnalyticsProvider>` instance, else the latest `createAnalytics()` instance | The instance that receives the error. |
-| `tags` | `Record<string, string>` | | Passed as `context.tags`. |
+| Prop        | Type                                                                  | Default                                                                          | Description                                                            |
+| ----------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `fallback`  | `JSX.Element \| ((error: unknown, reset: () => void) => JSX.Element)` |                                                                                  | **Required.** `reset()` clears the error and renders `children` again. |
+| `children`  | `JSX.Element`                                                         |                                                                                  |                                                                        |
+| `analytics` | `Analytics`                                                           | the `<AnalyticsProvider>` instance, else the latest `createAnalytics()` instance | The instance that receives the error.                                  |
+| `tags`      | `Record<string, string>`                                              |                                                                                  | Passed as `context.tags`.                                              |
 
 The props type is exported as `ErrorBoundaryProps`.
 
@@ -1222,12 +1222,12 @@ every `NavigationEnd` to a new path or query string, or one page view when the
 Angular Router is not provided. On the server it only provides the instance and
 the state.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `analytics` | `Analytics` | | **Required.** |
-| `captureErrors` | `boolean` | `true` | Provides an `ErrorHandler` that sends each error through `captureError` with `source: 'boundary'`, in the browser, then logs it as Angular's default `ErrorHandler` does. |
-| `page` | `PageViewPayload` | | Merged into every page view. |
-| `boot`, `autoShowBanner`, `openConsentGlobalKey` | | | As on the React [`<AnalyticsProvider>`](#analyticsprovider). |
+| Option                                           | Type              | Default | Description                                                                                                                                                               |
+| ------------------------------------------------ | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `analytics`                                      | `Analytics`       |         | **Required.**                                                                                                                                                             |
+| `captureErrors`                                  | `boolean`         | `true`  | Provides an `ErrorHandler` that sends each error through `captureError` with `source: 'boundary'`, in the browser, then logs it as Angular's default `ErrorHandler` does. |
+| `page`                                           | `PageViewPayload` |         | Merged into every page view.                                                                                                                                              |
+| `boot`, `autoShowBanner`, `openConsentGlobalKey` |                   |         | As on the React [`<AnalyticsProvider>`](#analyticsprovider).                                                                                                              |
 
 ### `injectAnalytics()`
 
@@ -1298,29 +1298,29 @@ Each provider is its own entry point, and each factory returns an
 `AnalyticsPlugin`. See [Providers](/guides/providers/) for setup and
 [Provider internals](/internals/providers/) for what each one sends.
 
-| Factory | Entry point | `id` | `requiredConsent` |
-|---|---|---|---|
-| `ga4` | `consentlayer/providers/ga4` | `ga4` | `analytics` |
-| `meta` | `consentlayer/providers/meta` | `meta` | `marketing` |
-| `gtm` | `consentlayer/providers/gtm` | `gtm` | `'none'`, or `requiredConsent` |
-| `posthog` | `consentlayer/providers/posthog` | `posthog` | `'none'` when `cookieless`, else `analytics` |
-| `sentry` | `consentlayer/providers/sentry` | `sentry` | `'none'` |
-| `contentsquare` | `consentlayer/providers/contentsquare` | `contentsquare` | `analytics` |
-| `hotjar` | `consentlayer/providers/hotjar` | `hotjar` | `analytics` |
-| `vercel` | `consentlayer/providers/vercel` | `vercel` | `'none'` |
-| `tiktok` | `consentlayer/providers/tiktok` | `tiktok` | `marketing` |
+| Factory         | Entry point                            | `id`            | `requiredConsent`                            |
+| --------------- | -------------------------------------- | --------------- | -------------------------------------------- |
+| `ga4`           | `consentlayer/providers/ga4`           | `ga4`           | `analytics`                                  |
+| `meta`          | `consentlayer/providers/meta`          | `meta`          | `marketing`                                  |
+| `gtm`           | `consentlayer/providers/gtm`           | `gtm`           | `'none'`, or `requiredConsent`               |
+| `posthog`       | `consentlayer/providers/posthog`       | `posthog`       | `'none'` when `cookieless`, else `analytics` |
+| `sentry`        | `consentlayer/providers/sentry`        | `sentry`        | `'none'`                                     |
+| `contentsquare` | `consentlayer/providers/contentsquare` | `contentsquare` | `analytics`                                  |
+| `hotjar`        | `consentlayer/providers/hotjar`        | `hotjar`        | `analytics`                                  |
+| `vercel`        | `consentlayer/providers/vercel`        | `vercel`        | `'none'`                                     |
+| `tiktok`        | `consentlayer/providers/tiktok`        | `tiktok`        | `marketing`                                  |
 
 ### `ga4(options)`
 
 Google Analytics 4 through gtag.js, with Consent Mode v2. Ad signals follow
 marketing consent.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `measurementId` | `string \| undefined` | | **Required.** Must match `G-` followed by 4 to 16 upper-case letters or digits; `undefined` or `''` turns the provider off. |
-| `loadBeforeConsent` | `boolean` | `false` | `true` loads gtag.js at boot with Consent Mode set to denied. |
-| `consentMode` | `'basic' \| 'advanced'` | `'basic'` | `'advanced'` loads and configures the tag at boot, for cookieless pings. See [Advanced mode](/guides/providers/ga4/#advanced-mode). |
-| `serverContainerUrl` | `string` | | An HTTPS or relative URL, set as `server_container_url`. |
+| Option               | Type                    | Default   | Description                                                                                                                         |
+| -------------------- | ----------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `measurementId`      | `string \| undefined`   |           | **Required.** Must match `G-` followed by 4 to 16 upper-case letters or digits; `undefined` or `''` turns the provider off.         |
+| `loadBeforeConsent`  | `boolean`               | `false`   | `true` loads gtag.js at boot with Consent Mode set to denied.                                                                       |
+| `consentMode`        | `'basic' \| 'advanced'` | `'basic'` | `'advanced'` loads and configures the tag at boot, for cookieless pings. See [Advanced mode](/guides/providers/ga4/#advanced-mode). |
+| `serverContainerUrl` | `string`                |           | An HTTPS or relative URL, set as `server_container_url`.                                                                            |
 
 `ga4()` sets the Consent Mode defaults and updates itself unless a
 [`googleConsentMode()`](#googleconsentmodeoptions) adapter is on the page.
@@ -1330,10 +1330,10 @@ marketing consent.
 The entry point also exports the types `Ga4Options` and `Ga4ConsentMode`, and
 two helpers:
 
-| Export | Signature | Description |
-|---|---|---|
-| `ga4EventName` | `(name: string) => string` | The GA4 name of an event: `lead` becomes `generate_lead`; other characters than letters, digits and `_` become `_`. |
-| `ga4UserData` | `(identity: UserIdentity) => Record<string, string>` | GA4 `user_data`: `email`, and `phone_number` with a leading `+`. Empty without an email or phone. |
+| Export         | Signature                                            | Description                                                                                                         |
+| -------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `ga4EventName` | `(name: string) => string`                           | The GA4 name of an event: `lead` becomes `generate_lead`; other characters than letters, digits and `_` become `_`. |
+| `ga4UserData`  | `(identity: UserIdentity) => Record<string, string>` | GA4 `user_data`: `email`, and `phone_number` with a leading `+`. Empty without an email or phone.                   |
 
 ### `gtm(options)`
 
@@ -1341,11 +1341,11 @@ Google Tag Manager. Loads the container and pushes page views, events, the
 user ID and consent changes into `dataLayer`. See
 [Google Tag Manager](/guides/providers/gtm/).
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `containerId` | `string \| undefined` | | **Required.** Must match `GTM-` followed by 4 to 12 upper-case letters or digits; `undefined` or `''` turns the provider off. |
-| `requiredConsent` | `ProviderConsentRequirement` | `'none'` | The category that must be granted before the container loads. |
-| `serverContainerUrl` | `string` | | An HTTPS or relative URL; `gtm.js` loads from it. |
+| Option               | Type                         | Default  | Description                                                                                                                   |
+| -------------------- | ---------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `containerId`        | `string \| undefined`        |          | **Required.** Must match `GTM-` followed by 4 to 12 upper-case letters or digits; `undefined` or `''` turns the provider off. |
+| `requiredConsent`    | `ProviderConsentRequirement` | `'none'` | The category that must be granted before the container loads.                                                                 |
+| `serverContainerUrl` | `string`                     |          | An HTTPS or relative URL; `gtm.js` loads from it.                                                                             |
 
 `gtm()` sets the Consent Mode defaults and updates itself unless a
 [`googleConsentMode()`](#googleconsentmodeoptions) adapter is on the page;
@@ -1360,36 +1360,36 @@ The entry point also exports the type `GtmOptions`.
 Meta Pixel. Combine it with [`metaCapi`](#metacapioptions) to also send events
 through the Conversions API.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | | **Required.** A numeric string of 8 to 20 digits; `undefined` or `''` turns the provider off. |
-| `locale` | `string` | `'en_US'` | The locale in the `fbevents.js` URL. |
-| `loadBeforeConsent` | `boolean` | `false` | `true` loads the pixel at boot with consent revoked. |
+| Option              | Type                  | Default   | Description                                                                                   |
+| ------------------- | --------------------- | --------- | --------------------------------------------------------------------------------------------- |
+| `pixelId`           | `string \| undefined` |           | **Required.** A numeric string of 8 to 20 digits; `undefined` or `''` turns the provider off. |
+| `locale`            | `string`              | `'en_US'` | The locale in the `fbevents.js` URL.                                                          |
+| `loadBeforeConsent` | `boolean`             | `false`   | `true` loads the pixel at boot with consent revoked.                                          |
 
 **Throws** an `Error` when `pixelId` is invalid.
 
 The entry point also exports the options type `MetaOptions` and two helpers:
 
-| Export | Signature | Description |
-|---|---|---|
-| `toMetaEvent` | `(event: AnalyticsEventPayload) => { method: 'track' \| 'trackCustom'; name: string; params: Record<string, unknown> }` | Maps a standard event to a Meta standard event, such as `purchase` to `Purchase`, or to a custom event. Converts `items` to `content_ids`, `contents`, `content_type` and `num_items`, and `search_term` to `search_string`. |
-| `metaUserData` | `(identity: UserIdentity) => Record<string, string>` | Advanced matching parameters: `em`, `ph` (digits only) and `external_id`. |
+| Export         | Signature                                                                                                               | Description                                                                                                                                                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `toMetaEvent`  | `(event: AnalyticsEventPayload) => { method: 'track' \| 'trackCustom'; name: string; params: Record<string, unknown> }` | Maps a standard event to a Meta standard event, such as `purchase` to `Purchase`, or to a custom event. Converts `items` to `content_ids`, `contents`, `content_type` and `num_items`, and `search_term` to `search_string`. |
+| `metaUserData` | `(identity: UserIdentity) => Record<string, string>`                                                                    | Advanced matching parameters: `em`, `ph` (digits only) and `external_id`.                                                                                                                                                    |
 
 ### `posthog(options)`
 
 PostHog product analytics. Requires the optional peer dependency `posthog-js`.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `apiKey` | `string \| undefined` | | **Required.** The project API key; `undefined` or `''` turns the provider off. |
-| `apiHost` | `string` | `'https://us.i.posthog.com'` | The ingestion host or your reverse proxy. |
-| `uiHost` | `string` | | PostHog's app URL, such as `https://us.posthog.com`, for toolbar links when `apiHost` is a proxy. |
-| `cookieless` | `boolean` | `true` | Counts visitors without cookies or storage until analytics is granted. Requires cookieless mode in the PostHog project settings. `false` loads PostHog only after analytics consent. |
-| `autocapture` | `boolean` | `false` | PostHog autocapture. |
-| `recording` | `boolean` | `false` | Session recording, after analytics consent. |
-| `errors` | `boolean` | `true` | Sends `captureError` errors to PostHog error tracking. |
-| `groupType` | `string` | `'company'` | The group type `group()` uses. |
-| `defer` | `LoadTiming` | `false` | When to load the SDK. See [`AnalyticsPlugin`](#analyticsplugin). |
+| Option        | Type                  | Default                      | Description                                                                                                                                                                          |
+| ------------- | --------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `apiKey`      | `string \| undefined` |                              | **Required.** The project API key; `undefined` or `''` turns the provider off.                                                                                                       |
+| `apiHost`     | `string`              | `'https://us.i.posthog.com'` | The ingestion host or your reverse proxy.                                                                                                                                            |
+| `uiHost`      | `string`              |                              | PostHog's app URL, such as `https://us.posthog.com`, for toolbar links when `apiHost` is a proxy.                                                                                    |
+| `cookieless`  | `boolean`             | `true`                       | Counts visitors without cookies or storage until analytics is granted. Requires cookieless mode in the PostHog project settings. `false` loads PostHog only after analytics consent. |
+| `autocapture` | `boolean`             | `false`                      | PostHog autocapture.                                                                                                                                                                 |
+| `recording`   | `boolean`             | `false`                      | Session recording, after analytics consent.                                                                                                                                          |
+| `errors`      | `boolean`             | `true`                       | Sends `captureError` errors to PostHog error tracking.                                                                                                                               |
+| `groupType`   | `string`              | `'company'`                  | The group type `group()` uses.                                                                                                                                                       |
+| `defer`       | `LoadTiming`          | `false`                      | When to load the SDK. See [`AnalyticsPlugin`](#analyticsplugin).                                                                                                                     |
 
 The options type is exported as `PostHogOptions`.
 
@@ -1401,15 +1401,15 @@ no IP address, cookies, headers, bodies or query strings. Analytics consent
 adds the user ID, Session Replay and tracing; marketing consent adds the
 email.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `dsn` | `string \| undefined` | | **Required.** `undefined` or `''` turns the provider off. |
-| `environment` | `string` | | Passed to `Sentry.init`. |
-| `release` | `string` | | Passed to `Sentry.init`. |
-| `replay` | `boolean \| { sessionSampleRate?: number; onErrorSampleRate?: number }` | `false` | Session Replay, after analytics consent. Sample rates default to `0.1` and `1`. |
-| `tracing` | `boolean \| { sampleRate?: number }` | `false` | Performance tracing, after analytics consent. `sampleRate` defaults to `1`. |
-| `tunnel` | `string` | | Sends events to this URL instead of the DSN's host. |
-| `defer` | `LoadTiming` | `false` | When to load the SDK. See [`AnalyticsPlugin`](#analyticsplugin). |
+| Option        | Type                                                                    | Default | Description                                                                     |
+| ------------- | ----------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------- |
+| `dsn`         | `string \| undefined`                                                   |         | **Required.** `undefined` or `''` turns the provider off.                       |
+| `environment` | `string`                                                                |         | Passed to `Sentry.init`.                                                        |
+| `release`     | `string`                                                                |         | Passed to `Sentry.init`.                                                        |
+| `replay`      | `boolean \| { sessionSampleRate?: number; onErrorSampleRate?: number }` | `false` | Session Replay, after analytics consent. Sample rates default to `0.1` and `1`. |
+| `tracing`     | `boolean \| { sampleRate?: number }`                                    | `false` | Performance tracing, after analytics consent. `sampleRate` defaults to `1`.     |
+| `tunnel`      | `string`                                                                |         | Sends events to this URL instead of the DSN's host.                             |
+| `defer`       | `LoadTiming`                                                            | `false` | When to load the SDK. See [`AnalyticsPlugin`](#analyticsplugin).                |
 
 The options type is exported as `SentryOptions`. For server-side Sentry, see
 [`consentlayer/sentry/server`](#consentlayersentryserver).
@@ -1418,9 +1418,9 @@ The options type is exported as `SentryOptions`. For server-side Sentry, see
 
 Contentsquare, Hotjar's successor.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `tagId` | `string \| undefined` | | **Required.** The ID in your tag's URL, `t.contentsquare.net/uxa/<tagId>.js`; `undefined` or `''` turns the provider off. |
+| Option  | Type                  | Default | Description                                                                                                               |
+| ------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `tagId` | `string \| undefined` |         | **Required.** The ID in your tag's URL, `t.contentsquare.net/uxa/<tagId>.js`; `undefined` or `''` turns the provider off. |
 
 The options type is exported as `ContentsquareOptions`.
 
@@ -1429,11 +1429,11 @@ The options type is exported as `ContentsquareOptions`.
 **Deprecated.** Hotjar accounts are moving to Contentsquare; use
 `contentsquare()` once yours has moved.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `siteId` | `number \| string \| undefined` | | **Required.** A positive integer, as a number or a string of digits. |
-| `version` | `number \| string \| undefined` | | **Required.** The Hotjar snippet version, a positive integer as a number or a string of digits. |
-| `reloadOnRevoke` | `boolean` | `false` | Hotjar cannot be stopped once loaded. On withdrawal its cookies and storage are always deleted; `true` also reloads the page so recording stops. |
+| Option           | Type                            | Default | Description                                                                                                                                      |
+| ---------------- | ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `siteId`         | `number \| string \| undefined` |         | **Required.** A positive integer, as a number or a string of digits.                                                                             |
+| `version`        | `number \| string \| undefined` |         | **Required.** The Hotjar snippet version, a positive integer as a number or a string of digits.                                                  |
+| `reloadOnRevoke` | `boolean`                       | `false` | Hotjar cannot be stopped once loaded. On withdrawal its cookies and storage are always deleted; `true` also reloads the page so recording stops. |
 
 While `siteId` or `version` is `undefined`, `''` or whitespace, the provider is
 off and, with `debug`, logs `hotjar is off: siteId is not set.` (or `version`).
@@ -1449,9 +1449,9 @@ Vercel Analytics. It is cookieless, so it runs without consent. Only `track`
 is forwarded; `Date` params become ISO strings, `undefined` becomes
 `null`, and objects and arrays are dropped.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `trackEvent` | `(name: string, payload: Record<string, string \| number \| boolean \| null>) => void` | | **Required.** `track` from `@vercel/analytics`. |
+| Option       | Type                                                                                   | Default | Description                                     |
+| ------------ | -------------------------------------------------------------------------------------- | ------- | ----------------------------------------------- |
+| `trackEvent` | `(name: string, payload: Record<string, string \| number \| boolean \| null>) => void` |         | **Required.** `track` from `@vercel/analytics`. |
 
 The options type is exported as `VercelOptions`.
 
@@ -1460,17 +1460,17 @@ The options type is exported as `VercelOptions`.
 TikTok Pixel. Combine it with [`tiktokEvents`](#tiktokeventsoptions) to also
 send events through the Events API.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | | **Required.** `undefined` or `''` turns the provider off. |
-| `loadBeforeConsent` | `boolean` | `false` | `true` loads the pixel at boot with `ttq.holdConsent()`. |
+| Option              | Type                  | Default | Description                                               |
+| ------------------- | --------------------- | ------- | --------------------------------------------------------- |
+| `pixelId`           | `string \| undefined` |         | **Required.** `undefined` or `''` turns the provider off. |
+| `loadBeforeConsent` | `boolean`             | `false` | `true` loads the pixel at boot with `ttq.holdConsent()`.  |
 
 The entry point also exports the options type `TikTokOptions` and two helpers:
 
-| Export | Signature | Description |
-|---|---|---|
-| `toTikTokEvent` | `(event: AnalyticsEventPayload) => { name: string; params: Record<string, unknown> }` | Maps a standard event to a TikTok standard event, such as `purchase` to `Purchase`, or keeps its name. Converts `items` to `content_ids`, `contents`, `content_type` and `num_items`, `search_term` to `search_string` and `transaction_id` to `order_id`. |
-| `tiktokUserData` | `(identity: UserIdentity) => Record<string, string>` | Advanced matching parameters for `ttq.identify`: `email` (trimmed, lowercased), `phone_number` (digits prefixed with `+`) and `external_id`. |
+| Export           | Signature                                                                             | Description                                                                                                                                                                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `toTikTokEvent`  | `(event: AnalyticsEventPayload) => { name: string; params: Record<string, unknown> }` | Maps a standard event to a TikTok standard event, such as `purchase` to `Purchase`, or keeps its name. Converts `items` to `content_ids`, `contents`, `content_type` and `num_items`, `search_term` to `search_string` and `transaction_id` to `order_id`. |
+| `tiktokUserData` | `(identity: UserIdentity) => Record<string, string>`                                  | Advanced matching parameters for `ttq.identify`: `email` (trimmed, lowercased), `phone_number` (digits prefixed with `+`) and `external_id`.                                                                                                               |
 
 ## `consentlayer/adapters/*`
 
@@ -1485,13 +1485,13 @@ From `consentlayer/adapters/shopify`. A
 `'shopify-customer-privacy'`, that syncs consent with Shopify's Customer
 Privacy API. Pass it to `createAnalytics({ consent: { adapters } })`.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `loadFeature` | `boolean` | `true` | Before reading or writing consent, loads Shopify's Customer Privacy script when `headlessStorefront.storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing, then the `consent-tracking-api` feature through `Shopify.loadFeatures` when available. |
-| `canBootstrap` | `() => boolean` | | Return `false` to skip reading Shopify's consent during bootstrap. |
-| `headlessStorefront` | `{ storefrontAccessToken?: string; checkoutRootDomain?: string; storefrontRootDomain?: string }` | | Required off Shopify-hosted themes. Applies only once `storefrontAccessToken` is set; then passed to `setTrackingConsent` with `headlessStorefront: true`. |
-| `document` | `Document` | `document` | The document that receives `visitorConsentCollected` events. |
-| `window` | `Window` | `window` | The window that holds `Shopify`. |
+| Option               | Type                                                                                             | Default    | Description                                                                                                                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `loadFeature`        | `boolean`                                                                                        | `true`     | Before reading or writing consent, loads Shopify's Customer Privacy script when `headlessStorefront.storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing, then the `consent-tracking-api` feature through `Shopify.loadFeatures` when available. |
+| `canBootstrap`       | `() => boolean`                                                                                  |            | Return `false` to skip reading Shopify's consent during bootstrap.                                                                                                                                                                                                 |
+| `headlessStorefront` | `{ storefrontAccessToken?: string; checkoutRootDomain?: string; storefrontRootDomain?: string }` |            | Required off Shopify-hosted themes. Applies only once `storefrontAccessToken` is set; then passed to `setTrackingConsent` with `headlessStorefront: true`.                                                                                                         |
+| `document`           | `Document`                                                                                       | `document` | The document that receives `visitorConsentCollected` events.                                                                                                                                                                                                       |
+| `window`             | `Window`                                                                                         | `window`   | The window that holds `Shopify`.                                                                                                                                                                                                                                   |
 
 The options type is exported as `ShopifyCustomerPrivacyOptions`.
 
@@ -1514,10 +1514,10 @@ reads consent from the IAB TCF v2 CMP on the page through `__tcfapi`. It has
 `__tcfapi` is missing or the CMP does not report `gdprApplies: true`. See
 [IAB TCF](/guides/adapters/tcf/).
 
-| Option | Type | Default | Description |
-|---|---|---|---|
+| Option     | Type                                         | Default                                                               | Description                                                                                                                                                                                                      |
+| ---------- | -------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `purposes` | `Partial<Record<ConsentCategory, number[]>>` | `{ preferences: [1], analytics: [1, 8], marketing: [1, 2, 3, 4, 7] }` | TCF purpose IDs per category, merged over the default. A category is granted when `purpose.consents` is `true` for every listed purpose; legitimate interest does not count, and an empty list is never granted. |
-| `window` | `Window` | `window` | The window that holds `__tcfapi`. |
+| `window`   | `Window`                                     | `window`                                                              | The window that holds `__tcfapi`.                                                                                                                                                                                |
 
 The options type is exported as `TcfOptions`.
 
@@ -1529,12 +1529,12 @@ From `consentlayer/adapters/google-consent-mode`. A
 defaults when the instance is created and an update after every change. See
 [Google Consent Mode](/guides/adapters/google-consent-mode/).
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `regions` | `GoogleConsentModeRegion[]` | `[]` | Categories granted before a choice in the listed regions. |
-| `waitForUpdate` | `number` | | Milliseconds, as `wait_for_update` in each default. |
-| `urlPassthrough` | `boolean` | `false` | `gtag('set', 'url_passthrough', true)`. |
-| `adsDataRedaction` | `boolean` | `false` | `gtag('set', 'ads_data_redaction', true)`. |
+| Option             | Type                        | Default | Description                                               |
+| ------------------ | --------------------------- | ------- | --------------------------------------------------------- |
+| `regions`          | `GoogleConsentModeRegion[]` | `[]`    | Categories granted before a choice in the listed regions. |
+| `waitForUpdate`    | `number`                    |         | Milliseconds, as `wait_for_update` in each default.       |
+| `urlPassthrough`   | `boolean`                   | `false` | `gtag('set', 'url_passthrough', true)`.                   |
+| `adsDataRedaction` | `boolean`                   | `false` | `gtag('set', 'ads_data_redaction', true)`.                |
 
 ```ts
 /** ISO 3166-2 codes, such as 'US' or 'US-CA', and the categories granted there before a choice. */
@@ -1556,12 +1556,12 @@ Builds the params of the standard ecommerce events from the product, cart and
 order shapes most storefront APIs return. See
 [Events and identity](/guides/events/).
 
-| Function | Returns | For |
-|---|---|---|
-| `productParams(product: ProductRef)` | `{ value, currency, items: [item] }`. `value` is price × quantity. | `view_item`, `add_to_cart`, `remove_from_cart`, `add_to_wishlist` |
-| `cartParams(cart: CartRef)` | `{ value, currency, items }`. `value` is `subtotal.amount`, else the sum of price × quantity; `currency` is the subtotal's, else the first line's. | `begin_checkout`, `add_payment_info`, `add_shipping_info` |
-| `orderParams(order: OrderRef)` | `{ transaction_id, value, currency, tax, shipping, coupon, items }` | `purchase` |
-| `toItem(product: ProductRef)` | One `EcommerceItem`. `quantity` defaults to `1`; `price.amount` is converted to a number. | `items[]` entries |
+| Function                             | Returns                                                                                                                                            | For                                                               |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `productParams(product: ProductRef)` | `{ value, currency, items: [item] }`. `value` is price × quantity.                                                                                 | `view_item`, `add_to_cart`, `remove_from_cart`, `add_to_wishlist` |
+| `cartParams(cart: CartRef)`          | `{ value, currency, items }`. `value` is `subtotal.amount`, else the sum of price × quantity; `currency` is the subtotal's, else the first line's. | `begin_checkout`, `add_payment_info`, `add_shipping_info`         |
+| `orderParams(order: OrderRef)`       | `{ transaction_id, value, currency, tax, shipping, coupon, items }`                                                                                | `purchase`                                                        |
+| `toItem(product: ProductRef)`        | One `EcommerceItem`. `quantity` defaults to `1`; `price.amount` is converted to a number.                                                          | `items[]` entries                                                 |
 
 <details>
 <summary>Type signatures</summary>
@@ -1625,20 +1625,20 @@ function createAnalyticsHandler(options: {
 }): (request: Request) => Promise<Response>
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `destinations` | `(ServerDestination<true> \| undefined)[]` | | **Required.** Destinations that accept browser events, such as `metaCapi()`. `ga4Server()` is rejected by the type. `undefined` entries, such as a `metaCapi()` without its token, are skipped. |
-| `consentCookie` | `ConsentCookieOptions` | | Takes consent from the cookie signed by `createConsentHandler`, ignoring the body's; without a valid cookie, every category is denied. With `secret` unset, every event is denied and a `console.warn` is logged once when the handler is created; a `secret` shorter than 32 characters makes every request answer `500` before the body is read. |
-| `onError` | `(error: unknown) => void` | | Receives each destination failure and any unexpected error. |
+| Option          | Type                                       | Default | Description                                                                                                                                                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `destinations`  | `(ServerDestination<true> \| undefined)[]` |         | **Required.** Destinations that accept browser events, such as `metaCapi()`. `ga4Server()` is rejected by the type. `undefined` entries, such as a `metaCapi()` without its token, are skipped.                                                                                                                                                    |
+| `consentCookie` | `ConsentCookieOptions`                     |         | Takes consent from the cookie signed by `createConsentHandler`, ignoring the body's; without a valid cookie, every category is denied. With `secret` unset, every event is denied and a `console.warn` is logged once when the handler is created; a `secret` shorter than 32 characters makes every request answer `500` before the body is read. |
+| `onError`       | `(error: unknown) => void`                 |         | Receives each destination failure and any unexpected error.                                                                                                                                                                                                                                                                                        |
 
-| Status | When |
-|---|---|
-| `204` | The event was processed, including when a destination failed. When `destinations` holds none that accepts browser events, the body is not read and the response carries `consentlayer-forwarding: off`, which stops the browser from forwarding until the page is reloaded. With `consentCookie` and no valid cookie, the response carries `consentlayer-consent: missing`, and the browser [restores the cookie](/guides/consent-records/#the-consent-cookie). |
-| `400` | Empty body, invalid JSON, or an invalid event. `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing`. |
-| `403` | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's. |
-| `413` | The body exceeds 16 KiB. |
-| `415` | The `Content-Type` is not `application/json`. |
-| `500` | Any other error; `onError` is called. |
+| Status | When                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `204`  | The event was processed, including when a destination failed. When `destinations` holds none that accepts browser events, the body is not read and the response carries `consentlayer-forwarding: off`, which stops the browser from forwarding until the page is reloaded. With `consentCookie` and no valid cookie, the response carries `consentlayer-consent: missing`, and the browser [restores the cookie](/guides/consent-records/#the-consent-cookie). |
+| `400`  | Empty body, invalid JSON, or an invalid event. `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing`.                                                                                                                                                                                                                                                                                               |
+| `403`  | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's.                                                                                                                                                                                                                                                                                                                                            |
+| `413`  | The body exceeds 16 KiB.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `415`  | The `Content-Type` is not `application/json`.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `500`  | Any other error; `onError` is called.                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ### `sendServerEvent(event, options)`
 
@@ -1653,11 +1653,11 @@ function sendServerEvent(
 ): Promise<ServerSendResult[]>
 ```
 
-| Parameter | Type | Description |
-|---|---|---|
-| `event` | [`ServerEvent`](#serverevent) | **Required.** |
-| `options.destinations` | `(ServerDestination \| undefined)[]` | **Required.** Any destination, including `ga4Server()`. `undefined` entries are skipped. |
-| `options.request` | `ServerRequestInfo` | The client's IP, user agent and cookies, when you have them. Build it with [`requestInfo(request)`](#requestinforequest). |
+| Parameter              | Type                                 | Description                                                                                                               |
+| ---------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `event`                | [`ServerEvent`](#serverevent)        | **Required.**                                                                                                             |
+| `options.destinations` | `(ServerDestination \| undefined)[]` | **Required.** Any destination, including `ga4Server()`. `undefined` entries are skipped.                                  |
+| `options.request`      | `ServerRequestInfo`                  | The client's IP, user agent and cookies, when you have them. Build it with [`requestInfo(request)`](#requestinforequest). |
 
 **Returns** one `{ id, ok, error? }` per destination that was called. Skipped
 `undefined` entries have no result. A failing destination does not reject the
@@ -1697,15 +1697,15 @@ function createConsentHandler(options: {
 }): (request: Request) => Promise<Response>
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `secret` | `string \| undefined` | | **Required.** The HMAC-SHA-256 key that signs the cookie. At least 32 characters. An unset or shorter one makes every request answer `500`, with `[consentlayer] the consent secret is not set` or `[consentlayer] the consent secret needs at least 32 characters` passed to `onError`, before the body is read or anything is stored. |
-| `store` | `ConsentStore` | | **Required.** Where records are appended. |
-| `policyVersion` | `string` | | **Required.** The privacy policy version the visitor saw, such as `'3.2'`. |
-| `categories` | `(keyof ConsentCategories)[]` | `[]` | The custom categories passed to `createAnalytics({ categories })`. Each must be a boolean in the request. |
-| `userId` | `(request: Request) => string \| undefined \| Promise<string \| undefined>` | | The signed-in user, from your session. Never read from the request body. |
-| `cookie` | `string` | `'consentlayer_proof'` | The cookie name. |
-| `onError` | `(error: unknown) => void` | | Receives store errors and any unexpected error. |
+| Option          | Type                                                                        | Default                | Description                                                                                                                                                                                                                                                                                                                             |
+| --------------- | --------------------------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `secret`        | `string \| undefined`                                                       |                        | **Required.** The HMAC-SHA-256 key that signs the cookie. At least 32 characters. An unset or shorter one makes every request answer `500`, with `[consentlayer] the consent secret is not set` or `[consentlayer] the consent secret needs at least 32 characters` passed to `onError`, before the body is read or anything is stored. |
+| `store`         | `ConsentStore`                                                              |                        | **Required.** Where records are appended.                                                                                                                                                                                                                                                                                               |
+| `policyVersion` | `string`                                                                    |                        | **Required.** The privacy policy version the visitor saw, such as `'3.2'`.                                                                                                                                                                                                                                                              |
+| `categories`    | `(keyof ConsentCategories)[]`                                               | `[]`                   | The custom categories passed to `createAnalytics({ categories })`. Each must be a boolean in the request.                                                                                                                                                                                                                               |
+| `userId`        | `(request: Request) => string \| undefined \| Promise<string \| undefined>` |                        | The signed-in user, from your session. Never read from the request body.                                                                                                                                                                                                                                                                |
+| `cookie`        | `string`                                                                    | `'consentlayer_proof'` | The cookie name.                                                                                                                                                                                                                                                                                                                        |
+| `onError`       | `(error: unknown) => void`                                                  |                        | Receives store errors and any unexpected error.                                                                                                                                                                                                                                                                                         |
 
 The record's `consentId` is taken from a valid existing cookie, else generated
 with `crypto.randomUUID()`. The cookie is set with
@@ -1713,14 +1713,14 @@ with `crypto.randomUUID()`. The cookie is set with
 `Secure` is left out when the request's host is `localhost`, `127.0.0.1` or
 `[::1]`, because Safari does not store `Secure` cookies on `http://localhost`.
 
-| Status | When |
-|---|---|
-| `204` | The record was appended; the response sets the cookie. |
-| `400` | Empty body, invalid JSON, or a `consent` with a missing or non-boolean category. |
-| `403` | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's. |
-| `413` | The body exceeds 4 KiB. |
-| `415` | The `Content-Type` is not `application/json`. |
-| `500` | `secret` is unset or shorter than 32 characters (checked first, so no record is stored), the store threw, or another error occurred; `onError` is called. |
+| Status | When                                                                                                                                                      |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `204`  | The record was appended; the response sets the cookie.                                                                                                    |
+| `400`  | Empty body, invalid JSON, or a `consent` with a missing or non-boolean category.                                                                          |
+| `403`  | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's.                                      |
+| `413`  | The body exceeds 4 KiB.                                                                                                                                   |
+| `415`  | The `Content-Type` is not `application/json`.                                                                                                             |
+| `500`  | `secret` is unset or shorter than 32 characters (checked first, so no record is stored), the store threw, or another error occurred; `onError` is called. |
 
 ### `readConsentCookie(request, options)`
 
@@ -1730,10 +1730,10 @@ Verifies the cookie set by `createConsentHandler`.
 function readConsentCookie(request: Request, options: ConsentCookieOptions): Promise<ConsentProof | null>
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `secret` | `string \| undefined` | | **Required.** The secret given to `createConsentHandler`. |
-| `cookie` | `string` | `'consentlayer_proof'` | The cookie name. |
+| Option   | Type                  | Default                | Description                                               |
+| -------- | --------------------- | ---------------------- | --------------------------------------------------------- |
+| `secret` | `string \| undefined` |                        | **Required.** The secret given to `createConsentHandler`. |
+| `cookie` | `string`              | `'consentlayer_proof'` | The cookie name.                                          |
 
 **Returns** `{ consentId, consent, policyVersion }`, or `null` when the cookie
 is missing, malformed or its signature does not match, or when `secret` is
@@ -1744,21 +1744,19 @@ unset or shorter than 32 characters. Never throws.
 Each returns a `ConsentStore` for `createConsentHandler({ store })`. Table
 schemas are in [Consent records](/guides/consent-records/).
 
-| Function | Writes |
-|---|---|
-| `postgresStore(sql)` | One row into `consent_records (consent_id, created_at, consent, policy_version, user_id)`, through any `sql` tagged template: postgres.js, Neon or Vercel Postgres. The table name is fixed. |
-| `supabaseStore(client, options?)` | One row into `options.table`, default `'consent_records'`, with the same snake_case columns. Throws when Supabase returns an error. |
-| `prismaStore(model)` | `model.create({ data })` with the record's camelCase fields; `userId` is `null` when absent. Pass the model, such as `prisma.consentRecord`. |
-| `drizzleStore(db, table)` | `db.insert(table).values(…)` with the record's camelCase fields; `userId` is `null` when absent. |
-| `upstashStore(redis, options?)` | `RPUSH` of the JSON record onto `` `${options.prefix}${consentId}` ``. `prefix` defaults to `'consent:'`. Works with Upstash Redis and Vercel KV. |
+| Function                          | Writes                                                                                                                                                                                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `postgresStore(sql)`              | One row into `consent_records (consent_id, created_at, consent, policy_version, user_id)`, through any `sql` tagged template: postgres.js, Neon or Vercel Postgres. The table name is fixed. |
+| `supabaseStore(client, options?)` | One row into `options.table`, default `'consent_records'`, with the same snake_case columns. Throws when Supabase returns an error.                                                          |
+| `prismaStore(model)`              | `model.create({ data })` with the record's camelCase fields; `userId` is `null` when absent. Pass the model, such as `prisma.consentRecord`.                                                 |
+| `drizzleStore(db, table)`         | `db.insert(table).values(…)` with the record's camelCase fields; `userId` is `null` when absent.                                                                                             |
+| `upstashStore(redis, options?)`   | `RPUSH` of the JSON record onto `` `${options.prefix}${consentId}` ``. `prefix` defaults to `'consent:'`. Works with Upstash Redis and Vercel KV.                                            |
 
 <details>
 <summary>Type signatures</summary>
 
 ```ts
-function postgresStore(
-  sql: (strings: TemplateStringsArray, ...values: unknown[]) => PromiseLike<unknown>,
-): ConsentStore
+function postgresStore(sql: (strings: TemplateStringsArray, ...values: unknown[]) => PromiseLike<unknown>): ConsentStore
 
 function supabaseStore(
   supabase: { from(table: string): { insert(row: object): PromiseLike<{ error: unknown }> } },
@@ -1865,13 +1863,13 @@ function metaCapi(options: {
 }): ServerDestination<true> | undefined
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | | **Required.** |
-| `accessToken` | `string \| undefined` | | **Required.** The Conversions API access token. |
-| `testEventCode` | `string` | | Sends events to Test Events in Events Manager. |
-| `apiVersion` | `string` | `'v26.0'` | The Graph API version. |
-| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
+| Option          | Type                  | Default            | Description                                     |
+| --------------- | --------------------- | ------------------ | ----------------------------------------------- |
+| `pixelId`       | `string \| undefined` |                    | **Required.**                                   |
+| `accessToken`   | `string \| undefined` |                    | **Required.** The Conversions API access token. |
+| `testEventCode` | `string`              |                    | Sends events to Test Events in Events Manager.  |
+| `apiVersion`    | `string`              | `'v26.0'`          | The Graph API version.                          |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` implementation.                     |
 
 **Returns** `undefined` while `pixelId` or `accessToken` is unset, empty or
 only whitespace (both are trimmed), so
@@ -1900,12 +1898,12 @@ function tiktokEvents(options: {
 }): ServerDestination<true> | undefined
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `pixelId` | `string \| undefined` | | **Required.** |
-| `accessToken` | `string \| undefined` | | **Required.** The Events API access token. |
-| `testEventCode` | `string` | | Sends events to Test Events in Events Manager. |
-| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
+| Option          | Type                  | Default            | Description                                    |
+| --------------- | --------------------- | ------------------ | ---------------------------------------------- |
+| `pixelId`       | `string \| undefined` |                    | **Required.**                                  |
+| `accessToken`   | `string \| undefined` |                    | **Required.** The Events API access token.     |
+| `testEventCode` | `string`              |                    | Sends events to Test Events in Events Manager. |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` implementation.                    |
 
 **Returns** `undefined` while `pixelId` or `accessToken`, both trimmed, is
 unset or empty, and calls `console.warn` once when exactly one of the two is
@@ -1931,12 +1929,12 @@ function sgtm(options: {
 }): ServerDestination<true> | undefined
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `url` | `string \| undefined` | | **Required.** The client's endpoint, such as `https://sgtm.example.com/mp/collect`. |
-| `measurementId` | `string \| undefined` | | **Required.** |
-| `apiSecret` | `string` | | Sent as `api_secret` when set. |
-| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
+| Option          | Type                  | Default            | Description                                                                         |
+| --------------- | --------------------- | ------------------ | ----------------------------------------------------------------------------------- |
+| `url`           | `string \| undefined` |                    | **Required.** The client's endpoint, such as `https://sgtm.example.com/mp/collect`. |
+| `measurementId` | `string \| undefined` |                    | **Required.**                                                                       |
+| `apiSecret`     | `string`              |                    | Sent as `api_secret` when set.                                                      |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` implementation.                                                         |
 
 **Returns** `undefined` while `url` or `measurementId`, both trimmed, is unset
 or empty, and calls `console.warn` once when exactly one of the two is set.
@@ -1962,11 +1960,11 @@ function ga4Server(options: {
 }): ServerDestination<false> | undefined
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `measurementId` | `string \| undefined` | | **Required.** |
-| `apiSecret` | `string \| undefined` | | **Required.** A Measurement Protocol API secret. |
-| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
+| Option          | Type                  | Default            | Description                                      |
+| --------------- | --------------------- | ------------------ | ------------------------------------------------ |
+| `measurementId` | `string \| undefined` |                    | **Required.**                                    |
+| `apiSecret`     | `string \| undefined` |                    | **Required.** A Measurement Protocol API secret. |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` implementation.                      |
 
 **Returns** `undefined` while `measurementId` or `apiSecret`, both trimmed, is unset or
 empty, and calls `console.warn` once when exactly one of the two is set.
@@ -1992,12 +1990,12 @@ function sentryInstrumentation(options: SentryServerOptions): {
 }
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `dsn` | `string \| undefined` | | **Required** key. When `undefined`, `register` does nothing. |
-| `environment` | `string` | | Passed to `Sentry.init`. |
-| `release` | `string` | | Passed to `Sentry.init`. |
-| `tracesSampleRate` | `number` | off | The performance tracing sample rate. |
+| Option             | Type                  | Default | Description                                                  |
+| ------------------ | --------------------- | ------- | ------------------------------------------------------------ |
+| `dsn`              | `string \| undefined` |         | **Required** key. When `undefined`, `register` does nothing. |
+| `environment`      | `string`              |         | Passed to `Sentry.init`.                                     |
+| `release`          | `string`              |         | Passed to `Sentry.init`.                                     |
+| `tracesSampleRate` | `number`              | off     | The performance tracing sample rate.                         |
 
 **Returns** `register`, which calls `Sentry.init`, and `onRequestError`, which
 is `captureRequestError` from `@sentry/nextjs`.

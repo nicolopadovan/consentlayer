@@ -19,7 +19,10 @@ describe('createConsentController', () => {
 
     expect(controller.getSnapshot()).toMatchObject({ ready: true, bannerVisible: true })
     await controller.actions.acceptAll()
-    expect(controller.getSnapshot()).toMatchObject({ bannerVisible: false, prefs: { analytics: true, marketing: true } })
+    expect(controller.getSnapshot()).toMatchObject({
+      bannerVisible: false,
+      prefs: { analytics: true, marketing: true },
+    })
     expect(analytics.consent.getConsent()).toMatchObject({ analytics: true, marketing: true })
     stop()
     analytics.destroy()

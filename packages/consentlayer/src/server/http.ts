@@ -6,10 +6,7 @@ export async function sha256(input: string | null | undefined): Promise<string |
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-export function assertSameOrigin(
-  request: Request,
-  options?: { requireHeader?: boolean },
-): void {
+export function assertSameOrigin(request: Request, options?: { requireHeader?: boolean }): void {
   const requestUrl = new URL(request.url)
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')
@@ -35,10 +32,7 @@ export function assertSameOrigin(
   }
 }
 
-export async function parseJsonWithLimit<T = unknown>(
-  request: Request,
-  maxBytes = 10 * 1024,
-): Promise<T> {
+export async function parseJsonWithLimit<T = unknown>(request: Request, maxBytes = 10 * 1024): Promise<T> {
   const contentType = request.headers.get('content-type') || ''
   if (!contentType.toLowerCase().includes('application/json')) {
     throw Object.assign(new Error('Unsupported Media Type'), { status: 415 })
@@ -57,9 +51,7 @@ export async function parseJsonWithLimit<T = unknown>(
     }
     chunks.push(value)
   }
-  const text = new TextDecoder('utf-8', { fatal: false }).decode(
-    concatUint8Arrays(chunks),
-  )
+  const text = new TextDecoder('utf-8', { fatal: false }).decode(concatUint8Arrays(chunks))
   try {
     return JSON.parse(text) as T
   } catch {

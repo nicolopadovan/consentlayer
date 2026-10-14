@@ -7,17 +7,12 @@ vi.mock('next/navigation', () => ({
 }))
 
 type IdleWindow = Window & {
-  requestIdleCallback: (
-    callback: IdleRequestCallback,
-    options?: IdleRequestOptions,
-  ) => number
+  requestIdleCallback: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number
   cancelIdleCallback: (handle: number) => void
 }
 
 describe('AnalyticsShell', () => {
-  let requestIdleCallbackMock: ReturnType<
-    typeof vi.fn<(callback: IdleRequestCallback) => number>
-  >
+  let requestIdleCallbackMock: ReturnType<typeof vi.fn<(callback: IdleRequestCallback) => number>>
 
   beforeEach(() => {
     vi.resetModules()
@@ -48,9 +43,7 @@ describe('AnalyticsShell', () => {
     Object.assign(process.env, {
       NEXT_PUBLIC_FACEBOOK_PIXEL_ID: '123456789012345',
     })
-    const { useConsent } = await import(
-      'consentlayer/react'
-    )
+    const { useConsent } = await import('consentlayer/react')
     const { AnalyticsShell } = await import('./analytics-shell')
 
     function ConsentProbe() {
@@ -69,18 +62,10 @@ describe('AnalyticsShell', () => {
 
     fireEvent.click(screen.getByText('Accept all'))
 
-    await waitFor(() =>
-      expect(screen.queryByText('Cookies')).toBeNull(),
-    )
+    await waitFor(() => expect(screen.queryByText('Cookies')).toBeNull())
     expect(localStorage.getItem('consentlayer_consent')).toContain('"marketing":true')
     expect(screen.getByText('Cookie settings')).toBeTruthy()
-    expect(screen.getByTestId('consent-probe').textContent).toContain(
-      '"marketing":true',
-    )
-    expect(
-      document.head.querySelector(
-        'script[src*="fbevents.js"]',
-      ),
-    ).toBeTruthy()
+    expect(screen.getByTestId('consent-probe').textContent).toContain('"marketing":true')
+    expect(document.head.querySelector('script[src*="fbevents.js"]')).toBeTruthy()
   })
 })

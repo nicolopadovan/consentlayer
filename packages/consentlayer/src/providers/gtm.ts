@@ -23,7 +23,9 @@ export function gtm(options: GtmOptions) {
   if (!options.containerId?.trim()) return skippedPlugin('gtm', 'containerId')
   const containerId = options.containerId.trim()
   if (!GTM_CONTAINER_ID.test(containerId)) {
-    throw new Error(`[consentlayer] Invalid GTM container ID: expected format "GTM-XXXXXXX", received "${containerId}".`)
+    throw new Error(
+      `[consentlayer] Invalid GTM container ID: expected format "GTM-XXXXXXX", received "${containerId}".`,
+    )
   }
   const origin = options.serverContainerUrl
     ? assertHttpsOrRelativeUrl(options.serverContainerUrl, 'gtm serverContainerUrl').replace(/\/$/, '')
@@ -62,7 +64,10 @@ export function gtm(options: GtmOptions) {
       loaded[containerId] = true
       push({ 'gtm.start': Date.now(), event: 'gtm.js' })
       loadScript(`${origin}/gtm.js?id=${encodeURIComponent(containerId)}`).catch(() =>
-        emitError({ scope: 'provider-script-load', message: `Failed to load Google Tag Manager container ${containerId}` }),
+        emitError({
+          scope: 'provider-script-load',
+          message: `Failed to load Google Tag Manager container ${containerId}`,
+        }),
       )
     },
     page(page) {

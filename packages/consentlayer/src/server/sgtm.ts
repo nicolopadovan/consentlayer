@@ -33,6 +33,11 @@ export function sgtm(options: {
     requiredConsent: 'analytics',
     forwardBrowserEvents: true,
     send: (event, request) =>
-      sendMeasurementProtocol({ url: endpoint.href, sender: 'sgtm', receiver: 'Server-side GTM' }, event, request, fetchImpl),
+      sendMeasurementProtocol(
+        { url: endpoint.href, sender: 'sgtm', receiver: 'Server-side GTM' },
+        event,
+        request,
+        fetchImpl,
+      ),
   }
 }

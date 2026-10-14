@@ -5,6 +5,7 @@
 The first public release.
 
 ### Consent
+
 - `createAnalytics()` returns one instance with `track`, `page`, `identify`,
   `reset`, `group`, `captureError` and `consent`. Each provider runs only
   while its consent category is granted; calls made before boot are held and
@@ -24,6 +25,7 @@ The first public release.
   body. A lost cookie is restored from the browser's stored choice.
 
 ### Consent adapters
+
 - `tcf()` from `consentlayer/adapters/tcf` follows the choice an IAB TCF v2
   CMP collects, read-only.
 - `shopifyCustomerPrivacy()` from `consentlayer/adapters/shopify` keeps
@@ -34,6 +36,7 @@ The first public release.
   `waitForUpdate`, `urlPassthrough` and `adsDataRedaction`.
 
 ### Providers
+
 - `ga4()`: Google Analytics 4 with Consent Mode v2, basic or advanced, and
   `serverContainerUrl` for server-side tagging.
 - `gtm()`: a Google Tag Manager container, loaded after the Consent Mode
@@ -60,6 +63,7 @@ The first public release.
   markup for visitors without JavaScript, opt-in.
 
 ### Server
+
 - `createAnalyticsHandler()` forwards browser events to server destinations;
   `sendServerEvent()` sends server-only events such as webhooks. Both check
   the event's consent, hash personal data and run on edge runtimes.
@@ -68,6 +72,7 @@ The first public release.
   `ga4Server()` (GA4 Measurement Protocol, server-only events).
 
 ### Frameworks
+
 - `consentlayer/react` and `consentlayer/next` (App Router and Pages Router).
 - `consentlayer/vue` and the `consentlayer/nuxt` module.
 - `consentlayer/svelte` and `consentlayer/sveltekit`.
@@ -78,6 +83,7 @@ The first public release.
   banner.
 
 ### Debugging
+
 - `debug` logs consent changes, page views, events, provider lifecycle and
   errors; its object form picks topics and providers and takes your own
   logger. `onError` reports script-load failures and plugin errors.

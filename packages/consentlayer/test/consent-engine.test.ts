@@ -44,7 +44,12 @@ describe('consent engine', () => {
       storage,
       adapters: [
         { id: 'observer', observe },
-        { id: 'broken', observe: () => { throw new Error('boom') } },
+        {
+          id: 'broken',
+          observe: () => {
+            throw new Error('boom')
+          },
+        },
       ],
       onError,
     })
@@ -210,7 +215,9 @@ describe('Shopify Customer Privacy sync', () => {
     const win = { Shopify: { customerPrivacy: { setTrackingConsent } } } as unknown as Window
     const adapter = shopifyCustomerPrivacy({ window: win, document })
     let applied = false
-    const apply = Promise.resolve(adapter.apply?.({ preferences: false, analytics: true, marketing: false })).then(() => (applied = true))
+    const apply = Promise.resolve(adapter.apply?.({ preferences: false, analytics: true, marketing: false })).then(
+      () => (applied = true),
+    )
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(applied).toBe(false)
     done?.()
@@ -280,7 +287,9 @@ describe('custom categories', () => {
     await analytics.track('open_chat')
     expect(chat.load).toHaveBeenCalledTimes(1)
     expect(chat.track).toHaveBeenCalledTimes(1)
-    expect((JSON.parse(localStorage.getItem('consentlayer_consent')!) as { consent: object }).consent).toMatchObject({ functional: true })
+    expect((JSON.parse(localStorage.getItem('consentlayer_consent')!) as { consent: object }).consent).toMatchObject({
+      functional: true,
+    })
     expect((broadcast.mock.calls.at(-1)?.[0] as CustomEvent).detail).toMatchObject({ functional: true })
 
     document.removeEventListener('consentlayer:consent', broadcast)
@@ -293,11 +302,19 @@ describe('custom categories', () => {
     const engine = createConsentEngine({
       categories,
       storage: createMemoryConsentStorage(),
-      adapters: [{ id: 'cmp', subscribe: (listener) => { push = listener; return () => {} } }],
+      adapters: [
+        {
+          id: 'cmp',
+          subscribe: (listener) => {
+            push = listener
+            return () => {}
+          },
+        },
+      ],
     })
-    await expect(
-      engine.setConsent({ preferences: true, analytics: true, marketing: true }),
-    ).rejects.toThrow('boolean preferences, analytics, marketing and functional')
+    await expect(engine.setConsent({ preferences: true, analytics: true, marketing: true })).rejects.toThrow(
+      'boolean preferences, analytics, marketing and functional',
+    )
 
     await engine.setConsent({ preferences: false, analytics: false, marketing: false, functional: true } as never)
     push({ preferences: false, analytics: true, marketing: false })
@@ -312,7 +329,10 @@ describe('consent endpoint', () => {
   })
 
   it('posts each choice, not the restored one, and reports a failed post', async () => {
-    localStorage.setItem('consentlayer_consent', JSON.stringify({ preferences: false, analytics: true, marketing: false }))
+    localStorage.setItem(
+      'consentlayer_consent',
+      JSON.stringify({ preferences: false, analytics: true, marketing: false }),
+    )
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
     vi.stubGlobal('fetch', fetchMock)
     const onError = vi.fn()
@@ -328,7 +348,9 @@ describe('consent endpoint', () => {
 
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 500 }))
     await analytics.consent.update({ marketing: false })
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'consent-adapter', providerId: 'consent-endpoint' }))
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: 'consent-adapter', providerId: 'consent-endpoint' }),
+    )
 
     vi.unstubAllGlobals()
     analytics.destroy()
@@ -361,7 +383,12 @@ describe('stale choices', () => {
   it('keeps a stale choice in force with onStale: keep, and records the same choice again', async () => {
     const storage = stored({ consent: choice, policyVersion: '1' })
     const apply = vi.fn()
-    const engine = createConsentEngine({ storage, policyVersion: '2', onStale: 'keep', adapters: [{ id: 'record', apply }] })
+    const engine = createConsentEngine({
+      storage,
+      policyVersion: '2',
+      onStale: 'keep',
+      adapters: [{ id: 'record', apply }],
+    })
     expect(await engine.bootstrap()).toEqual(choice)
     expect(engine.isStale()).toBe(true)
 

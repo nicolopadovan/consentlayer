@@ -9,17 +9,19 @@ function fakeCmp(initial: Record<string, unknown>, sync = false) {
   let tcData = initial
   const listeners = new Map<number, Listener>()
   let nextId = 0
-  const tcfapi = vi.fn((command: string, version: number, callback: (...args: unknown[]) => void, parameter?: unknown) => {
-    expect(version).toBe(2)
-    if (command === 'addEventListener') {
-      const listenerId = ++nextId
-      listeners.set(listenerId, callback)
-      const call = () => callback({ ...tcData, listenerId }, true)
-      if (sync) call()
-      else queueMicrotask(call)
-    }
-    if (command === 'removeEventListener') callback(listeners.delete(parameter as number))
-  })
+  const tcfapi = vi.fn(
+    (command: string, version: number, callback: (...args: unknown[]) => void, parameter?: unknown) => {
+      expect(version).toBe(2)
+      if (command === 'addEventListener') {
+        const listenerId = ++nextId
+        listeners.set(listenerId, callback)
+        const call = () => callback({ ...tcData, listenerId }, true)
+        if (sync) call()
+        else queueMicrotask(call)
+      }
+      if (command === 'removeEventListener') callback(listeners.delete(parameter as number))
+    },
+  )
   return {
     window: { __tcfapi: tcfapi } as unknown as Window,
     tcfapi,
