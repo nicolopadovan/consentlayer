@@ -129,4 +129,4 @@ export function createGlobal(config: GlobalConfig) {
   return { ...analytics, controller }
 }
 
-export type ConsentLayerGlobal = ReturnType<typeof createGlobal>
+type ConsentLayerGlobal = ReturnType<typeof createGlobal>

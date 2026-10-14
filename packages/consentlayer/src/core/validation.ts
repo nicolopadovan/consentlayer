@@ -3,7 +3,7 @@ const META_PIXEL_ID = /^\d{8,20}$/
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE_E164 = /^\+?[1-9]\d{6,14}$/
 
-export function isValidGa4MeasurementId(value: unknown): value is string {
+function isValidGa4MeasurementId(value: unknown): value is string {
   return typeof value === 'string' && GA4_MEASUREMENT_ID.test(value)
 }
 
@@ -16,7 +16,7 @@ export function assertValidGa4MeasurementId(value: unknown): string {
   return value
 }
 
-export function isValidMetaPixelId(value: unknown): value is string {
+function isValidMetaPixelId(value: unknown): value is string {
   return typeof value === 'string' && META_PIXEL_ID.test(value)
 }
 

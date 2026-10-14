@@ -23,7 +23,7 @@ export type NamesInput = Partial<Omit<Names, 'autoTrackingEvents'>> & {
   autoTrackingEvents?: Partial<AutoTrackingEventNames>
 }
 
-export const DEFAULT_PREFIX = 'consentlayer'
+const DEFAULT_PREFIX = 'consentlayer'
 
 function derive(prefix: string, legacy: boolean): Names {
   const upper = prefix.toUpperCase()
@@ -45,7 +45,7 @@ function derive(prefix: string, legacy: boolean): Names {
 }
 
 /** Names used before 1.0.0-rc.2. Read and written too when `legacy` is on. */
-export const legacyNames: Names = derive('acm', false)
+const legacyNames: Names = derive('acm', false)
 
 let current = derive(DEFAULT_PREFIX, false)
 

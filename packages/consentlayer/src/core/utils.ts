@@ -13,8 +13,6 @@ export function isBrowser(): boolean {
   return typeof window !== 'undefined' && typeof document !== 'undefined'
 }
 
-export function noop(): void {}
-
 export const BUILT_IN_CATEGORIES = ['preferences', 'analytics', 'marketing'] as const
 
 export function normalizeConsent(

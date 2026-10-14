@@ -1,7 +1,7 @@
 import { withLegacy } from './names'
 import type { Analytics, ConsentCategory, ConsentState, LazyBootConfig, PageViewPayload } from './types'
 
-export type Prefs = Record<ConsentCategory, boolean>
+type Prefs = Record<ConsentCategory, boolean>
 
 /** The state your consent UI renders. */
 export type ConsentControllerState = {

@@ -20,6 +20,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
+      - run: pnpm knip
       - run: pnpm turbo run typecheck lint test build
       - run: pnpm --filter consentlayer check:package
 
