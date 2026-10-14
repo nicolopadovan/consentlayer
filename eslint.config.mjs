@@ -3,6 +3,7 @@ import nextPlugin from "@next/eslint-plugin-next";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
+import compat from "eslint-plugin-compat";
 
 export default tseslint.config(
   {
@@ -43,5 +44,11 @@ export default tseslint.config(
     rules: {
       "react-hooks/rules-of-hooks": "off",
     },
+  },
+  {
+    ...compat.configs["flat/recommended"],
+    files: ["packages/consentlayer/src/**/*.{ts,tsx}"],
+    ignores: ["packages/consentlayer/src/{server,nuxt}/**", "packages/consentlayer/src/sentry/{server,next}.ts"],
   }
 );
+
