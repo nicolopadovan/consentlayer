@@ -20,7 +20,10 @@ Versions and the changelog are managed with [Changesets](https://changesets.dev)
 5. In the repository settings → Pages, set the source to GitHub Actions and
    the custom domain to `consentlayer.nicolopadovan.com`. At your DNS
    provider, add a `CNAME` record from `consentlayer` to
-   `nicolopadovan.github.io`. Then turn on Enforce HTTPS.
+   `nicolopadovan.github.io`, with any proxy off. Then turn on Enforce HTTPS.
+   In your account settings → Pages, verify `nicolopadovan.com` with the TXT
+   record GitHub shows, so no other account can serve a site on its
+   subdomains.
 
 The Docs workflow deploys the documentation site on every push to `main`.
 
