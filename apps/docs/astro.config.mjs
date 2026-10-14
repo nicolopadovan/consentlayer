@@ -94,6 +94,7 @@ export default defineConfig({
           items: [
             'guides/migrating-to-v1',
             'guides/troubleshooting',
+            'guides/c15t',
             'guides/roadmap',
             'guides/changelog',
             'guides/contributing',
