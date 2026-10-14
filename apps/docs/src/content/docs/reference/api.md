@@ -826,7 +826,7 @@ State and actions for building a consent banner and settings dialog. See
 | `bannerVisible`             | `boolean`                                          | Whether the banner should render.                                                   |
 | `showBanner`, `hideBanner`  | `() => void`                                       | Set `bannerVisible`.                                                                |
 | `dialogVisible`             | `boolean`                                          | Whether the settings dialog should render.                                          |
-| `openDialog`, `closeDialog` | `() => void`                                       | Set `dialogVisible`.                                                                |
+| `openDialog`, `closeDialog` | `() => void`                                       | Set `dialogVisible`. `closeDialog` also resets `prefs` to the stored choice.        |
 | `categories`                | `readonly ConsentCategory[]`                       | The categories the dialog shows, from `analytics.consent.categories`.               |
 | `prefs`                     | `Record<ConsentCategory, boolean>`                 | The dialog's toggles, one per category; kept in sync with the current consent.      |
 | `setPrefs`                  | `(next: Record<ConsentCategory, boolean>) => void` | Changes the toggles without saving them.                                            |

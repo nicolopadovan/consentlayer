@@ -48,7 +48,7 @@ instance.
 | `acceptAll()`                   | `() => Promise<void>`              | Grants every category, then hides the banner and the dialog. While `gpc` is `true`, `marketing` stays denied.                                                       |
 | `rejectNonEssential()`          | `() => Promise<void>`              | Denies every category, then hides both.                                                                                                                             |
 | `savePreferences()`             | `() => Promise<void>`              | Saves `prefs`, then hides both.                                                                                                                                     |
-| `openDialog()`, `closeDialog()` | `() => void`                       | Show or hide the dialog.                                                                                                                                            |
+| `openDialog()`, `closeDialog()` | `() => void`                       | Show or hide the dialog. Closing it discards toggles that were not saved.                                                                                           |
 | `showBanner()`, `hideBanner()`  | `() => void`                       | Show or hide the banner.                                                                                                                                            |
 
 The three saving actions call `analytics.consent.setConsent()` and hide the
