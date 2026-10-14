@@ -122,6 +122,10 @@
       "types": "./dist/angular.d.ts",
       "import": "./dist/angular.js"
     },
+    "./angular/banner": {
+      "types": "./dist/angular/banner.d.ts",
+      "import": "./dist/angular/banner.js"
+    },
     "./nuxt": {
       "types": "./dist/nuxt/index.d.ts",
       "import": "./dist/nuxt/index.js"
