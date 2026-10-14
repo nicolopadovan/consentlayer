@@ -9,6 +9,7 @@ import css from '../../../components/consent-banner.css?raw'
 import vueBanner from '../../../../../example-nuxt/app/components/ConsentBanner.vue?raw'
 import svelteBanner from '../../../../../example-sveltekit/src/lib/ConsentBanner.svelte?raw'
 import solidBanner from '../../../../../example-solidstart/src/lib/ConsentBanner.tsx?raw'
+import angularBanner from '../../../../../example-angular/src/app/consent-banner.ts?raw'
 
 ConsentLayer does not ship a consent banner, so its design, wording and
 languages remain yours. This page documents `useConsentController()`, the hook
@@ -235,6 +236,18 @@ file as the React recipe:
 Without Solid Router, import from `consentlayer/solid` instead.
 [SolidStart](/start/solidstart/#2-add-the-provider-to-the-routers-root) and
 [Solid](/start/solid/#2-add-the-provider) show where to render it.
+
+## Angular
+
+`injectConsentController()` from `consentlayer/angular` has the same fields,
+with the state as signals: call `consent.bannerVisible()` in the template. It
+throws `injectConsentController needs provideConsentLayer()` when
+`provideConsentLayer()` is not in the application config. This component uses
+the same CSS file as the React recipe, added to `styles` in `angular.json`:
+
+<Code code={angularBanner} lang="ts" title="src/app/consent-banner.ts" />
+
+[Angular](/start/angular/#3-add-the-banner) shows where to render it.
 
 ## Custom categories
 

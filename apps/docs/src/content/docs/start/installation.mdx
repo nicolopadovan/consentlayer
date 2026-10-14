@@ -50,6 +50,7 @@ ConsentLayer has no runtime dependencies.
 | SvelteKit | Only for `consentlayer/sveltekit`, which imports `$app/navigation`. Tested with SvelteKit 3. |
 | Solid | 1.9 or later, only for `consentlayer/solid` and `consentlayer/solidstart`. |
 | Solid Router | 0.16 or 1.x, only for `consentlayer/solidstart`, with or without SolidStart. Tested with SolidStart 2. |
+| Angular | 20 or later, only for `consentlayer/angular`. The Angular Router is optional. |
 | TypeScript | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`. |
 
 ## Optional peer dependencies
@@ -69,6 +70,7 @@ install and import yourself.
 | `consentlayer/svelte`, `consentlayer/sveltekit` | `svelte` |
 | `consentlayer/solid` | `solid-js` |
 | `consentlayer/solidstart` | `solid-js`, `@solidjs/router` |
+| `consentlayer/angular` | `@angular/core`, `@angular/router` |
 | `consentlayer/providers/posthog` | `posthog-js` |
 | `consentlayer/providers/sentry` | `@sentry/browser` |
 | `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs` |
@@ -93,6 +95,7 @@ are loaded with dynamic `import()` when they are first needed.
 | `consentlayer/sveltekit` | The same, with page views on SvelteKit navigation and `handleErrorWith` |
 | `consentlayer/solid` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript` |
 | `consentlayer/solidstart` | The same, with page views on Solid Router navigation |
+| `consentlayer/angular` | `provideConsentLayer`, the `inject*` functions and `provideMetaPixelNoscript` |
 | `consentlayer/providers/<name>` | One provider factory: `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, `shopify` |
 | `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
 | `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores |
@@ -160,6 +163,8 @@ ingestion hosts in `connect-src`, or none if you route them through
   `consentlayer/solid`.
 - [SolidStart](/start/solidstart/): the same with `consentlayer/solidstart` in
   the router's root.
+- [Angular](/start/angular/): the same with `provideConsentLayer()` in the
+  application config.
 - [Providers](/guides/providers/): the options and consent category of each
   provider.
 - [JavaScript and Astro](/start/javascript/): the same without a framework

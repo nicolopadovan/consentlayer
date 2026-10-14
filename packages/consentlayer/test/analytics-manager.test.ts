@@ -266,6 +266,8 @@ describe('analytics manager', () => {
     await manager.boot()
     const failure = new Error('checkout')
     await manager.captureError(failure, { tags: { area: 'cart' } })
+    await manager.captureError(failure)
+    window.dispatchEvent(new ErrorEvent('error', { error: failure }))
     window.dispatchEvent(new ErrorEvent('error', { error: new Error('uncaught') }))
     await vi.waitFor(() => expect(error).toHaveBeenCalledTimes(2))
     expect(error.mock.calls[0]?.slice(0, 2)).toEqual([failure, { source: 'manual', tags: { area: 'cart' } }])

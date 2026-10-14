@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: ConsentLayer is a consent-first analytics library for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Solid, SolidStart and the server.
+description: ConsentLayer is a consent-first analytics library for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Solid, SolidStart, Angular and the server.
 ---
 
 This page describes what ConsentLayer does, how the documentation is organized,
@@ -76,7 +76,7 @@ choice, consent stays `null`, which satisfies no requirement other than
 The docs are organized into the following sections:
 
 - **Getting started**: Installation, a step-by-step setup for React, Next.js,
-  Vue, Nuxt, Svelte, SvelteKit, Solid, SolidStart and plain JavaScript, and an interactive [Playground](/playground/) that logs every
+  Vue, Nuxt, Svelte, SvelteKit, Solid, SolidStart, Angular and plain JavaScript, and an interactive [Playground](/playground/) that logs every
   provider hook as you change consent.
 - **Guides**: Task-oriented pages for tracking [events and identity](/guides/events/),
   building the [consent UI](/guides/consent-ui/), configuring
@@ -136,6 +136,7 @@ npm or loaded from the vendor's CDN, are not included in these figures.
 | `consentlayer/sveltekit` | 2.5 kB |
 | `consentlayer/solid` | 2.5 kB |
 | `consentlayer/solidstart` | 2.5 kB |
+| `consentlayer/angular` | 2.5 kB |
 | `consentlayer/providers/ga4` | 1.8 kB |
 | `consentlayer/providers/meta` | 2.5 kB |
 | `consentlayer/providers/contentsquare` | 1.2 kB |
@@ -147,7 +148,8 @@ npm or loaded from the vendor's CDN, are not included in these figures.
 The core currently measures 7.6 kB, `consentlayer/react` 2.0 kB,
 `consentlayer/next` 1.6 kB, `consentlayer/vue` 2.0 kB,
 `consentlayer/svelte` 1.8 kB, `consentlayer/sveltekit` 1.8 kB,
-`consentlayer/solid` 2.0 kB and `consentlayer/solidstart` 2.1 kB. The Svelte
+`consentlayer/solid` 2.0 kB, `consentlayer/solidstart` 2.1 kB and
+`consentlayer/angular` 2.1 kB. The Svelte
 figures count the `MetaPixelNoscript` component as source, which your Svelte
 compiler builds.
 `consentlayer/nuxt` runs at build time, and adds `consentlayer/vue` to your

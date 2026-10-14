@@ -60,4 +60,15 @@ describe('debug', () => {
       'page dropped: enabled is false',
     ])
   })
+
+  it('counts only providers that handle the call', async () => {
+    const entries: string[] = []
+    const logger = (entry: DebugEntry) => entries.push(entry.message)
+    const analytics = createAnalytics({ providers: [spyProvider('ga4')], debug: { errors: true, logger } })
+    await analytics.consent.update({ analytics: true })
+    await analytics.boot()
+    await analytics.captureError(new Error('boom'))
+    analytics.destroy()
+    expect(entries).toEqual(['captureError reached no provider'])
+  })
 })

@@ -19,7 +19,8 @@
     "svelte",
     "sveltekit",
     "solid",
-    "solidstart"
+    "solidstart",
+    "angular"
   ],
   "type": "module",
   "license": "MIT",
@@ -79,6 +80,10 @@
     "./solidstart": {
       "types": "./dist/solidstart.d.ts",
       "import": "./dist/solidstart.js"
+    },
+    "./angular": {
+      "types": "./dist/angular.d.ts",
+      "import": "./dist/angular.js"
     },
     "./nuxt": {
       "types": "./dist/nuxt/index.d.ts",
@@ -154,6 +159,8 @@
     "check:package": "publint && attw --pack . --profile esm-only && size-limit"
   },
   "peerDependencies": {
+    "@angular/core": ">=20.0.0",
+    "@angular/router": ">=20.0.0",
     "@sentry/browser": "^11.0.0",
     "@sentry/nextjs": "^11.0.0",
     "@solidjs/router": ">=0.16.0 <2.0.0",
@@ -167,6 +174,12 @@
     "vue": "^3.5.0"
   },
   "peerDependenciesMeta": {
+    "@angular/core": {
+      "optional": true
+    },
+    "@angular/router": {
+      "optional": true
+    },
     "@sentry/browser": {
       "optional": true
     },
@@ -202,6 +215,11 @@
     }
   },
   "devDependencies": {
+    "@angular/common": "^22.2.2",
+    "@angular/compiler": "^22.2.2",
+    "@angular/core": "^22.2.2",
+    "@angular/platform-browser": "^22.2.2",
+    "@angular/router": "^22.2.2",
     "@arethetypeswrong/cli": "^0.18.5",
     "@sentry/browser": "^11.7.0",
     "@sentry/nextjs": "^11.7.0",
@@ -217,6 +235,7 @@
     "publint": "^0.3.25",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "rxjs": "^7.8.2",
     "size-limit": "^14.2.0",
     "solid-js": "^1.9.17",
     "svelte": "^5.57.2",

@@ -109,6 +109,12 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   reports to `captureError`, as in React.
 - `consentlayer/solidstart`: the same, with page views per Solid Router
   navigation, sent once the browser's URL has changed.
+- `consentlayer/angular`: `provideConsentLayer()` boots the instance, sends a
+  page view per Angular Router navigation, and reports errors from Angular's
+  `ErrorHandler`; `injectAnalytics()`, `injectConsent()` and
+  `injectConsentController()` provide the state as signals, and
+  `provideMetaPixelNoscript()` adds Meta's `<noscript>` pixel to server-rendered
+  HTML.
 - `<MetaPixelNoscript>` is exported from `consentlayer/vue`, `consentlayer/svelte`,
   `consentlayer/sveltekit`, `consentlayer/solid` and `consentlayer/solidstart`
   too, not only `consentlayer/react`.
@@ -233,6 +239,13 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `createEnvConfig()`: pass `process.env` values to the providers directly.
 
 ### Fixed
+- `captureError` reports each error object once, so an error that reaches both
+  a framework's error handler and the window's `error` event is not sent twice.
+- `debug` logs `reached no provider` when the providers a call reaches have no
+  hook for it, such as `captureError` with only GA4 and Meta; it logged nothing.
+- Bundlers built on esbuild, such as Angular's and Vite's dependency
+  pre-bundling, warned that `consentlayer` imported its own chunks for side
+  effects; the build no longer emits those imports.
 - A consent adapter whose `bootstrap()` failed left `consent.bootstrap()` and
   every later `consent.update()` rejected; the error now goes to `onError` and
   the next adapter is asked.

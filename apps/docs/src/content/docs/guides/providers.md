@@ -116,7 +116,8 @@ page's lifetime, even if consent is granted again. It resumes after a reload.
 For visitors without JavaScript, `<MetaPixelNoscript>` from
 `consentlayer/react`, `consentlayer/vue`, `consentlayer/svelte`,
 `consentlayer/sveltekit`, `consentlayer/solid` or `consentlayer/solidstart` renders Meta's `<noscript>` image pixel; the Nuxt
-module registers it. It fires without
+module registers it, and `provideMetaPixelNoscript()` from `consentlayer/angular`
+adds it. It fires without
 consent, since those visitors never see a banner. It renders nothing without
 `enabled` or while `pixelId` is `undefined` or empty.
 

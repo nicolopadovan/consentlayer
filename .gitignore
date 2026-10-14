@@ -11,3 +11,4 @@ coverage
 apps/*/.env.local
 .playwright-cli
 .DS_Store
+.angular

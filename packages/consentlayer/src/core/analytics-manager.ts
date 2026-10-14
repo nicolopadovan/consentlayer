@@ -31,7 +31,7 @@ type ProviderState = {
   loaded: boolean
   active: boolean
   /** Calls held while a deferred `load` is pending. */
-  backlog?: Array<() => Promise<void>>
+  backlog?: Array<() => Promise<unknown>>
 }
 
 type HookName = Exclude<
@@ -148,7 +148,7 @@ export function createAnalyticsManager(
     storedContact = undefined
   }
   settleStoredContact()
-  const pending: Array<() => Promise<void>> = []
+  const pending: Array<() => Promise<unknown>> = []
   let booted = false
   let ready = false
   let identifyQueued = false
@@ -201,7 +201,7 @@ export function createAnalyticsManager(
 
   // ponytail: fixed cap so a runaway caller can't grow memory; overflow is reported once per queue
   const overflowed = new WeakSet<unknown[]>()
-  const enqueue = (queue: Array<() => Promise<void>>, run: () => Promise<void>, providerId?: string) => {
+  const enqueue = (queue: Array<() => Promise<unknown>>, run: () => Promise<unknown>, providerId?: string) => {
     if (queue.length < 100) {
       queue.push(run)
     } else if (!overflowed.has(queue)) {
@@ -291,12 +291,12 @@ export function createAnalyticsManager(
     hook: HookName,
     run: (plugin: AnalyticsPlugin, ctx: PluginContext) => Promise<void> | void,
     ...detail: unknown[]
-  ) => {
-    if (destroyed) return
+  ): Promise<boolean> => {
+    if (destroyed) return false
     const { plugin } = state
     if (state.backlog && !LIFECYCLE_HOOKS.has(hook)) {
       enqueue(state.backlog, () => call(state, hook, run, ...detail), plugin.id)
-      return
+      return Boolean(plugin[hook])
     }
     if (plugin[hook]) debugLog(HOOK_TOPICS[hook], plugin.id, `${plugin.id}.${hook}`, ...detail)
     try {
@@ -309,6 +309,7 @@ export function createAnalyticsManager(
         cause: error,
       })
     }
+    return Boolean(plugin[hook])
   }
 
   const ensureProviderState = (plugin: AnalyticsPlugin): ProviderState => {
@@ -395,7 +396,7 @@ export function createAnalyticsManager(
   const trackAgainstProviders = async (
     label: string,
     selectedProviderIds: string[] | undefined,
-    callback: (state: ProviderState) => Promise<void>,
+    callback: (state: ProviderState) => Promise<boolean>,
     serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined,
   ) => {
     if (destroyed) return
@@ -411,7 +412,7 @@ export function createAnalyticsManager(
   const deliver = async (
     label: string,
     selectedProviderIds: string[] | undefined,
-    callback: (state: ProviderState) => Promise<void>,
+    callback: (state: ProviderState) => Promise<boolean>,
     serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined,
   ) => {
     if (destroyed) return
@@ -424,16 +425,15 @@ export function createAnalyticsManager(
       if (selectedProviderIds && !selectedProviderIds.includes(state.plugin.id)) {
         continue
       }
-      reached += 1
-      await callback(state)
+      if (await callback(state)) reached += 1
     }
     if (!reached) debugLog(labelTopic(label), undefined, `${label} reached no provider`)
   }
 
   const identifyProviders = (traits: UserTraits, only?: string[]) =>
-    trackAgainstProviders('identify', only, async (state) => {
-      await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx), traits)
-    })
+    trackAgainstProviders('identify', only, (state) =>
+      call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx), traits),
+    )
 
   const clearSessionTimers = () => {
     for (const timer of timeouts) {
@@ -521,6 +521,7 @@ export function createAnalyticsManager(
   }
 
   const errorsEnabled = options.errors !== false
+  const reportedErrors = new WeakSet<object>()
   const onWindowError = (event: ErrorEvent) =>
     void api.captureError(event.error ?? event.message, { source: 'global', level: 'fatal' })
   const onRejection = (event: PromiseRejectionEvent) =>
@@ -587,9 +588,7 @@ export function createAnalyticsManager(
       await trackAgainstProviders(
         'page',
         pageOptions.only,
-        async (state) => {
-          await call(state, 'page', (p, ctx) => p.page?.(page, ctx), page)
-        },
+        (state) => call(state, 'page', (p, ctx) => p.page?.(page, ctx), page),
         () => ({ id: page.id, name: 'page_view', url: page.url, only: pageOptions.only }),
       )
     },
@@ -606,9 +605,8 @@ export function createAnalyticsManager(
       await trackAgainstProviders(
         name,
         optionsInput.only,
-        async (state) => {
-          if (allowed()) await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)
-        },
+        async (state) =>
+          allowed() && (await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)),
         () =>
           allowed()
             ? {
@@ -646,16 +644,20 @@ export function createAnalyticsManager(
       }
     },
     async group(groupId, traits = {}) {
-      await trackAgainstProviders('group', undefined, async (state) => {
-        await call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx), groupId, traits)
-      })
+      await trackAgainstProviders('group', undefined, (state) =>
+        call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx), groupId, traits),
+      )
     },
     async captureError(error, errorContext = {}) {
       if (!errorsEnabled) return
+      if (typeof error === 'object' && error !== null) {
+        if (reportedErrors.has(error)) return
+        reportedErrors.add(error)
+      }
       const captured = { source: 'manual' as const, ...errorContext }
-      await trackAgainstProviders('captureError', undefined, async (state) => {
-        await call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx), error)
-      })
+      await trackAgainstProviders('captureError', undefined, (state) =>
+        call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx), error),
+      )
     },
     enableAutoTracking(config) {
       if (!isBrowser() || autoBound) return

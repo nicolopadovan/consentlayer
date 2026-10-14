@@ -36,18 +36,6 @@ a single file you load with a `<script>` tag from a CDN, configured on the page
 without a build step. It is what the [website builder and CMS
 ports](#website-builders-and-cms) build on.
 
-### Angular
-
-The core runs in any browser code, but React, [Vue](/start/vue/),
-[Nuxt](/start/nuxt/), [Svelte](/start/svelte/), [SvelteKit](/start/sveltekit/),
-[Solid](/start/solid/) and [SolidStart](/start/solidstart/) are the only
-bindings. Today, in Angular, use
-[`createConsentController()`](/start/javascript/) and connect it to the
-framework yourself. The planned binding provides the equivalent of
-`<AnalyticsProvider>`, `useConsent()` and `useConsentController()` for
-Angular, and sends a page view on every navigation with the Angular Router,
-like `consentlayer/next`, `consentlayer/nuxt` and `consentlayer/sveltekit` do.
-
 ### Website builders and CMS
 
 Sites built without a JavaScript build step can't install an npm package. The

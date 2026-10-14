@@ -30,7 +30,8 @@ with `console.debug`, prefixed with `[consentlayer]`:
 ```
 
 An event that no active provider receives, usually because its consent
-category is not granted, logs `sign_up reached no provider`. Calls made before
+category is not granted, logs `sign_up reached no provider`. So does a call no
+active provider handles, such as `captureError` without PostHog or Sentry. Calls made before
 boot log `held until boot`, and calls made while `enabled` is `false` log
 `dropped: enabled is false`. To narrow the output, pass an object, such as
 `debug: { events: true, only: ['ga4'] }`; [`debug`](/reference/api/#debug)

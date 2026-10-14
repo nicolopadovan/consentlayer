@@ -19,6 +19,7 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer/sveltekit`](#consentlayersveltekit) | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte` |
 | [`consentlayer/solid`](#consentlayersolid) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript` |
 | [`consentlayer/solidstart`](#consentlayersolidstart) | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid` |
+| [`consentlayer/angular`](#consentlayerangular) | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript` |
 | [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify consent adapter |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
@@ -212,7 +213,7 @@ turns the option off.
 | `identify` | `(userId?: string, traits?: UserTraits) => Promise<void>` | Sets the user ID and traits. A different `userId` replaces the previous identity. See [Identity](#identity). |
 | `reset` | `() => Promise<void>` | Forgets the identity, clears identity storage and calls each provider's `reset`. |
 | `group` | `(groupId: string, traits?: Record<string, unknown>) => Promise<void>` | Associates the user with a group, such as a company. |
-| `captureError` | `(error: unknown, context?: ErrorContext) => Promise<void>` | Sends an error to the providers that implement `error`. `context.source` defaults to `'manual'`. Does nothing when `errors` is `false`. |
+| `captureError` | `(error: unknown, context?: ErrorContext) => Promise<void>` | Sends an error to the providers that implement `error`. `context.source` defaults to `'manual'`. An error object is sent once; later calls with it do nothing. Does nothing when `errors` is `false`. |
 | `newPageSession` | `() => void` | Restarts the automatic page session: a new `session_id`, scroll depths and timers. Does nothing until auto-tracking has started. `<AnalyticsProvider>` calls it when `routeKey` changes. |
 | `registerProvider` | `(plugin: AnalyticsPlugin) => () => void` | Adds a provider after creation and runs it through the lifecycle if the instance has booted. Returns a function that tears it down and removes it. |
 | `getSnapshot` | `() => AnalyticsManagerStateSnapshot` | Returns `{ booted, consent, activeProviders }`. |
@@ -1162,6 +1163,79 @@ URL has changed. Render it in the `root` of `<Router>`.
 ```ts
 type SolidStartAnalyticsProviderProps = Omit<AnalyticsProviderProps, 'routeKey'>
 ```
+
+## `consentlayer/angular`
+
+Requires `@angular/core` 20 or later, an optional peer dependency, and
+`@angular/router` for page views on navigation. The functions are plain
+TypeScript, so they need no Angular compiler step.
+
+### `provideConsentLayer(options)`
+
+```ts
+function provideConsentLayer(options: ConsentLayerOptions): EnvironmentProviders
+```
+
+Add it to the application's providers. It provides the instance and the
+consent state. In the browser, it starts once `ApplicationRef.whenStable()`
+resolves and stops when the application is destroyed; it sends a page view on
+every `NavigationEnd` to a new path or query string, or one page view when the
+Angular Router is not provided. On the server it only provides the instance and
+the state.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `analytics` | `Analytics` | | **Required.** |
+| `captureErrors` | `boolean` | `true` | Provides an `ErrorHandler` that sends each error through `captureError` with `source: 'boundary'`, in the browser, then logs it as Angular's default `ErrorHandler` does. |
+| `page` | `PageViewPayload` | | Merged into every page view. |
+| `boot`, `autoShowBanner`, `openConsentGlobalKey` | | | As on the React [`<AnalyticsProvider>`](#analyticsprovider). |
+
+### `injectAnalytics()`
+
+```ts
+function injectAnalytics(): Analytics
+```
+
+**Returns** the instance from `provideConsentLayer()`, else the instance most
+recently created by `createAnalytics()`. Call it in an injection context.
+
+**Throws** an `Error` when neither exists.
+
+### `injectConsent()`
+
+```ts
+function injectConsent(): {
+  consent: Signal<ConsentState | null>
+  engine: ConsentApi
+  setConsent: (consent: ConsentState) => Promise<void>
+  update: (partial: Partial<ConsentState>) => Promise<void>
+}
+```
+
+As the React [`useConsent()`](#useconsent), with `consent` as a read-only
+signal. In the browser it listens for changes until the injector that called it
+is destroyed.
+
+### `injectConsentController()`
+
+The fields of the React [`useConsentController()`](#useconsentcontroller),
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories` and
+`prefs` as signals. The return type is exported as `ConsentController`.
+
+**Throws** an `Error` when `provideConsentLayer()` is not provided.
+
+### `provideMetaPixelNoscript(options)`
+
+```ts
+function provideMetaPixelNoscript(
+  options: { pixelId: string | undefined; enabled?: boolean } & Record<string, unknown>,
+): EnvironmentProviders
+```
+
+On the server, appends the React [`<MetaPixelNoscript>`](#metapixelnoscript)
+markup to the end of `<body>`. It adds nothing in the browser, without
+`enabled`, or while `pixelId` is `undefined` or empty. Other options become
+attributes of the image.
 
 ## `consentlayer/providers/*`
 
