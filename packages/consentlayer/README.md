@@ -15,8 +15,8 @@ format.
 - **Light:** each provider is its own entry point, and vendor SDKs and heavy
   features (Replay, tracing, session recording) are chunks loaded only when
   used.
-- **Frameworks:** bindings for React, Next.js, Vue, Nuxt, Svelte, SvelteKit,
-  Solid, SolidStart and Angular, plus a script-tag build with an optional
+- **Frameworks:** bindings for React, Next.js, TanStack Start, Vue, Nuxt,
+  Svelte, SvelteKit, Solid, SolidStart, Angular and Astro, plus a script-tag build with an optional
   banner. On npm you build your own banner on `useConsentController()`.
 - **Server:** forward browser events to the Meta Conversions API, the TikTok
   Events API or a server-side GTM container, with shared event IDs for

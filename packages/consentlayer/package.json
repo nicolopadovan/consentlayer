@@ -20,7 +20,9 @@
     "sveltekit",
     "solid",
     "solidstart",
-    "angular"
+    "angular",
+    "tanstack-start",
+    "astro"
   ],
   "type": "module",
   "license": "MIT",
@@ -96,6 +98,14 @@
     "./solidstart": {
       "types": "./dist/solidstart.d.ts",
       "import": "./dist/solidstart.js"
+    },
+    "./tanstack-start": {
+      "types": "./dist/tanstack-start.d.ts",
+      "import": "./dist/tanstack-start.js"
+    },
+    "./astro": {
+      "types": "./dist/astro.d.ts",
+      "import": "./dist/astro.js"
     },
     "./angular": {
       "types": "./dist/angular.d.ts",
@@ -200,6 +210,7 @@
     "@sentry/browser": "^11.0.0",
     "@sentry/nextjs": "^11.0.0",
     "@solidjs/router": ">=0.16.0 <2.0.0",
+    "@tanstack/react-router": "^1.29.0",
     "next": "^15.0.0 || ^16.0.0",
     "nuxt": "^4.0.0",
     "posthog-js": "^1.438.0",
@@ -223,6 +234,9 @@
       "optional": true
     },
     "@solidjs/router": {
+      "optional": true
+    },
+    "@tanstack/react-router": {
       "optional": true
     },
     "next": {
@@ -263,6 +277,7 @@
     "@size-limit/file": "^14.2.0",
     "@solidjs/router": "^1.0.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tanstack/react-router": "^1.170.44",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "es-check": "^9.8.1",
