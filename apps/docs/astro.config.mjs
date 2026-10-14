@@ -19,6 +19,7 @@ export default defineConfig({
         baseUrl: 'https://github.com/nicolopadovan/analytics-consent-manager-npm/edit/main/apps/docs/',
       },
       customCss: ['./src/styles/custom.css'],
+      routeMiddleware: './src/routeData.ts',
       sidebar: [
         {
           label: 'Getting started',

@@ -49,3 +49,14 @@
     font-size: var(--sl-text-sm);
   }
 }
+
+.sidebar-content a.sidebar-heading {
+  padding-inline-start: 1.25rem;
+  padding-block: 0.15em;
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-gray-3);
+}
+
+.sidebar-content a.sidebar-heading:hover {
+  color: var(--sl-color-white);
+}
