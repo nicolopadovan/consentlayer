@@ -60,15 +60,19 @@ a value:
 
 | Step | Source                                                                                                                     | Written to storage  | Broadcast | Adapters applied |
 | ---- | -------------------------------------------------------------------------------------------------------------------------- | ------------------- | --------- | ---------------- |
+| 0    | Each `authoritative` adapter's `bootstrap()`, such as `tcf()`'s, awaited one at a time                                     | yes                 | yes       | none             |
 | 1    | The storage adapter, by default `localStorage["consentlayer_consent"]`, unless the choice there is [stale](#stale-choices) | no (already stored) | yes       | none             |
-| 2    | Each adapter's `bootstrap()`, in the order given, awaited one at a time                                                    | yes                 | yes       | none             |
+| 2    | Each other adapter's `bootstrap()`, in the order given, awaited one at a time                                              | yes                 | yes       | none             |
 | 3    | Nothing found: the engine keeps `initialConsent` (default `null`)                                                          | no                  | no        | none             |
 
 Until bootstrap resolves, the engine holds `consent.initialConsent`, and the
 manager starts from the same value. If step 1 or 2 yields a value equal to the
 one already held, nothing is written or broadcast. In step 3 the engine still
 notifies its subscribers once, with the unchanged consent, so the manager
-runs a lifecycle pass. Bootstrap resolves to the resulting consent.
+runs a lifecycle pass. If a choice is committed while bootstrap awaits an
+adapter, for example through `setConsent()`, another tab or an adapter's
+`subscribe`, bootstrap stops and keeps that choice. Bootstrap resolves to the
+resulting consent.
 
 <details>
 <summary>Legacy keys and bootstrap failures</summary>
@@ -194,6 +198,7 @@ except `id` is optional:
 ```ts
 interface ConsentIntegrationAdapter {
   id: string
+  authoritative?: boolean
   bootstrap?(): Promise<ConsentState | null> | ConsentState | null
   apply?(consent: ConsentState): Promise<void> | void
   subscribe?(onConsent: (consent: ConsentState) => void): (() => void) | void
@@ -203,7 +208,7 @@ interface ConsentIntegrationAdapter {
 
 | Part        | When it runs                                                                                                                           | Purpose                                                                                           |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `bootstrap` | During bootstrap, only if storage holds no value and no earlier adapter returned one                                                   | Read a choice the external platform already has                                                   |
+| `bootstrap` | During bootstrap: first if `authoritative`, otherwise only if storage holds no value; and only while no earlier adapter returned one   | Read a choice the external platform already has                                                   |
 | `apply`     | After every committed change except those from storage, bootstrap, or this adapter's own `subscribe`                                   | Push the choice to the external platform                                                          |
 | `subscribe` | Once, when the engine is created                                                                                                       | Receive choices made in the external platform                                                     |
 | `observe`   | Once when the engine is created, with the current consent (`null` before a choice), then on every notify, whatever the change's source | Mirror the choice somewhere that has no consent of its own, such as Google's Consent Mode signals |
@@ -251,11 +256,11 @@ occurs.
 `tcf()` from `consentlayer/adapters/tcf` reads consent from the
 IAB TCF v2 CMP on the page. Its adapter ID is `tcf`.
 
-| Part        | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bootstrap` | Returns `null` if `window.__tcfapi` is missing. Otherwise calls `__tcfapi('addEventListener', 2, callback)`, takes the first callback, removes the listener with `removeEventListener` and its `listenerId`, and returns `null` unless the call succeeded and `gdprApplies` is `true`. Otherwise maps `purpose.consents` as in the [mapping table](/guides/adapters/tcf/#purposes-and-categories), including while the CMP shows its interface (`eventStatus: 'cmpuishown'`), when no purpose has consent yet. |
-| `apply`     | None. TCF has no command for writing consent back to the CMP.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `subscribe` | Adds a listener the same way and maps every callback with `gdprApplies: true`; the others are ignored. The returned function removes the listener, or removes it as soon as the CMP reports its `listenerId` if that has not happened yet.                                                                                                                                                                                                                                                                     |
+| Part        | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bootstrap` | Returns `null` if `window.__tcfapi` is missing. Otherwise calls `__tcfapi('addEventListener', 2, callback)`, takes the first callback, removes the listener with `removeEventListener` and its `listenerId`, and returns `null` unless the call succeeded and `gdprApplies` is `true`. Otherwise maps `purpose.consents` as in the [mapping table](/guides/adapters/tcf/#purposes-and-categories), including while the CMP shows its interface (`eventStatus: 'cmpuishown'`), when no purpose has consent yet. Rejects if no callback arrives within `timeout` (5000 ms); a later callback only removes the listener. |
+| `apply`     | None. TCF has no command for writing consent back to the CMP.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `subscribe` | Adds a listener the same way and maps every callback with `gdprApplies: true`; the others are ignored. The returned function removes the listener, or removes it as soon as the CMP reports its `listenerId` if that has not happened yet.                                                                                                                                                                                                                                                                                                                                                             |
 
 ### Google Consent Mode
 

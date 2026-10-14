@@ -249,6 +249,49 @@ describe('Shopify Customer Privacy sync', () => {
   })
 })
 
+describe('bootstrap precedence', () => {
+  const denied = { preferences: false, analytics: false, marketing: false }
+  const granted = { preferences: true, analytics: true, marketing: true }
+
+  it('keeps a choice made while an adapter bootstrap is pending', async () => {
+    let answer: (consent: typeof denied) => void = () => undefined
+    const storage = createMemoryConsentStorage()
+    const engine = createConsentEngine({
+      storage,
+      adapters: [{ id: 'slow', bootstrap: () => new Promise((resolve) => (answer = resolve)) }],
+    })
+    const bootstrapping = engine.bootstrap()
+    await engine.setConsent(granted)
+    answer(denied)
+    expect(await bootstrapping).toEqual(granted)
+    expect(storage.read()?.consent).toEqual(granted)
+    engine.destroy()
+  })
+
+  it('asks an authoritative adapter before the stored choice and falls back to it on null or failure', async () => {
+    const stored = { preferences: true, analytics: true, marketing: false }
+    const engineWith = (bootstrap: () => Promise<typeof denied | null>, onError = vi.fn()) =>
+      createConsentEngine({
+        storage: createMemoryConsentStorage(stored),
+        adapters: [{ id: 'cmp', authoritative: true, bootstrap }],
+        onError,
+      })
+
+    let answer: (consent: typeof denied) => void = () => undefined
+    const decided = engineWith(() => new Promise((resolve) => (answer = resolve)))
+    const bootstrapping = decided.bootstrap()
+    await Promise.resolve()
+    expect(decided.getConsent()).toBeNull()
+    answer(denied)
+    expect(await bootstrapping).toEqual(denied)
+
+    expect(await engineWith(async () => null).bootstrap()).toEqual(stored)
+    const onError = vi.fn()
+    expect(await engineWith(() => Promise.reject(new Error('timeout')), onError).bootstrap()).toEqual(stored)
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'consent-adapter', providerId: 'cmp' }))
+  })
+})
+
 describe('adapter failures', () => {
   it('reports a failed bootstrap and asks the next adapter', async () => {
     const onError = vi.fn()

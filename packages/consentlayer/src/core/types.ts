@@ -65,6 +65,8 @@ export interface IdentityStorageAdapter {
 /** Syncs consent with an outside consent platform: reads its choice at boot, pushes changes to it, and listens for its updates. */
 export interface ConsentIntegrationAdapter {
   id: string
+  /** Its bootstrap answer replaces the stored choice, which is used only when it answers `null` or fails. */
+  authoritative?: boolean
   bootstrap?(): Promise<ConsentState | null> | ConsentState | null
   apply?(consent: ConsentState): Promise<void> | void
   subscribe?(onConsent: (consent: ConsentState) => void): (() => void) | void

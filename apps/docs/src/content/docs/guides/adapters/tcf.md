@@ -63,10 +63,11 @@ tcf({
 
 ## Options
 
-| Option     | Type                                         | Default             | Description                                             |
-| ---------- | -------------------------------------------- | ------------------- | ------------------------------------------------------- |
-| `purposes` | `Partial<Record<ConsentCategory, number[]>>` | The table above     | TCF purpose IDs per category, merged over the defaults. |
-| `window`   | `Window`                                     | The global `window` | The window that holds `__tcfapi`.                       |
+| Option     | Type                                         | Default             | Description                                               |
+| ---------- | -------------------------------------------- | ------------------- | --------------------------------------------------------- |
+| `purposes` | `Partial<Record<ConsentCategory, number[]>>` | The table above     | TCF purpose IDs per category, merged over the defaults.   |
+| `timeout`  | `number`                                     | `5000`              | Milliseconds bootstrap waits for the CMP before it fails. |
+| `window`   | `Window`                                     | The global `window` | The window that holds `__tcfapi`.                         |
 
 ## When there is no TCF choice
 
@@ -78,8 +79,9 @@ ConsentLayer's own banner, in two cases:
   a visitor outside the EU. Updates with `gdprApplies` other than `true` are
   ignored too, so a choice made in ConsentLayer's banner is kept.
 
-To serve both groups, render ConsentLayer's banner as usual: it shows only
-when the adapter returned `null` and no choice is stored.
+In both cases ConsentLayer falls back to the stored choice. To serve both
+groups, render ConsentLayer's banner as usual: it shows only when the adapter
+returned `null` and no choice is stored.
 
 <details>
 <summary>While the CMP shows its interface</summary>
@@ -92,10 +94,10 @@ consent boot, and the others wait. When the visitor confirms in the CMP, it
 reports `eventStatus: 'useractioncomplete'`, and the adapter's subscription
 applies the new consent.
 
-The denied state is stored like any other adapter choice. On the next visit
-ConsentLayer reads the stored choice first and skips the adapter's bootstrap,
-but the subscription still receives the CMP's current data as soon as it
-registers, since a TCF CMP calls a new listener immediately.
+The denied state is stored like any other adapter choice. The adapter is
+authoritative, so on the next visit ConsentLayer asks the CMP before it reads
+the stored choice, nothing that needs consent boots until the CMP answers, and
+the CMP's answer replaces the stored choice.
 
 </details>
 
@@ -111,7 +113,10 @@ listener the same way. A callback with `success: false` counts as no choice.
 
 If the page has the CMP's `__tcfapi` stub but the CMP itself never loads, for
 example because a content blocker stops it, the stub queues the call and
-bootstrap waits: `ready` stays `false` until the CMP answers.
+bootstrap waits `timeout` milliseconds. Then it fails with
+`The TCF CMP did not answer within <timeout> ms`, reported to `onError` with
+scope `consent-adapter`, and ConsentLayer falls back to the stored choice, or
+to its own banner when nothing is stored.
 
 </details>
 
@@ -120,11 +125,11 @@ bootstrap waits: `ready` stays `false` until the CMP answers.
 - **Choices made in ConsentLayer are overwritten.** The CMP's next update
   replaces a choice made through ConsentLayer, as described in
   [The CMP owns the choice](#the-cmp-owns-the-choice).
-- **A CMP that never loads blocks ConsentLayer.** With the CMP's `__tcfapi`
-  stub on the page but the CMP blocked, for example by a content blocker,
-  bootstrap waits and `ready` stays `false`. There is no timeout, because
-  showing ConsentLayer's banner after one would put it on top of the CMP's
-  once the CMP loads.
+- **A CMP that answers late meets ConsentLayer's banner.** With the CMP's
+  `__tcfapi` stub on the page but the CMP slower than `timeout`, ConsentLayer
+  falls back to the stored choice or shows its banner, and the CMP may then
+  show its own on top. The subscription still applies the CMP's choice once
+  it answers. Raise `timeout` if your CMP loads slowly.
 - **The denied state from a first visit is stored.** A visitor who leaves
   while the CMP shows its interface has every category denied in
   ConsentLayer's storage. If you later remove the adapter, ConsentLayer reads

@@ -109,6 +109,17 @@ describe('tcf', () => {
     expect(cmp.listeners.size).toBe(0)
   })
 
+  it('is authoritative and gives up on a CMP that never answers', async () => {
+    vi.useFakeTimers()
+    const silent = vi.fn()
+    const adapter = tcf({ window: { __tcfapi: silent } as unknown as Window, timeout: 1000 })
+    expect(adapter.authoritative).toBe(true)
+    const bootstrapping = expect(adapter.bootstrap?.()).rejects.toThrow(/did not answer within 1000 ms/)
+    await vi.advanceTimersByTimeAsync(1000)
+    await bootstrapping
+    vi.useRealTimers()
+  })
+
   it('removes a listener whose id arrives after unsubscribe', () => {
     const cmp = fakeCmp(loaded([1]))
     const onConsent = vi.fn()

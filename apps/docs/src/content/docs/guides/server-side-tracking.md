@@ -116,11 +116,11 @@ or later.
 <details>
 <summary>Handler options and body validation</summary>
 
-| Option          | Type                                               | Description                                                                                                                                                                                                                                                                                               |
-| --------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `destinations`  | `(ServerDestination<true> \| undefined)[]`         | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, any destination with `forwardBrowserEvents: false` is skipped at runtime, and `undefined` entries are ignored.                                                                                                           |
+| Option          | Type                                               | Description                                                                                                                                                                                                                                                                                                                                    |
+| --------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `destinations`  | `(ServerDestination<true> \| undefined)[]`         | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, any destination with `forwardBrowserEvents: false` is skipped at runtime, and `undefined` entries are ignored.                                                                                                                                                |
 | `consentCookie` | `{ secret: string \| undefined; cookie?: string }` | Grants only the categories that both the body and the signed cookie set by `createConsentHandler` grant. With `secret` unset, every event is treated as denied and the handler logs a `console.warn` once when created; a secret shorter than 32 characters makes every request answer `500`. See [Consent records](/guides/consent-records/). |
-| `onError`       | `(error: unknown) => void`                         | Receives destination failures and unexpected errors.                                                                                                                                                                                                                                                      |
+| `onError`       | `(error: unknown) => void`                         | Receives destination failures and unexpected errors.                                                                                                                                                                                                                                                                                           |
 
 An event is valid when:
 
@@ -385,14 +385,14 @@ from marketing consent.
 Each event is one `POST` to `https://www.google-analytics.com/mp/collect`,
 with `measurement_id` and `api_secret` in the query string and this body:
 
-| Field              | Value                                                                                                                                                                |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `client_id`        | `event.clientId`, or the client ID from the request's `_ga` cookie.                                                                                                  |
-| `user_id`          | `event.identity.userId`.                                                                                                                                             |
+| Field              | Value                                                                                                                                                                                                                                  |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client_id`        | `event.clientId`, or the client ID from the request's `_ga` cookie.                                                                                                                                                                    |
+| `user_id`          | `event.identity.userId`.                                                                                                                                                                                                               |
 | `user_data`        | With marketing consent only: `sha256_email_address` (trimmed, lowercased, without dots before the `@` for `gmail.com` and `googlemail.com`) and `sha256_phone_number` (digits prefixed with `+`), each when valid. Omitted when empty. |
-| `consent`          | `ad_user_data` and `ad_personalization`, both `GRANTED` with marketing consent and `DENIED` without it.                                                              |
-| `events[0].name`   | The event name with every character outside `A–Z`, `a–z`, `0–9` and `_` replaced by `_`; `lead` becomes `generate_lead`.                                             |
-| `events[0].params` | The params merged with `providers.ga4`, plus `page_location` from `event.url` when there is one.                                                                     |
+| `consent`          | `ad_user_data` and `ad_personalization`, both `GRANTED` with marketing consent and `DENIED` without it.                                                                                                                                |
+| `events[0].name`   | The event name with every character outside `A–Z`, `a–z`, `0–9` and `_` replaced by `_`; `lead` becomes `generate_lead`.                                                                                                               |
+| `events[0].params` | The params merged with `providers.ga4`, plus `page_location` from `event.url` when there is one.                                                                                                                                       |
 
 Without a client ID, `send` throws `ga4Server needs event.clientId or the _ga
 cookie` before any request is made. A non-2xx response throws

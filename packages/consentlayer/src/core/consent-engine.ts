@@ -32,6 +32,7 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     (maxAgeDays !== undefined &&
       !(typeof record.updatedAt === 'number' && Date.now() - record.updatedAt <= maxAgeDays * 86_400_000))
   let stale = false
+  let changes = 0
 
   const notify = () => {
     const snapshot = { consent: current }
@@ -53,6 +54,7 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
   ) => {
     if (destroyed || !next || (equalConsent(current, next) && !(persist && stale))) return
     current = next
+    changes++
     if (persist) {
       stale = false
       storage?.write({ consent: next, updatedAt: Date.now(), policyVersion })
@@ -129,19 +131,10 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     const stored = normalize(record?.consent)
     stale = stored !== null && isStaleRecord(record!)
     if (stale) debugLog('consent', undefined, 'stored consent is stale', record)
-    if (stored && (!stale || options.onStale === 'keep')) {
-      await commit(stored, 'bootstrap', {
-        persist: false,
-        applyAdapters: false,
-      })
-      return current
-    }
-
-    for (const adapter of adapters) {
-      if (!adapter.bootstrap) continue
-      let next: ConsentState | null
+    const seen = changes
+    const ask = async (adapter: ConsentIntegrationAdapter) => {
       try {
-        next = normalize(await adapter.bootstrap())
+        return normalize(await adapter.bootstrap?.())
       } catch (cause) {
         options.onError?.({
           scope: 'consent-adapter',
@@ -149,14 +142,20 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
           message: `Consent adapter "${adapter.id}" failed to read consent`,
           cause,
         })
-        continue
+        return null
       }
+    }
+    const ordered = [
+      ...adapters.filter((adapter) => adapter.authoritative),
+      undefined,
+      ...adapters.filter((adapter) => !adapter.authoritative),
+    ]
+    for (const adapter of ordered) {
+      if (adapter && !adapter.bootstrap) continue
+      const next = adapter ? await ask(adapter) : stored && (!stale || options.onStale === 'keep') ? stored : null
+      if (changes !== seen) return current
       if (!next) continue
-      await commit(next, 'bootstrap', {
-        persist: true,
-        applyAdapters: false,
-        excludeAdapter: adapter,
-      })
+      await commit(next, 'bootstrap', { persist: adapter !== undefined, applyAdapters: false, excludeAdapter: adapter })
       return current
     }
 

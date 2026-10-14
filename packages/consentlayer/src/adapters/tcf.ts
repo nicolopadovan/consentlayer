@@ -19,6 +19,8 @@ declare global {
 export type TcfOptions = {
   /** TCF purpose IDs per category, merged over the defaults. A category is granted when every listed purpose has consent. */
   purposes?: Partial<Record<ConsentCategory, number[]>>
+  /** Milliseconds bootstrap waits for the CMP before it fails and ConsentLayer falls back to the stored choice. Defaults to `5000`. */
+  timeout?: number
   window?: Window
 }
 
@@ -57,11 +59,18 @@ export function tcf(options: TcfOptions = {}): ConsentIntegrationAdapter {
 
   return {
     id: 'tcf',
+    authoritative: true,
     bootstrap() {
       const api = win?.__tcfapi
       if (!api) return null
-      return new Promise((resolve) => {
-        listen(api, (tcData) => {
+      const timeout = options.timeout ?? 5000
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          stop()
+          reject(new Error(`[consentlayer] The TCF CMP did not answer within ${timeout} ms`))
+        }, timeout)
+        const stop = listen(api, (tcData) => {
+          clearTimeout(timer)
           resolve(tcData?.gdprApplies === true ? toConsent(tcData) : null)
           return true
         })
