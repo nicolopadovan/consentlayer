@@ -3,7 +3,10 @@
   "workspaces": {
     "apps/docs": { "entry": ["src/routeData.ts"] },
     "apps/example-html": { "ignoreDependencies": ["consentlayer"] },
-    "apps/example-nuxt": { "entry": ["app/consentlayer.config.ts"], "ignoreDependencies": ["vue-router", "vue-tsc"] },
+    "apps/example-nuxt": {
+      "entry": ["app/consentlayer.config.ts", "app/components/**/*.vue"],
+      "ignoreDependencies": ["vue-router", "vue-tsc"]
+    },
     "apps/example-solidstart": {
       "vite": false,
       "entry": ["vite.config.ts", "src/app.tsx", "src/entry-{client,server}.tsx", "src/routes/**/*.tsx"]
