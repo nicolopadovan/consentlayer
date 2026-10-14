@@ -2,6 +2,7 @@ import type {
   AnalyticsError,
   AnalyticsEventPayload,
   AnalyticsManager,
+  AutoTracking,
   AnalyticsManagerOptions,
   AnalyticsManagerStateSnapshot,
   AnalyticsPlugin,
@@ -21,6 +22,7 @@ import {
   hasRequiredConsent,
   isBrowser,
   normalizeIdentity,
+  receivesEvent,
 } from './utils'
 import { assertHttpsOrRelativeUrl } from './validation'
 
@@ -33,7 +35,7 @@ type ProviderState = {
   backlog?: Array<() => Promise<unknown>>
 }
 
-type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer'>
+type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer' | 'events'>
 
 const LIFECYCLE_HOOKS = new Set<HookName>(['setup', 'consent', 'load', 'teardown'])
 const HOOK_TOPICS: Record<HookName, DebugTopic> = {
@@ -320,7 +322,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     if (options.autoTracking && !pageSession && booted && evaluated?.analytics && isBrowser()) {
       pageSession = () => {}
       try {
-        pageSession = options.autoTracking({ track: api.track, signal: lifetime.signal })
+        pageSession = options.autoTracking({
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed once Register declares events
+          track: api.track as Parameters<AutoTracking>[0]['track'],
+          signal: lifetime.signal,
+        })
         pageSession()
       } catch (cause) {
         emitError({ scope: 'auto-tracking', message: 'Auto-tracking failed to start', cause })
@@ -480,6 +486,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         optionsInput.only,
         async (state) =>
           allowed() &&
+          receivesEvent(state.plugin, name, optionsInput.only) &&
           (await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)),
         () =>
           allowed()

@@ -19,6 +19,9 @@ const TIKTOK_EVENT_NAMES: Record<string, string> = {
   find_location: 'FindLocation',
 }
 
+/** The events with a TikTok standard event, under ConsentLayer's or TikTok's name. */
+export const TIKTOK_EVENTS = [...new Set([...Object.keys(TIKTOK_EVENT_NAMES), ...Object.values(TIKTOK_EVENT_NAMES)])]
+
 /** Translates a standard event into a TikTok standard event, or a custom one under its own name. */
 export function toTikTokEvent(event: AnalyticsEventPayload): { name: string; params: Record<string, unknown> } {
   const { items, search_term, transaction_id, ...rest } = event.params as {

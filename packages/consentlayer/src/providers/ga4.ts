@@ -1,5 +1,5 @@
 import { builtInConsentMode, ensureGtag, loadGtag } from '../core/consent-mode'
-import type { UserIdentity } from '../core/types'
+import type { EventName, UserIdentity } from '../core/types'
 import { definePlugin, getFlag, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 import { assertHttpsOrRelativeUrl, assertValidGa4MeasurementId } from '../core/validation'
@@ -23,6 +23,8 @@ export type Ga4Options = {
   consentMode?: Ga4ConsentMode
   /** Your tagging server, e.g. `https://sgtm.example.com`: hits go to it instead of Google. */
   serverContainerUrl?: string
+  /** Event names `track` sends to it: all by default, none with `false`. */
+  events?: readonly EventName[] | false
 }
 
 /**
@@ -73,6 +75,7 @@ export function ga4(options: Ga4Options) {
   }
   return definePlugin({
     id: 'ga4',
+    events: options.events,
     requiredConsent: advanced ? 'none' : 'analytics',
     loadBeforeConsent: advanced || (options.loadBeforeConsent ?? false),
     setup() {

@@ -28,3 +28,9 @@ export const analytics = createAnalytics({
   enabled: process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
   debug: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true',
 })
+
+declare module 'consentlayer' {
+  interface Register {
+    events: { quote_requested: { value: number; currency: string } }
+  }
+}

@@ -217,7 +217,7 @@ on the server.
 
 ## What `metaCapi` sends
 
-`metaCapi({ pixelId, accessToken, testEventCode?, apiVersion?, fetchImpl? })`
+`metaCapi({ pixelId, accessToken, testEventCode?, apiVersion?, events?, fetchImpl? })`
 from `consentlayer/server/meta` returns `undefined` while `pixelId` or
 `accessToken` is unset or empty, and calls `console.warn` once when only one
 of them is set. Otherwise the destination has the ID `meta`,
@@ -265,7 +265,7 @@ which is also when the browser includes email and phone. Fields that end up
 
 ## What `tiktokEvents` sends
 
-`tiktokEvents({ pixelId, accessToken, testEventCode?, fetchImpl? })` from
+`tiktokEvents({ pixelId, accessToken, testEventCode?, events?, fetchImpl? })` from
 `consentlayer/server/tiktok` returns `undefined` while `pixelId` or
 `accessToken` is unset or empty, and calls `console.warn` once when only one
 of them is set. Otherwise the destination has the ID `tiktok`, requires

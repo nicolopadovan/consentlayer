@@ -23,8 +23,9 @@ an object with the options below, in its configuration.
 ## Events
 
 Auto-tracking starts after boot, once `analytics` consent is granted, and sends
-each event to every active provider, or only to the provider IDs listed in
-its `only` option. `autoTracking()` from `consentlayer/auto-tracking` enables
+each event to every active provider whose
+[`events` option](/guides/events/#routing-events) includes it. The Meta and
+TikTok pixels leave them out by default. `autoTracking()` from `consentlayer/auto-tracking` enables
 every kind with its defaults. An object that turns kinds on enables only
 those: `autoTracking({ clicks: { mode: 'attribute' } })` sends clicks alone,
 while `autoTracking({ scroll: false })` keeps every kind but scroll.

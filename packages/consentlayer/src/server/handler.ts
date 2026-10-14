@@ -1,4 +1,5 @@
 import type { ConsentState, ServerEvent } from '../core/types'
+import { receivesEvent } from '../core/utils'
 import { assertSecret, readConsentCookie, type ConsentCookieOptions } from './consent'
 import { ANALYTICS_MAX_BODY, assertSameOrigin, parseCookieHeader, parseJsonWithLimit } from './http'
 
@@ -17,6 +18,8 @@ export interface ServerDestination<Forward extends boolean = boolean> {
   requiredConsent: keyof ConsentState
   /** Whether `createAnalyticsHandler` may send browser events to it. */
   forwardBrowserEvents: Forward
+  /** Event names sent to it besides page views: all when unset, none with `false`. An event whose `only` names it is always sent. */
+  events?: readonly string[] | false
   send(event: ServerEvent, request?: ServerRequestInfo): Promise<void>
 }
 
@@ -33,6 +36,7 @@ export async function sendServerEvent(
       destination !== undefined &&
       event.consent[destination.requiredConsent] === true &&
       (!event.only || event.only.includes(destination.id)) &&
+      (event.name === 'page_view' || receivesEvent(destination, event.name, event.only)) &&
       (!event.categories || event.categories.includes(destination.requiredConsent)),
   )
   const results = await Promise.allSettled(targets.map((destination) => destination.send(event, options.request)))

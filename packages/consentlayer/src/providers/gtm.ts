@@ -1,6 +1,6 @@
 import { builtInConsentMode, ensureGtag } from '../core/consent-mode'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
-import type { ConsentState, ProviderConsentRequirement } from '../core/types'
+import type { ConsentState, EventName, ProviderConsentRequirement } from '../core/types'
 import { assertHttpsOrRelativeUrl } from '../core/validation'
 
 /** Options for `gtm`. */
@@ -14,6 +14,8 @@ export type GtmOptions = {
   requiredConsent?: ProviderConsentRequirement
   /** Your tagging server, e.g. `https://sgtm.example.com`: `gtm.js` loads from it instead of Google. */
   serverContainerUrl?: string
+  /** Event names `track` sends to it: all by default, none with `false`. */
+  events?: readonly EventName[] | false
 }
 
 const GTM_CONTAINER_ID = /^GTM-[A-Z0-9]{4,12}$/
@@ -41,6 +43,7 @@ export function gtm(options: GtmOptions) {
   }
   return definePlugin({
     id: 'gtm',
+    events: options.events,
     requiredConsent: options.requiredConsent ?? 'none',
     setup() {
       if (typeof window === 'undefined') return

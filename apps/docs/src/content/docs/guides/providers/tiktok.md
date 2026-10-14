@@ -14,10 +14,11 @@ tiktok({ pixelId: process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID })
 
 ## Options
 
-| Option              | Type                  | Default  | Description                                                                                                                |
-| ------------------- | --------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `pixelId`           | `string \| undefined` | Required | The pixel ID from TikTok Events Manager.                                                                                   |
-| `loadBeforeConsent` | `boolean`             | `false`  | Loads the pixel at boot with `ttq.holdConsent()`. See [Loading before consent](/guides/providers/#loading-before-consent). |
+| Option              | Type                  | Default                  | Description                                                                                                                |
+| ------------------- | --------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `pixelId`           | `string \| undefined` | Required                 | The pixel ID from TikTok Events Manager.                                                                                   |
+| `loadBeforeConsent` | `boolean`             | `false`                  | Loads the pixel at boot with `ttq.holdConsent()`. See [Loading before consent](/guides/providers/#loading-before-consent). |
+| `events`            | `string[] \| false`   | TikTok's standard events | The event names sent to the pixel. See [Which events are sent](#which-events-are-sent).                                    |
 
 ## How it works
 
@@ -36,6 +37,27 @@ Page views are sent as `ttq.page()`. Events are sent as
 is forwarded to the Events API, so TikTok deduplicates the pair (see
 [Server-side tracking](/guides/server-side-tracking/)). Standard events map to
 TikTok's standard events; see [Events and identity](/guides/events/).
+
+## Which events are sent
+
+By default, the pixel receives only the events that map to a TikTok standard
+event, listed in [Events and identity](/guides/events/#what-each-provider-receives), such as `purchase`, `lead` and
+`sign_up`, and TikTok's own standard event names. Custom events, including those
+from [auto-tracking](/guides/auto-tracking/), stay with your analytics
+providers.
+
+To choose the events yourself, list them in `events`, or pass `false` to send
+none. The list replaces the default, so include the standard events you still
+want:
+
+```ts
+tiktok({ pixelId, events: ['purchase', 'lead', 'quote_requested'] })
+```
+
+An event whose [`only`](/guides/events/#event-options) option names the
+provider is sent whatever `events` says. The
+[server destination](/guides/server-side-tracking/) `tiktokEvents` takes the same
+option and applies the same rule.
 
 There is no `<noscript>` fallback for TikTok.
 

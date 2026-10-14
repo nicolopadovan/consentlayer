@@ -1,3 +1,4 @@
+import type { EventName } from '../core/types'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 
@@ -12,6 +13,8 @@ export type ContentsquareOptions = {
   /** The ID in your tag's URL: `t.contentsquare.net/uxa/<tagId>.js`. */
   /** `undefined` or `''` turns the provider off. */
   tagId: string | undefined
+  /** Event names `track` sends to it: all by default, none with `false`. */
+  events?: readonly EventName[] | false
 }
 
 const push = (...command: unknown[]) => (window._uxa = window._uxa ?? []).push(command)
@@ -24,6 +27,7 @@ export function contentsquare(options: ContentsquareOptions) {
   let loadedPath: string | undefined
   return definePlugin({
     id: 'contentsquare',
+    events: options.events,
     requiredConsent: 'analytics',
     consent(context) {
       // ponytail: Contentsquare has no web opt-in; dropping the opt-out cookie takes effect on the next page load
