@@ -28,14 +28,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # Opens or updates the "Release consentlayer" pull request while changesets are pending.
-      - uses: changesets/action@v2
+      - id: changesets
+        uses: changesets/action@v2
         with:
           version-script: pnpm changeset version
           commit-message: 'chore: release consentlayer'
           pr-title: Release consentlayer
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      # The action leaves the release branch checked out, so check only once no changeset is pending.
       - id: check
+        if: steps.changesets.outputs.hasChangesets == 'false'
         run: |
           version=$(node -p "require('./packages/consentlayer/package.json').version")
           if npm view "consentlayer@$version" version --silent >/dev/null 2>&1; then
