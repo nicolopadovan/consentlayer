@@ -132,7 +132,7 @@ initializer. It throws when `provideConsentLayer()` is not in the application
 config.
 
 <details>
-<summary>Meta Pixel without JavaScript</summary>
+<summary>Meta Pixel and GTM without JavaScript</summary>
 
 `provideMetaPixelNoscript()` adds Meta's `<noscript>` PageView image,
 `https://www.facebook.com/tr?id=<pixelId>&ev=PageView&noscript=1`, to the end
@@ -150,6 +150,10 @@ tracks them without consent. For that reason it adds nothing unless you pass
 become attributes of the image. It is a provider rather than a component
 because Angular components need the Angular compiler, which ConsentLayer's
 build doesn't run. An application rendered only in the browser never shows it.
+
+`provideGtmNoscript({ containerId, enabled: true })` does the
+same for Google Tag Manager's `<noscript>` iframe; see
+[Google Tag Manager](/guides/providers/gtm/#without-javascript).
 
 </details>
 

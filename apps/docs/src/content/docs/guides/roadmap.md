@@ -21,6 +21,16 @@ only from the CDN. The planned `consentlayer/banner` entry exports it for
 applications that install ConsentLayer from npm, as a function that mounts it
 on a consent controller.
 
+### Adapters for consent platforms
+
+Sites that already use a consent platform such as iubenda, Cookiebot, OneTrust
+or Usercentrics can let it collect the choice and ConsentLayer follow it. Today
+that works only through [`tcf()`](/guides/adapters/tcf/), when the platform
+runs in IAB TCF mode, and only for the categories TCF purposes map to. The
+planned [consent adapters](/guides/adapters/) read each platform's own
+JavaScript API and events, so they work without TCF and map the platform's
+categories directly.
+
 ### Website builders and CMS
 
 Sites built without a JavaScript build step can't install an npm package. The
@@ -72,8 +82,10 @@ simulated `__tcfapi`, not with a named CMP; its page lists its other
 Consent Mode defaults when `createAnalytics()` creates the instance in the
 browser, whatever the [`boot`](/start/react/#boot-timing) timing. A Google tag that runs before
 your bundle, such as a Google Tag Manager snippet at the top of `<head>`,
-still runs before the defaults exist. Load such tags after your bundle, or
-set the defaults yourself in an inline script before them.
+still runs before the defaults exist. Load the container with
+[`gtm()`](/guides/providers/gtm/), which sets the defaults first, load other
+such tags after your bundle, or set the defaults yourself in an inline script
+before them.
 
 </details>
 

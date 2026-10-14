@@ -389,13 +389,54 @@ with `measurement_id` and `api_secret` in the query string and this body:
 | `user_data` | With marketing consent only: `sha256_email_address` (trimmed, lowercased) and `sha256_phone_number` (digits prefixed with `+`), each when valid. Omitted when empty. |
 | `consent` | `ad_user_data` and `ad_personalization`, both `GRANTED` with marketing consent and `DENIED` without it. |
 | `events[0].name` | The event name with every character outside `A–Z`, `a–z`, `0–9` and `_` replaced by `_`; `lead` becomes `generate_lead`. |
-| `events[0].params` | The params merged with `providers.ga4`. |
+| `events[0].params` | The params merged with `providers.ga4`, plus `page_location` from `event.url` when there is one. |
 
 Without a client ID, `send` throws `ga4Server needs event.clientId or the _ga
 cookie` before any request is made. A non-2xx response throws
 `GA4 Measurement Protocol <status>: <response body>`.
 
 </details>
+
+### Server-side GTM
+
+`sgtm` from `consentlayer/server/sgtm` sends events to a
+[server-side GTM](https://developers.google.com/tag-platform/tag-manager/server-side)
+container, through its Measurement Protocol client. It requires analytics
+consent and has `forwardBrowserEvents: true`, so it takes browser events from
+`createAnalyticsHandler` as well as server-only events from `sendServerEvent`.
+Its `id` is `sgtm`.
+
+```ts
+import { createAnalyticsHandler } from 'consentlayer/server'
+import { sgtm } from 'consentlayer/server/sgtm'
+
+export const POST = createAnalyticsHandler({
+  destinations: [
+    sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: process.env.GA_MEASUREMENT_ID }),
+  ],
+})
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `url` | `string \| undefined` | Required | The client's endpoint: your tagging server followed by the activation path set in the client, such as `/mp/collect`. HTTPS only. |
+| `measurementId` | `string \| undefined` | Required | Sent as `measurement_id`. |
+| `apiSecret` | `string` | | Sent as `api_secret`, for a client or tag that checks it. |
+| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+
+While `url` or `measurementId` is unset, `sgtm()` returns `undefined` and the
+destination is off, with a `console.warn` once when only one of them is set.
+The body is the one [sent to GA4](#ga4-measurement-protocol), so the event
+needs a client ID or a `_ga` cookie, and errors name `sgtm` and
+`Server-side GTM`. The container's tags decide where each event goes from
+there. Google's Measurement Protocol client
+[doesn't support every Measurement Protocol feature](https://developers.google.com/tag-platform/tag-manager/server-side/send-data).
+
+:::caution[Send each event once]
+`ga4({ serverContainerUrl })` already sends the browser's GA4 hits to the
+same container. With it and `sgtm()` in `createAnalyticsHandler`, each event
+arrives twice. Use one route per event.
+:::
 
 ## Writing a destination
 

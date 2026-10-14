@@ -8,7 +8,8 @@ import {
 } from './core/consent-controller'
 import { latestAnalytics } from './core/create-analytics'
 import type { Analytics, ConsentApi, ConsentState, PageViewPayload } from './core/types'
-import type { HTMLImgAttributes } from 'svelte/elements'
+import type { HTMLIframeAttributes, HTMLImgAttributes } from 'svelte/elements'
+import GtmNoscriptComponent from './svelte/GtmNoscript.svelte'
 import MetaPixelNoscriptComponent from './svelte/MetaPixelNoscript.svelte'
 
 /** The part of SvelteKit's `afterNavigate` ConsentLayer uses. */
@@ -33,6 +34,15 @@ export type ConsentController = Readonly<ConsentControllerState> & ConsentContro
  */
 export const MetaPixelNoscript: Component<{ pixelId: string | undefined; enabled?: boolean } & HTMLImgAttributes> =
   MetaPixelNoscriptComponent
+
+/**
+ * Google Tag Manager's `<noscript>` iframe. It loads the container only for
+ * visitors without JavaScript, who never see the consent banner, so its tags
+ * run without consent. Render it only where that is lawful for you. Renders
+ * nothing without `enabled` or while `containerId` is unset. Other attributes go to the `<iframe>`.
+ */
+export const GtmNoscript: Component<{ containerId: string | undefined; enabled?: boolean } & HTMLIframeAttributes> =
+  GtmNoscriptComponent
 
 const AnalyticsKey = Symbol('consentlayer.analytics')
 const ControllerKey = Symbol('consentlayer.controller')

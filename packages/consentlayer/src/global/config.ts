@@ -6,6 +6,7 @@ import { createConsentController, type ConsentControllerOptions } from '../core/
 import type { AnalyticsPlugin, ConsentIntegrationAdapter } from '../core/types'
 import { contentsquare } from '../providers/contentsquare'
 import { ga4 } from '../providers/ga4'
+import { gtm } from '../providers/gtm'
 import { hotjar } from '../providers/hotjar'
 import { meta } from '../providers/meta'
 import { posthog } from '../providers/posthog'
@@ -31,6 +32,7 @@ export type GlobalConfig = Omit<AnalyticsOptions, 'providers'> &
 
 const factories: Record<string, (options: never) => AnalyticsPlugin> = {
   ga4,
+  gtm,
   meta,
   tiktok,
   contentsquare,
@@ -48,6 +50,7 @@ const adapterFactories: Record<string, (options: never) => ConsentIntegrationAda
 
 const attributes: Record<string, [provider: string, option?: string, flag?: boolean]> = {
   ga4: ['ga4', 'measurementId'],
+  gtm: ['gtm', 'containerId'],
   metaPixel: ['meta', 'pixelId'],
   tiktokPixel: ['tiktok', 'pixelId'],
   contentsquareTag: ['contentsquare', 'tagId'],

@@ -142,7 +142,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 ```
 
 <details>
-<summary>Meta Pixel without JavaScript, and Shopify Customer Privacy</summary>
+<summary>Meta Pixel and GTM without JavaScript, and Shopify Customer Privacy</summary>
 
 `<MetaPixelNoscript>` from `consentlayer/react` renders Meta's `<noscript>`
 PageView image, `https://www.facebook.com/tr?id=<pixelId>&ev=PageView&noscript=1`,
@@ -151,6 +151,10 @@ banner, so the image tracks them without consent. For that reason it renders
 nothing unless you pass `enabled`, and nothing while `pixelId` is `undefined`
 or empty, so you can pass the environment variable directly. The example app
 enables it with `NEXT_PUBLIC_FACEBOOK_PIXEL_NOSCRIPT=true`.
+
+`<GtmNoscript containerId={…} enabled />` from `consentlayer/react` does the
+same for Google Tag Manager's `<noscript>` iframe; see
+[Google Tag Manager](/guides/providers/gtm/#without-javascript).
 
 On a headless Shopify storefront, the Shopify Customer Privacy adapter loads
 Shopify's consent script itself once `storefrontAccessToken` is set, so the

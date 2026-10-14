@@ -11,15 +11,15 @@ return value and the errors it throws. Options are optional unless marked
 | Entry point | Exports |
 |---|---|
 | [`consentlayer`](#consentlayer) | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types |
-| [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript` |
+| [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript`, `GtmNoscript` |
 | [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for Next.js |
-| [`consentlayer/vue`](#consentlayervue) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript` |
+| [`consentlayer/vue`](#consentlayervue) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript` |
 | [`consentlayer/nuxt`](#consentlayernuxt) | The Nuxt module, which auto-imports `defineConsentLayerConfig` |
-| [`consentlayer/svelte`](#consentlayersvelte) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript` |
+| [`consentlayer/svelte`](#consentlayersvelte) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript` |
 | [`consentlayer/sveltekit`](#consentlayersveltekit) | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte` |
-| [`consentlayer/solid`](#consentlayersolid) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript` |
+| [`consentlayer/solid`](#consentlayersolid) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript` |
 | [`consentlayer/solidstart`](#consentlayersolidstart) | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid` |
-| [`consentlayer/angular`](#consentlayerangular) | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript` |
+| [`consentlayer/angular`](#consentlayerangular) | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript`, `provideGtmNoscript` |
 | [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify and IAB TCF consent adapters |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
@@ -853,6 +853,19 @@ consent. Render it only where that is lawful.
 | `enabled` | `boolean` | `undefined` | Renders nothing unless `true`. |
 | other `<img>` props | `ComponentPropsWithoutRef<'img'>` | `width` and `height` `1`, `style.display` `'none'` | Passed to the image. `alt` is always `''`. |
 
+### `<GtmNoscript>`
+
+Renders Google Tag Manager's `<noscript>` iframe, which loads the container
+for visitors without JavaScript. Those visitors never see the consent banner,
+so its tags run without consent. Render it only where that is lawful, at the
+start of `<body>`.
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `containerId` | `string \| undefined` | | **Required.** Renders nothing while `undefined` or empty. |
+| `enabled` | `boolean` | `undefined` | Renders nothing unless `true`. |
+| other `<iframe>` props | `ComponentPropsWithoutRef<'iframe'>` | `title` `'Google Tag Manager'`, `width` and `height` `0`, hidden | Passed to the iframe. |
+
 ## `consentlayer/next`
 
 Requires `next` 15 or 16, an optional peer dependency, and works in the App
@@ -947,6 +960,12 @@ the props `pixel-id` and `enabled`. Other attributes are passed to the image.
 It renders the image as the `<noscript>` element's HTML, so hydration doesn't
 compare it with the text browsers parse there when JavaScript is on.
 
+### `<GtmNoscript>` for Vue
+
+The React [`<GtmNoscript>`](#gtmnoscript) as a Vue component, with the props
+`container-id` and `enabled`, rendered the same way. Other attributes are
+passed to the iframe.
+
 ## `consentlayer/nuxt`
 
 A Nuxt module for Nuxt 4, an optional peer dependency. Add it to `modules` in
@@ -960,7 +979,8 @@ A Nuxt module for Nuxt 4, an optional peer dependency. Add it to `modules` in
   from Nuxt's `vue:error` hook through `captureError` with `source: 'boundary'`
   and a `vue_info` tag;
 - auto-imports `defineConsentLayerConfig`, `useAnalytics`, `useConsent` and
-  `useConsentController`, and registers the `<MetaPixelNoscript>` component.
+  `useConsentController`, and registers the `<MetaPixelNoscript>` and
+  `<GtmNoscript>` components.
 
 The module options, under the `consentlayer` key of `nuxt.config.ts`, are the
 [`consentLayer`](#consentlayer-1) options except `analytics` and `router`. They
@@ -1055,9 +1075,15 @@ with the props `pixelId` and `enabled`. Other attributes are passed to the
 image. It ships as Svelte source, which your Svelte compiler builds; the
 package's `svelte` export condition points Vite at it.
 
+### `<GtmNoscript>` for Svelte
+
+The React [`<GtmNoscript>`](#gtmnoscript) as a Svelte component, with the
+props `containerId` and `enabled`. Other attributes are passed to the iframe.
+It ships as Svelte source too.
+
 ## `consentlayer/sveltekit`
 
-`MetaPixelNoscript`, `useAnalytics`, `useConsent`, `useConsentController` and
+`MetaPixelNoscript`, `GtmNoscript`, `useAnalytics`, `useConsent`, `useConsentController` and
 the `ConsentController` type from `consentlayer/svelte`, plus the two functions
 below. It imports `afterNavigate` from
 SvelteKit's `$app/navigation`, so it only works inside a SvelteKit
@@ -1153,9 +1179,14 @@ The React [`<MetaPixelNoscript>`](#metapixelnoscript) as a Solid component,
 with the props `pixelId` and `enabled`. Other attributes are passed to the
 image.
 
+### `<GtmNoscript>` for Solid
+
+The React [`<GtmNoscript>`](#gtmnoscript) as a Solid component, with the props
+`containerId` and `enabled`. Other attributes are passed to the iframe.
+
 ## `consentlayer/solidstart`
 
-`ErrorBoundary`, `MetaPixelNoscript`, `useAnalytics`, `useConsent`,
+`ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript`, `useAnalytics`, `useConsent`,
 `useConsentController` and the `ConsentController` and `ErrorBoundaryProps`
 types from `consentlayer/solid`, plus the provider below. It imports
 `useLocation` and `useIsRouting` from `@solidjs/router`, so it works in any
@@ -1245,6 +1276,19 @@ markup to the end of `<body>`. It adds nothing in the browser, without
 `enabled`, or while `pixelId` is `undefined` or empty. Other options become
 attributes of the image.
 
+### `provideGtmNoscript(options)`
+
+```ts
+function provideGtmNoscript(
+  options: { containerId: string | undefined; enabled?: boolean } & Record<string, unknown>,
+): EnvironmentProviders
+```
+
+On the server, inserts the React [`<GtmNoscript>`](#gtmnoscript) markup at
+the start of `<body>`. It adds nothing in the browser, without `enabled`, or
+while `containerId` is `undefined` or empty. Other options become attributes
+of the iframe.
+
 ## `consentlayer/providers/*`
 
 Consent adapters have their own entry points; see
@@ -1258,6 +1302,7 @@ Each provider is its own entry point, and each factory returns an
 |---|---|---|---|
 | `ga4` | `consentlayer/providers/ga4` | `ga4` | `analytics` |
 | `meta` | `consentlayer/providers/meta` | `meta` | `marketing` |
+| `gtm` | `consentlayer/providers/gtm` | `gtm` | `'none'`, or `requiredConsent` |
 | `posthog` | `consentlayer/providers/posthog` | `posthog` | `'none'` when `cookieless`, else `analytics` |
 | `sentry` | `consentlayer/providers/sentry` | `sentry` | `'none'` |
 | `contentsquare` | `consentlayer/providers/contentsquare` | `contentsquare` | `analytics` |
@@ -1275,6 +1320,7 @@ marketing consent.
 | `measurementId` | `string \| undefined` | | **Required.** Must match `G-` followed by 4 to 16 upper-case letters or digits; `undefined` or `''` turns the provider off. |
 | `loadBeforeConsent` | `boolean` | `false` | `true` loads gtag.js at boot with Consent Mode set to denied. |
 | `consentMode` | `'basic' \| 'advanced'` | `'basic'` | `'advanced'` loads and configures the tag at boot, for cookieless pings. See [Advanced mode](/guides/providers/ga4/#advanced-mode). |
+| `serverContainerUrl` | `string` | | An HTTPS or relative URL, set as `server_container_url`. |
 
 `ga4()` sets the Consent Mode defaults and updates itself unless a
 [`googleConsentMode()`](#googleconsentmodeoptions) adapter is on the page.
@@ -1288,6 +1334,26 @@ two helpers:
 |---|---|---|
 | `ga4EventName` | `(name: string) => string` | The GA4 name of an event: `lead` becomes `generate_lead`; other characters than letters, digits and `_` become `_`. |
 | `ga4UserData` | `(identity: UserIdentity) => Record<string, string>` | GA4 `user_data`: `email`, and `phone_number` with a leading `+`. Empty without an email or phone. |
+
+### `gtm(options)`
+
+Google Tag Manager. Loads the container and pushes page views, events, the
+user ID and consent changes into `dataLayer`. See
+[Google Tag Manager](/guides/providers/gtm/).
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `containerId` | `string \| undefined` | | **Required.** Must match `GTM-` followed by 4 to 12 upper-case letters or digits; `undefined` or `''` turns the provider off. |
+| `requiredConsent` | `ProviderConsentRequirement` | `'none'` | The category that must be granted before the container loads. |
+| `serverContainerUrl` | `string` | | An HTTPS or relative URL; `gtm.js` loads from it. |
+
+`gtm()` sets the Consent Mode defaults and updates itself unless a
+[`googleConsentMode()`](#googleconsentmodeoptions) adapter is on the page;
+with `ga4()` too, they are sent once.
+
+**Throws** an `Error` when `containerId` or `serverContainerUrl` is invalid.
+
+The entry point also exports the type `GtmOptions`.
 
 ### `meta(options)`
 
@@ -1847,6 +1913,37 @@ set. Otherwise it returns a destination with `id` `'tiktok'` and
 `requiredConsent` `'marketing'`. Its `send` throws
 `Error('TikTok Events API <status or code>: <message>')` on a non-2xx response
 or a response whose `code` is not `0`.
+
+## `consentlayer/server/sgtm`
+
+### `sgtm(options)`
+
+Server-side Google Tag Manager, through the container's Measurement Protocol
+client. It accepts browser events. The request body is the one
+[`ga4Server`](#ga4serveroptions) sends.
+
+```ts
+function sgtm(options: {
+  url: string | undefined
+  measurementId: string | undefined
+  apiSecret?: string
+  fetchImpl?: typeof fetch
+}): ServerDestination<true> | undefined
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `url` | `string \| undefined` | | **Required.** The client's endpoint, such as `https://sgtm.example.com/mp/collect`. |
+| `measurementId` | `string \| undefined` | | **Required.** |
+| `apiSecret` | `string` | | Sent as `api_secret` when set. |
+| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
+
+**Returns** `undefined` while `url` or `measurementId`, both trimmed, is unset
+or empty, and calls `console.warn` once when exactly one of the two is set.
+Otherwise it returns a destination with `id` `'sgtm'` and `requiredConsent`
+`'analytics'`. **Throws** when `url` is not an HTTPS URL. Its `send` throws
+when there is neither `event.clientId` nor a `_ga` cookie, and
+`Error('Server-side GTM <status>: <body>')` on a non-2xx response.
 
 ## `consentlayer/server/ga4`
 

@@ -123,7 +123,7 @@ const { bannerVisible, openDialog } = useConsentController()
 refs and the actions as functions.
 
 <details>
-<summary>Meta Pixel without JavaScript</summary>
+<summary>Meta Pixel and GTM without JavaScript</summary>
 
 The module registers `<MetaPixelNoscript>`, which renders Meta's `<noscript>`
 PageView image, `https://www.facebook.com/tr?id=<pixelId>&ev=PageView&noscript=1`,
@@ -145,6 +145,10 @@ Visitors with JavaScript disabled never see the consent banner, so the image
 tracks them without consent. For that reason it renders nothing unless you pass
 `enabled`, and nothing while `pixel-id` is `undefined` or empty. Other
 attributes are passed to the image. Render it outside `<ClientOnly>`.
+
+The module also registers `<GtmNoscript :container-id="…" enabled />`, which does the
+same for Google Tag Manager's `<noscript>` iframe; see
+[Google Tag Manager](/guides/providers/gtm/#without-javascript).
 
 </details>
 

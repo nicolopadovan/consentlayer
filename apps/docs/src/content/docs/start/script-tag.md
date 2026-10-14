@@ -109,6 +109,7 @@ An unknown name logs `[consentlayer] Unknown provider "<name>".` or
 | Attribute | Sets |
 |---|---|
 | `data-ga4` | `ga4.measurementId` |
+| `data-gtm` | `gtm.containerId` |
 | `data-meta-pixel` | `meta.pixelId` |
 | `data-tiktok-pixel` | `tiktok.pixelId` |
 | `data-contentsquare-tag` | `contentsquare.tagId` |

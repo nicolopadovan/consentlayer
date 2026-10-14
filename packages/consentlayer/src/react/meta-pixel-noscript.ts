@@ -1,5 +1,5 @@
 import { createElement, type ComponentPropsWithoutRef } from 'react'
-import { metaNoscriptSrc } from '../core/meta-noscript'
+import { metaNoscriptSrc } from '../core/noscript'
 
 /**
  * Meta's `<noscript>` PageView pixel. It fires only for visitors without

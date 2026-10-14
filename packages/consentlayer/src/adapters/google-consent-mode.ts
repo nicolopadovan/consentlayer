@@ -1,4 +1,4 @@
-import { setFlag } from '../core/plugin'
+import { getFlag, setFlag } from '../core/plugin'
 import type { ConsentIntegrationAdapter, ConsentState } from '../core/types'
 
 export type GoogleConsentModeOptions = {
@@ -51,7 +51,7 @@ export function consentModeSignals(options: GoogleConsentModeOptions = {}) {
   }
   const wait = waitForUpdate === undefined ? {} : { wait_for_update: waitForUpdate }
   let defaulted = false
-  let updated = false
+  let sent: string | undefined
   return (consent: ConsentState | null) => {
     if (typeof window === 'undefined') return
     ensureGtag()
@@ -64,11 +64,20 @@ export function consentModeSignals(options: GoogleConsentModeOptions = {}) {
       if (adsDataRedaction) gtag('set', 'ads_data_redaction', true)
     }
     // Before any choice, the defaults (and their regions) stay in force.
-    if (consent || updated) {
-      gtag('consent', 'update', signals(consent))
-      updated = true
+    const update = signals(consent)
+    if ((consent || sent) && JSON.stringify(update) !== sent) {
+      gtag('consent', 'update', update)
+      sent = JSON.stringify(update)
     }
   }
+}
+
+/** The signals `ga4()` and `gtm()` send without `googleConsentMode()`; shared, so they go out once. */
+export function builtInConsentMode(consent: ConsentState | null) {
+  const observe =
+    getFlag<ReturnType<typeof consentModeSignals>>('BuiltInConsentMode') ??
+    setFlag('BuiltInConsentMode', consentModeSignals())
+  observe(consent)
 }
 
 /** Sends the visitor's choice to Google tags (GA4, Google Ads, Tag Manager) as Consent Mode v2 signals. */

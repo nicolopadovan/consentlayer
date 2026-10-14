@@ -21,7 +21,7 @@ import {
   type ConsentControllerState,
 } from './core/consent-controller'
 import { latestAnalytics } from './core/create-analytics'
-import { metaNoscriptImg } from './core/meta-noscript'
+import { gtmNoscriptIframe, metaNoscriptImg } from './core/noscript'
 import type { Analytics, ConsentApi, ConsentState, PageViewPayload } from './core/types'
 
 /** Options for `provideConsentLayer()`. */
@@ -164,5 +164,26 @@ export function provideMetaPixelNoscript({
     const noscript = document.createElement('noscript')
     noscript.innerHTML = metaNoscriptImg(pixelId, attrs)
     document.body.appendChild(noscript)
+  })
+}
+
+/**
+ * Adds Google Tag Manager's `<noscript>` iframe to the start of `<body>` in
+ * HTML rendered on the server. It loads the container only for visitors without
+ * JavaScript, who never see the consent banner, so its tags run without
+ * consent. Add it only where that is lawful for you. Adds nothing without
+ * `enabled` or while `containerId` is unset. Other options become attributes of the `<iframe>`.
+ */
+export function provideGtmNoscript({
+  containerId,
+  enabled,
+  ...attrs
+}: { containerId: string | undefined; enabled?: boolean } & Record<string, unknown>): EnvironmentProviders {
+  return provideEnvironmentInitializer(() => {
+    if (!enabled || !containerId || isBrowser()) return
+    const document = inject(DOCUMENT)
+    const noscript = document.createElement('noscript')
+    noscript.innerHTML = gtmNoscriptIframe(containerId, attrs)
+    document.body.insertBefore(noscript, document.body.firstChild)
   })
 }

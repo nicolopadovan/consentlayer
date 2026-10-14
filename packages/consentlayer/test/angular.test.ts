@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing'
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing'
 import { provideRouter, Router } from '@angular/router'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { injectConsent, injectConsentController, provideConsentLayer, provideMetaPixelNoscript } from '../src/angular'
+import { injectConsent, injectConsentController, provideConsentLayer, provideGtmNoscript, provideMetaPixelNoscript } from '../src/angular'
 import { createAnalytics } from '../src/core/create-analytics'
 import type { AnalyticsPlugin } from '../src/core/types'
 
@@ -116,6 +116,23 @@ describe('consentlayer/angular', () => {
     expect(render({ pixelId: undefined, enabled: true })).toBeNull()
     expect(render({ pixelId: '123', enabled: true, loading: 'lazy' })).toContain(
       'loading="lazy" alt="" src="https://www.facebook.com/tr?id=123&amp;ev=PageView&amp;noscript=1"',
+    )
+  })
+
+  it('adds the GTM noscript iframe first in the body on the server, only when enabled with an ID', () => {
+    const render = (options: Parameters<typeof provideGtmNoscript>[0]) => {
+      TestBed.resetTestingModule()
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'server' }, provideGtmNoscript(options)],
+      })
+      const document = TestBed.inject(DOCUMENT)
+      const noscript = document.body.firstElementChild?.tagName === 'NOSCRIPT' ? document.body.firstElementChild : null
+      noscript?.remove()
+      return noscript?.innerHTML ?? null
+    }
+    expect(render({ containerId: 'GTM-ABC123' })).toBeNull()
+    expect(render({ containerId: 'GTM-ABC123', enabled: true })).toContain(
+      'src="https://www.googletagmanager.com/ns.html?id=GTM-ABC123"',
     )
   })
 })

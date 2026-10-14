@@ -4,6 +4,7 @@ import { AnalyticsProvider as SolidAnalyticsProvider, type AnalyticsProviderProp
 
 export {
   ErrorBoundary,
+  GtmNoscript,
   MetaPixelNoscript,
   useAnalytics,
   useConsent,

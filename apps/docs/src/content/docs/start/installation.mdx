@@ -87,15 +87,15 @@ are loaded with dynamic `import()` when they are first needed.
 | Entry point | Exports |
 |---|---|
 | `consentlayer` | `createAnalytics`, `definePlugin`, storage helpers and core types |
-| `consentlayer/react` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript` |
+| `consentlayer/react` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript` |
 | `consentlayer/next` | `AnalyticsProvider` for Next.js, which tracks navigation itself |
-| `consentlayer/vue` | The `consentLayer` Vue plugin, composables and `MetaPixelNoscript` |
+| `consentlayer/vue` | The `consentLayer` Vue plugin, composables, `MetaPixelNoscript` and `GtmNoscript` |
 | `consentlayer/nuxt` | The Nuxt module, which sets up `consentlayer/vue` from a config file |
-| `consentlayer/svelte` | `consentLayer` for your root component, the `use*` functions and `MetaPixelNoscript` |
+| `consentlayer/svelte` | `consentLayer` for your root component, the `use*` functions, `MetaPixelNoscript` and `GtmNoscript` |
 | `consentlayer/sveltekit` | The same, with page views on SvelteKit navigation and `handleErrorWith` |
-| `consentlayer/solid` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript` |
+| `consentlayer/solid` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript` |
 | `consentlayer/solidstart` | The same, with page views on Solid Router navigation |
-| `consentlayer/angular` | `provideConsentLayer`, the `inject*` functions and `provideMetaPixelNoscript` |
+| `consentlayer/angular` | `provideConsentLayer`, the `inject*` functions, `provideMetaPixelNoscript` and `provideGtmNoscript` |
 | `consentlayer/providers/<name>` | One provider factory: `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, `shopify` |
 | `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
 | `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores |

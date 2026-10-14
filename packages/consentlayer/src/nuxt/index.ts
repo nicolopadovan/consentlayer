@@ -21,6 +21,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
       ...['useAnalytics', 'useConsent', 'useConsentController'].map((name) => ({ name, from: 'consentlayer/vue' })),
     ])
     addComponent({ name: 'MetaPixelNoscript', export: 'MetaPixelNoscript', filePath: 'consentlayer/vue' })
+    addComponent({ name: 'GtmNoscript', export: 'GtmNoscript', filePath: 'consentlayer/vue' })
   },
 })
 

@@ -5,6 +5,7 @@ import { createAnalytics } from '../src/core/create-analytics'
 import { loadScript } from '../src/core/plugin'
 import { contentsquare } from '../src/providers/contentsquare'
 import { ga4 } from '../src/providers/ga4'
+import { gtm } from '../src/providers/gtm'
 import { hotjar } from '../src/providers/hotjar'
 import { meta } from '../src/providers/meta'
 import { posthog } from '../src/providers/posthog'
@@ -16,6 +17,7 @@ describe('providers', () => {
     const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined)
     const skipped = [
       ga4({ measurementId: undefined }),
+      gtm({ containerId: undefined }),
       meta({ pixelId: '' }),
       posthog({ apiKey: undefined }),
       sentry({ dsn: undefined }),
@@ -193,7 +195,7 @@ describe('ga4 consent mode', () => {
     (window.dataLayer ?? []).map((entry) => Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date)))
   beforeEach(() => {
     const win = window as unknown as Record<string, unknown>
-    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured', '__consentlayerGoogleConsentMode', '__acmGoogleConsentMode']) delete win[key]
+    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured', '__consentlayerGoogleConsentMode', '__acmGoogleConsentMode', '__consentlayerBuiltInConsentMode', '__consentlayerGtmLoaded']) delete win[key]
   })
 
   it('sets the Consent Mode defaults when the manager is created, before boot', async () => {
@@ -258,6 +260,57 @@ describe('ga4 consent mode', () => {
     ])
     expect(() => googleConsentMode({ regions: [{ region: ['usa'] }] })).toThrow('ISO 3166-2')
     expect(() => googleConsentMode({ waitForUpdate: -1 })).toThrow('whole number')
+  })
+
+  it('gtm loads the container after the defaults and feeds dataLayer, sharing Consent Mode with ga4', async () => {
+    localStorage.clear()
+    const analytics = createAnalytics({
+      providers: [
+        ga4({ measurementId: 'G-GTM123', serverContainerUrl: 'https://sgtm.example.com' }),
+        gtm({ containerId: 'GTM-ABC123', serverContainerUrl: 'https://sgtm.example.com/' }),
+      ],
+    })
+    await analytics.boot()
+    await analytics.identify('u1')
+    await analytics.page({ path: '/a', url: 'https://example.com/a', title: 'A' })
+    await analytics.track('sign_up', { method: 'email' }, { providers: { gtm: { plan: 'pro' } } })
+    await analytics.consent.setConsent({ preferences: false, analytics: true, marketing: false })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    await analytics.reset()
+    const log = (window.dataLayer ?? []).map((entry) =>
+      Object.prototype.toString.call(entry) === '[object Arguments]'
+        ? Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date))
+        : { ...(entry as object), 'gtm.start': undefined },
+    )
+    const denied = { ad_user_data: 'denied', ad_personalization: 'denied', ad_storage: 'denied', analytics_storage: 'denied', functionality_storage: 'denied', security_storage: 'granted' }
+    expect(log).toEqual([
+      ['consent', 'default', denied],
+      ['js'],
+      { event: 'gtm.js', 'gtm.start': undefined },
+      { event: 'page_view', page_location: 'https://example.com/a', page_path: '/a', page_title: 'A', 'gtm.start': undefined },
+      { event: 'sign_up', method: 'email', plan: 'pro', 'gtm.start': undefined },
+      ['consent', 'update', { ...denied, analytics_storage: 'granted' }],
+      ['config', 'G-GTM123', { send_page_view: false, server_container_url: 'https://sgtm.example.com' }],
+      ['set', { user_id: 'u1' }],
+      ['set', 'user_data', {}],
+      { event: 'consentlayer_consent', consent: expect.objectContaining({ analytics: true, marketing: false }) as unknown, 'gtm.start': undefined },
+      { event: 'consentlayer_identify', user_id: 'u1', 'gtm.start': undefined },
+      ['set', { user_id: null }],
+      ['set', 'user_data', {}],
+      { event: 'consentlayer_identify', user_id: null, 'gtm.start': undefined },
+    ])
+    expect(document.querySelector('script[src="https://sgtm.example.com/gtm.js?id=GTM-ABC123"]')).toBeTruthy()
+    analytics.destroy()
+  })
+
+  it('gtm waits for its requiredConsent and rejects a malformed container ID', async () => {
+    const manager = createAnalyticsManager({ providers: [gtm({ containerId: 'GTM-WAIT12', requiredConsent: 'analytics' })] })
+    await manager.boot()
+    expect(document.querySelector('script[src*="GTM-WAIT12"]')).toBeNull()
+    await manager.updateConsent({ preferences: false, analytics: true, marketing: false })
+    expect(document.querySelector('script[src="https://www.googletagmanager.com/gtm.js?id=GTM-WAIT12"]')).toBeTruthy()
+    manager.destroy()
+    expect(() => gtm({ containerId: 'G-ABC123' })).toThrow('Invalid GTM container ID')
   })
 })
 

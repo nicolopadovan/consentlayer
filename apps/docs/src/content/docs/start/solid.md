@@ -138,7 +138,7 @@ export function CookieSettingsButton() {
 value once. It throws when no `<AnalyticsProvider>` is above the component.
 
 <details>
-<summary>Meta Pixel without JavaScript</summary>
+<summary>Meta Pixel and GTM without JavaScript</summary>
 
 `<MetaPixelNoscript>` renders Meta's `<noscript>` PageView image,
 `https://www.facebook.com/tr?id=<pixelId>&ev=PageView&noscript=1`, for visitors
@@ -156,6 +156,10 @@ nothing while `pixelId` is `undefined` or empty. Other attributes are passed to
 the image. It only has an effect in HTML rendered on the server, as with
 SolidStart or `renderToString` from `solid-js/web`; an application rendered
 only in the browser never shows it.
+
+`<GtmNoscript containerId={…} enabled />` does the
+same for Google Tag Manager's `<noscript>` iframe; see
+[Google Tag Manager](/guides/providers/gtm/#without-javascript).
 
 </details>
 

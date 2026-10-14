@@ -11,6 +11,7 @@ import {
   AnalyticsProvider,
   createGlobalError,
   ErrorBoundary,
+  GtmNoscript,
   MetaPixelNoscript,
   useAnalytics,
   useConsent,
@@ -517,6 +518,15 @@ describe('MetaPixelNoscript', () => {
     rerender(<MetaPixelNoscript enabled pixelId={undefined} />)
     expect(container.innerHTML).toBe('')
     rerender(<MetaPixelNoscript pixelId="123456789012345" />)
+    expect(container.innerHTML).toBe('')
+  })
+})
+
+describe('GtmNoscript', () => {
+  it('renders the iframe only when enabled and the container id is set', () => {
+    const { container, rerender } = render(<GtmNoscript enabled containerId="GTM-ABC123" />)
+    expect(container.querySelector('noscript')).toBeTruthy()
+    rerender(<GtmNoscript containerId="GTM-ABC123" />)
     expect(container.innerHTML).toBe('')
   })
 })

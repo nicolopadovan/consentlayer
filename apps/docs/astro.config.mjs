@@ -56,6 +56,7 @@ export default defineConfig({
                 { label: 'Overview', slug: 'guides/providers' },
                 'guides/providers/ga4',
                 'guides/providers/meta',
+                'guides/providers/gtm',
                 'guides/providers/tiktok',
                 'guides/providers/posthog',
                 'guides/providers/sentry',

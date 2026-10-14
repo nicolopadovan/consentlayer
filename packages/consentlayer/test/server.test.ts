@@ -6,6 +6,7 @@ import { createAnalyticsHandler, sendServerEvent } from '../src/server'
 import { ga4Server } from '../src/server/ga4'
 import { assertSameOrigin, parseJsonWithLimit } from '../src/server/http'
 import { metaCapi } from '../src/server/meta'
+import { sgtm } from '../src/server/sgtm'
 import { tiktokEvents } from '../src/server/tiktok'
 
 const sha256 = (input: string) => createHash('sha256').update(input).digest('hex')
@@ -154,6 +155,28 @@ describe('server destinations', () => {
     })
     expect((await POST(post({ name: 'sign_up', consent: granted }))).status).toBe(204)
     expect(String(onError.mock.calls[0]?.[0])).toMatch(/Meta CAPI 400/)
+  })
+
+  it('forwards browser events to a server-side GTM container as Measurement Protocol requests', async () => {
+    const fetchImpl = okFetch()
+    const POST = createAnalyticsHandler({
+      destinations: [sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: 'G-ABC123', apiSecret: 's', fetchImpl })],
+    })
+    await POST(post({ name: 'page_view', url: 'https://shop.example/a', consent: { ...granted, marketing: false } }, { cookie: '_ga=GA1.1.111.222' }))
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe('https://sgtm.example.com/mp/collect?measurement_id=G-ABC123&api_secret=s')
+    expect(sentBody(fetchImpl)).toEqual({
+      client_id: '111.222',
+      consent: { ad_user_data: 'DENIED', ad_personalization: 'DENIED' },
+      events: [{ name: 'page_view', params: { page_location: 'https://shop.example/a' } }],
+    })
+    await POST(post({ name: 'page_view', consent: { ...granted, analytics: false } }, { cookie: '_ga=GA1.1.111.222' }))
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    expect(sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: undefined })).toBeUndefined()
+    expect(warn).toHaveBeenCalledWith('[consentlayer] sgtm is off: set both url and measurementId.')
+    warn.mockRestore()
+    expect(() => sgtm({ url: 'http://sgtm.example.com/mp/collect', measurementId: 'G-ABC123' })).toThrow('HTTPS')
   })
 
   it('sends server-only events to GA4 with the cookie client id and consent', async () => {

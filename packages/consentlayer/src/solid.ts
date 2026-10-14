@@ -21,7 +21,7 @@ import {
   type ConsentControllerState,
 } from './core/consent-controller'
 import { latestAnalytics } from './core/create-analytics'
-import { metaNoscriptImg } from './core/meta-noscript'
+import { gtmNoscriptIframe, metaNoscriptImg } from './core/noscript'
 import type { Analytics, ConsentApi, ConsentState, ErrorContext, PageViewPayload } from './core/types'
 
 /** Props for `<AnalyticsProvider>`. */
@@ -166,6 +166,31 @@ export function MetaPixelNoscript(
         component: 'noscript',
         get innerHTML() {
           return metaNoscriptImg(own.pixelId ?? '', attrs)
+        },
+      })
+    },
+  })
+}
+
+/**
+ * Google Tag Manager's `<noscript>` iframe. It loads the container only for
+ * visitors without JavaScript, who never see the consent banner, so its tags
+ * run without consent. Render it only where that is lawful for you. Renders
+ * nothing without `enabled` or while `containerId` is unset. Other attributes go to the `<iframe>`.
+ */
+export function GtmNoscript(
+  props: { containerId: string | undefined; enabled?: boolean } & ComponentProps<'iframe'>,
+): JSX.Element {
+  const [own, attrs] = splitProps(props, ['containerId', 'enabled'])
+  return Show({
+    get when() {
+      return own.enabled && own.containerId
+    },
+    get children() {
+      return createComponent(Dynamic, {
+        component: 'noscript',
+        get innerHTML() {
+          return gtmNoscriptIframe(own.containerId ?? '', attrs)
         },
       })
     },

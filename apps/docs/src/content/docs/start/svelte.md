@@ -116,7 +116,7 @@ In other components, `useConsentController()` returns the object
 `consentLayer()`.
 
 <details>
-<summary>Meta Pixel without JavaScript</summary>
+<summary>Meta Pixel and GTM without JavaScript</summary>
 
 `<MetaPixelNoscript>` renders Meta's `<noscript>` PageView image,
 `https://www.facebook.com/tr?id=<pixelId>&ev=PageView&noscript=1`, for visitors
@@ -139,6 +139,10 @@ the image. It only has an effect in HTML rendered on the server, as with
 SvelteKit or `render` from `svelte/server`; an application rendered only in the
 browser never shows it. The component ships as Svelte source, which your Svelte
 compiler builds with your application.
+
+`<GtmNoscript containerId={…} enabled />` does the
+same for Google Tag Manager's `<noscript>` iframe; see
+[Google Tag Manager](/guides/providers/gtm/#without-javascript).
 
 </details>
 

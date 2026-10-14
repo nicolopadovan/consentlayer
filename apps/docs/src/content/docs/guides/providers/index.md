@@ -22,6 +22,7 @@ Each provider is a named export of its own entry point,
 |---|---|---|---|
 | [GA4](/guides/providers/ga4/) | `ga4()` from `consentlayer/providers/ga4` | `analytics` | `measurementId` |
 | [Meta Pixel](/guides/providers/meta/) | `meta()` from `consentlayer/providers/meta` | `marketing` | `pixelId` |
+| [Google Tag Manager](/guides/providers/gtm/) | `gtm()` from `consentlayer/providers/gtm` | `'none'`, or `requiredConsent` | `containerId` |
 | [PostHog](/guides/providers/posthog/) | `posthog()` from `consentlayer/providers/posthog` | `'none'`; `analytics` with `cookieless: false` | `apiKey` |
 | [Sentry](/guides/providers/sentry/) | `sentry()` from `consentlayer/providers/sentry` | `'none'` | `dsn` |
 | [Contentsquare](/guides/providers/contentsquare/) | `contentsquare()` from `consentlayer/providers/contentsquare` | `analytics` | `tagId` |

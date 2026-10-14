@@ -2,7 +2,7 @@ import { afterNavigate } from '$app/navigation'
 import type { Analytics } from './core/types'
 import { consentLayer as svelteConsentLayer, type ConsentController, type ConsentLayerOptions } from './svelte'
 
-export { MetaPixelNoscript, useAnalytics, useConsent, useConsentController, type ConsentController } from './svelte'
+export { GtmNoscript, MetaPixelNoscript, useAnalytics, useConsent, useConsentController, type ConsentController } from './svelte'
 
 /** Options for `consentLayer()` from `consentlayer/sveltekit`. */
 export type SvelteKitConsentLayerOptions = Omit<ConsentLayerOptions, 'afterNavigate'>

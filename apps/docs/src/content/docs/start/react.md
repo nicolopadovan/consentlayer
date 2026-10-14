@@ -162,7 +162,7 @@ On mount, `<AnalyticsProvider>` performs these steps:
 | `openConsentGlobalKey` | `string` | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog from outside React. |
 
 <details>
-<summary>Meta Pixel without JavaScript</summary>
+<summary>Meta Pixel and GTM without JavaScript</summary>
 
 `<MetaPixelNoscript>` from `consentlayer/react` renders Meta's `<noscript>`
 PageView image, `https://www.facebook.com/tr?id=<pixelId>&ev=PageView&noscript=1`,
@@ -172,6 +172,10 @@ nothing unless you pass `enabled`, and nothing while `pixelId` is `undefined`
 or empty, so you can pass the environment variable directly. It only has an
 effect in HTML rendered on the server; an application rendered only in the
 browser never shows it.
+
+`<GtmNoscript containerId={…} enabled />` from `consentlayer/react` does the
+same for Google Tag Manager's `<noscript>` iframe; see
+[Google Tag Manager](/guides/providers/gtm/#without-javascript).
 
 </details>
 

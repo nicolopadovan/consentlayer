@@ -1,7 +1,7 @@
-import { consentModeSignals, ensureGtag } from '../adapters/google-consent-mode'
+import { builtInConsentMode, ensureGtag } from '../adapters/google-consent-mode'
 import type { UserIdentity } from '../core/types'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
-import { assertValidGa4MeasurementId } from '../core/validation'
+import { assertHttpsOrRelativeUrl, assertValidGa4MeasurementId } from '../core/validation'
 
 declare global {
   interface Window {
@@ -20,6 +20,8 @@ export type Ga4Options = {
    */
   loadBeforeConsent?: boolean
   consentMode?: Ga4ConsentMode
+  /** Your tagging server, e.g. `https://sgtm.example.com`: hits go to it instead of Google. */
+  serverContainerUrl?: string
 }
 
 /**
@@ -51,13 +53,14 @@ export function ga4(options: Ga4Options) {
   if (!options.measurementId?.trim()) return skippedPlugin('ga4', 'measurementId')
   const measurementId = assertValidGa4MeasurementId(options.measurementId.trim())
   const advanced = options.consentMode === 'advanced'
-  const consentMode = consentModeSignals()
+  const serverContainerUrl =
+    options.serverContainerUrl && assertHttpsOrRelativeUrl(options.serverContainerUrl, 'ga4 serverContainerUrl')
   let ownConsentMode = false
   const gtag = (...args: unknown[]) => window.gtag?.(...args)
   const configure = () => {
     const configured = setFlag('Ga4Configured', getFlag<Record<string, boolean>>('Ga4Configured') ?? {})
     if (configured[measurementId]) return
-    gtag('config', measurementId, { send_page_view: false })
+    gtag('config', measurementId, { send_page_view: false, ...(serverContainerUrl && { server_container_url: serverContainerUrl }) })
     configured[measurementId] = true
   }
   const applyIdentity = (identity: UserIdentity) => {
@@ -71,14 +74,14 @@ export function ga4(options: Ga4Options) {
     setup() {
       if (typeof window === 'undefined') return
       ownConsentMode = !getFlag('GoogleConsentMode')
-      if (ownConsentMode) consentMode(null)
+      if (ownConsentMode) builtInConsentMode(null)
       else ensureGtag()
       gtag('js', new Date())
       if (advanced) configure()
     },
     consent({ consent, identity }) {
       if (typeof window === 'undefined') return
-      if (ownConsentMode) consentMode(consent)
+      if (ownConsentMode) builtInConsentMode(consent)
       if (advanced) applyIdentity(consent?.analytics ? identity : {})
       // In basic mode, configured only after consent, so no cookieless pings are sent before it.
       else if (consent?.analytics) configure()
