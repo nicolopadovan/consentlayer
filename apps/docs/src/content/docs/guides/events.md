@@ -153,22 +153,22 @@ its own.
 GA4, Meta and TikTok rename standard events to their own vocabulary. Every
 other provider receives the name you passed to `track()`.
 
-| Standard event                                                                   | GA4                                                             | Meta                                                                                                                                      | TikTok                                                                                  |
-| -------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `view_item`                                                                      | `view_item`                                                     | `ViewContent`                                                                                                                             | `ViewContent`                                                                           |
-| `add_to_cart`                                                                    | `add_to_cart`                                                   | `AddToCart`                                                                                                                               | `AddToCart`                                                                             |
-| `add_to_wishlist`                                                                | `add_to_wishlist`                                               | `AddToWishlist`                                                                                                                           | `AddToWishlist`                                                                         |
-| `begin_checkout`                                                                 | `begin_checkout`                                                | `InitiateCheckout`                                                                                                                        | `InitiateCheckout`                                                                      |
-| `add_payment_info`                                                               | `add_payment_info`                                              | `AddPaymentInfo`                                                                                                                          | `AddPaymentInfo`                                                                        |
-| `purchase`                                                                       | `purchase`                                                      | `Purchase`                                                                                                                                | `Purchase`                                                                              |
-| `sign_up`                                                                        | `sign_up`                                                       | `CompleteRegistration`                                                                                                                    | `CompleteRegistration`                                                                  |
-| `lead`                                                                           | `generate_lead`                                                 | `Lead`                                                                                                                                    | `Lead`                                                                                  |
-| `search`                                                                         | `search`                                                        | `Search`                                                                                                                                  | `Search`                                                                                |
-| `contact`                                                                        | `contact`                                                       | `Contact`                                                                                                                                 | `Contact`                                                                               |
-| `trial_started`                                                                  | `trial_started`                                                 | `StartTrial`                                                                                                                              | `StartTrial`                                                                            |
-| `subscription_started`                                                           | `subscription_started`                                          | `Subscribe`                                                                                                                               | `Subscribe`                                                                             |
-| `customize_product`, `schedule`, `submit_application`, `find_location`, `donate` | unchanged                                                       | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`, `Donate`                                                             | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`; `donate` unchanged |
-| Any other name                                                                   | Characters other than letters, digits and `_` replaced with `_` | Sent with `fbq('track')` if it is already one of Meta's standard event names, otherwise with `fbq('trackCustom')` under the original name | Unchanged, as a custom event                                                            |
+| Standard event                                                                   | GA4                                                             | Meta                                                                                                                                                                               | TikTok                                                                                  |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `view_item`                                                                      | `view_item`                                                     | `ViewContent`                                                                                                                                                                      | `ViewContent`                                                                           |
+| `add_to_cart`                                                                    | `add_to_cart`                                                   | `AddToCart`                                                                                                                                                                        | `AddToCart`                                                                             |
+| `add_to_wishlist`                                                                | `add_to_wishlist`                                               | `AddToWishlist`                                                                                                                                                                    | `AddToWishlist`                                                                         |
+| `begin_checkout`                                                                 | `begin_checkout`                                                | `InitiateCheckout`                                                                                                                                                                 | `InitiateCheckout`                                                                      |
+| `add_payment_info`                                                               | `add_payment_info`                                              | `AddPaymentInfo`                                                                                                                                                                   | `AddPaymentInfo`                                                                        |
+| `purchase`                                                                       | `purchase`                                                      | `Purchase`                                                                                                                                                                         | `Purchase`                                                                              |
+| `sign_up`                                                                        | `sign_up`                                                       | `CompleteRegistration`                                                                                                                                                             | `CompleteRegistration`                                                                  |
+| `lead`                                                                           | `generate_lead`                                                 | `Lead`                                                                                                                                                                             | `Lead`                                                                                  |
+| `search`                                                                         | `search`                                                        | `Search`                                                                                                                                                                           | `Search`                                                                                |
+| `contact`                                                                        | `contact`                                                       | `Contact`                                                                                                                                                                          | `Contact`                                                                               |
+| `trial_started`                                                                  | `trial_started`                                                 | `StartTrial`                                                                                                                                                                       | `StartTrial`                                                                            |
+| `subscription_started`                                                           | `subscription_started`                                          | `Subscribe`                                                                                                                                                                        | `Subscribe`                                                                             |
+| `customize_product`, `schedule`, `submit_application`, `find_location`, `donate` | unchanged                                                       | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`, `Donate`                                                                                                      | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`; `donate` unchanged |
+| Any other name                                                                   | Characters other than letters, digits and `_` replaced with `_` | Sent with `fbq('track')` if it is already one of Meta's standard event names, otherwise not sent unless listed in `events`, then with `fbq('trackCustom')` under the original name | Not sent unless listed in `events`, then unchanged, as a custom event                   |
 
 The params each provider sends differ as follows:
 
@@ -216,6 +216,54 @@ while analytics or marketing is granted, with its ID, name, params, URL and
 the `only` and `providers` options. See
 [server-side tracking](/guides/server-side-tracking/).
 
+## Routing events
+
+Each provider decides which events it receives with its `events` option.
+Analytics providers, such as GA4, GTM and PostHog, receive every event by
+default. The Meta and TikTok pixels, and their server destinations, receive
+only the events that map to one of their
+[standard events](#what-each-provider-receives).
+
+```ts
+createAnalytics({
+  providers: [
+    ga4({ measurementId }),
+    meta({ pixelId, events: ['purchase', 'quote_requested'] }),
+    hotjar({ siteId, version, events: false }),
+  ],
+})
+```
+
+A list sends exactly those names, and `false` sends none; page views are not
+affected. To send a single event elsewhere, name the providers in its
+[`only`](#event-options) option. `only` wins over `events`: the event goes to
+every provider it names and to no other.
+
+## Typed custom events
+
+Declare your own events in the file that creates the instance. Their params
+are then type-checked like those of the standard events:
+
+```ts
+// src/analytics.ts
+export const analytics = createAnalytics({ providers })
+
+declare module 'consentlayer' {
+  interface Register {
+    events: {
+      quote_requested: { value: number; currency: string }
+      filter_changed: { filter: string }
+    }
+  }
+}
+```
+
+Once `Register` declares events, `track()` accepts only the standard events,
+the declared events and the [auto-tracking](/guides/auto-tracking/) events, so
+a misspelled name is a type error. The `events` option of every provider is
+checked against the same names. Without the declaration, `track()` accepts any
+name.
+
 ## Event options
 
 The third argument of `track()` scopes a single event.
@@ -232,7 +280,7 @@ analytics.track('purchase', params, {
 | Option                    | Type                                      | Behavior                                                                                                                                                                                                                                               |
 | ------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `eventId`                 | `string`                                  | ID shared by the browser and server events so destinations can deduplicate them; Meta receives it as `eventID`; TikTok, the Conversions API and the Events API as `event_id`. Defaults to `crypto.randomUUID()`.                                       |
-| `only`                    | `string[]`                                | Provider IDs that receive the event. Other providers skip it.                                                                                                                                                                                          |
+| `only`                    | `string[]`                                | Provider IDs that receive the event, whatever their `events` option says. Other providers skip it.                                                                                                                                                     |
 | `providers`               | `Record<string, Record<string, unknown>>` | Extra params for one provider, keyed by provider ID and merged over the event params. Read by the GA4, GTM, Meta, TikTok and PostHog providers, and on the server by Meta CAPI and the TikTok Events API; `ga4Server` and `sgtm` read `providers.ga4`. |
 | `requireAnalyticsConsent` | `boolean`                                 | Drops the event, for providers and the server endpoint alike, unless analytics is granted when it is delivered.                                                                                                                                        |
 | `requireMarketingConsent` | `boolean`                                 | The same, for marketing.                                                                                                                                                                                                                               |

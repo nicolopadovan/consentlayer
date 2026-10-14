@@ -46,6 +46,13 @@ export function DemoClient() {
           </button>
           <button
             className="button secondary"
+            onClick={() => void analytics.track('quote_requested', { value: 120, currency: 'EUR' })}
+            type="button"
+          >
+            Track quote_requested
+          </button>
+          <button
+            className="button secondary"
             onClick={() =>
               void analytics.consent.update({
                 preferences: true,

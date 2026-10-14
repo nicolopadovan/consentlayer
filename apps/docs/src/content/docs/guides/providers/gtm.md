@@ -22,11 +22,12 @@ Use GTM for the tags ConsentLayer has no provider for.
 
 ## Options
 
-| Option               | Type                   | Default  | Description                                                                                                                         |
-| -------------------- | ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `containerId`        | `string \| undefined`  | Required | The `GTM-` container ID. `undefined` or `''` turns the provider off.                                                                |
-| `requiredConsent`    | `'none'` or a category | `'none'` | `'none'` loads the container at boot. A category, such as `'analytics'`, loads nothing until it is granted.                         |
-| `serverContainerUrl` | `string`               | None     | Your tagging server. `gtm.js` loads from it instead of `www.googletagmanager.com`. See [Server-side tagging](#server-side-tagging). |
+| Option               | Type                   | Default    | Description                                                                                                                         |
+| -------------------- | ---------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `containerId`        | `string \| undefined`  | Required   | The `GTM-` container ID. `undefined` or `''` turns the provider off.                                                                |
+| `requiredConsent`    | `'none'` or a category | `'none'`   | `'none'` loads the container at boot. A category, such as `'analytics'`, loads nothing until it is granted.                         |
+| `serverContainerUrl` | `string`               | None       | Your tagging server. `gtm.js` loads from it instead of `www.googletagmanager.com`. See [Server-side tagging](#server-side-tagging). |
+| `events`             | `string[] \| false`    | All events | The event names `track()` sends to it; `false` sends none. See [Routing events](/guides/events/#routing-events).                    |
 
 ## How it works
 

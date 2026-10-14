@@ -34,6 +34,7 @@ only once enabled and consented to.
 | `errors`      | `boolean`                                    | `true`                       | Sends `captureError` errors to PostHog error tracking with `captureException`.                                                                                               |
 | `groupType`   | `string`                                     | `'company'`                  | The group type `analytics.group()` uses.                                                                                                                                     |
 | `defer`       | `false \| 'idle' \| 'interaction' \| number` | `false`                      | See [Loading SDKs later](/guides/providers/#loading-sdks-later).                                                                                                             |
+| `events`      | `string[] \| false`                          | All events                   | The event names `track()` sends to it; `false` sends none. See [Routing events](/guides/events/#routing-events).                                                             |
 
 ## How it works
 

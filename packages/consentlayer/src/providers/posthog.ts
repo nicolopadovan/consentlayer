@@ -1,6 +1,6 @@
 import type { PostHog } from 'posthog-js'
 import { definePlugin, skippedPlugin } from '../core/plugin'
-import type { LoadTiming, PluginContext } from '../core/types'
+import type { EventName, LoadTiming, PluginContext } from '../core/types'
 
 /** Options for `posthog`. */
 export type PostHogOptions = {
@@ -25,6 +25,8 @@ export type PostHogOptions = {
   /** The group type `group()` uses. Defaults to `company`. */
   groupType?: string
   defer?: LoadTiming
+  /** Event names `track` sends to it: all by default, none with `false`. */
+  events?: readonly EventName[] | false
 }
 
 /** PostHog product analytics, cookieless until analytics consent. */
@@ -52,6 +54,7 @@ export function posthog(options: PostHogOptions) {
 
   return definePlugin({
     id: 'posthog',
+    events: options.events,
     requiredConsent: cookieless ? 'none' : 'analytics',
     defer: options.defer,
     async consent(ctx) {

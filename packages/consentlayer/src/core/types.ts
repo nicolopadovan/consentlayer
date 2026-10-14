@@ -150,8 +150,6 @@ export type AutoTrackingConfig = {
   scroll?: boolean | AutoTrackingScrollConfig
   timeOnPage?: boolean | AutoTrackingTimeConfig
   pageViews?: boolean
-  /** Send auto-tracked events only to these provider ids. Defaults to all. */
-  only?: string[]
 }
 
 /** What `autoTracking()` returns: started once with `track` and a signal aborted on `destroy()`, it returns the function that starts a page session. */
@@ -231,10 +229,28 @@ export interface StandardEvents {
   subscription_cancelled: { plan?: string; reason?: string }
 }
 
-/** Params for an event: typed for the standard events, free-form for the rest. */
+/**
+ * Declares your own events, which types their params and makes `track` reject undeclared names:
+ * `declare module 'consentlayer' { interface Register { events: { quote_requested: { value: number } } } }`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface Register {}
+
+type RegisteredEvents = Register extends { events: infer Events } ? Events : Record<never, never>
+
+/** Any name until events are declared in `Register`; then the standard, declared and auto-tracking events. */
+export type EventName = Register extends { events: infer Events }
+  ? | keyof StandardEvents
+    | (keyof Events & string)
+    | `${string}.${'page_session_start' | 'scroll_depth' | 'time_on_page' | 'ui_click'}`
+  : keyof StandardEvents | (string & {})
+
+/** Params for an event: typed for the standard and declared events, free-form for the rest. */
 export type EventParams<Name extends string> = Name extends keyof StandardEvents
   ? StandardEvents[Name] & Record<string, unknown>
-  : Record<string, unknown>
+  : Name extends keyof RegisteredEvents
+    ? RegisteredEvents[Name]
+    : Record<string, unknown>
 
 /** What `analytics.subscribe` listeners receive. */
 export type AnalyticsManagerStateSnapshot = {
@@ -378,6 +394,8 @@ export interface AnalyticsPlugin {
   /** Load before consent and rely on the provider's own consent mode. */
   loadBeforeConsent?: boolean
   defer?: LoadTiming
+  /** Event names `track` sends to it: all when unset, none with `false`. An event whose `only` names it is always sent. */
+  events?: readonly string[] | false
   /** No network, no cookies. */
   setup?: Hook
   /** Inject scripts. Runs once. */
@@ -408,7 +426,7 @@ export interface AnalyticsManager {
     payload?: PageViewPayload,
     options?: { only?: string[]; server?: boolean | (keyof ConsentState)[] },
   ) => Promise<void>
-  track: <Name extends string>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>
+  track: <Name extends EventName>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>
   identify: (userId?: string, traits?: UserTraits) => Promise<void>
   reset: () => Promise<void>
   group: (groupId: string, traits?: Record<string, unknown>) => Promise<void>

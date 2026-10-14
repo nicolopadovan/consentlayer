@@ -12,6 +12,9 @@
       "entry": ["vite.config.ts", "src/app.tsx", "src/entry-{client,server}.tsx", "src/routes/**/*.tsx"]
     },
     "apps/example-sveltekit": { "entry": ["src/env.ts"] },
-    "packages/consentlayer": { "entry": ["test/svelte/app-navigation.ts"], "ignoreUnresolved": ["\\$app/navigation"] }
+    "packages/consentlayer": {
+      "entry": ["test/svelte/app-navigation.ts", "test/types/register.ts"],
+      "ignoreUnresolved": ["\\$app/navigation"]
+    }
   }
 }

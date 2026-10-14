@@ -138,3 +138,13 @@ export function safeJsonParse<T>(raw: string | null): T | null {
     return null
   }
 }
+
+/** Whether a provider or destination receives an event, from its `events` and the event's `only`. */
+export function receivesEvent(
+  target: { id: string; events?: readonly string[] | false },
+  name: string,
+  only?: readonly string[],
+): boolean {
+  if (only?.includes(target.id) || target.events === undefined) return true
+  return target.events !== false && target.events.includes(name)
+}

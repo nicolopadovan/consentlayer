@@ -84,6 +84,27 @@ describe('providers', () => {
     manager.destroy()
   })
 
+  it('sends Meta only its standard events, the names in events, or an event whose only names it', async () => {
+    const fbq = vi.fn()
+    ;(window as unknown as { fbq?: typeof fbq }).fbq = fbq
+    ;(window as unknown as { __consentlayerMetaPixelInitialized?: boolean }).__consentlayerMetaPixelInitialized = true
+    const sent = async (events?: string[]) => {
+      fbq.mockClear()
+      const manager = createAnalyticsManager({
+        providers: [{ ...meta({ pixelId: '123456789012345', events }), load: undefined }],
+        consent: { preferences: true, analytics: true, marketing: true },
+      })
+      await manager.boot()
+      for (const name of ['purchase', 'Schedule', 'scroll_depth', 'filter_changed']) await manager.track(name)
+      await manager.track('share', {}, { only: ['meta'] })
+      manager.destroy()
+      return fbq.mock.calls.filter(([method]) => method !== 'consent').map((call) => call[1] as string)
+    }
+    expect(await sent()).toEqual(['Purchase', 'Schedule', 'share'])
+    expect(await sent(['purchase', 'filter_changed'])).toEqual(['Purchase', 'filter_changed', 'share'])
+    expect(await sent([])).toEqual(['share'])
+  })
+
   it('stops forwarding once the route reports no destination', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -451,6 +472,7 @@ describe('tiktok', () => {
       { eventId: 'evt-1', providers: { tiktok: { description: 'mugs' } } },
     )
     await manager.track('share', {}, { eventId: 'evt-2' })
+    await manager.track('share', {}, { eventId: 'evt-3', only: ['tiktok'] })
     await manager.updateConsent(denied)
     await manager.updateConsent({ ...denied, marketing: true })
     await manager.page()
@@ -475,7 +497,7 @@ describe('tiktok', () => {
         },
         { event_id: 'evt-1' },
       ],
-      ['track', 'share', {}, { event_id: 'evt-2' }],
+      ['track', 'share', {}, { event_id: 'evt-3' }],
       ['revokeConsent'],
       ['revokeConsent'],
     ])
