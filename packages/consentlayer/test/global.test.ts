@@ -51,6 +51,7 @@ describe('readConfig', () => {
       sentryDsn: 'https://k@o1.ingest.sentry.io/1',
       sentryReplay: 'false',
       vercel: '',
+      tcf: '',
       autoTracking: '',
       debug: 'false',
     })
@@ -65,6 +66,7 @@ describe('readConfig', () => {
         posthog: { apiKey: 'phc_1', apiHost: 'https://eu.i.posthog.com', recording: true },
         sentry: { dsn: 'https://k@o1.ingest.sentry.io/1', replay: false },
         vercel: {},
+        tcf: {},
       },
     })
   })

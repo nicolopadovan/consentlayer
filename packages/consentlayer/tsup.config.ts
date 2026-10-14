@@ -18,6 +18,7 @@ export default defineConfig([{
     'providers/meta': 'src/providers/meta.ts',
     'providers/ga4': 'src/providers/ga4.ts',
     'providers/shopify': 'src/providers/shopify.ts',
+    'providers/tcf': 'src/providers/tcf.ts',
     'providers/contentsquare': 'src/providers/contentsquare.ts',
     'providers/hotjar': 'src/providers/hotjar.ts',
     'providers/vercel': 'src/providers/vercel.ts',
