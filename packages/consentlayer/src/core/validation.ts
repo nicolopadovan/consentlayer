@@ -1,6 +1,6 @@
 const GA4_MEASUREMENT_ID = /^G-[A-Z0-9]{4,16}$/
 const META_PIXEL_ID = /^\d{8,20}$/
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/
 const PHONE_E164 = /^\+?[1-9]\d{6,14}$/
 
 function isValidGa4MeasurementId(value: unknown): value is string {

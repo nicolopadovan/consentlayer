@@ -39,6 +39,10 @@ describe('validation helpers', () => {
     expect(isValidEmail('user@example.com')).toBe(true)
     expect(isValidEmail('not-an-email')).toBe(false)
     expect(isValidEmail('user@@example.com')).toBe(false)
+    expect(isValidEmail('user@mail.example.co.uk')).toBe(true)
+    const start = performance.now()
+    expect(isValidEmail(`a@${'.'.repeat(50_000)}`)).toBe(false)
+    expect(performance.now() - start).toBeLessThan(100)
 
     expect(isValidPhoneE164('+393331234567')).toBe(true)
     expect(isValidPhoneE164('+1234567890')).toBe(true)
@@ -80,6 +84,18 @@ describe('definePlugin', () => {
     // @ts-expect-error requiredConsent has no default
     expect(definePlugin({ id: 'implicit' }).id).toBe('implicit')
     expect(definePlugin({ id: 'explicit', requiredConsent: 'none' }).requiredConsent).toBe('none')
+  })
+
+  it('never loads a plain-JS plugin that omits requiredConsent', async () => {
+    const load = vi.fn()
+    const manager = createAnalyticsManager({
+      // @ts-expect-error requiredConsent is missing
+      providers: [{ id: 'implicit', load }],
+      identityStorage: createMemoryIdentityStorage(),
+    })
+    await manager.boot()
+    await manager.updateConsent({ preferences: true, analytics: true, marketing: true })
+    expect(load).not.toHaveBeenCalled()
   })
 })
 

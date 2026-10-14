@@ -606,10 +606,10 @@ The lifecycle changes in three ways:
   set cookies. Move that work to `load`.
 - `load` runs once. The old `init` ran each time the provider became active
   again after a withdrawal.
-- A plugin without `requiredConsent` was already active before consent, but
-  its `trackEvent` waited for analytics consent. Its `track` now runs without
-  consent. `requiredConsent` is now required: set it explicitly, to `'none'`
-  for a plugin that needs no consent.
+- A plugin without `requiredConsent` was active before consent, but its
+  `trackEvent` waited for analytics consent. `requiredConsent` is now
+  required, and a plugin without it never runs: set it explicitly, to
+  `'none'` for a plugin that needs no consent.
 
 New optional hooks are `identify(identity, traits, ctx)`, `reset(ctx)`,
 `group(groupId, traits, ctx)` and `error(error, context, ctx)`. A plugin can

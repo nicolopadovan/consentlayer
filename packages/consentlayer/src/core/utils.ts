@@ -34,8 +34,8 @@ export function equalConsent(left: ConsentState | null, right: ConsentState | nu
 }
 
 export function hasRequiredConsent(consent: ConsentState | null, required?: ProviderConsentRequirement): boolean {
-  if (!required || required === 'none') return true
-  if (!consent) return false
+  if (required === 'none') return true
+  if (!required || !consent) return false
   if (typeof required === 'function') return required(consent)
   return Boolean(consent[required])
 }
