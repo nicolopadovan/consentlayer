@@ -281,7 +281,7 @@ keeps the state of a consent banner and settings dialog. See
 | ---------------------- | ---------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
 | `boot`                 | `LazyBootConfig` | `{ mode: 'immediate' }`                                                  | As on [`<AnalyticsProvider>`](#analyticsprovider). |
 | `autoShowBanner`       | `boolean`        | `true`                                                                   | As on `<AnalyticsProvider>`.                       |
-| `openConsentGlobalKey` | `string`         | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. Set by `start()`.     |
+| `openConsentGlobalKey` | `string`         | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. Set by `start()`; its stop function deletes it unless another controller has replaced it. |
 
 It returns a `ConsentController`:
 

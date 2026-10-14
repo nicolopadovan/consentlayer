@@ -139,14 +139,13 @@ export function createConsentController(
       const unsubscribeConsent = engine.subscribe(({ consent }) => syncPrefs(consent))
       const unsubscribeAnalytics = analytics.subscribe(sendPageViews)
       sendPageViews()
-      if (typeof window !== 'undefined') {
-        const keys = openConsentGlobalKey ? [openConsentGlobalKey] : withLegacy((names) => names.openConsentGlobalKey)
-        for (const key of keys) {
-          ;(window as unknown as Record<string, unknown>)[key] = () => set({ dialogVisible: true })
-        }
-      }
+      const globals = typeof window === 'undefined' ? {} : (window as unknown as Record<string, unknown>)
+      const openConsent = () => set({ dialogVisible: true })
+      const keys = openConsentGlobalKey ? [openConsentGlobalKey] : withLegacy((names) => names.openConsentGlobalKey)
+      for (const key of keys) globals[key] = openConsent
       return () => {
         stopped = true
+        for (const key of keys) if (globals[key] === openConsent) delete globals[key]
         cancelBoot()
         unsubscribeConsent()
         unsubscribeAnalytics()

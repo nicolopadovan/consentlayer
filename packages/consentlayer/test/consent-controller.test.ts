@@ -128,6 +128,23 @@ describe('createConsentController', () => {
     analytics.destroy()
   })
 
+  it('removes its openConsent global on stop unless another controller replaced it', () => {
+    const analytics = createAnalytics({ providers: [] })
+    const globals = window as unknown as Record<string, unknown>
+    const stopFirst = createConsentController(analytics).start()
+    stopFirst()
+    expect(globals.CONSENTLAYER_openConsent).toBeUndefined()
+
+    const stopOld = createConsentController(analytics).start()
+    const stopNew = createConsentController(analytics).start()
+    const current = globals.CONSENTLAYER_openConsent
+    stopOld()
+    expect(globals.CONSENTLAYER_openConsent).toBe(current)
+    stopNew()
+    expect(globals.CONSENTLAYER_openConsent).toBeUndefined()
+    analytics.destroy()
+  })
+
   it('does not boot in manual mode', async () => {
     const analytics = createAnalytics({ providers: [] })
     const stop = createConsentController(analytics, { boot: { mode: 'manual' } }).start()

@@ -241,6 +241,21 @@ describe('analytics manager', () => {
     expect(load).not.toHaveBeenCalled()
   })
 
+  it('removes the interaction listeners of a pending deferred load on destroy', async () => {
+    const added = vi.spyOn(window, 'addEventListener')
+    const manager = createAnalyticsManager({
+      providers: [{ id: 'later', requiredConsent: 'none', defer: 'interaction', load: vi.fn() }],
+    })
+    await manager.boot()
+    manager.destroy()
+    const interactions = added.mock.calls.filter(([type]) =>
+      ['pointerdown', 'keydown', 'scroll', 'touchstart'].includes(type),
+    )
+    expect(interactions).toHaveLength(4)
+    for (const [, , options] of interactions) expect((options as AddEventListenerOptions).signal?.aborted).toBe(true)
+    added.mockRestore()
+  })
+
   it('skips a deferred load when consent is withdrawn before it fires', async () => {
     vi.useFakeTimers()
     const load = vi.fn()

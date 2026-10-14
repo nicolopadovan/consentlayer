@@ -51,7 +51,7 @@ const HOOK_TOPICS: Record<HookName, DebugTopic> = {
 }
 const INTERACTIONS = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const
 
-function whenDue(timing: Exclude<LoadTiming, false>): Promise<void> {
+function whenDue(timing: Exclude<LoadTiming, false>, signal: AbortSignal): Promise<void> {
   if (!isBrowser()) return Promise.resolve()
   return new Promise((resolve) => {
     if (typeof timing === 'number') {
@@ -66,7 +66,7 @@ function whenDue(timing: Exclude<LoadTiming, false>): Promise<void> {
         resolve()
       }
       for (const type of INTERACTIONS) {
-        window.addEventListener(type, done, { once: true, passive: true })
+        window.addEventListener(type, done, { once: true, passive: true, signal })
       }
     }
   })
@@ -139,6 +139,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
   let ready = false
   let identifyQueued = false
   let destroyed = false
+  const lifetime = new AbortController()
   let lifecycleQueue = Promise.resolve()
   let unsubscribeConsent: (() => void) | undefined
   let autoBound = false
@@ -347,7 +348,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
 
   const deferLoad = (state: ProviderState, timing: Exclude<LoadTiming, false>) => {
     state.backlog = []
-    void whenDue(timing).then(() => {
+    void whenDue(timing, lifetime.signal).then(() => {
       lifecycleQueue = lifecycleQueue.then(async () => {
         const backlog = state.backlog ?? []
         state.backlog = undefined
@@ -688,6 +689,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     destroy() {
       for (const state of providerStates.values()) void teardown(state)
       destroyed = true
+      lifetime.abort()
       unsubscribeConsent?.()
       if (globalHandlers) {
         window.removeEventListener('error', onWindowError)
