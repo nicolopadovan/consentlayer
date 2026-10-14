@@ -84,6 +84,7 @@ export function readConfig(global: GlobalConfig | undefined, script: HTMLOrSVGSc
     if (value === undefined) continue
     if (key === 'autoTracking') config.autoTracking = flag(value)
     else if (key === 'debug') config.debug = flag(value)
+    else if (key === 'region') config.consent = { ...config.consent, region: value }
     else if (adapterFactories[key]) {
       if (flag(value)) adapters[key] ??= {}
       else delete adapters[key]

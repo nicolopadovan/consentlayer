@@ -125,7 +125,7 @@ export function createConsentController(
           if (stopped) return
           set({
             ...(consent && { prefs: all((category) => consent[category]) }),
-            bannerVisible: consent && !engine.isStale() ? false : autoShowBanner,
+            bannerVisible: autoShowBanner && engine.shouldAsk(),
           })
         })
         .catch((error) => {

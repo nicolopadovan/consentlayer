@@ -20,7 +20,6 @@ from. Each ships in its own minor release, in order of priority:
 
 | Item                                                                              | Priority | Target        |
 | --------------------------------------------------------------------------------- | -------- | ------------- |
-| [Privacy laws per visitor region](#privacy-laws-beyond-the-gdpr)                  | High     | December 2026 |
 | [Banner on npm](#banner-on-npm-consentlayerbanner)                                | High     | January 2027  |
 | [Banner translations](#banner-translations)                                       | High     | January 2027  |
 | [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027  |
@@ -125,36 +124,12 @@ and reading them is left to you. The planned helpers look up a visitor's
 records by `consentId` or `userId`, export them for a data subject request,
 and delete records older than a retention period you set.
 
-### Privacy laws beyond the GDPR
-
-ConsentLayer's defaults follow the opt-in model of the EU's GDPR and ePrivacy
-Directive: nothing that needs consent runs before the visitor gives it. They
-have not been legally reviewed; see the [legal notice](/guides/legal/).
-Other laws work differently, and the planned jurisdiction presets set the
-consent model, the defaults and the signals to honor per visitor region:
-
-| Law                                                | Planned                                                                                                                                                                                                                                        |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US state laws, such as California's CCPA and CPRA  | An opt-out model: tracking until the visitor opts out of the sale or sharing of their data, through a "Do Not Sell or Share" choice or [Global Privacy Control](/guides/consent-ui/#global-privacy-control), which ConsentLayer already reads. |
-| UK GDPR and PECR                                   | A preset for the UK's opt-in rules.                                                                                                                                                                                                            |
-| Switzerland's Federal Act on Data Protection       | A preset for Swiss requirements.                                                                                                                                                                                                               |
-| France, CNIL guidance                              | A preset for the CNIL's recommendations on cookies, such as how long a choice is kept.                                                                                                                                                         |
-| Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each.                                                                                                                                                                                                                              |
-
-Applying a preset per region needs the visitor's region. The planned region
-lookup reads it on the server, from the country and region headers your host
-or CDN adds, and passes it to the browser with the page. It comes with a
-one-line setup for the most used hosts: Vercel, Cloudflare, Netlify and AWS
-CloudFront. No IP address is stored. A visitor whose region is unknown gets
-the strictest rules, the EU's opt-in model, so a site that doesn't set up the
-lookup keeps today's behavior. The presets and the region lookup ship
-together, in one release.
-
 ### A hosted consent service
 
 Consent records are stored in your own database through a
-[store](/guides/consent-records/#stores), and the region lookup needs a server
-that renders the page. The planned hosted service removes both requirements:
+[store](/guides/consent-records/#stores), and
+[rules per region](/guides/regions/) need a server that reads the visitor's
+region. The planned hosted service removes both requirements:
 it stores consent records, reads the visitor's region from the request and
 returns the rules that apply, so a static site or a single-page application
 can use per-region rules without a server of its own. A dashboard shows the
