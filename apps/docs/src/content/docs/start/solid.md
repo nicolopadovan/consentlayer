@@ -1,13 +1,19 @@
 ---
-title: Solid
-description: Set up ConsentLayer in a SolidJS application with consentlayer/solid.
+title: Solid & SolidStart
+description: Set up ConsentLayer in a SolidStart or Solid application with consentlayer/solidstart or consentlayer/solid.
 ---
 
-This guide sets up ConsentLayer in a Solid application built with Vite: a
-module-level analytics instance, a provider that holds consent state for your
-consent banner, page views, event tracking, and error reporting.
-`consentlayer/solid` supports Solid 1.9 and later. For SolidStart or Solid
-Router, follow [SolidStart](/start/solidstart/) instead.
+This guide sets up ConsentLayer in a SolidStart application: a module-level
+analytics instance, a provider that holds consent state for your consent
+banner, page views on every navigation, event tracking, and error reporting.
+ConsentLayer supports Solid 1.9 and later, with two entry points:
+
+- `consentlayer/solidstart` follows Solid Router's navigation itself. It needs
+  only `@solidjs/router`, so it also works in a Solid application that uses
+  Solid Router without SolidStart.
+- `consentlayer/solid` exports the same functions and components, for an
+  application without Solid Router. Its differences are in
+  [Without Solid Router](#without-solid-router).
 
 It assumes you have [installed](/start/installation/) `consentlayer` and the
 SDKs of the providers you use.
@@ -15,8 +21,8 @@ SDKs of the providers you use.
 ## 1. Create the instance
 
 Create the instance once, at module level, in a file your components import.
-Pass each provider its ID from the environment; with Vite, that is
-`import.meta.env`:
+SolidStart builds with Vite, so environment variables prefixed with `VITE_` are
+available in browser code from `import.meta.env`:
 
 ```ts
 // src/lib/analytics.ts
@@ -36,25 +42,36 @@ export const analytics = createAnalytics({
 The options are the same as in React; [React](/start/react/#1-create-the-instance)
 explains how missing IDs, `autoTracking`, `enabled` and `debug` behave.
 
-## 2. Add the provider
+## 2. Add the provider to the router's root
 
-Wrap your application in `<AnalyticsProvider>`:
+Render `<AnalyticsProvider>` in the `root` of your `<Router>`, where Solid
+Router's location is available:
 
 ```tsx
-// src/App.tsx
-import { AnalyticsProvider } from 'consentlayer/solid'
-import { analytics } from './lib/analytics'
-import { ConsentBanner } from './lib/ConsentBanner'
-import { CookieSettingsButton } from './lib/CookieSettingsButton'
-import { Page } from './Page'
+// src/app.tsx
+import { Router } from '@solidjs/router'
+import { FileRoutes } from '@solidjs/start/router'
+import { AnalyticsProvider, ErrorBoundary } from 'consentlayer/solidstart'
+import { Suspense } from 'solid-js'
+import { analytics } from '~/lib/analytics'
+import { ConsentBanner } from '~/lib/ConsentBanner'
+import { CookieSettingsButton } from '~/lib/CookieSettingsButton'
 
-export function App() {
+export default function App() {
   return (
-    <AnalyticsProvider analytics={analytics}>
-      <Page />
-      <ConsentBanner privacyPolicyUrl="/privacy" />
-      <CookieSettingsButton />
-    </AnalyticsProvider>
+    <Router
+      root={(props) => (
+        <AnalyticsProvider analytics={analytics}>
+          <ErrorBoundary fallback={<p>Something went wrong.</p>}>
+            <Suspense>{props.children}</Suspense>
+          </ErrorBoundary>
+          <ConsentBanner privacyPolicyUrl="/privacy" />
+          <CookieSettingsButton />
+        </AnalyticsProvider>
+      )}
+    >
+      <FileRoutes />
+    </Router>
   )
 }
 ```
@@ -70,29 +87,37 @@ Once the provider is mounted, it performs these steps:
 3. It sends a page view to every active provider. A provider that becomes
    active later, because the visitor grants its category, receives the current
    page view at that point.
-4. Whenever `routeKey` changes, it sends a page view and calls
-   `analytics.newPageSession()`.
+4. After every navigation to a new path or query string, it sends a page view
+   and calls `analytics.newPageSession()`. A change to the hash alone sends
+   nothing.
 
 When the provider is disposed, it stops. On the server it does nothing, and
 `ready` stays `false`, so the banner is not rendered there and the HTML matches
 the first render in the browser.
 
-The props are those of the [React provider](/start/react/#2-add-the-provider-and-the-banner).
-`routeKey` is read reactively, so pass it a signal's value, such as
-`routeKey={location.pathname}`; the other props are read once, when the
-provider is created. Without `routeKey`, it sends one page view for the page
-load.
+The props are those of the [React provider](/start/react/#2-add-the-provider-and-the-banner)
+except `routeKey`, which it sets from the path and query string of
+`useLocation()`. They are read once, when the provider is created.
+
+<details>
+<summary>When the page view is sent</summary>
+
+Solid Router updates its location when a navigation starts, and the browser's
+URL only when the navigation ends, after the new route's data has loaded. The
+provider holds the page view while `useIsRouting()` is `true`, so the page view
+carries the new URL.
+
+</details>
 
 ## 3. Add the banner
 
 Copy the [Solid consent banner recipe](/guides/consent-ui/#solid) into
-`src/lib/ConsentBanner.tsx`, change its import to `consentlayer/solid`, and
-render it once, inside the provider as above. A button to reopen the settings
-reads the same state:
+`src/lib/ConsentBanner.tsx` and render it once, in the router's root as above.
+A button to reopen the settings reads the same state:
 
 ```tsx
 // src/lib/CookieSettingsButton.tsx
-import { useConsentController } from 'consentlayer/solid'
+import { useConsentController } from 'consentlayer/solidstart'
 import { Show } from 'solid-js'
 
 export function CookieSettingsButton() {
@@ -120,7 +145,7 @@ value once. It throws when no `<AnalyticsProvider>` is above the component.
 with JavaScript disabled:
 
 ```tsx
-import { MetaPixelNoscript } from 'consentlayer/solid'
+import { MetaPixelNoscript } from 'consentlayer/solidstart'
 
 <MetaPixelNoscript pixelId={import.meta.env.VITE_FACEBOOK_PIXEL_ID} enabled />
 ```
@@ -141,7 +166,7 @@ or the most recently created instance when there is no provider above it.
 Outside components, import the instance from `src/lib/analytics.ts`.
 
 ```tsx
-import { useAnalytics } from 'consentlayer/solid'
+import { useAnalytics } from 'consentlayer/solidstart'
 
 export function SignUpButton() {
   const analytics = useAnalytics()
@@ -156,13 +181,14 @@ and what each provider receives.
 
 ## 5. Report errors
 
-`ErrorBoundary` from `consentlayer/solid` wraps Solid's `<ErrorBoundary>`.
-When a child throws while rendering or in an effect, it calls
+`ErrorBoundary` wraps Solid's `<ErrorBoundary>`. When a child throws while
+rendering or in an effect, it calls
 `captureError(error, { source: 'boundary', tags })` on the instance and renders
-`fallback`:
+`fallback`. Wrap your routes in it, as in the router's root above, or wrap a
+smaller part of the page:
 
 ```tsx
-import { ErrorBoundary } from 'consentlayer/solid'
+import { ErrorBoundary } from 'consentlayer/solidstart'
 
 <ErrorBoundary fallback={(error, reset) => <button onClick={reset}>Retry</button>} tags={{ area: 'cart' }}>
   <Cart />
@@ -177,3 +203,37 @@ As in React, `captureError` reaches the providers that implement error
 reporting, Sentry and PostHog, and the window's `error` and
 `unhandledrejection` events are reported after boot unless you set
 `errors: { globalHandlers: false }`.
+
+## Without Solid Router
+
+In a Solid application without Solid Router, import everything from
+`consentlayer/solid` instead, and render `<AnalyticsProvider>` around your
+application:
+
+```tsx
+// src/App.tsx
+import { AnalyticsProvider } from 'consentlayer/solid'
+import { analytics } from './lib/analytics'
+import { ConsentBanner } from './lib/ConsentBanner'
+import { CookieSettingsButton } from './lib/CookieSettingsButton'
+import { Page } from './Page'
+
+export function App() {
+  return (
+    <AnalyticsProvider analytics={analytics}>
+      <Page />
+      <ConsentBanner privacyPolicyUrl="/privacy" />
+      <CookieSettingsButton />
+    </AnalyticsProvider>
+  )
+}
+```
+
+It sends one page view for the page load. With another client-side router, pass
+`routeKey`, a value that changes on every navigation, and the provider sends a
+page view and calls `analytics.newPageSession()` whenever it changes.
+`routeKey` is read reactively, so pass it a signal's value, such as
+`routeKey={location.pathname}`.
+
+The [SolidStart example](https://github.com/nicolopadovan/analytics-consent-manager-npm/tree/main/apps/example-solidstart)
+in the repository runs the setup on this page.

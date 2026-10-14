@@ -5,6 +5,7 @@ import { defineConfig } from 'astro/config'
 
 export default defineConfig({
   site: 'https://consentlayer.vercel.app',
+  redirects: { '/start/sveltekit': '/start/svelte/', '/start/solidstart': '/start/solid/' },
   integrations: [
     react(),
     starlight({
@@ -19,7 +20,7 @@ export default defineConfig({
       },
       customCss: ['./src/styles/custom.css'],
       sidebar: [
-        { label: 'Getting started', items: [{ label: 'Introduction', link: '/' }, 'start/installation', 'start/react', 'start/nextjs', 'start/vue', 'start/nuxt', 'start/svelte', 'start/sveltekit', 'start/solid', 'start/solidstart', 'start/angular', 'start/javascript', 'playground'] },
+        { label: 'Getting started', items: [{ label: 'Introduction', link: '/' }, 'start/installation', 'start/react', 'start/nextjs', 'start/vue', 'start/nuxt', 'start/svelte', 'start/solid', 'start/angular', 'start/javascript', 'playground'] },
         {
           label: 'Guides',
           items: [
