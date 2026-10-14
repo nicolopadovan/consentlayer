@@ -1,9 +1,10 @@
 import { googleConsentMode } from '../adapters/google-consent-mode'
 import { shopifyCustomerPrivacy } from '../adapters/shopify'
 import { tcf } from '../adapters/tcf'
+import { autoTracking } from '../auto-tracking'
 import { createAnalytics, type AnalyticsOptions } from '../core/create-analytics'
 import { createConsentController, type ConsentControllerOptions } from '../core/consent-controller'
-import type { AnalyticsPlugin, ConsentIntegrationAdapter } from '../core/types'
+import type { AnalyticsPlugin, AutoTrackingConfig, ConsentIntegrationAdapter } from '../core/types'
 import { contentsquare } from '../providers/contentsquare'
 import { ga4 } from '../providers/ga4'
 import { gtm } from '../providers/gtm'
@@ -24,8 +25,10 @@ declare global {
 }
 
 /** `window.ConsentLayer` before the script loads: `createAnalytics()` options, with `providers` and `adapters` keyed by name. */
-export type GlobalConfig = Omit<AnalyticsOptions, 'providers'> &
+export type GlobalConfig = Omit<AnalyticsOptions, 'providers' | 'autoTracking'> &
   ConsentControllerOptions & {
+    /** `true` or the options of `autoTracking()`. */
+    autoTracking?: boolean | AutoTrackingConfig
     providers?: Record<string, Record<string, unknown>>
     adapters?: Record<string, Record<string, unknown>>
   }
@@ -104,6 +107,7 @@ export function createGlobal(config: GlobalConfig) {
     boot,
     autoShowBanner,
     openConsentGlobalKey,
+    autoTracking: tracking,
     ...options
   } = config
   const plugins: AnalyticsPlugin[] = []
@@ -117,7 +121,12 @@ export function createGlobal(config: GlobalConfig) {
     else console.warn(`[consentlayer] Unknown adapter "${name}".`)
   }
   setPostHogHost(providers.posthog?.apiHost as string | undefined)
-  const analytics = createAnalytics({ ...options, providers: plugins, consent: { ...options.consent, adapters } })
+  const analytics = createAnalytics({
+    ...options,
+    providers: plugins,
+    consent: { ...options.consent, adapters },
+    autoTracking: tracking ? autoTracking(tracking === true ? undefined : tracking) : undefined,
+  })
   const controller = createConsentController(analytics, { boot, autoShowBanner, openConsentGlobalKey })
   controller.start()
   const route = () => controller.setRoute(location.pathname + location.search)

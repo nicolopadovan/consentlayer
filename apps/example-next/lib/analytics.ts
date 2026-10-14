@@ -1,4 +1,5 @@
 import { createAnalytics } from 'consentlayer'
+import { autoTracking } from 'consentlayer/auto-tracking'
 import { ga4 } from 'consentlayer/providers/ga4'
 import { hotjar } from 'consentlayer/providers/hotjar'
 import { meta } from 'consentlayer/providers/meta'
@@ -23,7 +24,7 @@ export const analytics = createAnalytics({
     ],
   },
   server: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID ? { endpoint: '/api/analytics' } : undefined,
-  autoTracking: true,
+  autoTracking: autoTracking(),
   enabled: process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
   debug: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true',
 })

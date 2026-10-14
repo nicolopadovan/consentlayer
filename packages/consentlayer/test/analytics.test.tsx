@@ -1,3 +1,4 @@
+import { autoTracking } from '../src/auto-tracking'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
@@ -226,7 +227,7 @@ describe('createAnalytics', () => {
     const ga4 = spyProvider('ga4')
     const analytics = createAnalytics({
       providers: [ga4],
-      autoTracking: { clicks: false, scroll: false, timeOnPage: false, only: ['ga4'] },
+      autoTracking: autoTracking({ clicks: false, scroll: false, timeOnPage: false, only: ['ga4'] }),
     })
     const hotjar = spyProvider('hotjar')
     analytics.registerProvider(hotjar)
@@ -492,7 +493,7 @@ describe('withdrawal and failure paths', () => {
     const cookieless = spyProvider('cookieless', 'none')
     const analytics = createAnalytics({
       providers: [cookieless],
-      autoTracking: { scroll: false, timeOnPage: false, pageViews: false },
+      autoTracking: autoTracking({ scroll: false, timeOnPage: false, pageViews: false }),
     })
     await analytics.consent.update(granted)
     await analytics.boot()

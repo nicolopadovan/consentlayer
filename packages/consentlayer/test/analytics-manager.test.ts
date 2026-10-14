@@ -1,3 +1,4 @@
+import { autoTracking } from '../src/auto-tracking'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
 import { createMemoryIdentityStorage } from '../src/core/storage'
@@ -139,6 +140,7 @@ describe('analytics manager', () => {
         },
       ],
       identityStorage: createMemoryIdentityStorage(),
+      autoTracking: autoTracking(),
     })
 
     await manager.boot()
@@ -166,7 +168,6 @@ describe('analytics manager', () => {
     button.textContent = 'Checkout'
     document.body.appendChild(button)
 
-    manager.enableAutoTracking()
     button.click()
     window.dispatchEvent(new Event('scroll'))
     vi.advanceTimersByTime(5000)

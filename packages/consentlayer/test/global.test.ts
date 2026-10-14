@@ -93,6 +93,22 @@ describe('createGlobal', () => {
   })
 })
 
+describe('data-auto-tracking', () => {
+  it('starts auto-tracking from the attribute once analytics is granted', async () => {
+    const global = createGlobal(readConfig(undefined, script({ autoTracking: '' })))
+    const track = vi.fn()
+    global.registerProvider({ id: 'spy', requiredConsent: 'analytics', track })
+    await global.consent.update({ analytics: true })
+    await vi.waitFor(() =>
+      expect(track).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'consentlayer.page_session_start' }),
+        expect.anything(),
+      ),
+    )
+    global.destroy()
+  })
+})
+
 describe('CDN shims', () => {
   // The test runner awaits each module it imports, which resolves these thenable shims too.
   it('resolve to the window globals once the vendor script has loaded', async () => {

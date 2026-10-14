@@ -15,6 +15,7 @@ export default defineConfig([
     entry: {
       index: 'src/index.ts',
       ecommerce: 'src/ecommerce.ts',
+      'auto-tracking': 'src/auto-tracking.ts',
       'react/index': 'src/react/index.ts',
       'providers/meta': 'src/providers/meta.ts',
       'providers/ga4': 'src/providers/ga4.ts',

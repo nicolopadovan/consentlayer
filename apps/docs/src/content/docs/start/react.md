@@ -24,13 +24,14 @@ Pass each provider its ID from the environment; with Vite, that is
 import { createAnalytics } from 'consentlayer'
 import { ga4 } from 'consentlayer/providers/ga4'
 import { meta } from 'consentlayer/providers/meta'
+import { autoTracking } from 'consentlayer/auto-tracking'
 
 export const analytics = createAnalytics({
   providers: [
     ga4({ measurementId: import.meta.env.VITE_GA4_MEASUREMENT_ID }),
     meta({ pixelId: import.meta.env.VITE_FACEBOOK_PIXEL_ID }),
   ],
-  autoTracking: true,
+  autoTracking: autoTracking(),
 })
 ```
 
@@ -57,13 +58,14 @@ are shared by the whole page, so creating a second instance with different
 [`names`](/guides/names/) logs a warning and the last names win.
 
 <details>
-<summary>What <code>autoTracking: true</code> sends</summary>
+<summary>What <code>autoTracking()</code> sends</summary>
 
 Auto-tracking starts after boot, once `analytics` consent is granted, and sends
 each event to every active provider, or only to the provider IDs listed in
-`autoTracking.only`. `true` enables every kind with its defaults. An object
-that turns kinds on enables only those: `{ clicks: { mode: 'attribute' } }`
-sends clicks alone, while `{ scroll: false }` keeps every kind but scroll.
+its `only` option. `autoTracking()` from `consentlayer/auto-tracking` enables
+every kind with its defaults. An object that turns kinds on enables only
+those: `autoTracking({ clicks: { mode: 'attribute' } })` sends clicks alone,
+while `autoTracking({ scroll: false })` keeps every kind but scroll.
 
 | Option       | Default                                    | Event                                                                                                                      | Params                                                   |
 | ------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |

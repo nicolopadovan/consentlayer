@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { autoTracking } from '../src/auto-tracking'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
+import type { AutoTrackingConfig } from '../src/core/types'
 import { createMemoryIdentityStorage } from '../src/core/storage'
 
 type CollectedEvent = { name: string; params: Record<string, unknown> }
 
-function setupManager(collected: CollectedEvent[]) {
+function setupManager(collected: CollectedEvent[], config?: AutoTrackingConfig) {
   return createAnalyticsManager({
+    autoTracking: autoTracking(config),
     providers: [
       {
         id: 'collector',
@@ -36,14 +39,12 @@ describe('granular auto-tracking', () => {
 
   it('disables clicks entirely when clicks: false', async () => {
     const events: CollectedEvent[] = []
-    const manager = setupManager(events)
+    const manager = setupManager(events, { clicks: false })
     await boot(manager)
 
     const button = document.createElement('button')
     button.textContent = 'Buy'
     document.body.appendChild(button)
-
-    manager.enableAutoTracking({ clicks: false })
     button.click()
 
     expect(events.find((e) => e.name === 'consentlayer.ui_click')).toBeUndefined()
@@ -51,7 +52,7 @@ describe('granular auto-tracking', () => {
 
   it('attribute mode only fires for elements bearing the attribute', async () => {
     const events: CollectedEvent[] = []
-    const manager = setupManager(events)
+    const manager = setupManager(events, { clicks: { mode: 'attribute' } })
     await boot(manager)
 
     const tracked = document.createElement('button')
@@ -61,8 +62,6 @@ describe('granular auto-tracking', () => {
     const ignored = document.createElement('button')
     ignored.textContent = 'random'
     document.body.appendChild(ignored)
-
-    manager.enableAutoTracking({ clicks: { mode: 'attribute' } })
     ignored.click()
     tracked.click()
 
@@ -73,7 +72,7 @@ describe('granular auto-tracking', () => {
 
   it('labels a click only from the tracking attribute or aria-label, never from page text', async () => {
     const events: CollectedEvent[] = []
-    const manager = setupManager(events)
+    const manager = setupManager(events, { clicks: true })
     await boot(manager)
 
     const labels = [['aria-label', 'Close'], ['name', 'email'], []].map((attributes) => {
@@ -84,8 +83,6 @@ describe('granular auto-tracking', () => {
       document.body.appendChild(button)
       return button
     })
-
-    manager.enableAutoTracking({ clicks: true })
     labels.forEach((button) => button.click())
 
     const clickEvents = events.filter((e) => e.name === 'consentlayer.ui_click')
@@ -95,16 +92,14 @@ describe('granular auto-tracking', () => {
 
   it('honors a custom attribute name in attribute mode', async () => {
     const events: CollectedEvent[] = []
-    const manager = setupManager(events)
+    const manager = setupManager(events, {
+      clicks: { mode: 'attribute', attribute: 'data-analytics' },
+    })
     await boot(manager)
 
     const tracked = document.createElement('div')
     tracked.setAttribute('data-analytics', 'hero-cta')
     document.body.appendChild(tracked)
-
-    manager.enableAutoTracking({
-      clicks: { mode: 'attribute', attribute: 'data-analytics' },
-    })
     tracked.click()
 
     const clickEvents = events.filter((e) => e.name === 'consentlayer.ui_click')
@@ -114,7 +109,7 @@ describe('granular auto-tracking', () => {
 
   it('fires scroll depth only at configured thresholds', async () => {
     const events: CollectedEvent[] = []
-    const manager = setupManager(events)
+    const manager = setupManager(events, { scroll: { thresholds: [50] } })
     await boot(manager)
 
     Object.defineProperty(document.documentElement, 'scrollHeight', {
@@ -130,8 +125,6 @@ describe('granular auto-tracking', () => {
       writable: true,
       value: 250,
     })
-
-    manager.enableAutoTracking({ scroll: { thresholds: [50] } })
     window.dispatchEvent(new Event('scroll'))
 
     const scrollEvents = events.filter((e) => e.name === 'consentlayer.scroll_depth')
@@ -142,10 +135,8 @@ describe('granular auto-tracking', () => {
   it('fires time-on-page only at configured intervals', async () => {
     vi.useFakeTimers()
     const events: CollectedEvent[] = []
-    const manager = setupManager(events)
+    const manager = setupManager(events, { timeOnPage: { intervals: [10, 60] } })
     await boot(manager)
-
-    manager.enableAutoTracking({ timeOnPage: { intervals: [10, 60] } })
 
     await vi.advanceTimersByTimeAsync(10000)
     expect(events.filter((e) => e.name === 'consentlayer.time_on_page').map((e) => e.params.seconds)).toEqual([10])
@@ -156,26 +147,44 @@ describe('granular auto-tracking', () => {
 
   it('suppresses page_session_start when pageViews is false', async () => {
     const events: CollectedEvent[] = []
-    const manager = setupManager(events)
+    const manager = setupManager(events, { pageViews: false })
     await boot(manager)
-
-    manager.enableAutoTracking({ pageViews: false })
 
     expect(events.find((e) => e.name === 'consentlayer.page_session_start')).toBeUndefined()
   })
 
   it('turns on only the kinds an object names, else every kind it does not turn off', async () => {
-    const sessionStarts = async (config: Parameters<ReturnType<typeof setupManager>['enableAutoTracking']>[0]) => {
+    const sessionStarts = async (config: AutoTrackingConfig) => {
       const events: CollectedEvent[] = []
-      const manager = setupManager(events)
+      const manager = setupManager(events, config)
       await boot(manager)
-      manager.enableAutoTracking(config)
       return events.filter((e) => e.name === 'consentlayer.page_session_start').length
     }
     expect(await sessionStarts({ clicks: { mode: 'attribute' } })).toBe(0)
     expect(await sessionStarts({ scroll: true, pageViews: true })).toBe(1)
     expect(await sessionStarts({ scroll: false })).toBe(1)
     expect(await sessionStarts({ only: ['collector'] })).toBe(1)
+  })
+
+  it('removes its listeners and timers when the signal aborts, and restarts them per page session', async () => {
+    vi.useFakeTimers()
+    const track = vi.fn<(name: string, params: object, options: object) => Promise<void>>(() => Promise.resolve())
+    const lifetime = new AbortController()
+    const startPage = autoTracking({ timeOnPage: { intervals: [10] }, clicks: true })({
+      track,
+      signal: lifetime.signal,
+    })
+    startPage()
+    await vi.advanceTimersByTimeAsync(5000)
+    startPage()
+    await vi.advanceTimersByTimeAsync(10000)
+    expect(track.mock.calls.map(([name]) => name)).toEqual(['consentlayer.time_on_page'])
+    expect(track).toHaveBeenCalledWith('consentlayer.time_on_page', { seconds: 10, session_id: 2 }, expect.anything())
+
+    lifetime.abort()
+    document.body.appendChild(document.createElement('button')).click()
+    await vi.advanceTimersByTimeAsync(10000)
+    expect(track).toHaveBeenCalledTimes(1)
   })
 
   it('preserves current behaviour when called with no config', async () => {
@@ -186,8 +195,6 @@ describe('granular auto-tracking', () => {
     const button = document.createElement('button')
     button.textContent = 'Click me'
     document.body.appendChild(button)
-
-    manager.enableAutoTracking()
     button.click()
 
     expect(events.find((e) => e.name === 'consentlayer.page_session_start')).toBeDefined()

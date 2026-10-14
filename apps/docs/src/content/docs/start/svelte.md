@@ -40,10 +40,11 @@ import { FACEBOOK_PIXEL_ID, GA4_MEASUREMENT_ID } from '$app/env/public'
 import { createAnalytics } from 'consentlayer'
 import { ga4 } from 'consentlayer/providers/ga4'
 import { meta } from 'consentlayer/providers/meta'
+import { autoTracking } from 'consentlayer/auto-tracking'
 
 export const analytics = createAnalytics({
   providers: [ga4({ measurementId: GA4_MEASUREMENT_ID }), meta({ pixelId: FACEBOOK_PIXEL_ID })],
-  autoTracking: true,
+  autoTracking: autoTracking(),
 })
 ```
 

@@ -18,10 +18,11 @@ SDKs of the providers you use.
 // src/analytics.ts
 import { createAnalytics, createConsentController } from 'consentlayer'
 import { ga4 } from 'consentlayer/providers/ga4'
+import { autoTracking } from 'consentlayer/auto-tracking'
 
 export const analytics = createAnalytics({
   providers: [ga4({ measurementId: import.meta.env.VITE_GA4_MEASUREMENT_ID })],
-  autoTracking: true,
+  autoTracking: autoTracking(),
 })
 
 export const controller = createConsentController(analytics)

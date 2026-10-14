@@ -59,6 +59,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./auto-tracking": {
+      "types": "./dist/auto-tracking.d.ts",
+      "import": "./dist/auto-tracking.js"
+    },
     "./ecommerce": {
       "types": "./dist/ecommerce.d.ts",
       "import": "./dist/ecommerce.js"

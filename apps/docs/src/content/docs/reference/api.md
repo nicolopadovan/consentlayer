@@ -22,6 +22,7 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer/angular`](#consentlayerangular)            | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript`, `provideGtmNoscript`                                     |
 | [`consentlayer/providers/*`](#consentlayerproviders)      | `ga4`, `gtm`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`                                                                                   |
 | [`consentlayer/adapters/*`](#consentlayeradapters)        | `shopifyCustomerPrivacy`, `tcf`, `googleConsentMode`                                                                                                                       |
+| [`consentlayer/auto-tracking`](#autotracking) | `autoTracking` |
 | [`consentlayer/ecommerce`](#consentlayerecommerce)        | `productParams`, `cartParams`, `orderParams`, `toItem`                                                                                                                     |
 | [`consentlayer/server`](#consentlayerserver)              | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores                                                    |
 | [`consentlayer/server/meta`](#consentlayerservermeta)     | `metaCapi`                                                                                                                                                                 |
@@ -51,7 +52,7 @@ function createAnalytics(options?: AnalyticsOptions): Analytics
 | `categories`      | `(keyof ConsentCategories)[]`                     | `[]`                                             | Custom consent categories, added after `preferences`, `analytics` and `marketing`. See [Custom categories](#custom-categories).                                                        |
 | `consent`         | [`ConsentOptions`](#consent-options)              |                                                  | Consent storage, adapters and broadcast.                                                                                                                                               |
 | `names`           | [`NamesInput`](#names)                            |                                                  | Storage keys, globals and DOM event names. See [Names](/guides/names/).                                                                                                                |
-| `autoTracking`    | `boolean \| AutoTrackingConfig`                   | `false`                                          | Automatic page session, click, scroll and time-on-page events. See [`autoTracking`](#autotracking).                                                                                    |
+| `autoTracking`    | `AutoTracking`                                    |                                                  | `autoTracking()` from `consentlayer/auto-tracking`: automatic page session, click, scroll and time-on-page events. See [`autoTracking`](#autotracking).                                |
 | `server`          | `{ endpoint?: string; consentEndpoint?: string }` |                                                  | Server routes. See [`server`](#server).                                                                                                                                                |
 | `errors`          | `boolean \| { globalHandlers?: boolean }`         | `true`                                           | `false` disables `captureError` and the global handlers. `{ globalHandlers: false }` keeps `captureError` but does not listen to the window's `error` and `unhandledrejection` events. |
 | `enabled`         | `boolean \| (() => boolean)`                      | `true`                                           | When `false`, or when the function returns `false`, no provider runs and calls are dropped. The function is evaluated on every call.                                                   |
@@ -76,7 +77,7 @@ type AnalyticsOptions = {
   identityStorage?: IdentityStorageAdapter
   enabled?: boolean | (() => boolean)
   debug?: boolean | DebugOptions
-  autoTracking?: AutoTrackingConfig | boolean
+  autoTracking?: AutoTracking
   onError?: AnalyticsErrorHandler
   errors?: boolean | { globalHandlers?: boolean }
   server?: {
@@ -137,8 +138,15 @@ type ConsentBroadcastConfig = {
 
 #### `autoTracking`
 
-`true` enables every kind of event with its defaults. An object that turns on
-a kind, with `true` or its options, enables only the kinds it turns on. An
+```ts
+import { autoTracking } from 'consentlayer/auto-tracking'
+
+createAnalytics({ providers, autoTracking: autoTracking({ scroll: true }) })
+```
+
+`autoTracking(config?)` is a separate entry, so an app that doesn't use it
+doesn't bundle it. With no argument it enables every kind of event with its
+defaults. A `config` that turns on a kind, with `true` or its options, enables only the kinds it turns on. An
 object that turns none on, such as `{ scroll: false }` or `{ only: ['ga4'] }`,
 enables every kind it does not set to `false`, the same rule as
 [`debug`](#debug). Automatic events start after `boot()`, once

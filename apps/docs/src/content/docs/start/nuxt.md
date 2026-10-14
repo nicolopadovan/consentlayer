@@ -42,6 +42,7 @@ The module reads the `createAnalytics()` options from
 // app/consentlayer.config.ts
 import { ga4 } from 'consentlayer/providers/ga4'
 import { meta } from 'consentlayer/providers/meta'
+import { autoTracking } from 'consentlayer/auto-tracking'
 
 export default defineConsentLayerConfig(() => {
   const config = useRuntimeConfig().public
@@ -50,7 +51,7 @@ export default defineConsentLayerConfig(() => {
       ga4({ measurementId: config.ga4MeasurementId }),
       meta({ pixelId: String(config.facebookPixelId) }),
     ],
-    autoTracking: true,
+    autoTracking: autoTracking(),
   }
 })
 ```

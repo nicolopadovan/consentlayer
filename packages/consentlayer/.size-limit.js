@@ -8,9 +8,10 @@ const modifyEsbuildConfig = (config) => ({
 })
 
 export default [
-  ['core', 'dist/index.js', '8 kB'],
-  ['core: createAnalytics only', 'dist/index.js', '7 kB', '{ createAnalytics }'],
+  ['core', 'dist/index.js', '7.5 kB'],
+  ['core: createAnalytics only', 'dist/index.js', '6 kB', '{ createAnalytics }'],
   ['core: tree-shaken to createConsentController', 'dist/index.js', '1.5 kB', '{ createConsentController }'],
+  ['auto-tracking', 'dist/auto-tracking.js', '1.2 kB'],
   ['react', 'dist/react/index.js', '2.5 kB'],
   ['next', 'dist/next.js', '2.5 kB'],
   ['vue', 'dist/vue.js', '2.5 kB'],
@@ -19,7 +20,7 @@ export default [
   ['solid', 'dist/solid.js', '2.5 kB'],
   ['solidstart', 'dist/solidstart.js', '2.5 kB'],
   ['angular', 'dist/angular.js', '2.5 kB'],
-  ['providers/ga4', 'dist/providers/ga4.js', '2 kB'],
+  ['providers/ga4', 'dist/providers/ga4.js', '2.5 kB'],
   ['providers/meta', 'dist/providers/meta.js', '2.5 kB'],
   ['providers/tiktok', 'dist/providers/tiktok.js', '2 kB'],
   ['providers/gtm', 'dist/providers/gtm.js', '2 kB'],

@@ -5,7 +5,6 @@ import type {
   AnalyticsManagerOptions,
   AnalyticsManagerStateSnapshot,
   AnalyticsPlugin,
-  AutoTrackingConfig,
   DebugTopic,
   LoadTiming,
   PluginContext,
@@ -14,7 +13,6 @@ import type {
   UserTraits,
 } from './types'
 import { createMemoryIdentityStorage } from './storage'
-import { getNames } from './names'
 import {
   createEventId,
   createDebugLog,
@@ -72,51 +70,6 @@ function whenDue(timing: Exclude<LoadTiming, false>, signal: AbortSignal): Promi
   })
 }
 
-const DEFAULT_CLICK_SELECTORS = ['button', '[role="button"]', 'a', 'input[type="submit"]', 'input[type="button"]']
-const DEFAULT_CLICK_ATTRIBUTE = 'data-track'
-const DEFAULT_SCROLL_THRESHOLDS = [25, 50, 75, 100]
-const DEFAULT_TIME_INTERVALS = [5, 15, 30, 60, 120]
-
-type ResolvedAutoTracking = {
-  clicks:
-    | { enabled: false }
-    | {
-        enabled: true
-        mode: 'all' | 'attribute'
-        attribute: string
-        selectors: string[]
-      }
-  scroll: { enabled: false } | { enabled: true; thresholds: number[] }
-  timeOnPage: { enabled: false } | { enabled: true; intervals: number[] }
-  pageViews: boolean
-}
-
-function resolveAutoTracking(config: AutoTrackingConfig | undefined): ResolvedAutoTracking {
-  const { clicks, scroll, timeOnPage, pageViews } = config ?? {}
-  const named = [clicks, scroll, timeOnPage, pageViews].some((kind) => kind != null && kind !== false)
-  const on = (kind: unknown) => (kind == null ? !named : kind !== false)
-  const settings = <T extends object>(kind: boolean | T | undefined): Partial<T> =>
-    typeof kind === 'object' ? kind : {}
-
-  return {
-    clicks: on(clicks)
-      ? {
-          enabled: true,
-          mode: settings(clicks).mode ?? 'all',
-          attribute: settings(clicks).attribute ?? DEFAULT_CLICK_ATTRIBUTE,
-          selectors: settings(clicks).selectors ?? DEFAULT_CLICK_SELECTORS,
-        }
-      : { enabled: false },
-    scroll: on(scroll)
-      ? { enabled: true, thresholds: settings(scroll).thresholds ?? DEFAULT_SCROLL_THRESHOLDS }
-      : { enabled: false },
-    timeOnPage: on(timeOnPage)
-      ? { enabled: true, intervals: settings(timeOnPage).intervals ?? DEFAULT_TIME_INTERVALS }
-      : { enabled: false },
-    pageViews: on(pageViews),
-  }
-}
-
 export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): AnalyticsManager {
   const debugLog = createDebugLog(options.debug)
   const listeners = new Set<(snapshot: AnalyticsManagerStateSnapshot) => void>()
@@ -142,15 +95,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
   const lifetime = new AbortController()
   let lifecycleQueue = Promise.resolve()
   let unsubscribeConsent: (() => void) | undefined
-  let autoBound = false
-  let autoTracking: ResolvedAutoTracking = resolveAutoTracking(undefined)
-  let activeScrollHandler: ((event: Event) => void) | null = null
-  let activeClickHandler: ((event: Event) => void) | null = null
-  let pageSessionIdCounter = 0
-  let timeouts: number[] = []
-  let autoOnly: string[] | undefined
-  const autoTrack = (name: string, params: Record<string, unknown>) =>
-    api.track(name, params, { only: autoOnly, requireAnalyticsConsent: true })
+  let pageSession: (() => void) | undefined
 
   const snapshot = (): AnalyticsManagerStateSnapshot => ({
     booted,
@@ -367,8 +312,9 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     for (const state of providerStates.values()) {
       await evaluateProvider(state)
     }
-    if (options.autoTracking && booted && evaluated?.analytics) {
-      api.enableAutoTracking(options.autoTracking === true ? undefined : options.autoTracking)
+    if (options.autoTracking && !pageSession && booted && evaluated?.analytics && isBrowser()) {
+      pageSession = options.autoTracking({ track: api.track, signal: lifetime.signal })
+      pageSession()
     }
     notify()
   }
@@ -421,72 +367,6 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     trackAgainstProviders('identify', only, (state) =>
       call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx), traits),
     )
-
-  const clearSessionTimers = () => {
-    for (const timer of timeouts) {
-      window.clearTimeout(timer)
-    }
-    timeouts = []
-  }
-
-  const startPageSession = () => {
-    if (!isBrowser()) return
-    clearSessionTimers()
-    pageSessionIdCounter += 1
-    const sessionId = pageSessionIdCounter
-
-    if (autoTracking.pageViews) {
-      void autoTrack(getNames().autoTrackingEvents.pageSessionStart, { session_id: sessionId })
-    }
-
-    if (activeScrollHandler) {
-      window.removeEventListener('scroll', activeScrollHandler)
-      activeScrollHandler = null
-    }
-
-    if (autoTracking.scroll.enabled) {
-      const thresholds = [...autoTracking.scroll.thresholds]
-        .filter((value) => Number.isFinite(value) && value > 0 && value <= 100)
-        .sort((a, b) => a - b)
-      const emitted = new Set<number>()
-      const emitDepth = (threshold: number) => {
-        if (emitted.has(threshold)) return
-        emitted.add(threshold)
-        void autoTrack(getNames().autoTrackingEvents.scrollDepth, { depth: threshold, session_id: sessionId })
-      }
-
-      activeScrollHandler = () => {
-        const doc = document.documentElement
-        const scrollTop = window.scrollY || doc.scrollTop
-        const total = doc.scrollHeight - window.innerHeight
-        if (total <= 0) return
-        const ratio = Math.min(1, scrollTop / total)
-        const depth = Math.round(ratio * 100)
-        for (const threshold of thresholds) {
-          // Allow a small buffer for the 100% threshold so it fires near the
-          // bottom even when scroll math doesn't land exactly on 100.
-          const triggerAt = threshold === 100 ? 95 : threshold
-          if (depth >= triggerAt) emitDepth(threshold)
-        }
-        if (emitted.size === thresholds.length && activeScrollHandler) {
-          window.removeEventListener('scroll', activeScrollHandler)
-        }
-      }
-
-      window.addEventListener('scroll', activeScrollHandler, { passive: true })
-    }
-
-    if (autoTracking.timeOnPage.enabled) {
-      for (const seconds of autoTracking.timeOnPage.intervals) {
-        if (!Number.isFinite(seconds) || seconds <= 0) continue
-        const handle = window.setTimeout(() => {
-          if (sessionId !== pageSessionIdCounter) return
-          void autoTrack(getNames().autoTrackingEvents.timeOnPage, { seconds, session_id: sessionId })
-        }, seconds * 1000)
-        timeouts.push(handle)
-      }
-    }
-  }
 
   if (options.consentEngine) {
     unsubscribeConsent = options.consentEngine.subscribe(({ consent: nextConsent }) => {
@@ -635,44 +515,8 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx), error),
       )
     },
-    enableAutoTracking(config) {
-      if (!isBrowser() || autoBound) return
-      autoBound = true
-      autoTracking = resolveAutoTracking(config)
-      autoOnly = config?.only
-
-      const clicks = autoTracking.clicks
-      if (clicks.enabled) {
-        const selectorList = clicks.selectors.join(', ')
-        activeClickHandler = (event) => {
-          const target = event.target as HTMLElement | null
-          if (!target) return
-          let element: HTMLElement | null = null
-          if (clicks.mode === 'attribute') {
-            const closest = target.closest(`[${clicks.attribute}]`)
-            if (closest instanceof HTMLElement) element = closest
-          } else {
-            const closest = selectorList ? target.closest(selectorList) : null
-            if (closest instanceof HTMLElement) element = closest
-          }
-          if (!element) return
-          const name = element.getAttribute(clicks.attribute) || element.getAttribute('aria-label') || 'unknown'
-          void autoTrack(getNames().autoTrackingEvents.uiClick, {
-            ui_target: name,
-            ui_element: element.tagName.toLowerCase(),
-            ui_id: element.id || undefined,
-            path: window.location.pathname,
-            session_id: pageSessionIdCounter || undefined,
-          })
-        }
-
-        window.addEventListener('click', activeClickHandler)
-      }
-
-      startPageSession()
-    },
     newPageSession() {
-      if (autoBound) startPageSession()
+      pageSession?.()
     },
     getSnapshot() {
       return currentSnapshot
@@ -689,13 +533,6 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       if (globalHandlers) {
         window.removeEventListener('error', onWindowError)
         window.removeEventListener('unhandledrejection', onRejection)
-      }
-      clearSessionTimers()
-      if (activeScrollHandler && isBrowser()) {
-        window.removeEventListener('scroll', activeScrollHandler)
-      }
-      if (activeClickHandler && isBrowser()) {
-        window.removeEventListener('click', activeClickHandler)
       }
       providerStates.clear()
       listeners.clear()

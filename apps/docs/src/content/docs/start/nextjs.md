@@ -29,13 +29,14 @@ import. Pass each provider its ID straight from the environment:
 import { createAnalytics } from 'consentlayer'
 import { ga4 } from 'consentlayer/providers/ga4'
 import { meta } from 'consentlayer/providers/meta'
+import { autoTracking } from 'consentlayer/auto-tracking'
 
 export const analytics = createAnalytics({
   providers: [
     ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID }),
     meta({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID }),
   ],
-  autoTracking: true,
+  autoTracking: autoTracking(),
 })
 ```
 

@@ -163,7 +163,7 @@ email and phone passed to its `init` call. A reload starts it again.
 sent before consent are not replayed to a provider that loads later.
 
 **The event is limited to other providers.** `{ only: ['ga4'] }` on a call, or
-`autoTracking: { only: [...] }`, sends it only to the listed provider IDs.
+`autoTracking({ only: [...] })`, sends it only to the listed provider IDs.
 
 **The event is waiting for boot.** Calls made before `boot()` are held and
 delivered once it runs. After 100 waiting calls, later ones are dropped:

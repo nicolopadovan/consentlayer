@@ -26,10 +26,11 @@ import { createAnalytics } from 'consentlayer'
 import { ga4 } from 'consentlayer/providers/ga4'
 import { meta } from 'consentlayer/providers/meta'
 import { environment } from '../environments/environment'
+import { autoTracking } from 'consentlayer/auto-tracking'
 
 export const analytics = createAnalytics({
   providers: [ga4({ measurementId: environment.ga4MeasurementId }), meta({ pixelId: environment.facebookPixelId })],
-  autoTracking: true,
+  autoTracking: autoTracking(),
   enabled: !isDevMode(),
 })
 ```

@@ -323,8 +323,11 @@ opt-out command; GA4, Meta and TikTok expire their cookies; Hotjar deletes its
 ## Auto-tracking
 
 At the end of a pass, if the instance has booted, `autoTracking` is set and
-the consent the pass evaluated grants analytics, `enableAutoTracking` runs.
-It binds once per instance:
+the consent the pass evaluated grants analytics, the manager calls the
+function `autoTracking()` returned, once per instance, with `track` and a
+signal that `destroy()` aborts. It binds its listeners and returns the
+function that starts a page session, which the manager calls at once and on
+every `newPageSession()`:
 
 | Tracker      | Mechanism                                                                                                               | Event (default name)              |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
@@ -335,7 +338,7 @@ It binds once per instance:
 
 The listeners stay bound if consent is later withdrawn, but every
 auto-tracked event is sent with `requireAnalyticsConsent: true` (and
-`autoTracking.only`, if set), so delivery drops it. `newPageSession()` clears
+its `only` option, if set), so delivery drops it. `newPageSession()` clears
 the timers, rebinds the scroll listener and increments the `session_id`
 attached to every auto-tracked event.
 
@@ -388,8 +391,8 @@ no level. With `errors: false`, `captureError` does nothing.
    queued or delivered, no request is forwarded, and `call` refuses to run
    any hook.
 3. Unsubscribes from the consent engine.
-4. Removes the global error listeners, the auto-tracking click and scroll
-   listeners and the time-on-page timers.
+4. Removes the global error listeners and aborts the signal that removes the
+   auto-tracking click and scroll listeners and the time-on-page timers.
 5. Forgets all providers and subscribers.
 
 On the instance returned by `createAnalytics()`, `destroy()` also destroys the

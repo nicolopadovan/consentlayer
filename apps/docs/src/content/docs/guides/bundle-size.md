@@ -28,8 +28,10 @@ import it.
 
 From the root entry, only the exports you use are bundled; the
 [bundle size table](/#bundle-size) lists `createAnalytics()` on its own. The
-consent engine, the event queue, auto-tracking and `debug` logging are part of
-`createAnalytics()` whether or not you turn them on.
+consent engine, the event queue and `debug` logging are part of
+`createAnalytics()` whether or not you turn them on. Auto-tracking is a
+separate entry, `consentlayer/auto-tracking`, bundled only when you import
+`autoTracking()`.
 
 ## Load vendor SDKs on demand
 

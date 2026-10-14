@@ -151,6 +151,12 @@ export type AutoTrackingConfig = {
   only?: string[]
 }
 
+/** What `autoTracking()` returns: started once with `track` and a signal aborted on `destroy()`, it returns the function that starts a page session. */
+export type AutoTracking = (context: {
+  track: (name: string, params: Record<string, unknown>, options: TrackEventOptions) => Promise<void>
+  signal: AbortSignal
+}) => () => void
+
 /** Page view details; read from `location` and `document.title` when omitted. */
 export type PageViewPayload = {
   url?: string
@@ -280,8 +286,8 @@ export type AnalyticsManagerOptions = {
   identityStorage?: IdentityStorageAdapter
   enabled?: boolean | (() => boolean)
   debug?: boolean | DebugOptions
-  /** Starts once analytics consent is granted. `true` turns everything on; off by default. */
-  autoTracking?: AutoTrackingConfig | boolean
+  /** `autoTracking()` from `consentlayer/auto-tracking`. Starts once analytics consent is granted; off by default. */
+  autoTracking?: AutoTracking
   onError?: AnalyticsErrorHandler
   /**
    * `captureError` and the window `error` / `unhandledrejection` handlers.
@@ -393,7 +399,6 @@ export interface AnalyticsManager {
   reset: () => Promise<void>
   group: (groupId: string, traits?: Record<string, unknown>) => Promise<void>
   captureError: (error: unknown, context?: ErrorContext) => Promise<void>
-  enableAutoTracking: (config?: AutoTrackingConfig) => void
   newPageSession: () => void
   getSnapshot: () => AnalyticsManagerStateSnapshot
   subscribe: (listener: (snapshot: AnalyticsManagerStateSnapshot) => void) => () => void
@@ -407,6 +412,6 @@ export type ConsentApi = Omit<ConsentEngine, 'destroy'> & {
 }
 
 /** The instance `createAnalytics` returns. */
-export type Analytics = Omit<AnalyticsManager, 'updateConsent' | 'getConsent' | 'enableAutoTracking'> & {
+export type Analytics = Omit<AnalyticsManager, 'updateConsent' | 'getConsent'> & {
   consent: ConsentApi
 }

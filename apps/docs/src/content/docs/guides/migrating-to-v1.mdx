@@ -86,10 +86,11 @@ and returns one object with the whole API. `<AnalyticsProvider>` replaces
 ```ts title="lib/analytics.ts"
 import { createAnalytics } from 'consentlayer'
 import { ga4 } from 'consentlayer/providers/ga4'
+import { autoTracking } from 'consentlayer/auto-tracking'
 
 export const analytics = createAnalytics({
   providers: [ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID })],
-  autoTracking: true,
+  autoTracking: autoTracking(),
   names: { legacy: true },
 })
 ```
@@ -193,6 +194,7 @@ After:
 import { createAnalytics } from 'consentlayer'
 import { ga4 } from 'consentlayer/providers/ga4'
 import { meta } from 'consentlayer/providers/meta'
+import { autoTracking } from 'consentlayer/auto-tracking'
 
 export const analytics = createAnalytics({
   providers: [
@@ -200,7 +202,7 @@ export const analytics = createAnalytics({
     meta({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID }),
   ],
   server: { endpoint: '/api/analytics' },
-  autoTracking: true,
+  autoTracking: autoTracking(),
   names: { legacy: true },
 })
 ```
@@ -240,11 +242,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 | `updateConsent(consent)`                                                                                                       | `analytics.consent.setConsent(consent)`, or `analytics.consent.update(partial)` to change some categories                     |
 | `trackEvent(name, params, options)`                                                                                            | `analytics.track(name, params, options)`                                                                                      |
 | `trackPage(payload)`                                                                                                           | `analytics.page(payload)`                                                                                                     |
-| `enableAutoTracking(config)`                                                                                                   | `createAnalytics({ autoTracking: config })`                                                                                   |
+| `enableAutoTracking(config)`                                                                                                   | `createAnalytics({ autoTracking: autoTracking(config) })`, from `consentlayer/auto-tracking`                                  |
 | `newPageSession()`                                                                                                             | `analytics.newPageSession()`; `<AnalyticsProvider>` calls it when `routeKey` changes                                          |
 | `saveIdentity({ email, phone, external_id })`                                                                                  | `analytics.identify(external_id, { email, phone })`                                                                           |
 | `getIdentity()`                                                                                                                | No replacement; the identity is passed to plugins as `ctx.identity`                                                           |
-| `defaultEventDestinations`                                                                                                     | Events go to every provider; limit one event with `{ only: [...] }` and automatic events with `autoTracking: { only: [...] }` |
+| `defaultEventDestinations`                                                                                                     | Events go to every provider; limit one event with `{ only: [...] }` and automatic events with `autoTracking({ only: [...] })` |
 | `defaultRuntimePreset`                                                                                                         | `getNames()`, which returns the configured names                                                                              |
 | `<ConsentProvider>`, `<ConsentControllerProvider>`, `<AnalyticsManager>`, `<AutoTracking>`                                     | `<AnalyticsProvider analytics={analytics}>`                                                                                   |
 | `<AnalyticsManager lazy={...}>`                                                                                                | `<AnalyticsProvider boot={...}>`, with the same `mode` and `timeoutMs`                                                        |
@@ -330,9 +332,10 @@ dashboards that filter on `acm.*`, or keep the old names with
 `names: { prefix: 'acm' }`.
 
 Auto-tracking is configured with the `autoTracking` option instead of the
-`<AutoTracking config>` prop. It accepts the same `AutoTrackingConfig`, or
-`true` for the defaults, and still starts only once analytics consent is
-granted.
+`<AutoTracking config>` prop. Pass it `autoTracking(config)` from
+`consentlayer/auto-tracking`, which takes the same `AutoTrackingConfig`, or
+`autoTracking()` for the defaults. It still starts only once analytics
+consent is granted.
 
 A config that turns on a kind, with `true` or its options, now turns on only
 the kinds it names; before, every other kind stayed on unless set to `false`.
@@ -341,9 +344,9 @@ A config that turns nothing on, such as `{ scroll: false }` or
 
 ```ts
 // Before: clicks in attribute mode, plus page sessions, scroll and time on page
-autoTracking: { clicks: { mode: 'attribute' } }
+<AutoTracking config={{ clicks: { mode: 'attribute' } }} />
 // Now: name each kind you want
-autoTracking: { clicks: { mode: 'attribute' }, pageViews: true, scroll: true, timeOnPage: true }
+autoTracking: autoTracking({ clicks: { mode: 'attribute' }, pageViews: true, scroll: true, timeOnPage: true })
 ```
 
 ## Rename the providers
