@@ -272,7 +272,7 @@ describe('ga4 consent mode', () => {
     analytics.destroy()
   })
 
-  it('sends Consent Mode without GA4 and rejects invalid settings', () => {
+  it('sends Consent Mode without GA4, rejects invalid settings and exports only the adapter', async () => {
     googleConsentMode().observe!({ preferences: true, analytics: false, marketing: true })
     expect(
       entries().map(([command, type, signals]) => [command, type, (signals as { ad_storage: string }).ad_storage]),
@@ -282,6 +282,7 @@ describe('ga4 consent mode', () => {
     ])
     expect(() => googleConsentMode({ regions: [{ region: ['usa'] }] })).toThrow('ISO 3166-2')
     expect(() => googleConsentMode({ waitForUpdate: -1 })).toThrow('whole number')
+    expect(Object.keys(await import('../src/adapters/google-consent-mode'))).toEqual(['googleConsentMode'])
   })
 
   it('gtm loads the container after the defaults and feeds dataLayer, sharing Consent Mode with ga4', async () => {

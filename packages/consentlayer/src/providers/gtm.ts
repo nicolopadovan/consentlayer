@@ -1,4 +1,4 @@
-import { builtInConsentMode, ensureGtag } from '../adapters/google-consent-mode'
+import { builtInConsentMode, ensureGtag } from '../core/consent-mode'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import type { ConsentState, ProviderConsentRequirement } from '../core/types'
 import { assertHttpsOrRelativeUrl } from '../core/validation'

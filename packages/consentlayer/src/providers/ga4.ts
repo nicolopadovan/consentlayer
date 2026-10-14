@@ -1,4 +1,4 @@
-import { builtInConsentMode, ensureGtag } from '../adapters/google-consent-mode'
+import { builtInConsentMode, ensureGtag } from '../core/consent-mode'
 import type { UserIdentity } from '../core/types'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { assertHttpsOrRelativeUrl, assertValidGa4MeasurementId } from '../core/validation'
