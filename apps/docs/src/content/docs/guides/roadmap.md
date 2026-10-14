@@ -12,7 +12,9 @@ records what each release actually ships.
 
 ## Planned
 
-Ordered from the smallest change to the largest.
+Ordered from the smallest change to the largest. The
+[comparison with c15t](/guides/c15t/) explains where several of these come
+from.
 
 ### Banner on npm: `consentlayer/banner`
 
@@ -20,6 +22,14 @@ The banner of the [script tag](/start/script-tag/#3-the-banner) is available
 only from the CDN. The planned `consentlayer/banner` entry exports it for
 applications that install ConsentLayer from npm, as a function that mounts it
 on a consent controller.
+
+### Banner translations
+
+The [script tag](/start/script-tag/)'s banner is in English; each string can
+be overridden, but no other language ships. The planned translations cover the
+banner's text in the main European languages and beyond, chosen from the
+page's `lang` attribute or set explicitly, and are used by the banner
+components below.
 
 ### Banner components for UI libraries
 
@@ -35,6 +45,36 @@ interface:
 | shadcn-vue, shadcn-svelte and solid-ui | The same component for Vue, Svelte and Solid.                                                                                 |
 | MUI, Mantine and Chakra UI             | Components for React applications built on them.                                                                              |
 | Vuetify, Angular Material and others   | Components for the main UI library of each framework, added as there is demand.                                               |
+
+### Astro and TanStack Start
+
+Astro and TanStack Start applications can use `consentlayer` and the
+[JavaScript setup](/start/javascript/) today, without a dedicated
+integration. The planned bindings send page views on their client-side
+navigation, as the other framework integrations do.
+
+### More providers
+
+ConsentLayer has [9 providers](/guides/providers/). The planned ones cover
+the tools that other consent tools already load:
+
+| Kind         | Planned providers                                                                 |
+| ------------ | --------------------------------------------------------------------------------- |
+| Advertising  | Google Ads, LinkedIn Insight, Microsoft Advertising (UET), Reddit, Snapchat and X |
+| Analytics    | Microsoft Clarity, Mixpanel, Amplitude, Plausible, Matomo and Segment             |
+| Support chat | Intercom and Crisp                                                                |
+
+Until a provider exists, write it with [`definePlugin()`](/internals/plugins/).
+The advertising providers that have a server API, such as Google Ads
+conversions, also get a server destination.
+
+### Embeds behind consent
+
+ConsentLayer controls scripts it loads itself. Embedded content such as
+YouTube videos and Google Maps sets cookies of its own as soon as its iframe
+loads. The planned embed helper holds each embed behind a placeholder until
+its consent category is granted, or until the visitor allows it on the
+placeholder.
 
 ### Adapters for consent platforms
 
@@ -59,6 +99,13 @@ planned ports set ConsentLayer up where those sites add code:
 | Shopify themes              | A theme app extension. In a headless storefront, `shopifyCustomerPrivacy()` already keeps Shopify's consent in sync. |
 | Google Tag Manager          | A community template that loads the script tag from a GTM container.                                                 |
 
+### Viewing and exporting consent records
+
+[Consent records](/guides/consent-records/) are appended to your database,
+and reading them is left to you. The planned helpers look up a visitor's
+records by `consentId` or `userId`, export them for a data subject request,
+and delete records older than a retention period you set.
+
 ### Privacy laws beyond the GDPR
 
 ConsentLayer's defaults follow the opt-in model of the EU's GDPR and ePrivacy
@@ -75,6 +122,22 @@ consent model, the defaults and the signals to honor per visitor region:
 | France, CNIL guidance                              | A preset for the CNIL's recommendations on cookies, such as how long a choice is kept.                                                                                                                                                         |
 | Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each, after the ones above.                                                                                                                                                                                                        |
 
+Applying a preset per region needs the visitor's region. The planned region
+lookup reads it on the server, from the country header your host or CDN adds,
+such as Vercel's `x-vercel-ip-country` or Cloudflare's `CF-IPCountry`, and
+passes it to the browser with the page. No IP address is stored.
+
+### A full IAB TCF and GPP consent manager
+
+The [`tcf()`](/guides/adapters/tcf/) adapter only reads the choice of an IAB
+TCF consent manager on the page. A full implementation would make
+ConsentLayer that consent manager: its banner would show the vendors and
+purposes of the Global Vendor List and write the TC string, and it would
+answer the IAB's Global Privacy Platform (GPP) API for US and other
+regional frameworks. Each site that uses it must be covered by a CMP
+registered with IAB Europe, which charges a fee and reviews the banner, so
+this comes last.
+
 ## Under consideration
 
 The following are not supported today. They are being considered, with no
@@ -82,8 +145,6 @@ commitment either way.
 
 | Feature                           | Today                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Google Ads                        | No provider. [`googleConsentMode()`](/guides/adapters/google-consent-mode/) sends it Consent Mode signals, but nothing loads the Google Ads tag or sends conversions.                                                                                                                                                                                                                                                                                               |
-| Microsoft Clarity                 | No provider. Write one with [`definePlugin()`](/internals/plugins/).                                                                                                                                                                                                                                                                                                                                                                                                |
 | PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys.                                                                                                                                                                                                                                                                                                                                   |
 | A setup CLI, after 1.0            | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed. `vercel()` calls the `track` function you pass from `@vercel/analytics`, and the other providers load their vendor's script in the browser. |
 | A hosted consent service          | Consent records are stored in your own database through a [store](/guides/consent-records/#stores).                                                                                                                                                                                                                                                                                                                                                                 |
