@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ConsentLayer script tag: data- attributes</title>
+    <style>
+      :root {
+        --consentlayer-accent: #4f46e5;
+      }
+    </style>
+    <!-- On a real site: https://cdn.jsdelivr.net/npm/consentlayer@1/dist/consentlayer-banner.global.js -->
+    <script
+      src="/consentlayer-banner.global.js"
+      data-privacy-policy-url="/privacy"
+      data-text-title="Your privacy"
+    ></script>
+    <!-- On a real site: https://cdn.jsdelivr.net/npm/consentlayer@1/dist/consentlayer.global.js -->
+    <script src="/consentlayer.global.js" data-ga4="G-XXXXXXXXXX" data-meta-pixel="000000000000000" data-auto-tracking data-debug></script>
+  </head>
+  <body>
+    <h1>Configured with data- attributes</h1>
+    <p><a href="/">The same setup with <code>window.ConsentLayer</code></a></p>
+    <p>The banner script comes first here, to show that the two files load in either order.</p>
+    <button type="button" id="sign-up">Track sign_up</button>
+    <button type="button" id="settings">Cookie settings</button>
+    <script>
+      document.getElementById('sign-up').addEventListener('click', () => ConsentLayer.track('sign_up', { method: 'email' }))
+      document.getElementById('settings').addEventListener('click', () => CONSENTLAYER_openConsent())
+    </script>
+  </body>
+</html>

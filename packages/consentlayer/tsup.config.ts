@@ -1,7 +1,16 @@
 import { readFile, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { defineConfig } from 'tsup'
 
-export default defineConfig({
+const cdnShims: Record<string, string> = {
+  'posthog-js': 'posthog',
+  'posthog-js/dist/recorder': 'posthog-recorder',
+  './sentry-sdk': 'sentry',
+  './sentry-replay': 'sentry',
+  './sentry-tracing': 'sentry',
+}
+
+export default defineConfig([{
   entry: {
     index: 'src/index.ts',
     ecommerce: 'src/ecommerce.ts',
@@ -35,7 +44,7 @@ export default defineConfig({
   },
   dts: true,
   format: ['esm'],
-  clean: true,
+  clean: ['!*.global.js'],
   sourcemap: true,
   treeshake: { moduleSideEffects: false },
   external: ['react', 'react-dom', 'vue', 'svelte', 'nuxt', 'solid-js', /^solid-js\//, '@solidjs/router', /^@angular\//, /^consentlayer/, /^#build\//, /^\$app\//, /\.svelte$/],
@@ -45,4 +54,20 @@ export default defineConfig({
       await writeFile(entry, `'use client';${await readFile(entry, 'utf8')}`)
     }
   },
-})
+}, {
+  entry: { consentlayer: 'src/global/index.ts', 'consentlayer-banner': 'src/global/banner.ts' },
+  format: ['iife'],
+  platform: 'browser',
+  minify: true,
+  noExternal: [/./],
+  esbuildPlugins: [
+    {
+      name: 'cdn-shims',
+      setup(build) {
+        build.onResolve({ filter: /^(posthog-js(\/dist\/recorder)?|\.\/sentry-(sdk|replay|tracing))$/ }, ({ path }) => ({
+          path: resolve(import.meta.dirname, `src/global/cdn/${cdnShims[path]}.ts`),
+        }))
+      },
+    },
+  ],
+}])

@@ -20,7 +20,7 @@ export default defineConfig({
       },
       customCss: ['./src/styles/custom.css'],
       sidebar: [
-        { label: 'Getting started', items: [{ label: 'Introduction', link: '/' }, 'start/installation', 'start/react', 'start/nextjs', 'start/vue', 'start/nuxt', 'start/svelte', 'start/solid', 'start/angular', 'start/javascript', 'playground'] },
+        { label: 'Getting started', items: [{ label: 'Introduction', link: '/' }, 'start/installation', 'start/react', 'start/nextjs', 'start/vue', 'start/nuxt', 'start/svelte', 'start/solid', 'start/angular', 'start/javascript', 'start/script-tag', 'playground'] },
         {
           label: 'Guides',
           items: [
