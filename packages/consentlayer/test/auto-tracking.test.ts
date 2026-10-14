@@ -201,3 +201,27 @@ describe('granular auto-tracking', () => {
     expect(events.find((e) => e.name === 'consentlayer.ui_click')).toBeDefined()
   })
 })
+
+describe('autoTracking failures', () => {
+  it('rejects a value that is not autoTracking()', () => {
+    // @ts-expect-error the v0 boolean form
+    expect(() => createAnalyticsManager({ autoTracking: true })).toThrow(/autoTracking/)
+  })
+
+  it('keeps applying consent when autoTracking throws', async () => {
+    const onError = vi.fn()
+    const manager = createAnalyticsManager({
+      autoTracking: () => {
+        throw new Error('boom')
+      },
+      providers: [{ id: 'p', requiredConsent: 'analytics' }],
+      identityStorage: createMemoryIdentityStorage(),
+      onError,
+    })
+    await manager.boot()
+    await manager.updateConsent({ preferences: true, analytics: true, marketing: true })
+    await manager.updateConsent({ preferences: true, analytics: false, marketing: false })
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'auto-tracking' }))
+    expect(manager.getSnapshot().activeProviders).toEqual([])
+  })
+})

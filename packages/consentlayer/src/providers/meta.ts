@@ -30,6 +30,8 @@ export type MetaOptions = {
 }
 
 /** Meta Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Conversions API. */
+const isOwnCookie = (name: string) => name === '_fbp' || name === '_fbc'
+
 export function meta(options: MetaOptions) {
   if (!options.pixelId?.trim()) return skippedPlugin('meta', 'pixelId')
   const pixelId = assertValidMetaPixelId(options.pixelId.trim())
@@ -69,13 +71,14 @@ fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(loadContex
       setFlag('MetaPixelInitialized', true)
     },
     consent(context) {
+      if (typeof window !== 'undefined' && context.consent && !context.consent.marketing) expireCookies(isOwnCookie)
       if (!isReady()) return
       if (matched && !context.consent?.marketing) stale = true
       window.fbq?.('consent', context.consent?.marketing && !stale ? 'grant' : 'revoke')
     },
     teardown(context) {
       if (typeof window === 'undefined' || context.consent?.marketing) return
-      expireCookies((name) => name === '_fbp' || name === '_fbc')
+      expireCookies(isOwnCookie)
     },
     page(page, context) {
       if (!isReady() || stale || !context.consent?.marketing) return

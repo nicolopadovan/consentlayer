@@ -53,6 +53,7 @@ export default defineConfig({
           label: 'Guides',
           items: [
             'guides/events',
+            'guides/auto-tracking',
             'guides/consent-ui',
             {
               label: 'Providers',

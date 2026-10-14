@@ -28,6 +28,8 @@ export type TikTokOptions = {
 }
 
 /** TikTok Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Events API. */
+const isOwnCookie = (name: string) => name === '_ttp' || name === 'ttclid' || name.startsWith('ttcsid')
+
 export function tiktok(options: TikTokOptions) {
   const pixelId = options.pixelId?.trim()
   if (!pixelId) return skippedPlugin('tiktok', 'pixelId')
@@ -68,6 +70,7 @@ ttq.load(${JSON.stringify(pixelId).replace(/</g, '\\u003c')});
       setFlag('TikTokPixelInitialized', true)
     },
     consent(context) {
+      if (typeof window !== 'undefined' && context.consent && !context.consent.marketing) expireCookies(isOwnCookie)
       if (!isReady()) return
       if (matched && !context.consent?.marketing) stale = true
       if (context.consent?.marketing && !stale) window.ttq?.grantConsent()
@@ -75,7 +78,7 @@ ttq.load(${JSON.stringify(pixelId).replace(/</g, '\\u003c')});
     },
     teardown(context) {
       if (typeof window === 'undefined' || context.consent?.marketing) return
-      expireCookies((name) => name === '_ttp' || name === 'ttclid' || name.startsWith('ttcsid'))
+      expireCookies(isOwnCookie)
     },
     identify(identity, _traits, context) {
       if (!isReady() || stale || !context.consent?.marketing) return

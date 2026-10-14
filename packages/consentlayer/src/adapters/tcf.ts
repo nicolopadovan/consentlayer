@@ -49,6 +49,10 @@ function listen(api: TcfApi, onData: (tcData: TcData | null) => boolean | void):
 export function tcf(options: TcfOptions = {}): ConsentIntegrationAdapter {
   const win = options.window ?? (typeof window !== 'undefined' ? window : undefined)
   const purposes = { ...defaultPurposes, ...options.purposes }
+  const timeout = options.timeout ?? 5000
+  if (!(timeout >= 0 && Number.isFinite(timeout))) {
+    throw new Error(`[consentlayer] tcf timeout must be a non-negative number, received ${timeout}`)
+  }
   const toConsent = (tcData: TcData) =>
     Object.fromEntries(
       Object.entries(purposes).map(([category, ids]) => [
@@ -63,7 +67,6 @@ export function tcf(options: TcfOptions = {}): ConsentIntegrationAdapter {
     bootstrap() {
       const api = win?.__tcfapi
       if (!api) return null
-      const timeout = options.timeout ?? 5000
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
           stop()

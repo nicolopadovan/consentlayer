@@ -446,7 +446,7 @@ interface ConsentIntegrationAdapter {
   id: string
   /** Its bootstrap answer replaces the stored choice, which is used only when it answers null or fails. */
   authoritative?: boolean
-  /** Called by bootstrap() when nothing is stored, or first when authoritative. Errors go to onError with scope 'consent-adapter'. */
+  /** Called by bootstrap() when no valid choice is stored, or first when authoritative. Errors go to onError with scope 'consent-adapter'. */
   bootstrap?(): Promise<ConsentState | null> | ConsentState | null
   /** Called on every change not made by this adapter. Errors go to onError with scope 'consent-adapter'. */
   apply?(consent: ConsentState): Promise<void> | void
@@ -692,7 +692,7 @@ is reported to `onError` and does not affect other providers. See
 
 ### `AnalyticsError`
 
-Errors inside providers, server forwarding and consent adapters are never
+Errors inside providers, server forwarding, consent adapters and auto-tracking are never
 thrown to your code. They are passed to `onError`:
 
 ```ts
@@ -713,6 +713,7 @@ type AnalyticsErrorHandler = (error: AnalyticsError) => void
 | `provider-script-load`                                                                                                          | A provider's vendor script fails to load.                                                                                                                      |
 | `server-forward`                                                                                                                | Posting to `server.endpoint` fails or returns a non-2xx status, or restoring the consent cookie at `server.consentEndpoint` fails.                             |
 | `consent-adapter`                                                                                                               | An adapter's `bootstrap`, `apply` or `observe` throws, including the `server.consentEndpoint` recorder. After a failed `bootstrap`, the next adapter is asked. |
+| `auto-tracking`                                                                                                                 | `autoTracking()` throws while it starts or begins a page session.                                                                                              |
 | `queue-full`                                                                                                                    | 100 calls are already waiting for boot or for a deferred `load`.                                                                                               |
 
 <details>

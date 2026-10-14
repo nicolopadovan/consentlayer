@@ -57,29 +57,8 @@ the most recently created instance, and storage keys, globals and DOM events
 are shared by the whole page, so creating a second instance with different
 [`names`](/guides/names/) logs a warning and the last names win.
 
-<details>
-<summary>What <code>autoTracking()</code> sends</summary>
-
-Auto-tracking starts after boot, once `analytics` consent is granted, and sends
-each event to every active provider, or only to the provider IDs listed in
-its `only` option. `autoTracking()` from `consentlayer/auto-tracking` enables
-every kind with its defaults. An object that turns kinds on enables only
-those: `autoTracking({ clicks: { mode: 'attribute' } })` sends clicks alone,
-while `autoTracking({ scroll: false })` keeps every kind but scroll.
-
-| Option       | Default                                    | Event                                                                                                                      | Params                                                   |
-| ------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `pageViews`  | `true`                                     | `consentlayer.page_session_start`, on start and on every route change                                                      | `session_id`                                             |
-| `clicks`     | `{ mode: 'all', attribute: 'data-track' }` | `consentlayer.ui_click`, for clicks on `button`, `[role="button"]`, `a`, `input[type="submit"]` and `input[type="button"]` | `ui_target`, `ui_element`, `ui_id`, `path`, `session_id` |
-| `scroll`     | `{ thresholds: [25, 50, 75, 100] }`        | `consentlayer.scroll_depth`, once per threshold and page session                                                           | `depth`, `session_id`                                    |
-| `timeOnPage` | `{ intervals: [5, 15, 30, 60, 120] }`      | `consentlayer.time_on_page`, after each interval in seconds                                                                | `seconds`, `session_id`                                  |
-
-With `clicks: { mode: 'attribute' }`, only elements carrying the attribute
-are tracked. `ui_target` is the first non-empty value of the attribute and
-`aria-label`, never the element's text. The
-event names derive from [`names.prefix`](/guides/names/).
-
-</details>
+[Auto-tracking](/guides/auto-tracking/) describes the events `autoTracking()`
+sends and its options.
 
 <details>
 <summary>Turning analytics off in development</summary>

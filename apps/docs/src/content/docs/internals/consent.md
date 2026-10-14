@@ -66,7 +66,7 @@ a value:
 | 3    | Nothing found: the engine keeps `initialConsent` (default `null`)                                                          | no                  | no        | none             |
 
 Until bootstrap resolves, the engine holds `consent.initialConsent`, and the
-manager starts from the same value. If step 1 or 2 yields a value equal to the
+manager starts from the same value. If step 0, 1 or 2 yields a value equal to the
 one already held, nothing is written or broadcast. In step 3 the engine still
 notifies its subscribers once, with the unchanged consent, so the manager
 runs a lifecycle pass. If a choice is committed while bootstrap awaits an
@@ -206,12 +206,12 @@ interface ConsentIntegrationAdapter {
 }
 ```
 
-| Part        | When it runs                                                                                                                           | Purpose                                                                                           |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `bootstrap` | During bootstrap: first if `authoritative`, otherwise only if storage holds no value; and only while no earlier adapter returned one   | Read a choice the external platform already has                                                   |
-| `apply`     | After every committed change except those from storage, bootstrap, or this adapter's own `subscribe`                                   | Push the choice to the external platform                                                          |
-| `subscribe` | Once, when the engine is created                                                                                                       | Receive choices made in the external platform                                                     |
-| `observe`   | Once when the engine is created, with the current consent (`null` before a choice), then on every notify, whatever the change's source | Mirror the choice somewhere that has no consent of its own, such as Google's Consent Mode signals |
+| Part        | When it runs                                                                                                                                | Purpose                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `bootstrap` | During bootstrap: first if `authoritative`, otherwise only if storage holds no valid choice; and only while no earlier adapter returned one | Read a choice the external platform already has                                                   |
+| `apply`     | After every committed change except those from storage, bootstrap, or this adapter's own `subscribe`                                        | Push the choice to the external platform                                                          |
+| `subscribe` | Once, when the engine is created                                                                                                            | Receive choices made in the external platform                                                     |
+| `observe`   | Once when the engine is created, with the current consent (`null` before a choice), then on every notify, whatever the change's source      | Mirror the choice somewhere that has no consent of its own, such as Google's Consent Mode signals |
 
 Pass adapters with `createAnalytics({ consent: { adapters: [...] } })`.
 An `observe` that throws is reported to `onError` with scope

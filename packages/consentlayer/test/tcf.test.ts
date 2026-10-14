@@ -109,6 +109,12 @@ describe('tcf', () => {
     expect(cmp.listeners.size).toBe(0)
   })
 
+  it('rejects a timeout that is not a non-negative number', () => {
+    expect(() => tcf({ timeout: Number.NaN })).toThrow(/timeout/)
+    expect(() => tcf({ timeout: -1 })).toThrow(/timeout/)
+    expect(() => tcf({ timeout: 0 })).not.toThrow()
+  })
+
   it('is authoritative and gives up on a CMP that never answers', async () => {
     vi.useFakeTimers()
     const silent = vi.fn()

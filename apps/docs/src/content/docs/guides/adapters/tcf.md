@@ -63,11 +63,11 @@ tcf({
 
 ## Options
 
-| Option     | Type                                         | Default             | Description                                               |
-| ---------- | -------------------------------------------- | ------------------- | --------------------------------------------------------- |
-| `purposes` | `Partial<Record<ConsentCategory, number[]>>` | The table above     | TCF purpose IDs per category, merged over the defaults.   |
-| `timeout`  | `number`                                     | `5000`              | Milliseconds bootstrap waits for the CMP before it fails. |
-| `window`   | `Window`                                     | The global `window` | The window that holds `__tcfapi`.                         |
+| Option     | Type                                         | Default             | Description                                                                                      |
+| ---------- | -------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------ |
+| `purposes` | `Partial<Record<ConsentCategory, number[]>>` | The table above     | TCF purpose IDs per category, merged over the defaults.                                          |
+| `timeout`  | `number`                                     | `5000`              | Milliseconds bootstrap waits for the CMP before it fails. A negative or non-finite value throws. |
+| `window`   | `Window`                                     | The global `window` | The window that holds `__tcfapi`.                                                                |
 
 ## When there is no TCF choice
 

@@ -71,6 +71,9 @@ function whenDue(timing: Exclude<LoadTiming, false>, signal: AbortSignal): Promi
 }
 
 export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): AnalyticsManager {
+  if (options.autoTracking !== undefined && typeof options.autoTracking !== 'function') {
+    throw new Error('[consentlayer] autoTracking must be autoTracking() from consentlayer/auto-tracking')
+  }
   const debugLog = createDebugLog(options.debug)
   const listeners = new Set<(snapshot: AnalyticsManagerStateSnapshot) => void>()
   const providerStates = new Map<string, ProviderState>()
@@ -313,8 +316,13 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       await evaluateProvider(state)
     }
     if (options.autoTracking && !pageSession && booted && evaluated?.analytics && isBrowser()) {
-      pageSession = options.autoTracking({ track: api.track, signal: lifetime.signal })
-      pageSession()
+      pageSession = () => {}
+      try {
+        pageSession = options.autoTracking({ track: api.track, signal: lifetime.signal })
+        pageSession()
+      } catch (cause) {
+        emitError({ scope: 'auto-tracking', message: 'Auto-tracking failed to start', cause })
+      }
     }
     notify()
   }
@@ -516,7 +524,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       )
     },
     newPageSession() {
-      pageSession?.()
+      try {
+        pageSession?.()
+      } catch (cause) {
+        emitError({ scope: 'auto-tracking', message: 'Auto-tracking failed to start a page session', cause })
+      }
     },
     getSnapshot() {
       return currentSnapshot

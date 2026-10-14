@@ -520,4 +520,15 @@ describe('withdrawal', () => {
     manager.destroy()
     document.cookie = 'keep=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
   })
+
+  it('expires meta and tiktok cookies left from a visit before marketing was withdrawn', async () => {
+    for (const name of ['_fbp', '_ttp']) document.cookie = `${name}=1; path=/`
+    const manager = createAnalyticsManager({
+      providers: [meta({ pixelId: '12345678' }), tiktok({ pixelId: 'CABC123' })],
+      consent: { preferences: true, analytics: true, marketing: false },
+    })
+    await manager.boot()
+    expect(document.cookie).toBe('')
+    manager.destroy()
+  })
 })

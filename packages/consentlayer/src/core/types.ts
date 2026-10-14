@@ -253,6 +253,7 @@ export type AnalyticsErrorScope =
   | 'provider-script-load'
   | 'server-forward'
   | 'consent-adapter'
+  | 'auto-tracking'
   | 'queue-full'
 
 /** A failure inside a provider, the server forward or a consent adapter, or a full call queue. Never thrown; passed to `onError`. */
