@@ -1,6 +1,6 @@
 ---
 title: Server forwarding
-description: What the browser posts, how the route validates and filters it, and exactly what Meta CAPI and GA4 receive.
+description: What the browser posts, how the route validates and filters it, and exactly what Meta CAPI, the TikTok Events API and GA4 receive.
 sidebar:
   order: 4
 ---
@@ -117,8 +117,8 @@ once when created, and every event counts as denied, so nothing is sent:
    response carries `consentlayer-consent: missing`.
 6. **Destinations.** `undefined` entries, such as a `metaCapi()` called
    without its token, are dropped. Only destinations with
-   `forwardBrowserEvents: true` are considered. Of the built-in ones, that is
-   `metaCapi`.
+   `forwardBrowserEvents: true` are considered. Of the built-in ones, those
+   are `metaCapi` and `tiktokEvents`.
 7. **Consent and `only` filter.** A destination receives the event only if
    `consent[destination.requiredConsent] === true` and, when `only` is set,
    its `id` is in `only`.
@@ -185,7 +185,7 @@ type ServerRequestInfo = {
 
 </details>
 
-## Shared event IDs and Meta deduplication
+## Shared event IDs and deduplication
 
 The browser pixel and the server post carry the same ID:
 
@@ -197,6 +197,12 @@ The browser pixel and the server post carry the same ID:
 used; `page_view` is translated to `PageView` as well. Meta receives two
 copies with the same name and ID and keeps one. When the pixel is blocked,
 the server copy still arrives.
+
+`tiktokEvents` sends the `id` of each `track()` event as `event_id`, with the
+same event name `ttq.track()` used. TikTok deduplicates events with the same
+pixel ID, event name and `event_id`. `ttq.page()` takes no event ID, so
+`tiktokEvents` skips `page_view`: TikTok receives page views from the pixel
+only.
 
 To send a server-only event for something that also happened in the
 browser, such as a purchase confirmed by a webhook, generate the ID in the
@@ -250,6 +256,58 @@ Through the route, the event only reaches `metaCapi` with marketing consent,
 which is also when the browser includes email and phone. Fields that end up
 `undefined` are omitted from the JSON. A non-2xx response throws
 `Meta CAPI <status>: <response body>`.
+
+## What `tiktokEvents` sends
+
+`tiktokEvents({ pixelId, accessToken, testEventCode?, fetchImpl? })` from
+`consentlayer/server/tiktok` returns `undefined` while `pixelId` or
+`accessToken` is unset or empty, and calls `console.warn` once when only one
+of them is set. Otherwise the destination has the ID `tiktok`, requires
+marketing consent and accepts browser events. A `page_view` is skipped; every
+other event is sent as:
+
+`POST https://business-api.tiktok.com/open_api/v1.3/event/track/` with the
+headers `Access-Token: <accessToken>` and `Content-Type: application/json`
+
+```json
+{
+  "event_source": "web",
+  "event_source_id": "<pixelId>",
+  "test_event_code": "<testEventCode>",
+  "data": [{
+    "event": "AddToCart",
+    "event_time": 1760353200,
+    "event_id": "6f1c2a9e-…",
+    "user": {
+      "email": "<sha256>",
+      "phone": "<sha256>",
+      "external_id": "<sha256>",
+      "ip": "203.0.113.7",
+      "user_agent": "Mozilla/5.0 …",
+      "ttp": "…",
+      "ttclid": "…"
+    },
+    "properties": { "value": 25, "currency": "EUR", "content_ids": ["…"], "content_type": "product" },
+    "page": { "url": "https://shop.example/products/mug" }
+  }]
+}
+```
+
+| Field | Source |
+|---|---|
+| `event`, `properties` | The same translation as the pixel (`toTikTokEvent`, see [Events](/guides/events/)), with `providers.tiktok` merged in |
+| `event_time` | The server clock, in seconds |
+| `event_id`, `page.url` | The event's `id` and `url` |
+| `ip`, `user_agent` | The request info from step 8 |
+| `ttp`, `ttclid` | The `_ttp` and `ttclid` cookies, if present |
+| `email` | The email, trimmed and lowercased; sent only if valid |
+| `phone` | The phone reduced to digits with a leading `+`; sent only if it is a valid E.164 number; hashed including the `+`, as TikTok requires |
+| `external_id` | The user ID, hashed as is |
+
+Fields that end up `undefined` are omitted from the JSON. TikTok answers
+HTTP 200 with `{ code, message, request_id, data }`, and `code` is `0` on
+success. A non-2xx response or a non-zero `code` throws
+`TikTok Events API <status or code>: <message>`.
 
 ## What `ga4Server` sends
 

@@ -14,21 +14,6 @@ records what each release actually ships.
 
 Ordered from the smallest change to the largest.
 
-### TikTok pixel
-
-Today `tiktok()` only forwards consent to a `ttq` your application loads
-itself: it calls `ttq('consent', 'grant')` when `marketing` is granted and
-`ttq('consent', 'reject')` otherwise. The planned provider loads the TikTok
-pixel once `marketing` is granted and sends page views and events, like
-`meta()` does for the Meta Pixel.
-
-### TikTok Events API
-
-`consentlayer/server` has destinations for Meta, `metaCapi()`, and GA4,
-`ga4Server()`. The planned `tiktokEvents()` destination sends server events to
-the TikTok Events API under `marketing` consent, sharing each event's ID with
-the [TikTok pixel](#tiktok-pixel) so TikTok can deduplicate the two.
-
 ### Script-tag build
 
 The package ships ES modules only, so it needs a bundler. The planned build is

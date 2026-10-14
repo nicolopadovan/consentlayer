@@ -24,6 +24,7 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
 | [`consentlayer/server/meta`](#consentlayerservermeta) | `metaCapi` |
+| [`consentlayer/server/tiktok`](#consentlayerservertiktok) | `tiktokEvents` |
 | [`consentlayer/server/ga4`](#consentlayerserverga4) | `ga4Server` |
 | [`consentlayer/sentry/server`](#consentlayersentryserver) | `sentryInstrumentation` |
 | [`consentlayer/sentry/next`](#consentlayersentrynext) | `withSentryConfig` |
@@ -1398,11 +1399,22 @@ is forwarded; `Date` params become ISO strings, `undefined` becomes
 
 The options type is exported as `VercelOptions`.
 
-### `tiktok()`
+### `tiktok(options)`
 
-Takes no options. Forwards consent to a TikTok `ttq` your app loads itself:
-`ttq('consent', 'grant')` with marketing consent, `ttq('consent', 'reject')`
-without it.
+TikTok Pixel. Combine it with [`tiktokEvents`](#tiktokeventsoptions) to also
+send events through the Events API.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `pixelId` | `string \| undefined` | | **Required.** `undefined` or `''` turns the provider off. |
+| `loadBeforeConsent` | `boolean` | `false` | `true` loads the pixel at boot with `ttq.holdConsent()`. |
+
+The entry point also exports the options type `TikTokOptions` and two helpers:
+
+| Export | Signature | Description |
+|---|---|---|
+| `toTikTokEvent` | `(event: AnalyticsEventPayload) => { name: string; params: Record<string, unknown> }` | Maps a standard event to a TikTok standard event, such as `purchase` to `Purchase`, or keeps its name. Converts `items` to `content_ids`, `contents`, `content_type` and `num_items`, `search_term` to `search_string` and `transaction_id` to `order_id`. |
+| `tiktokUserData` | `(identity: UserIdentity) => Record<string, string>` | Advanced matching parameters for `ttq.identify`: `email` (trimmed, lowercased), `phone_number` (digits prefixed with `+`) and `external_id`. |
 
 ### `createShopifyCustomerPrivacyAdapter(options?)`
 
@@ -1761,6 +1773,39 @@ a missing variable, it also calls `console.warn` once; with both unset it is
 silent. Otherwise it returns a destination with `id` `'meta'` and `requiredConsent`
 `'marketing'`. Its `send` throws `Error('Meta CAPI <status>: <body>')` on a
 non-2xx response.
+
+## `consentlayer/server/tiktok`
+
+### `tiktokEvents(options)`
+
+The TikTok Events API. It accepts browser events, which TikTok deduplicates
+against the pixel by event name and event ID, and skips `page_view`, which the
+pixel sends without an ID. Email, phone (including its `+`) and user ID are
+SHA-256 hashed before sending; `_ttp` and `ttclid` are read from the request's
+cookies.
+
+```ts
+function tiktokEvents(options: {
+  pixelId: string | undefined
+  accessToken: string | undefined
+  testEventCode?: string
+  fetchImpl?: typeof fetch
+}): ServerDestination<true> | undefined
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `pixelId` | `string \| undefined` | | **Required.** |
+| `accessToken` | `string \| undefined` | | **Required.** The Events API access token. |
+| `testEventCode` | `string` | | Sends events to Test Events in Events Manager. |
+| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` implementation. |
+
+**Returns** `undefined` while `pixelId` or `accessToken`, both trimmed, is
+unset or empty, and calls `console.warn` once when exactly one of the two is
+set. Otherwise it returns a destination with `id` `'tiktok'` and
+`requiredConsent` `'marketing'`. Its `send` throws
+`Error('TikTok Events API <status or code>: <message>')` on a non-2xx response
+or a response whose `code` is not `0`.
 
 ## `consentlayer/server/ga4`
 

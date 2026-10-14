@@ -150,25 +150,25 @@ its own.
 
 ## What each provider receives
 
-GA4 and Meta rename standard events to their own vocabulary. Every other
-provider receives the name you passed to `track()`.
+GA4, Meta and TikTok rename standard events to their own vocabulary. Every
+other provider receives the name you passed to `track()`.
 
-| Standard event | GA4 | Meta |
-|---|---|---|
-| `view_item` | `view_item` | `ViewContent` |
-| `add_to_cart` | `add_to_cart` | `AddToCart` |
-| `add_to_wishlist` | `add_to_wishlist` | `AddToWishlist` |
-| `begin_checkout` | `begin_checkout` | `InitiateCheckout` |
-| `add_payment_info` | `add_payment_info` | `AddPaymentInfo` |
-| `purchase` | `purchase` | `Purchase` |
-| `sign_up` | `sign_up` | `CompleteRegistration` |
-| `lead` | `generate_lead` | `Lead` |
-| `search` | `search` | `Search` |
-| `contact` | `contact` | `Contact` |
-| `trial_started` | `trial_started` | `StartTrial` |
-| `subscription_started` | `subscription_started` | `Subscribe` |
-| `customize_product`, `schedule`, `submit_application`, `find_location`, `donate` | unchanged | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`, `Donate` |
-| Any other name | Characters other than letters, digits and `_` replaced with `_` | Sent with `fbq('track')` if it is already one of Meta's standard event names, otherwise with `fbq('trackCustom')` under the original name |
+| Standard event | GA4 | Meta | TikTok |
+|---|---|---|---|
+| `view_item` | `view_item` | `ViewContent` | `ViewContent` |
+| `add_to_cart` | `add_to_cart` | `AddToCart` | `AddToCart` |
+| `add_to_wishlist` | `add_to_wishlist` | `AddToWishlist` | `AddToWishlist` |
+| `begin_checkout` | `begin_checkout` | `InitiateCheckout` | `InitiateCheckout` |
+| `add_payment_info` | `add_payment_info` | `AddPaymentInfo` | `AddPaymentInfo` |
+| `purchase` | `purchase` | `Purchase` | `Purchase` |
+| `sign_up` | `sign_up` | `CompleteRegistration` | `CompleteRegistration` |
+| `lead` | `generate_lead` | `Lead` | `Lead` |
+| `search` | `search` | `Search` | `Search` |
+| `contact` | `contact` | `Contact` | `Contact` |
+| `trial_started` | `trial_started` | `StartTrial` | `StartTrial` |
+| `subscription_started` | `subscription_started` | `Subscribe` | `Subscribe` |
+| `customize_product`, `schedule`, `submit_application`, `find_location`, `donate` | unchanged | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`, `Donate` | `CustomizeProduct`, `Schedule`, `SubmitApplication`, `FindLocation`; `donate` unchanged |
+| Any other name | Characters other than letters, digits and `_` replaced with `_` | Sent with `fbq('track')` if it is already one of Meta's standard event names, otherwise with `fbq('trackCustom')` under the original name | Unchanged, as a custom event |
 
 The params each provider sends differ as follows:
 
@@ -176,20 +176,27 @@ The params each provider sends differ as follows:
 |---|---|---|
 | GA4 | `gtag('event', name, params)` | The event params, merged with `providers.ga4` |
 | Meta Pixel | `fbq('track' \| 'trackCustom', name, params, { eventID })` | Translated as described below, merged with `providers.meta` |
+| TikTok Pixel | `ttq.track(name, params, { event_id })` | Translated as described below, merged with `providers.tiktok` |
 | PostHog | `posthog.capture(name, params)` | The event params, merged with `providers.posthog` |
 | Vercel | The `trackEvent` function you pass | Top-level strings, numbers, booleans and `null`; `undefined` becomes `null`, a `Date` becomes an ISO string, and every other value is dropped |
 | Contentsquare | `_uxa.push(['trackPageEvent', name])` | None. `purchase` instead creates and sends an ecommerce transaction with `transaction_id`, `value` and `currency` as `id`, `revenue` and `currency` |
 | Hotjar | `hj('event', name)` | None |
 
-Sentry and TikTok receive no events: Sentry receives errors from
-`captureError()`, and TikTok only forwards consent to a `ttq` you load
-yourself.
+Sentry receives no events, only errors from `captureError()`.
 
 Meta receives `items[]` as `content_ids`, `contents` (`id`, `quantity`,
 `item_price`), `content_type: 'product'` and `num_items`, the sum of the item
 quantities. Each item's ID is its `item_variant` when present and its
 `item_id` otherwise, and a missing quantity counts as 1. `search_term` is
 renamed to `search_string`. Every other param is passed through.
+
+TikTok receives `items[]` as `content_ids`, `contents` (`content_id`,
+`content_name`, `content_category`, `brand`, `price` and `quantity`, from
+`item_name`, `item_category`, `item_brand`, `price` and `quantity`),
+`content_type: 'product'` and `num_items`, with the same item ID and quantity
+rules as Meta. `search_term` is renamed to `search_string` and
+`transaction_id` to `order_id`. Every other param, such as `value` and
+`currency`, is passed through.
 
 ### Consent
 

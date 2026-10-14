@@ -9,6 +9,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating-to-v1/).
 
 ### Breaking
+- `tiktok()` takes `{ pixelId, loadBeforeConsent? }` and loads the TikTok
+  pixel itself. The consent-only mode, which forwarded
+  `ttq('consent', …)` to a `ttq` the app loaded, is removed; drop your own
+  TikTok base code.
 - An `autoTracking` object that turns on a kind, with `true` or its options,
   enables only the kinds it turns on, like `debug`. An object that turns none
   on, such as `{ scroll: false }`, still enables every other kind.
@@ -82,6 +86,13 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `tiktok({ pixelId })` loads the TikTok pixel after marketing consent, with
+  TikTok's consent mode (`holdConsent`, `grantConsent`, `revokeConsent`), and
+  sends page views, events with `event_id` and advanced matching through
+  `ttq.identify`. `toTikTokEvent` maps standard events to TikTok's.
+- `tiktokEvents()` from `consentlayer/server/tiktok` sends events to the TikTok
+  Events API under marketing consent, deduplicated against the pixel by the
+  shared event ID.
 - `createConsentController(analytics, options?)` is exported from
   `consentlayer`: what the React provider and the Vue plugin do, without a
   framework, for plain JavaScript and Astro sites.

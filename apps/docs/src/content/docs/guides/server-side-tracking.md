@@ -1,20 +1,21 @@
 ---
 title: Server-side tracking
-description: Forward browser events to the Meta Conversions API and send server-only events to GA4 and Meta.
+description: Forward browser events to the Meta Conversions API and the TikTok Events API, and send server-only events to GA4, Meta and TikTok.
 ---
 
 This page covers the two server entry points in `consentlayer/server`, the
-built-in destinations for the Meta Conversions API and the GA4 Measurement
-Protocol, writing your own destination, and handling the vendor secrets.
+built-in destinations for the Meta Conversions API, the TikTok Events API and
+the GA4 Measurement Protocol, writing your own destination, and handling the vendor secrets.
 
 - `createAnalyticsHandler` is a route handler that receives the events the
-  browser forwards and sends them to the Meta Conversions API (CAPI).
+  browser forwards and sends them to the Meta Conversions API (CAPI) and the
+  TikTok Events API.
 - `sendServerEvent` sends events that only the server observes, such as a
-  Stripe or Shopify webhook, to GA4 and Meta.
+  Stripe or Shopify webhook, to GA4, Meta and TikTok.
 
-The split follows each vendor's recommended setup. Meta deduplicates browser
-and server events that share an event ID, so every browser event is also sent
-to CAPI. GA4 does not deduplicate, and its Measurement Protocol is meant to
+The split follows each vendor's recommended setup. Meta and TikTok
+deduplicate browser and server events that share an event ID, so every
+browser event is also sent to CAPI and the Events API. GA4 does not deduplicate, and its Measurement Protocol is meant to
 supplement gtag rather than mirror it, so GA4 receives only server-only events.
 
 To make the route trust only consent you recorded, instead of the consent the
@@ -275,6 +276,68 @@ single entry in `data`:
 | `user_data.external_id` | The SHA-256 hex digest of the user ID. |
 
 A non-2xx response throws `Meta CAPI <status>: <response body>`.
+
+</details>
+
+### TikTok Events API
+
+`tiktokEvents` from `consentlayer/server/tiktok` requires marketing consent
+and accepts browser events, so it can be passed to both
+`createAnalyticsHandler` and `sendServerEvent`. Its `id` is `tiktok`.
+
+```ts
+import { tiktokEvents } from 'consentlayer/server/tiktok'
+
+tiktokEvents({
+  pixelId: process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID,
+  accessToken: process.env.TIKTOK_TOKEN,
+})
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `pixelId` | `string \| undefined` | Required | The pixel ID, sent as `event_source_id`. |
+| `accessToken` | `string \| undefined` | Required | An Events API access token. Server only. |
+| `testEventCode` | `string` | None | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
+| `fetchImpl` | `typeof fetch` | `globalThis.fetch` | The `fetch` used for the request. |
+
+Both values are trimmed. While `pixelId` or `accessToken` is `undefined`, empty
+or only whitespace, `tiktokEvents()` returns `undefined` and the destination
+is off, with a `console.warn` once when only one of them is set.
+
+TikTok deduplicates a pixel event and an Events API event with the same pixel
+ID, event name and `event_id`. `tiktok()` and `tiktokEvents()` translate
+event names the same way and both use the ConsentLayer event ID, so each
+`track()` call is counted once. `ttq.page()` takes no event ID, so
+`tiktokEvents()` skips `page_view` events and TikTok receives page views from
+the pixel only.
+
+<details>
+<summary>Request sent to TikTok</summary>
+
+Each event is one `POST` to
+`https://business-api.tiktok.com/open_api/v1.3/event/track/`, with the
+`Access-Token` header and this body:
+
+| Field | Value |
+|---|---|
+| `event_source` | `web`. |
+| `event_source_id` | The pixel ID. |
+| `test_event_code` | `testEventCode`, when set. |
+| `data[0].event` | The TikTok name for the event: a standard event where one maps, otherwise the original name. |
+| `data[0].event_time` | The send time, in Unix seconds. |
+| `data[0].event_id` | The event's `id`, which TikTok uses to deduplicate it against the pixel event. |
+| `data[0].user.email` | The SHA-256 hex digest of the trimmed, lowercased email, if it is a valid address. |
+| `data[0].user.phone` | The SHA-256 hex digest of the phone number's digits prefixed with `+`, if it is a valid E.164 number. |
+| `data[0].user.external_id` | The SHA-256 hex digest of the user ID. |
+| `data[0].user.ip`, `user_agent` | From the request, when there is one. |
+| `data[0].user.ttp`, `ttclid` | The `_ttp` and `ttclid` cookies, when there is a request. |
+| `data[0].properties` | The translated params, merged with `providers.tiktok`. |
+| `data[0].page.url` | The event's `url`. |
+
+TikTok answers HTTP 200 with a `code` that is `0` on success. A non-2xx
+response or a non-zero `code` throws
+`TikTok Events API <status or code>: <message>`.
 
 </details>
 

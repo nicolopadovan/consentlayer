@@ -353,12 +353,12 @@ autoTracking: { clicks: { mode: 'attribute' }, pageViews: true, scroll: true, ti
 | `createGa4Adapter({ measurementId })` | `ga4({ measurementId })` |
 | `createMetaAdapter({ pixelId, locale, serverEndpoint, fetchImpl })` | `meta({ pixelId, locale })`; see [server routes](#replace-your-server-routes) |
 | `createHotjarAdapter({ siteId, version })` | `hotjar({ siteId, version })` |
-| `createTikTokConsentAdapter()` | `tiktok()` |
+| `createTikTokConsentAdapter()` | `tiktok({ pixelId })`; see below |
 | `createVercelAdapter({ trackEvent })` | `vercel({ trackEvent })` |
 | `createShopifyAnalyticsAdapter(options)` | Removed. Its events went to a queue that no Shopify script reads. |
 | `createShopifyCustomerPrivacyAdapter(options)` | Unchanged; pass it as `createAnalytics({ consent: { adapters: [...] } })` |
 
-Each factory is still imported from `consentlayer/providers/<name>`. Three
+Each factory is still imported from `consentlayer/providers/<name>`. Four
 providers behave differently:
 
 - **GA4 and Meta load after consent.** The old adapters injected `gtag.js` and
@@ -376,6 +376,10 @@ providers behave differently:
   yours has moved. On analytics withdrawal, `hotjar()` now deletes Hotjar's
   cookies and storage, and `reloadOnRevoke: true` reloads the page to stop
   recording.
+- **TikTok loads the pixel.** The old adapter only forwarded consent to a
+  `ttq` you loaded yourself. `tiktok({ pixelId })` loads the TikTok pixel
+  after marketing consent and sends page views, events and advanced matching
+  through it. Remove your own TikTok base code when you switch.
 
 `MetaPixelNoscript` moved from `consentlayer/providers/meta` to
 `consentlayer/react`, so the Meta provider no longer imports React. Its props

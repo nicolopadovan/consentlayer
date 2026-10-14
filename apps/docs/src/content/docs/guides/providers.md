@@ -26,11 +26,11 @@ Each provider is a named export of its own entry point,
 | Sentry | `sentry()` from `consentlayer/providers/sentry` | `'none'` | `dsn` |
 | Contentsquare | `contentsquare()` from `consentlayer/providers/contentsquare` | `analytics` | `tagId` |
 | Vercel Analytics | `vercel()` from `consentlayer/providers/vercel` | `'none'` | `trackEvent` |
-| TikTok | `tiktok()` from `consentlayer/providers/tiktok` | `marketing` | None |
+| TikTok Pixel | `tiktok()` from `consentlayer/providers/tiktok` | `marketing` | `pixelId` |
 | Hotjar (deprecated) | `hotjar()` from `consentlayer/providers/hotjar` | `analytics` | `siteId`, `version` |
 | Shopify Customer Privacy | `createShopifyCustomerPrivacyAdapter()` from `consentlayer/providers/shopify` | Consent source | None |
 
-The ID options of GA4, Meta, PostHog, Sentry, Contentsquare and Hotjar may be
+The ID options of GA4, Meta, TikTok, PostHog, Sentry, Contentsquare and Hotjar may be
 `undefined` or empty: the provider is then turned off, and with `debug: true`
 it logs `[consentlayer] <id> is off: <option> is not set.` at boot. Pass
 `process.env` values directly instead of guarding each provider. String IDs
@@ -161,12 +161,67 @@ all other values are dropped. To gate it on consent anyway, spread it:
 </details>
 
 <details>
-<summary>TikTok</summary>
+<summary>TikTok Pixel</summary>
 
-`tiktok()` takes no options and does not load TikTok's SDK. Load the `ttq`
-pixel yourself; on every consent change, if `window.ttq` is a function,
-`tiktok()` calls `ttq('consent', 'grant')` when marketing is granted and
-`ttq('consent', 'reject')` otherwise. It forwards no events.
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `pixelId` | `string \| undefined` | Required | The pixel ID from TikTok Events Manager. |
+| `loadBeforeConsent` | `boolean` | `false` | Loads the pixel at boot with `ttq.holdConsent()`. See [Loading before consent](#loading-before-consent). |
+
+On load, `tiktok()` runs TikTok's base code, with the consent mode methods
+`holdConsent`, `revokeConsent` and `grantConsent` added to the `ttq` queue.
+Before `ttq.load(pixelId)` it calls `ttq.grantConsent()` when marketing is
+granted and `ttq.holdConsent()` otherwise, then loads
+`https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=<pixelId>&lib=ttq`.
+A failed load is reported to `onError` with scope `provider-script-load`. The
+base code's own `ttq.page()` call is left out, since ConsentLayer sends page
+views itself. Every consent change calls `ttq.grantConsent()` or
+`ttq.revokeConsent()`.
+
+<details>
+<summary>Consent mode</summary>
+
+TikTok's Pixel Cookie Consent Mode works on the `ttq` queue:
+
+| Call | Effect |
+|---|---|
+| `ttq.holdConsent()` | Events are queued and not shared with TikTok. |
+| `ttq.grantConsent()` | Queued and later events are shared. |
+| `ttq.revokeConsent()` | Nothing is shared, including queued events. |
+
+With `loadBeforeConsent: true`, the pixel loads with `holdConsent` and
+`tiktok()` sends nothing until marketing is granted.
+
+</details>
+
+Page views are sent as `ttq.page()`. Events are sent as
+`ttq.track(name, params, { event_id })`, where `event_id` is the same ID that
+is forwarded to the Events API, so TikTok deduplicates the pair (see
+[Server-side tracking](/guides/server-side-tracking/)). Standard events map to
+TikTok's standard events; see [Events and identity](/guides/events/).
+
+`identify` calls `ttq.identify()` with `email` (trimmed and lowercased),
+`phone_number` (the digits prefixed with `+`, E.164) and `external_id` (the
+user ID). The pixel hashes them before sending. If the pixel received an email
+address or phone number and marketing consent is then withdrawn, the pixel
+stays revoked and sends nothing for the rest of the page's lifetime, even if
+consent is granted again. It resumes after a reload.
+
+<details>
+<summary>Cookies</summary>
+
+TikTok documents these first-party cookies for the pixel, each kept for 13
+months:
+
+| Cookie | Purpose |
+|---|---|
+| `_ttp` | Identifies the browser across visits. The Events API destination reads it. |
+| `ttcsid`, `ttcsid_<pixelId>` | The session. |
+| `ttclid` | The TikTok click ID from an ad click. The Events API destination reads it. |
+
+</details>
+
+There is no `<noscript>` fallback for TikTok.
 
 </details>
 
@@ -350,21 +405,23 @@ are discarded.
 
 ## Loading before consent
 
-By default, GA4 and Meta Pixel load nothing until their category is granted.
-With `loadBeforeConsent: true`, the vendor script is loaded at boot with
-consent denied: gtag.js with the Consent Mode defaults above, and the pixel
-with `fbq('consent', 'revoke')`.
+By default, GA4, Meta Pixel and TikTok Pixel load nothing until their
+category is granted. With `loadBeforeConsent: true`, the vendor script is
+loaded at boot with consent denied: gtag.js with the Consent Mode defaults
+above, the Meta pixel with `fbq('consent', 'revoke')` and the TikTok pixel
+with `ttq.holdConsent()`.
 
 ```ts
 ga4({ measurementId, loadBeforeConsent: true })
 meta({ pixelId, loadBeforeConsent: true })
+tiktok({ pixelId, loadBeforeConsent: true })
 ```
 
 No hits are sent before consent either way: GA4 is configured only after
-analytics consent is granted, and the pixel sends events only with marketing
+analytics consent is granted, and the pixels send events only with marketing
 consent. The effect is that the script is already loaded when the visitor
 consents. The script request itself discloses the visitor's IP address to
-Google or Meta before consent.
+Google, Meta or TikTok before consent.
 
 ## Google Consent Mode
 

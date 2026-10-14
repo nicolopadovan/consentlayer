@@ -42,7 +42,7 @@ Providers receive `userId` under any consent they run with, and `email` and
 | Contentsquare | `contentsquare` | `analytics` | — | — | yes |
 | Hotjar | `hotjar` | `analytics` | — | — | yes |
 | Vercel Analytics | `vercel` | `none` | — | — | — |
-| TikTok | `tiktok` | `marketing` | — | — | — |
+| TikTok Pixel | `tiktok` | `marketing` | option | — | — |
 
 A dash means the provider does not set that field. The `id` is the value to
 use in `only` and the `providerId` in `onError`.
@@ -288,13 +288,41 @@ also a user ID and marketing consent is granted.
 
 **Personal data.** None; identity is never passed.
 
-## TikTok
+## TikTok Pixel
 
-`tiktok()` from `consentlayer/providers/tiktok`.
+`tiktok({ pixelId, loadBeforeConsent? })` from `consentlayer/providers/tiktok`.
+The value is trimmed; an `undefined`, empty or whitespace-only `pixelId` turns
+the provider off.
 
 | Hook | Behaviour |
 |---|---|
-| `consent` | If `window.ttq` is a function: `ttq('consent', 'grant')` with marketing consent, otherwise `ttq('consent', 'reject')`. |
-| All other hooks | Not implemented. Load the TikTok pixel and send its events yourself. |
+| Script | `https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=<pixelId>&lib=ttq` |
+| `load` | Skipped if a pixel was already initialised on the page. Otherwise runs an inline bootstrap, TikTok's base code with the consent mode methods added and without its script injection and `ttq.page()`, that defines the `ttq` queue, calls `ttq.grantConsent()` or `ttq.holdConsent()` from the current consent, then `ttq.load(pixelId)`; then injects `events.js`. A failed load is reported with scope `provider-script-load`. |
+| `consent` | `ttq.grantConsent()` with marketing consent, otherwise `ttq.revokeConsent()`. |
+| `identify` | `ttq.identify({ email, phone_number, external_id })`, when the identity has any of them. |
+| `page` | `ttq.page()` |
+| `track` | `ttq.track(name, params, { event_id })` |
+| `reset`, `group`, `teardown` | Not implemented. |
 
-The provider exists only to forward consent to a pixel you manage.
+Because consent is held before `ttq.load` in the bootstrap, a pixel loaded
+with `loadBeforeConsent` shares nothing until marketing is granted. `page`,
+`track` and `identify` also check marketing consent themselves.
+
+**Names.** Standard events map to TikTok's (`purchase` → `Purchase`,
+`add_to_cart` → `AddToCart`; the full list is in [Events](/guides/events/)).
+Other names are sent under their own name. `items` becomes `content_ids`,
+`contents`, `content_type: 'product'` and `num_items`; `search_term` becomes
+`search_string` and `transaction_id` becomes `order_id`; `providers.tiktok` is
+merged last.
+
+**Personal data.** `email` is trimmed and lowercased, `phone_number` is the
+phone's digits prefixed with `+`, and `external_id` is the user ID. The pixel
+hashes them. Email and phone are present only with marketing consent.
+
+**Withdrawal after matching.** If the pixel received an email or phone and
+marketing is then withdrawn, the provider keeps the pixel revoked and silent
+until the page reloads, even if marketing is granted again.
+
+**Deduplication.** Each `track` passes `event_id`, the same ID the server
+route sends to the Events API. `ttq.page()` takes no event ID, so the Events
+API destination skips page views.
