@@ -16,6 +16,7 @@ export default [
   ['react', 'dist/react/index.js', '2.5 kB'],
   ['next', 'dist/next.js', '2.5 kB'],
   ['vue', 'dist/vue.js', '2.5 kB'],
+  ['vue/banner', 'dist/vue/banner.js', '4.5 kB'],
   ['svelte', 'dist/svelte.js', '2.5 kB'],
   ['sveltekit', 'dist/sveltekit.js', '2.5 kB'],
   ['solid', 'dist/solid.js', '2.5 kB'],

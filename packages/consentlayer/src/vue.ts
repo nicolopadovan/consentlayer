@@ -20,6 +20,7 @@ import {
 import { latestAnalytics } from './core/create-analytics'
 import { gtmNoscriptIframe, metaNoscriptImg } from './core/noscript'
 import type { Analytics, ConsentApi, ConsentState, PageViewPayload } from './core/types'
+import { CoreControllerKey } from './vue/core-controller-key'
 
 type RouteLike = { fullPath: string }
 
@@ -57,6 +58,7 @@ export const consentLayer: Plugin<[ConsentLayerOptions]> = {
     const state = shallowRef(controller.getSnapshot())
     const field = <Key extends keyof ConsentControllerState>(key: Key) => computed(() => state.value[key])
     app.provide(AnalyticsKey, analytics)
+    app.provide(CoreControllerKey, controller)
     app.provide(ControllerKey, {
       ready: field('ready'),
       error: field('error'),

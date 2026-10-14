@@ -83,6 +83,10 @@
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.js"
     },
+    "./vue/banner": {
+      "types": "./dist/vue/banner.d.ts",
+      "import": "./dist/vue/banner.js"
+    },
     "./svelte": {
       "types": "./dist/svelte.d.ts",
       "svelte": "./dist/svelte.js",
