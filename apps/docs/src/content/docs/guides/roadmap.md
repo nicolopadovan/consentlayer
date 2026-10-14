@@ -43,7 +43,6 @@ commitment either way.
 |---|---|
 | Google Ads | No provider. Only `ga4()` sends Consent Mode commands. |
 | Microsoft Clarity | No provider. Write one with [`definePlugin()`](/internals/plugins/). |
-| IAB TCF | ConsentLayer does not read or write a TCF consent string. |
 | PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys. |
 | A setup CLI, after 1.0 | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed; the other providers load their vendor's script in the browser. |
 | A hosted consent service | Consent records are stored in your own database through a [store](/guides/consent-records/#stores). |

@@ -61,6 +61,7 @@ export default defineConfig({
                 'guides/providers/contentsquare',
                 'guides/providers/vercel',
                 'guides/providers/shopify',
+                'guides/providers/tcf',
                 'guides/providers/hotjar',
               ],
             },

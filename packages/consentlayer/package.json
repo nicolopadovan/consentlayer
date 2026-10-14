@@ -103,6 +103,10 @@
       "types": "./dist/providers/shopify.d.ts",
       "import": "./dist/providers/shopify.js"
     },
+    "./providers/tcf": {
+      "types": "./dist/providers/tcf.d.ts",
+      "import": "./dist/providers/tcf.js"
+    },
     "./providers/contentsquare": {
       "types": "./dist/providers/contentsquare.d.ts",
       "import": "./dist/providers/contentsquare.js"

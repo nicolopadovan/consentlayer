@@ -8,6 +8,7 @@ import { meta } from '../providers/meta'
 import { posthog } from '../providers/posthog'
 import { sentry } from '../providers/sentry'
 import { createShopifyCustomerPrivacyAdapter } from '../providers/shopify'
+import { createTcfAdapter } from '../providers/tcf'
 import { tiktok } from '../providers/tiktok'
 import { vercel } from '../providers/vercel'
 import type { BannerConfig } from './banner'
@@ -50,6 +51,7 @@ const attributes: Record<string, [provider: string, option?: string, flag?: bool
   sentryReplay: ['sentry', 'replay', true],
   sentryTracing: ['sentry', 'tracing', true],
   shopify: ['shopify'],
+  tcf: ['tcf'],
   vercel: ['vercel'],
 }
 
@@ -82,6 +84,7 @@ export function createGlobal(config: GlobalConfig) {
   const adapters = [...(options.consent?.adapters ?? [])]
   for (const [name, providerOptions] of Object.entries(providers)) {
     if (name === 'shopify') adapters.push(createShopifyCustomerPrivacyAdapter(providerOptions))
+    else if (name === 'tcf') adapters.push(createTcfAdapter(providerOptions))
     else if (factories[name]) plugins.push(factories[name](providerOptions as never))
     else console.warn(`[consentlayer] Unknown provider "${name}".`)
   }

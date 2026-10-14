@@ -20,7 +20,7 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer/solid`](#consentlayersolid) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript` |
 | [`consentlayer/solidstart`](#consentlayersolidstart) | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid` |
 | [`consentlayer/angular`](#consentlayerangular) | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript` |
-| [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify consent adapter |
+| [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify and IAB TCF consent adapters |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
 | [`consentlayer/server/meta`](#consentlayerservermeta) | `metaCapi` |
@@ -106,7 +106,7 @@ type AnalyticsOptions = {
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `storage` | `ConsentStorageAdapter` | `localStorage`, under `names.consentStorageKey` | Where the choice is stored. See [Storage adapters](#storage-adapters). |
-| `adapters` | `ConsentIntegrationAdapter[]` | `[]` | External consent platforms to sync with, such as [`createShopifyCustomerPrivacyAdapter()`](#createshopifycustomerprivacyadapteroptions). |
+| `adapters` | `ConsentIntegrationAdapter[]` | `[]` | External consent platforms to sync with, such as [`createShopifyCustomerPrivacyAdapter()`](#createshopifycustomerprivacyadapteroptions) or [`createTcfAdapter()`](#createtcfadapteroptions). |
 | `initialConsent` | `ConsentState \| null` | `null` | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one. |
 | `broadcast` | `ConsentBroadcastConfig` | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set. |
 | `maxAgeDays` | `number` | None | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`. |
@@ -1446,6 +1446,22 @@ Content Security Policy or a preload hint.
 ```ts
 function getShopifyCustomerPrivacyScriptUrl(): string
 ```
+
+### `createTcfAdapter(options?)`
+
+From `consentlayer/providers/tcf`. A read-only
+[`ConsentIntegrationAdapter`](#storage-adapters), with `id` `'tcf'`, that
+reads consent from the IAB TCF v2 CMP on the page through `__tcfapi`. It has
+`bootstrap` and `subscribe` but no `apply`. Bootstrap returns `null` when
+`__tcfapi` is missing or the CMP does not report `gdprApplies: true`. See
+[IAB TCF](/guides/providers/tcf/).
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `purposes` | `Partial<Record<ConsentCategory, number[]>>` | `{ preferences: [1], analytics: [1, 8], marketing: [1, 2, 3, 4, 7] }` | TCF purpose IDs per category, merged over the default. A category is granted when `purpose.consents` is `true` for every listed purpose; legitimate interest does not count, and an empty list is never granted. |
+| `window` | `Window` | `window` | The window that holds `__tcfapi`. |
+
+The options type is exported as `TcfAdapterOptions`.
 
 ## `consentlayer/ecommerce`
 
