@@ -39,7 +39,7 @@ export default tseslint.config(
     }
   },
   {
-    files: ["packages/consentlayer/{src,test}/vue{,.test}.ts", "packages/consentlayer/src/nuxt/*.ts"],
+    files: ["packages/consentlayer/{src,test}/{vue,solid}{,.test}.ts", "packages/consentlayer/src/solidstart.ts", "packages/consentlayer/src/nuxt/*.ts", "apps/example-solidstart/**/*.tsx"],
     rules: {
       "react-hooks/rules-of-hooks": "off",
     },

@@ -104,8 +104,14 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   and `useConsentController()` with the state as reactive properties.
 - `consentlayer/sveltekit`: the same, with page views per SvelteKit navigation,
   and `handleErrorWith(analytics)` for the client `handleError` hook.
-- `<MetaPixelNoscript>` is exported from `consentlayer/vue`, `consentlayer/svelte`
-  and `consentlayer/sveltekit` too, not only `consentlayer/react`.
+- `consentlayer/solid`: `<AnalyticsProvider>`, `useAnalytics()`,
+  `useConsent()`, `useConsentController()` and an `<ErrorBoundary>` that
+  reports to `captureError`, as in React.
+- `consentlayer/solidstart`: the same, with page views per Solid Router
+  navigation, sent once the browser's URL has changed.
+- `<MetaPixelNoscript>` is exported from `consentlayer/vue`, `consentlayer/svelte`,
+  `consentlayer/sveltekit`, `consentlayer/solid` and `consentlayer/solidstart`
+  too, not only `consentlayer/react`.
 - `createAnalytics({ consent: { maxAgeDays, policyVersion, onStale } })` asks
   the visitor again when the stored choice is older than `maxAgeDays` or was
   made under another major `policyVersion` (`'3.x'` to `'4.0'`).

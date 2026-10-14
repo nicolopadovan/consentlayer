@@ -8,6 +8,7 @@ import banner from '../../../components/ConsentBanner.tsx?raw'
 import css from '../../../components/consent-banner.css?raw'
 import vueBanner from '../../../../../example-nuxt/app/components/ConsentBanner.vue?raw'
 import svelteBanner from '../../../../../example-sveltekit/src/lib/ConsentBanner.svelte?raw'
+import solidBanner from '../../../../../example-solidstart/src/lib/ConsentBanner.tsx?raw'
 
 ConsentLayer does not ship a consent banner, so its design, wording and
 languages remain yours. This page documents `useConsentController()`, the hook
@@ -219,6 +220,21 @@ Without SvelteKit, import from `consentlayer/svelte` instead.
 [SvelteKit](/start/sveltekit/#2-call-consentlayer-in-the-root-layout) and
 [Svelte](/start/svelte/#2-call-consentlayer-in-the-root-component) show where
 to render it.
+
+## Solid
+
+`useConsentController()` from `consentlayer/solid` and `consentlayer/solidstart`
+has the same fields, with the state as reactive properties: read
+`consent.bannerVisible` in JSX rather than destructuring it. It throws
+`useConsentController must be used within AnalyticsProvider` when no
+`<AnalyticsProvider>` is above the component. This component uses the same CSS
+file as the React recipe:
+
+<Code code={solidBanner} lang="tsx" title="src/lib/ConsentBanner.tsx" />
+
+Without Solid Router, import from `consentlayer/solid` instead.
+[SolidStart](/start/solidstart/#2-add-the-provider-to-the-routers-root) and
+[Solid](/start/solid/#2-add-the-provider) show where to render it.
 
 ## Custom categories
 

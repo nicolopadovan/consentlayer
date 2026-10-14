@@ -25,6 +25,8 @@ export default defineConfig({
     vue: 'src/vue.ts',
     svelte: 'src/svelte.ts',
     sveltekit: 'src/sveltekit.ts',
+    solid: 'src/solid.ts',
+    solidstart: 'src/solidstart.ts',
     'nuxt/index': 'src/nuxt/index.ts',
     'nuxt/plugin': 'src/nuxt/plugin.ts',
     'nuxt/config': 'src/nuxt/config.ts',
@@ -34,7 +36,7 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   treeshake: true,
-  external: ['react', 'react-dom', 'vue', 'svelte', 'nuxt', /^consentlayer/, /^#build\//, /^\$app\//, /\.svelte$/],
+  external: ['react', 'react-dom', 'vue', 'svelte', 'nuxt', 'solid-js', /^solid-js\//, '@solidjs/router', /^consentlayer/, /^#build\//, /^\$app\//, /\.svelte$/],
   async onSuccess() {
     // esbuild drops module directives; prepended on line 1 so the sourcemaps stay aligned.
     for (const entry of ['dist/react/index.js', 'dist/next.js']) {

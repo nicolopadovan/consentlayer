@@ -17,6 +17,8 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer/nuxt`](#consentlayernuxt) | The Nuxt module, which auto-imports `defineConsentLayerConfig` |
 | [`consentlayer/svelte`](#consentlayersvelte) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript` |
 | [`consentlayer/sveltekit`](#consentlayersveltekit) | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte` |
+| [`consentlayer/solid`](#consentlayersolid) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript` |
+| [`consentlayer/solidstart`](#consentlayersolidstart) | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid` |
 | [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify consent adapter |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
@@ -1073,6 +1075,93 @@ hook. It calls `analytics.captureError(error, { source: 'boundary' })` when
 `kind` is `'unknown'`, the errors your code threw, and skips `'app'` and
 `'framework'` errors. It returns nothing, so SvelteKit shows its default
 message.
+
+## `consentlayer/solid`
+
+Requires `solid-js` 1.9 or later, an optional peer dependency. The components
+are plain functions, so they work with any Solid JSX setup.
+
+### `<AnalyticsProvider>` for Solid
+
+The React [`<AnalyticsProvider>`](#analyticsprovider) as a Solid component,
+with the same props. `routeKey` and `page` are read reactively; `boot`,
+`autoShowBanner` and `openConsentGlobalKey` are read once, when it is created.
+It starts once mounted and stops when disposed; on the server it only provides
+the instance and the state. The props type is exported as
+`AnalyticsProviderProps`.
+
+### `useAnalytics()` for Solid
+
+```ts
+function useAnalytics(): Analytics
+```
+
+**Returns** the instance from the closest `<AnalyticsProvider>`, else the
+instance most recently created by `createAnalytics()`.
+
+**Throws** an `Error` when neither exists.
+
+### `useConsent()` for Solid
+
+```ts
+function useConsent(): {
+  consent: Accessor<ConsentState | null>
+  engine: ConsentApi
+  setConsent: (consent: ConsentState) => Promise<void>
+  update: (partial: Partial<ConsentState>) => Promise<void>
+}
+```
+
+As the React [`useConsent()`](#useconsent), with `consent` as an accessor. It
+listens for changes until the calling component is disposed.
+
+### `useConsentController()` for Solid
+
+The fields of the React [`useConsentController()`](#useconsentcontroller),
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories` and
+`prefs` as reactive read-only properties. The return type is exported as
+`ConsentController`.
+
+**Throws** an `Error` when no `<AnalyticsProvider>` is above the component.
+
+### `<ErrorBoundary>` for Solid
+
+Solid's `<ErrorBoundary>`, which also sends the error through `captureError`
+with `source: 'boundary'`.
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `fallback` | `JSX.Element \| ((error: unknown, reset: () => void) => JSX.Element)` | | **Required.** `reset()` clears the error and renders `children` again. |
+| `children` | `JSX.Element` | | |
+| `analytics` | `Analytics` | the `<AnalyticsProvider>` instance, else the latest `createAnalytics()` instance | The instance that receives the error. |
+| `tags` | `Record<string, string>` | | Passed as `context.tags`. |
+
+The props type is exported as `ErrorBoundaryProps`.
+
+### `<MetaPixelNoscript>` for Solid
+
+The React [`<MetaPixelNoscript>`](#metapixelnoscript) as a Solid component,
+with the props `pixelId` and `enabled`. Other attributes are passed to the
+image.
+
+## `consentlayer/solidstart`
+
+`ErrorBoundary`, `MetaPixelNoscript`, `useAnalytics`, `useConsent`,
+`useConsentController` and the `ConsentController` and `ErrorBoundaryProps`
+types from `consentlayer/solid`, plus the provider below. It imports
+`useLocation` and `useIsRouting` from `@solidjs/router`, so it works in any
+application that uses Solid Router, with or without SolidStart.
+
+### `<AnalyticsProvider>` for SolidStart
+
+The Solid [`<AnalyticsProvider>`](#analyticsprovider-for-solid), with
+`routeKey` set to the path and query string of `useLocation()`, and `null`
+while `useIsRouting()` is `true`, so each page view is sent once the browser's
+URL has changed. Render it in the `root` of `<Router>`.
+
+```ts
+type SolidStartAnalyticsProviderProps = Omit<AnalyticsProviderProps, 'routeKey'>
+```
 
 ## `consentlayer/providers/*`
 
