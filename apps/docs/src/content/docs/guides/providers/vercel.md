@@ -15,9 +15,10 @@ vercel({ trackEvent: track })
 
 ## Options
 
-| Option       | Type                                                                                   | Default  | Description                       |
-| ------------ | -------------------------------------------------------------------------------------- | -------- | --------------------------------- |
-| `trackEvent` | `(name: string, payload: Record<string, string \| number \| boolean \| null>) => void` | Required | `track` from `@vercel/analytics`. |
+| Option       | Type                                                                                   | Default    | Description                                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| `trackEvent` | `(name: string, payload: Record<string, string \| number \| boolean \| null>) => void` | Required   | `track` from `@vercel/analytics`.                                                                                |
+| `events`     | `string[] \| false`                                                                    | All events | The event names `track()` sends to it; `false` sends none. See [Routing events](/guides/events/#routing-events). |
 
 ## How it works
 

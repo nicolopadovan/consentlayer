@@ -46,6 +46,7 @@ interface AnalyticsPlugin {
 | `requiredConsent`   | Required, with no default; a plugin without it never runs. `'none'`: the plugin is active from boot, before the visitor chooses. A category name (`preferences`, `analytics`, `marketing`, a custom category or `sale_of_data`) requires that category to be `true`. A function is called only once consent is known; before that the plugin is not allowed. |
 | `loadBeforeConsent` | Run `load` at boot even if the plugin is not yet allowed. It still receives no events until it is.                                                                                                                                                                                                                                                           |
 | `defer`             | Delay `load` by a number of milliseconds, until the browser is idle (`'idle'`, with a 5 second cap), or until the first `pointerdown`, `keydown`, `scroll` or `touchstart` (`'interaction'`). Outside the browser it is due at once.                                                                                                                         |
+| `events`            | The event names `track` receives: all when unset, none with `false`. An event whose `only` names the plugin is always delivered. Page views are not affected.                                                                                                                                                                                                |
 
 ### Hooks
 

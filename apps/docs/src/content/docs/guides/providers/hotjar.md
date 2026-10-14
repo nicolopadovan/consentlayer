@@ -16,11 +16,12 @@ hotjar({ siteId: process.env.NEXT_PUBLIC_HOTJAR_SITE_ID, version: process.env.NE
 
 ## Options
 
-| Option           | Type                            | Default  | Description                                                     |
-| ---------------- | ------------------------------- | -------- | --------------------------------------------------------------- |
-| `siteId`         | `number \| string \| undefined` | Required | The Hotjar site ID, as a number or a string of digits.          |
-| `version`        | `number \| string \| undefined` | Required | The snippet version, `hjsv`, as a number or a string of digits. |
-| `reloadOnRevoke` | `boolean`                       | `false`  | Reloads the page when analytics consent is withdrawn.           |
+| Option           | Type                            | Default    | Description                                                                                                      |
+| ---------------- | ------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| `siteId`         | `number \| string \| undefined` | Required   | The Hotjar site ID, as a number or a string of digits.                                                           |
+| `version`        | `number \| string \| undefined` | Required   | The snippet version, `hjsv`, as a number or a string of digits.                                                  |
+| `reloadOnRevoke` | `boolean`                       | `false`    | Reloads the page when analytics consent is withdrawn.                                                            |
+| `events`         | `string[] \| false`             | All events | The event names `track()` sends to it; `false` sends none. See [Routing events](/guides/events/#routing-events). |
 
 An unset, empty or whitespace-only `siteId` or `version` turns the provider
 off. Surrounding whitespace is trimmed. Any other value that is not a positive

@@ -19,7 +19,7 @@ meta({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID })
 | `pixelId`           | `string \| undefined` | Required               | The 8 to 20 digit pixel ID.                                                                                                       |
 | `locale`            | `string`              | `'en_US'`              | The locale segment of the `fbevents.js` URL.                                                                                      |
 | `loadBeforeConsent` | `boolean`             | `false`                | Loads the pixel at boot with `fbq('consent', 'revoke')`. See [Loading before consent](/guides/providers/#loading-before-consent). |
-| `events`            | `string[]`            | Meta's standard events | The event names sent to the pixel. See [Which events are sent](#which-events-are-sent).                                           |
+| `events`            | `string[] \| false`   | Meta's standard events | The event names sent to the pixel. See [Which events are sent](#which-events-are-sent).                                           |
 
 ## How it works
 
@@ -42,8 +42,9 @@ event, listed in [Events and identity](/guides/events/#what-each-provider-receiv
 from [auto-tracking](/guides/auto-tracking/), stay with your analytics
 providers.
 
-To choose the events yourself, list them in `events`. The list replaces the
-default, so include the standard events you still want:
+To choose the events yourself, list them in `events`, or pass `false` to send
+none. The list replaces the default, so include the standard events you still
+want:
 
 ```ts
 meta({ pixelId, events: ['purchase', 'lead', 'quote_requested'] })

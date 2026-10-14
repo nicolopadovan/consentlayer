@@ -163,7 +163,6 @@ describe('granular auto-tracking', () => {
     expect(await sessionStarts({ clicks: { mode: 'attribute' } })).toBe(0)
     expect(await sessionStarts({ scroll: true, pageViews: true })).toBe(1)
     expect(await sessionStarts({ scroll: false })).toBe(1)
-    expect(await sessionStarts({ only: ['collector'] })).toBe(1)
   })
 
   it('removes its listeners and timers when the signal aborts, and restarts them per page session', async () => {

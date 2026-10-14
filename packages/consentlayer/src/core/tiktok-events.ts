@@ -19,13 +19,8 @@ const TIKTOK_EVENT_NAMES: Record<string, string> = {
   find_location: 'FindLocation',
 }
 
-const TIKTOK_STANDARD = new Set(Object.values(TIKTOK_EVENT_NAMES))
-
-/** Whether TikTok receives an event: one `only` names TikTok, else the names in `events`, else events with a TikTok standard event. */
-export function sendsToTikTok(name: string, events: readonly string[] | undefined, only?: readonly string[]): boolean {
-  if (only?.includes('tiktok')) return true
-  return events ? events.includes(name) : name in TIKTOK_EVENT_NAMES || TIKTOK_STANDARD.has(name)
-}
+/** The events with a TikTok standard event, under ConsentLayer's or TikTok's name. */
+export const TIKTOK_EVENTS = [...new Set([...Object.keys(TIKTOK_EVENT_NAMES), ...Object.values(TIKTOK_EVENT_NAMES)])]
 
 /** Translates a standard event into a TikTok standard event, or a custom one under its own name. */
 export function toTikTokEvent(event: AnalyticsEventPayload): { name: string; params: Record<string, unknown> } {

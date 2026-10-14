@@ -60,6 +60,26 @@ describe('createAnalytics', () => {
     analytics.destroy()
   })
 
+  it("sends each provider the events its `events` option lists, unless an event's `only` names it", async () => {
+    const all = spyProvider('ga4')
+    const listed = { ...spyProvider('meta'), events: ['purchase'] }
+    const none = { ...spyProvider('hotjar'), events: false as const }
+    const analytics = createAnalytics({ providers: [all, listed, none] })
+    await analytics.consent.update(granted)
+    await analytics.boot()
+
+    await analytics.track('purchase', { transaction_id: 'T-1' })
+    await analytics.track('quote_requested')
+    await analytics.track('share', {}, { only: ['meta', 'hotjar'] })
+
+    const names = (provider: typeof all) =>
+      provider.track.mock.calls.map(([event]) => (event as AnalyticsEventPayload).name)
+    expect(names(all)).toEqual(['purchase', 'quote_requested'])
+    expect(names(listed)).toEqual(['purchase', 'share'])
+    expect(names(none)).toEqual(['share'])
+    analytics.destroy()
+  })
+
   it('merges partial consent updates into denied defaults', async () => {
     const analytics = createAnalytics()
     await analytics.consent.update({ analytics: true })
@@ -227,9 +247,9 @@ describe('createAnalytics', () => {
     const ga4 = spyProvider('ga4')
     const analytics = createAnalytics({
       providers: [ga4],
-      autoTracking: autoTracking({ clicks: false, scroll: false, timeOnPage: false, only: ['ga4'] }),
+      autoTracking: autoTracking({ clicks: false, scroll: false, timeOnPage: false }),
     })
-    const hotjar = spyProvider('hotjar')
+    const hotjar = Object.assign(spyProvider('hotjar'), { events: false as const })
     analytics.registerProvider(hotjar)
     await analytics.boot()
     expect(ga4.track).not.toHaveBeenCalled()

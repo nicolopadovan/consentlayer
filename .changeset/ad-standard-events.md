@@ -2,4 +2,8 @@
 'consentlayer': minor
 ---
 
-The Meta and TikTok pixels, `metaCapi` and `tiktokEvents` now receive only events that map to a standard event of theirs. Custom events, including auto-tracking events, are no longer sent to them unless listed in the new `events` option. An event whose `only` option names the provider is always sent.
+Every provider and server destination takes an `events` option: the event names `track()` sends to it, or `false` for none. Analytics providers receive every event by default. The Meta and TikTok pixels, `metaCapi` and `tiktokEvents` now receive only events that map to one of their standard events; custom and auto-tracking events reach them only when listed. An event whose `only` option names a provider is always sent to it.
+
+`autoTracking()` no longer takes `only`; use the providers' `events` option instead.
+
+Declare your own events in a `Register` interface (`declare module 'consentlayer' { interface Register { events: { … } } }`) to type their params. Once declared, `track()` rejects undeclared names.

@@ -2,7 +2,7 @@
 
 import { createHash } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
-import { createAnalyticsHandler, sendServerEvent } from '../src/server'
+import { createAnalyticsHandler, sendServerEvent, type ServerDestination } from '../src/server'
 import { ga4Server } from '../src/server/ga4'
 import { assertSameOrigin, parseJsonWithLimit } from '../src/server/http'
 import { metaCapi } from '../src/server/meta'
@@ -204,6 +204,20 @@ describe('server destinations', () => {
     expect(warn).toHaveBeenCalledWith('[consentlayer] sgtm is off: set both url and measurementId.')
     warn.mockRestore()
     expect(() => sgtm({ url: 'http://sgtm.example.com/mp/collect', measurementId: 'G-ABC123' })).toThrow('HTTPS')
+  })
+
+  it('sends a destination page views and the events in its `events` option, unless `only` names it', async () => {
+    const send = vi.fn<ServerDestination['send']>(() => Promise.resolve())
+    const destination: ServerDestination = {
+      id: 'd',
+      requiredConsent: 'analytics',
+      forwardBrowserEvents: true,
+      events: false,
+      send,
+    }
+    for (const event of [{ name: 'page_view' }, { name: 'purchase' }, { name: 'share', only: ['d'] }])
+      await sendServerEvent({ ...event, consent: granted }, { destinations: [destination] })
+    expect(send.mock.calls.map(([event]) => event.name)).toEqual(['page_view', 'share'])
   })
 
   it('sends server-only events to GA4 with the cookie client id and consent', async () => {
