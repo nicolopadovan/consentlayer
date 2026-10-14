@@ -45,6 +45,7 @@ export default defineConfig([
       solid: 'src/solid.ts',
       solidstart: 'src/solidstart.ts',
       angular: 'src/angular.ts',
+      'angular/banner': 'src/angular/banner.ts',
       'nuxt/index': 'src/nuxt/index.ts',
       'nuxt/plugin': 'src/nuxt/plugin.ts',
       'nuxt/config': 'src/nuxt/config.ts',

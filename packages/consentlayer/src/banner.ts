@@ -205,7 +205,7 @@ function icon() {
 
 /** Renders the banner and the settings dialog from `controller`'s state. Returns a function that removes them. */
 export function mountBanner(
-  controller: ConsentController,
+  controller: Pick<ConsentController, 'actions' | 'getSnapshot' | 'subscribe'>,
   {
     position = 'bottom-left',
     overlay,
