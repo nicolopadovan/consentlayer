@@ -15,8 +15,8 @@ pnpm add consentlayer
 
 - [`packages/consentlayer`](./packages/consentlayer): the package
 - [`apps/docs`](./apps/docs): the docs site (Astro Starlight)
-- `apps/example-*`: an example application per framework, and one for the
-  script tag
+- `apps/example-*`: example applications for Next.js, Nuxt, SvelteKit,
+  SolidStart and Angular, and one for the script tag
 - [`docs`](./docs): maintainer notes: [publishing and releases](./docs/publishing-and-releases.md) and the [v1 spec](./docs/spec-v1.md)
 
 ConsentLayer has not been legally reviewed and is not legal advice. Whether

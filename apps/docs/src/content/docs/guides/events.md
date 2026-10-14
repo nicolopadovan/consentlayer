@@ -175,6 +175,7 @@ The params each provider sends differ as follows:
 | Provider      | Call                                                       | Params                                                                                                                                              |
 | ------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GA4           | `gtag('event', name, params)`                              | The event params, merged with `providers.ga4`                                                                                                       |
+| GTM           | `dataLayer.push({ ...params, event: name })`               | The event params, merged with `providers.gtm`, pushed with the unchanged name as `event`                                                            |
 | Meta Pixel    | `fbq('track' \| 'trackCustom', name, params, { eventID })` | Translated as described below, merged with `providers.meta`                                                                                         |
 | TikTok Pixel  | `ttq.track(name, params, { event_id })`                    | Translated as described below, merged with `providers.tiktok`                                                                                       |
 | PostHog       | `posthog.capture(name, params)`                            | The event params, merged with `providers.posthog`                                                                                                   |
@@ -201,8 +202,10 @@ rules as Meta. `search_term` is renamed to `search_string` and
 ### Consent
 
 An event reaches a provider only while the provider's consent requirement is
-met: analytics for GA4, Contentsquare and Hotjar, and marketing for Meta and
-TikTok. Vercel and Sentry require no consent. PostHog requires none in its
+met: analytics for GA4 (none with `consentMode: 'advanced'`), Contentsquare and
+Hotjar, and marketing for Meta and TikTok. Vercel and Sentry require no
+consent, and neither does Google Tag Manager unless you pass
+`requiredConsent`. PostHog requires none in its
 default cookieless mode, and analytics with `cookieless: false`; PostHog and
 Sentry add cookies, session recording and user data only once analytics is
 granted. [Providers](/guides/providers/) documents each provider's options
@@ -226,13 +229,13 @@ analytics.track('purchase', params, {
 })
 ```
 
-| Option                    | Type                                      | Behaviour                                                                                                                                                                                |
-| ------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `eventId`                 | `string`                                  | ID shared by the browser and server events so destinations can deduplicate them; Meta receives it as `eventID` and the Conversions API as `event_id`. Defaults to `crypto.randomUUID()`. |
-| `only`                    | `string[]`                                | Provider IDs that receive the event. Other providers skip it.                                                                                                                            |
-| `providers`               | `Record<string, Record<string, unknown>>` | Extra params for one provider, keyed by provider ID and merged over the event params. Read by GA4, Meta and PostHog, and by the Meta Conversions API on the server.                      |
-| `requireAnalyticsConsent` | `boolean`                                 | Drops the event, for providers and the server endpoint alike, unless analytics is granted when it is delivered.                                                                          |
-| `requireMarketingConsent` | `boolean`                                 | The same, for marketing.                                                                                                                                                                 |
+| Option                    | Type                                      | Behavior                                                                                                                                                                                                                                               |
+| ------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `eventId`                 | `string`                                  | ID shared by the browser and server events so destinations can deduplicate them; Meta receives it as `eventID` and the Conversions API as `event_id`. Defaults to `crypto.randomUUID()`.                                                               |
+| `only`                    | `string[]`                                | Provider IDs that receive the event. Other providers skip it.                                                                                                                                                                                          |
+| `providers`               | `Record<string, Record<string, unknown>>` | Extra params for one provider, keyed by provider ID and merged over the event params. Read by the GA4, GTM, Meta, TikTok and PostHog providers, and on the server by Meta CAPI and the TikTok Events API; `ga4Server` and `sgtm` read `providers.ga4`. |
+| `requireAnalyticsConsent` | `boolean`                                 | Drops the event, for providers and the server endpoint alike, unless analytics is granted when it is delivered.                                                                                                                                        |
+| `requireMarketingConsent` | `boolean`                                 | The same, for marketing.                                                                                                                                                                                                                               |
 
 ## Identity
 
@@ -244,8 +247,9 @@ await analytics.identify('user_123', { email: 'ada@example.com', plan: 'pro' })
 await analytics.reset()
 ```
 
-- **User ID.** Converted to a string and passed to every provider that accepts
-  one, whatever the consent state. Identifying a different user ID first
+- **User ID.** Converted to a string and passed to every active provider that
+  accepts one; a provider is active only while its own consent requirement is
+  met. Identifying a different user ID first
   discards the current identity, including email and phone. Calling
   `identify(undefined, traits)` keeps the current user ID.
 - **Email and phone.** Read from `traits.email` and `traits.phone`. Email is
@@ -272,37 +276,47 @@ await analytics.reset()
   holds 100 calls; later ones are dropped and a single `queue-full` error is
   reported to `onError`.
 
-| Provider             | User ID                                                        | Email and phone (marketing granted)                                                                                                                                             |
-| -------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GA4                  | `gtag('set', { user_id })`                                     | `gtag('set', 'user_data', { email, phone_number })`. Requires [user-provided data collection](https://support.google.com/analytics/answer/14077171) to be enabled in GA4 admin. |
-| Meta Pixel           | `external_id` in advanced matching                             | `em` and `ph` in advanced matching. The pixel accepts these only in `fbq('init')`, so it receives the identity known when it loads, usually none on a first visit.              |
-| Meta Conversions API | `external_id`, SHA-256 hashed, on every event                  | `em` and `ph`, SHA-256 hashed, on every event                                                                                                                                   |
-| PostHog              | `posthog.identify(userId, traits)`, while analytics is granted | `email` added to the person properties                                                                                                                                          |
-| Sentry               | `Sentry.setUser({ id })`, while analytics is granted           | `email`                                                                                                                                                                         |
-| Contentsquare        | `identify`                                                     | Not sent                                                                                                                                                                        |
-| Hotjar               | `hj('identify', userId, traits)`                               | `email` as an attribute, only with a user ID                                                                                                                                    |
-| Vercel               | Not sent                                                       | Not sent                                                                                                                                                                        |
+| Provider             | User ID                                                                  | Email and phone (marketing granted)                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GA4                  | `gtag('set', { user_id })`                                               | `gtag('set', 'user_data', { email, phone_number })`. Requires [user-provided data collection](https://support.google.com/analytics/answer/14077171) to be enabled in GA4 admin. |
+| Meta Pixel           | `external_id` in advanced matching                                       | `em` and `ph` in advanced matching. The pixel accepts these only in `fbq('init')`, so it receives the identity known when it loads, usually none on a first visit.              |
+| Meta Conversions API | `external_id`, SHA-256 hashed, on every event                            | `em` and `ph`, SHA-256 hashed, on every event                                                                                                                                   |
+| TikTok Pixel         | `external_id` in `ttq.identify`                                          | `email` and `phone_number` in `ttq.identify`                                                                                                                                    |
+| TikTok Events API    | `external_id`, SHA-256 hashed, on every event                            | `email` and `phone`, SHA-256 hashed, on every event                                                                                                                             |
+| GTM                  | `consentlayer_identify` event with `user_id`, while analytics is granted | Not sent                                                                                                                                                                        |
+| PostHog              | `posthog.identify(userId, traits)`, while analytics is granted           | `email` added to the person properties                                                                                                                                          |
+| Sentry               | `Sentry.setUser({ id })`, while analytics is granted                     | `email`                                                                                                                                                                         |
+| Contentsquare        | `identify`                                                               | Not sent                                                                                                                                                                        |
+| Hotjar               | `hj('identify', userId, traits)`                                         | `email` as an attribute, only with a user ID                                                                                                                                    |
+| Vercel               | Not sent                                                                 | Not sent                                                                                                                                                                        |
 
 ### Logging out
 
 `reset()` clears the identity in memory and in storage, then calls `reset` on
 every provider that has been set up, whatever the current consent:
 
-| Provider      | Effect of `reset()`                                       |
-| ------------- | --------------------------------------------------------- |
-| GA4           | Sets `user_id` to `null` and `user_data` to `{}`          |
-| PostHog       | Calls `posthog.reset()` and reapplies the current consent |
-| Sentry        | Calls `Sentry.setUser(null)`                              |
-| Contentsquare | Sends `resetIdentity`                                     |
-| Hotjar        | Identifies as anonymous with `hj('identify', null, {})`   |
-| Meta Pixel    | No effect                                                 |
+| Provider      | Effect of `reset()`                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------- |
+| GA4           | Sets `user_id` to `null` and `user_data` to `{}`                                            |
+| PostHog       | Calls `posthog.reset()` and reapplies the current consent                                   |
+| Sentry        | Calls `Sentry.setUser(null)`                                                                |
+| Contentsquare | Sends `resetIdentity`                                                                       |
+| Hotjar        | Identifies as anonymous with `hj('identify', null, {})`                                     |
+| GTM           | Pushes a `consentlayer_identify` event with `user_id: null`, if a user ID was pushed before |
+| Meta Pixel    | No effect                                                                                   |
+| TikTok Pixel  | No effect                                                                                   |
+| Vercel        | No effect                                                                                   |
 
-Two vendors cannot fully forget a user without a page load:
+Three vendors cannot fully forget a user without a page load:
 
 - The Meta pixel keeps the advanced-matching data from `fbq('init')` until the
-  page is reloaded. If the pixel was initialised with an email or phone and
+  page is reloaded. If the pixel was initialized with an email or phone and
   marketing is then withdrawn, the pixel stays revoked for the rest of the
   page, even if marketing is granted again.
+- The TikTok pixel keeps what `ttq.identify` received until the page is
+  reloaded, because ConsentLayer's TikTok provider has no `reset` hook. If the
+  pixel received an email or phone and marketing is then withdrawn, it stays
+  revoked for the rest of the page, even if marketing is granted again.
 - Hotjar has no API to remove the email attribute or to log out. It keeps
   linking the browser to the last user until its cookies are cleared, which
   ConsentLayer does when analytics consent is withdrawn.
@@ -326,7 +340,7 @@ const unsubscribe = analytics.consent.subscribe(({ consent }) => {
 })
 ```
 
-| Member                | Behaviour                                                                                                                                                                        |
+| Member                | Behavior                                                                                                                                                                         |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `categories`          | Every category the visitor can toggle: `preferences`, `analytics` and `marketing`, followed by your [custom categories](/guides/consent-ui/#custom-categories).                  |
 | `getConsent()`        | The current `ConsentState`, or `null` until the visitor has chosen.                                                                                                              |

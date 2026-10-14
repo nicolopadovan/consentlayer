@@ -5,10 +5,16 @@ sidebar:
   order: 2
 ---
 
-Consent is owned by the consent engine (`src/core/consent-engine.ts`).
+This page explains what the consent engine does with a visitor's choice: how
+it stores, restores, broadcasts and synchronizes consent, and how identity
+storage follows it. It is for readers who need the exact behavior, for
+example to write a consent adapter or to debug a stored value. Building a
+banner is covered in [Consent UI](/guides/consent-ui/).
+
+The consent engine (`src/core/consent-engine.ts`) owns consent.
 `createAnalytics()` creates one engine per instance and subscribes the
 analytics manager to it. The engine has no knowledge of providers: it reads
-and writes storage, broadcasts each change to the page, and synchronises with
+and writes storage, broadcasts each change to the page, and synchronizes with
 external consent platforms through adapters. The manager reacts to every
 change by loading, updating or tearing down providers, as described in
 [Lifecycle](/internals/lifecycle/).
@@ -28,7 +34,7 @@ type ConsentCategory = keyof ({ preferences: true; analytics: true; marketing: t
 `ConsentCategories`, passed to `createAnalytics({ categories })`, and stored,
 broadcast and sent to the server exactly like the built-in ones.
 
-Every value entering the engine is normalised (`normalizeConsent` in
+Every value entering the engine is normalized (`normalizeConsent` in
 `src/core/utils.ts`):
 
 | Input                 | Result                                                        |
@@ -117,7 +123,7 @@ Every change goes through one function, `commit`, which runs these steps in
 order:
 
 1. **Skip** the change if the engine was destroyed, the value is `null`, or it
-   equals the current value. Equality compares the normalised objects, so it
+   equals the current value. Equality compares the normalized objects, so it
    covers every category, custom ones included, and `sale_of_data`.
 2. **Store** the value in memory and, unless it came from storage itself,
    **write** it to the storage adapter.
@@ -174,8 +180,8 @@ never broadcast.
 
 The default localStorage storage subscribes to the browser's `storage` event
 for its key, which fires only in other tabs. When another tab saves a choice,
-this tab reads the key, normalises the choice and commits it with the
-"Another tab" behaviour from the table above: it broadcasts and notifies the
+this tab reads the key, normalizes the choice and commits it with the
+"Another tab" behavior from the table above: it broadcasts and notifies the
 manager, so providers load or stop here too, but it neither writes the value
 back nor calls adapters, because the originating tab already did both. A
 removed, unreadable or stale value is ignored.
@@ -207,7 +213,7 @@ An `observe` that throws is reported to `onError` with scope
 `consent-adapter` and the message
 `Consent adapter "<id>" failed to observe consent`.
 `destroy()` calls every cleanup function returned by `subscribe`. A value from
-`subscribe` is merged over the current consent before it is normalised, so
+`subscribe` is merged over the current consent before it is normalized, so
 categories the external platform does not know, such as your own or
 `sale_of_data`, keep their current value.
 
@@ -223,7 +229,7 @@ is reported with scope `consent-adapter`. See
 keeps Shopify's consent state and ConsentLayer's in step. Its adapter ID is
 `shopify-customer-privacy`.
 
-| Part        | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Part        | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bootstrap` | Returns `null` if `canBootstrap()` returns false. Unless `loadFeature: false`, first loads Shopify's Customer Privacy script when `headlessStorefront.storefrontAccessToken` is set and `Shopify.customerPrivacy` is missing, then awaits `Shopify.loadFeatures([{ name: 'consent-tracking-api', version: '0.1' }])`. Reads `Shopify.customerPrivacy.currentVisitorConsent()` and returns `null` if it is missing or every value is empty, which means the visitor has not chosen. Otherwise maps the values as below. |
 | `apply`     | Loads the feature in the same way, then calls `setTrackingConsent({ preferences, analytics, marketing, sale_of_data? })`. With `headlessStorefront.storefrontAccessToken` set, it adds `headlessStorefront: true` and your `checkoutRootDomain`, `storefrontRootDomain` and `storefrontAccessToken`, which Shopify requires outside its hosted themes. It resolves when Shopify calls back, or immediately when `setTrackingConsent` is missing.                                                                       |
@@ -245,7 +251,7 @@ occurs.
 `tcf()` from `consentlayer/adapters/tcf` reads consent from the
 IAB TCF v2 CMP on the page. Its adapter ID is `tcf`.
 
-| Part        | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Part        | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `bootstrap` | Returns `null` if `window.__tcfapi` is missing. Otherwise calls `__tcfapi('addEventListener', 2, callback)`, takes the first callback, removes the listener with `removeEventListener` and its `listenerId`, and returns `null` unless the call succeeded and `gdprApplies` is `true`. Otherwise maps `purpose.consents` as in the [mapping table](/guides/adapters/tcf/#purposes-and-categories), including while the CMP shows its interface (`eventStatus: 'cmpuishown'`), when no purpose has consent yet. |
 | `apply`     | None. TCF has no command for writing consent back to the CMP.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -257,7 +263,7 @@ IAB TCF v2 CMP on the page. Its adapter ID is `tcf`.
 the choice to Google tags. Its adapter ID is `google-consent-mode`, and it has
 only `observe`.
 
-| Call  | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Call  | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | First | Creates `window.dataLayer` and `window.gtag` if absent and sets the `__consentlayerGoogleConsentMode` window flag, which tells `ga4()` to skip its own Consent Mode calls. Calls `gtag('consent', 'default', …)` with every signal denied except `security_storage`, then one `default` per `regions` entry, then the `url_passthrough` and `ads_data_redaction` settings that are on. If the consent is not `null`, continues as below. |
 | Later | Calls `gtag('consent', 'update', …)` with the [signal mapping](/guides/adapters/google-consent-mode/#signals). While consent is `null` and no update was sent yet, nothing is sent, so the defaults stay in force.                                                                                                                                                                                                                       |
@@ -274,10 +280,10 @@ with providers and what is persisted depends on consent:
 | Analytics granted, marketing denied                    | `userId`                                              | `{ userId }`                |
 | Marketing granted                                      | `userId`, `email`, `phone`                            | `{ userId, email, phone }`  |
 
-The identity is normalised on the way in (`normalizeIdentity` in
+The identity is normalized on the way in (`normalizeIdentity` in
 `src/core/utils.ts`):
 
-| Field    | Normalisation                                                                                                                                               |
+| Field    | Normalization                                                                                                                                               |
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `email`  | Trimmed and lowercased; kept only if it has the form `name@domain.tld` with no whitespace.                                                                  |
 | `phone`  | Spaces, dashes, dots and parentheses removed; kept only if it is an E.164 number, with or without the leading `+`.                                          |
@@ -304,11 +310,11 @@ On a consent change:
 `useConsentController()`'s actions all call `setConsent`, await it, and then
 hide both the banner and the preferences dialog:
 
-| Action                 | Commits                                                        |
-| ---------------------- | -------------------------------------------------------------- |
-| `acceptAll()`          | Every category in `analytics.consent.categories` set to `true` |
-| `rejectNonEssential()` | Every category set to `false`                                  |
-| `savePreferences()`    | The dialog's toggles (`prefs`) as set                          |
+| Action                 | Commits                                                                                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `acceptAll()`          | Every category in `analytics.consent.categories` set to `true`, except `marketing` while [Global Privacy Control](/guides/consent-ui/#global-privacy-control) is honored |
+| `rejectNonEssential()` | Every category set to `false`                                                                                                                                            |
+| `savePreferences()`    | The dialog's toggles (`prefs`) as set                                                                                                                                    |
 
 Rejecting is a real choice: it is stored, so the banner does not return, and
 only providers that need no consent keep running. None of these actions sets

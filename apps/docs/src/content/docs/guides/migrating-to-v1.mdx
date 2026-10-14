@@ -27,8 +27,8 @@ route handler.
 | The `track*` e-commerce helpers are removed; events use GA4 names          | [Replace the helpers](#replace-the-e-commerce-helpers) with `track()` and the param builders |
 | `track()` no longer requires analytics consent                             | [Check what each provider receives](#review-what-each-provider-receives)                     |
 | `consentlayer/ui` and its stylesheet are removed                           | [Build your own banner](#build-your-own-consent-banner) from the recipe                      |
-| "Reject non-essential" and "Save" store `preferences: false`               | [Review consent behaviour](#consent-behaviour)                                               |
-| `setConsent()` rejects non-boolean values                                  | [Validate consent you read yourself](#consent-behaviour)                                     |
+| "Reject non-essential" and "Save" store `preferences: false`               | [Review consent behavior](#consent-behavior)                                                 |
+| `setConsent()` rejects non-boolean values                                  | [Validate consent you read yourself](#consent-behavior)                                      |
 | `meta({ serverEndpoint })` and the `/server` helpers are removed           | [Replace your server routes](#replace-your-server-routes)                                    |
 | The validators and `renderMetaPixelNoscriptHtml` are removed               | [Other removed exports](#other-removed-exports)                                              |
 | The plugin contract is renamed and its lifecycle changes                   | [Update custom plugins](#update-custom-plugins)                                              |
@@ -486,9 +486,9 @@ To open the settings from outside React, call `window.CONSENTLAYER_openConsent()
 or keep `window.ACM_openConsent()` with `names: { legacy: true }` or
 `names: { prefix: 'acm' }`.
 
-### Consent behaviour
+### Consent behavior
 
-Three behaviours of `useConsentController()` and the consent API changed:
+Three behaviors of `useConsentController()` and the consent API changed:
 
 - **"Reject non-essential" denies preferences.** `rejectNonEssential()` stores
   `preferences: false`; it used to store `true`. If your app reads
@@ -596,9 +596,11 @@ A provider you wrote yourself is now a plugin. Wrap it in `definePlugin()` from
 
 The lifecycle changes in three ways:
 
-- `setup` runs when the instance is created in the browser, before boot and
-  consent, for every plugin. It must not load scripts, send requests or set
-  cookies. Move that work to `load`.
+- `setup` runs once per plugin, before `consent` and `load` and whatever the
+  consent. In the browser it runs when the instance is created, for plugins
+  passed to `createAnalytics()` while `enabled` is on; otherwise it runs on the
+  first lifecycle pass after boot. It must not load scripts, send requests or
+  set cookies. Move that work to `load`.
 - `load` runs once. The old `init` ran each time the provider became active
   again after a withdrawal.
 - A plugin without `requiredConsent` was already active before consent, but

@@ -1,22 +1,25 @@
 ---
 title: Server-side tracking
-description: Forward browser events to the Meta Conversions API and the TikTok Events API, and send server-only events to GA4, Meta and TikTok.
+description: Forward browser events to the Meta Conversions API, the TikTok Events API and server-side GTM, and send server-only events to GA4, Meta, TikTok and server-side GTM.
 ---
 
 This page covers the two server entry points in `consentlayer/server`, the
-built-in destinations for the Meta Conversions API, the TikTok Events API and
-the GA4 Measurement Protocol, writing your own destination, and handling the vendor secrets.
+built-in destinations for the Meta Conversions API, the TikTok Events API,
+server-side GTM and the GA4 Measurement Protocol, writing your own
+destination, and handling the vendor secrets.
 
 - `createAnalyticsHandler` is a route handler that receives the events the
-  browser forwards and sends them to the Meta Conversions API (CAPI) and the
-  TikTok Events API.
+  browser forwards and sends them to the Meta Conversions API (CAPI), the
+  TikTok Events API and server-side GTM.
 - `sendServerEvent` sends events that only the server observes, such as a
-  Stripe or Shopify webhook, to GA4, Meta and TikTok.
+  Stripe or Shopify webhook, to GA4, Meta, TikTok and server-side GTM.
 
 The split follows each vendor's recommended setup. Meta and TikTok
 deduplicate browser and server events that share an event ID, so every
-browser event is also sent to CAPI and the Events API. GA4 does not deduplicate, and its Measurement Protocol is meant to
-supplement gtag rather than mirror it, so GA4 receives only server-only events.
+browser event is also sent to CAPI and the Events API. GA4 does not
+deduplicate, and its Measurement Protocol is meant to supplement gtag rather
+than mirror it, so `ga4Server` receives only server-only events. `sgtm`
+accepts browser events too; see [Server-side GTM](#server-side-gtm).
 
 To make the route trust only consent you recorded, instead of the consent the
 browser reports, see [Consent records](/guides/consent-records/).
@@ -464,8 +467,9 @@ or an `onError` call in the handler.
 
 ## Secrets
 
-`ga4Server` and `metaCapi` take credentials that must never reach the browser
-bundle: GA4's `apiSecret` and Meta's `accessToken`. Keep both in server-only
+`ga4Server`, `metaCapi`, `tiktokEvents` and `sgtm` take credentials that must
+never reach the browser bundle: the `apiSecret` of `ga4Server` and `sgtm`, and
+the `accessToken` of `metaCapi` and `tiktokEvents`. Keep them in server-only
 environment variables. For Meta, use a system-user token and rotate it when
 someone with access leaves the team.
 
@@ -476,6 +480,6 @@ metaCapi({ pixelId, accessToken: 'EAAB…' })
 ```
 
 In Next.js, only public identifiers belong in `NEXT_PUBLIC_*` variables: the
-GA4 measurement ID and the Meta pixel ID. Keep `apiSecret` and `accessToken`
-in variables without the prefix, and read them only in route handlers, server
-actions or other server-only code.
+GA4 measurement ID, the Meta pixel ID and the TikTok pixel ID. Keep every
+`apiSecret` and `accessToken` in variables without the prefix, and read them
+only in route handlers, server actions or other server-only code.

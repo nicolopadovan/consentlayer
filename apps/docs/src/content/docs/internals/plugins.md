@@ -121,8 +121,9 @@ All three are exported from `consentlayer` and defined in
 </details>
 
 A `load` hook that throws or rejects is reported with scope `provider-load`.
-GA4 and Meta catch their `loadScript` failure themselves and report it with
-scope `provider-script-load`; Contentsquare and Hotjar ignore it.
+GA4, GTM, Meta and TikTok catch their `loadScript` failure themselves and
+report it with scope `provider-script-load`; Contentsquare and Hotjar ignore
+it.
 
 ## What the manager guarantees
 
@@ -130,7 +131,7 @@ scope `provider-script-load`; Contentsquare and Hotjar ignore it.
   `identify` from `identify()`, run only while the plugin is active and its
   `requiredConsent` holds at that moment. `reset` is the exception: it runs
   for every plugin that was set up.
-- **Lifecycle passes are serialised.** Each pass runs `setup`, `consent`,
+- **Lifecycle passes are serialized.** Each pass runs `setup`, `consent`,
   `load` and `teardown` plugin by plugin, in registration order, and a pass
   starts only after the previous one finished. A deferred `load` joins the
   same queue. Two calls run outside it: `teardown` on unregister and on

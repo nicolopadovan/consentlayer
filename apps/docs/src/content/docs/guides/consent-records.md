@@ -100,7 +100,10 @@ export const POST = createAnalyticsHandler({
 `createAnalytics` is called. Each recorded choice is
 posted as `{ "consent": { … } }` with `fetch`. A network failure or non-2xx
 response is reported to `onError` with scope `consent-adapter` and provider ID
-`consent-endpoint`; the choice still applies in the browser.
+`consent-endpoint`; the choice still applies in the browser. A failed
+[lost-cookie](#the-consent-cookie) restore is reported with scope
+`server-forward` and the message
+`Restoring the consent cookie at <consentEndpoint> failed`.
 
 <details>
 <summary><code>createConsentHandler</code> options</summary>
@@ -215,9 +218,9 @@ To make the table append-only in the database as well, revoke `update` and
 
 `postgresStore(sql)` takes any `sql` tagged template that returns a promise:
 postgres.js (`postgres(url)`), Neon (`neon(url)`) or Vercel Postgres (`sql`
-from `@vercel/postgres`). It runs a parameterised `insert`, casting
+from `@vercel/postgres`). It runs a parameterized `insert`, casting
 `created_at` to `timestamptz` and `consent` to `jsonb`. The table name is
-fixed to `consent_records`, because tagged templates cannot parameterise
+fixed to `consent_records`, because tagged templates cannot parameterize
 identifiers portably.
 
 ### Supabase

@@ -1,6 +1,6 @@
 ---
 title: Server forwarding
-description: What the browser posts, how the route validates and filters it, and exactly what Meta CAPI, the TikTok Events API and GA4 receive.
+description: What the browser posts, how the route validates and filters it, and exactly what Meta CAPI, the TikTok Events API, server-side GTM and GA4 receive.
 sidebar:
   order: 4
 ---
@@ -117,7 +117,7 @@ once when created, and every event counts as denied, so nothing is sent:
 6. **Destinations.** `undefined` entries, such as a `metaCapi()` called
    without its token, are dropped. Only destinations with
    `forwardBrowserEvents: true` are considered. Of the built-in ones, those
-   are `metaCapi` and `tiktokEvents`.
+   are `metaCapi`, `tiktokEvents` and `sgtm`.
 7. **Consent and `only` filter.** A destination receives the event only if
    `consent[destination.requiredConsent] === true` and, when `only` is set,
    its `id` is in `only`.
@@ -335,7 +335,7 @@ requires analytics consent. It sends:
 | `user_data`        | Only with marketing consent. The email trimmed and lowercased; the phone reduced to digits with a leading `+`. Each is sent only if valid, using the same checks as Meta, and hashed including the `+`, as Google requires. Omitted when empty. |
 | `consent`          | Both keys `GRANTED` with marketing consent, otherwise `DENIED`                                                                                                                                                                                  |
 | `events[0].name`   | `ga4EventName(name)`, the same rule as gtag: `lead` → `generate_lead`, other invalid characters → `_`                                                                                                                                           |
-| `events[0].params` | `params`, with `providers.ga4` merged in                                                                                                                                                                                                        |
+| `events[0].params` | `page_location` from the event's `url` when set, then `params`, then `providers.ga4`; a later key replaces an earlier one                                                                                                                       |
 
 Without a client ID it throws `ga4Server needs event.clientId or the _ga cookie`,
 because GA4 cannot attribute the event to a visitor. A non-2xx response throws
@@ -350,9 +350,35 @@ one twice. The Measurement Protocol is meant to add events gtag cannot see,
 such as refunds, subscription renewals and webhooks; send those through
 `sendServerEvent`.
 
+## What `sgtm` sends
+
+`sgtm({ url, measurementId, apiSecret?, fetchImpl? })` from
+`consentlayer/server/sgtm` returns `undefined` while `url` or `measurementId`
+is unset or empty, and calls `console.warn` once when only one of them is
+set. It throws when `url` is not an HTTPS URL: a path such as `/mp/collect`
+is refused, because the request goes to your tagging server. Otherwise the
+destination has the ID `sgtm`, requires analytics consent and accepts browser
+events.
+
+It sends the same body as `ga4Server`, described above, to the Measurement
+Protocol client of your server container:
+
+`POST <url>?measurement_id=…[&api_secret=…]`
+
+The `url` is the client's endpoint, such as
+`https://sgtm.example.com/mp/collect`. `measurement_id` is always set to
+`measurementId`, and `api_secret` is added only when you pass `apiSecret`, for
+a client or tag that checks it. Both replace a query parameter of the same
+name in `url`.
+
+Without a client ID it throws `sgtm needs event.clientId or the _ga cookie`.
+A non-2xx response throws `Server-side GTM <status>: <response body>`.
+
 ## Hashing
 
-Both destinations hash with SHA-256 through Web Crypto
+`metaCapi` and `tiktokEvents` hash the email, the phone number and the user
+ID, and `ga4Server` and `sgtm` hash the email and the phone number and send
+`user_id` as is. All of them use SHA-256 through Web Crypto
 (`crypto.subtle.digest`), which Node.js and edge runtimes both provide, and
 send the digest as lowercase hex. Empty values are neither hashed nor sent.
 

@@ -8,7 +8,7 @@ sidebar:
 This page follows one ConsentLayer instance from `createAnalytics()` to
 `destroy()`: when each provider hook runs, which calls are awaited, how events
 are queued before boot and before a deferred SDK loads, and how failures are
-isolated. The behaviour described here lives in `createAnalyticsManager`
+isolated. The behavior described here lives in `createAnalyticsManager`
 (`src/core/analytics-manager.ts`). `<AnalyticsProvider>` only decides when to
 call `boot()` and when to send page views.
 
@@ -69,7 +69,7 @@ effect and schedules `boot()` in another, according to its `boot` prop:
 
 | `boot.mode`             | When `boot()` runs                                                                                                          |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `'immediate'` (default) | In the mount effect. Also the behaviour whenever `window` is undefined.                                                     |
+| `'immediate'` (default) | In the mount effect. Also the behavior whenever `window` is undefined.                                                      |
 | `'idle'`                | `requestIdleCallback` with `timeout: boot.timeoutMs ?? 3000`. Without that API, `setTimeout` with `boot.timeoutMs ?? 1500`. |
 | `'manual'`              | Never. Call `analytics.boot()` yourself.                                                                                    |
 
@@ -137,9 +137,11 @@ keep the context it received in `consent` and apply it once its SDK exists.
 
 Until the visitor has chosen, consent is `null`, and every requirement other
 than `'none'` fails without the function being called. Sentry, Vercel
-Analytics and PostHog in cookieless mode use `'none'`; GA4, Contentsquare,
-Hotjar and PostHog with `cookieless: false` use `'analytics'`; Meta Pixel and
-TikTok use `'marketing'`. See [What each provider receives](/internals/providers/).
+Analytics, Google Tag Manager (unless you pass `requiredConsent`) and PostHog
+in cookieless mode use `'none'`; GA4, Contentsquare, Hotjar and PostHog with
+`cookieless: false` use `'analytics'`, except that GA4 uses `'none'` with
+`consentMode: 'advanced'`; Meta Pixel and TikTok use `'marketing'`. See
+[What each provider receives](/internals/providers/).
 
 ### `loadBeforeConsent`
 
@@ -191,7 +193,7 @@ Until `boot()` has finished, `page`, `track`, `identify`, `group` and
 in the `pending` queue, which `boot()` drains in order after its first
 lifecycle pass.
 
-| Detail                       | Behaviour                                                                                                                                                                                  |
+| Detail                       | Behavior                                                                                                                                                                                   |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Capacity                     | 100 calls. The first call beyond that is reported with scope `queue-full`; it and later calls are dropped.                                                                                 |
 | Consent check                | Performed when the call is delivered, not when it was made, so queued events reach exactly the providers that the first pass activated.                                                    |
@@ -226,7 +228,7 @@ An event for a provider that is not active is dropped, not stored. Only the
 <summary>Ordering guarantees between calls</summary>
 
 Within one call, providers receive the event one after another and each hook
-is awaited. Separate calls are not serialised against each other: if you
+is awaited. Separate calls are not serialized against each other: if you
 call `track()` twice without awaiting, both start immediately, so a provider
 whose hook is asynchronous can delay later providers for the first event
 while the second event already reaches the first provider. The `pending`
@@ -269,8 +271,10 @@ tracks which providers have already received a page view for the current
 2. If there are any, it records them and calls
    `analytics.page(pageProp, { only: fresh })`.
 3. A new `routeKey` resets the record and also calls
-   `analytics.newPageSession()`, unless the previous key was `null`: the first
-   known route continues the session that started at boot.
+   `analytics.newPageSession()`, unless it is the first key that is not
+   `null`: that route continues the session that started at boot. A `null`
+   key between routes holds page views but does not count as a change, so
+   going from A to `null` and back to A starts no session.
 
 A provider that becomes active part-way through a visit, for example after
 the visitor accepts the banner, therefore receives one page view for the
@@ -353,14 +357,14 @@ inside `call`, which catches synchronous throws and rejected promises and
 passes them to `onError` as an `AnalyticsError`
 `{ scope, providerId?, message, cause? }`:
 
-| Scope                                                                                                                           | Source                                                                                  |
-| ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `provider-setup`, `provider-load`, `provider-consent`, `provider-page`, `provider-track`, `provider-error`, `provider-teardown` | That hook threw or rejected. `provider-setup` is also used for a duplicate provider ID. |
-| `provider-identify`                                                                                                             | `identify`, `reset` or `group` threw or rejected.                                       |
-| `provider-script-load`                                                                                                          | A provider reported a failed script through `emitError`.                                |
-| `server-forward`                                                                                                                | The request to `server.endpoint` failed.                                                |
-| `consent-adapter`                                                                                                               | A consent adapter's `bootstrap` or `apply` threw or rejected.                           |
-| `queue-full`                                                                                                                    | 100 calls were already waiting for boot or for a deferred `load`.                       |
+| Scope                                                                                                                           | Source                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `provider-setup`, `provider-load`, `provider-consent`, `provider-page`, `provider-track`, `provider-error`, `provider-teardown` | That hook threw or rejected. `provider-setup` is also used for a duplicate provider ID.                      |
+| `provider-identify`                                                                                                             | `identify`, `reset` or `group` threw or rejected.                                                            |
+| `provider-script-load`                                                                                                          | A provider reported a failed script through `emitError`.                                                     |
+| `server-forward`                                                                                                                | The request to `server.endpoint` failed, or restoring the consent cookie at `server.consentEndpoint` failed. |
+| `consent-adapter`                                                                                                               | A consent adapter's `bootstrap`, `apply` or `observe` threw or rejected.                                     |
+| `queue-full`                                                                                                                    | 100 calls were already waiting for boot or for a deferred `load`.                                            |
 
 If `onError` itself throws inside the manager, the exception is swallowed and
 logged with `console.debug` when `debug` is on.
@@ -397,9 +401,8 @@ visitor with nothing stored.
 
 1. `<AnalyticsProvider>` mounts. Bootstrap finds no stored choice, so consent
    stays `null`, and `boot()` runs.
-2. PostHog's `setup` (it has none) ran when the instance was created. The
-   first pass runs `consent`, which
-   stores the context. `allowed` is false and there is no
+2. PostHog has no `setup` hook, so nothing ran when the instance was created.
+   The first pass runs `consent`, which stores the context. `allowed` is false and there is no
    `loadBeforeConsent`, so nothing loads and the provider stays inactive. The
    `pending` queue is empty.
 3. Your code calls `track('pricing_viewed')`. PostHog is not active, so the
@@ -416,7 +419,7 @@ visitor with nothing stored.
    `page` hook goes into the backlog.
 7. You call `track('cta_click')`. It goes into the backlog too.
 8. The browser becomes idle, at most 5 seconds later. On the lifecycle queue,
-   PostHog's `load` imports `posthog-js`, initialises it opted out, and
+   PostHog's `load` imports `posthog-js`, initializes it opted out, and
    applies the stored context, which opts in. The backlog then replays the
    page view and `cta_click`, in order.
 9. From now on, calls reach PostHog's hooks directly.

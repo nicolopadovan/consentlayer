@@ -33,16 +33,17 @@ Providers receive `userId` under any consent they run with, and `email` and
 `phone` only with marketing consent (see
 [Identity storage](/internals/consent/#identity-storage)).
 
-| Provider         | `id`            | `requiredConsent`                       | `loadBeforeConsent`             | `defer` | `teardown` |
-| ---------------- | --------------- | --------------------------------------- | ------------------------------- | ------- | ---------- |
-| GA4              | `ga4`           | `analytics`, or `none` in advanced mode | option, `true` in advanced mode | —       | —          |
-| Meta Pixel       | `meta`          | `marketing`                             | option                          | —       | —          |
-| PostHog          | `posthog`       | `none` (cookieless) or `analytics`      | —                               | option  | —          |
-| Sentry           | `sentry`        | `none`                                  | —                               | option  | —          |
-| Contentsquare    | `contentsquare` | `analytics`                             | —                               | —       | yes        |
-| Hotjar           | `hotjar`        | `analytics`                             | —                               | —       | yes        |
-| Vercel Analytics | `vercel`        | `none`                                  | —                               | —       | —          |
-| TikTok Pixel     | `tiktok`        | `marketing`                             | option                          | —       | —          |
+| Provider           | `id`            | `requiredConsent`                       | `loadBeforeConsent`             | `defer` | `teardown` |
+| ------------------ | --------------- | --------------------------------------- | ------------------------------- | ------- | ---------- |
+| GA4                | `ga4`           | `analytics`, or `none` in advanced mode | option, `true` in advanced mode | —       | —          |
+| Google Tag Manager | `gtm`           | `none`, or the option                   | —                               | —       | —          |
+| Meta Pixel         | `meta`          | `marketing`                             | option                          | —       | —          |
+| PostHog            | `posthog`       | `none` (cookieless) or `analytics`      | —                               | option  | —          |
+| Sentry             | `sentry`        | `none`                                  | —                               | option  | —          |
+| Contentsquare      | `contentsquare` | `analytics`                             | —                               | —       | yes        |
+| Hotjar             | `hotjar`        | `analytics`                             | —                               | —       | yes        |
+| Vercel Analytics   | `vercel`        | `none`                                  | —                               | —       | —          |
+| TikTok Pixel       | `tiktok`        | `marketing`                             | option                          | —       | —          |
 
 A dash means the provider does not set that field. The `id` is the value to
 use in `only` and the `providerId` in `onError`.
@@ -54,7 +55,7 @@ The value is trimmed. An `undefined`, empty or whitespace-only
 `measurementId` returns a stand-in plugin with only a `setup` hook that logs
 the skip in debug mode. Any other value that does not match `G-` followed by 4 to 16 uppercase letters or digits throws.
 
-| Hook       | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Hook       | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Script     | `https://www.googletagmanager.com/gtag/js?id=<measurementId>`                                                                                                                                                                                                                                                                                                                                                                       |
 | `setup`    | Creates `window.dataLayer` and `window.gtag` if absent. Unless a [`googleConsentMode()`](/internals/consent/#google-consent-mode) adapter set its window flag first, calls `gtag('consent', 'default', …)` with every key denied except `security_storage`. Then `gtag('js', new Date())`, and in advanced mode `config`.                                                                                                           |
@@ -88,6 +89,39 @@ digit or `_` becomes `_`, so `consentlayer.scroll_depth` is sent as
 `user_data` only with marketing consent; the phone is prefixed with `+` if
 needed, and gtag hashes both itself.
 
+## Google Tag Manager
+
+`gtm({ containerId, requiredConsent?, serverContainerUrl? })` from
+`consentlayer/providers/gtm`. The value is trimmed. An `undefined`, empty or
+whitespace-only `containerId` returns a stand-in plugin with only a `setup`
+hook that logs the skip in debug mode. Any other value that does not match
+`GTM-` followed by 4 to 12 uppercase letters or digits throws.
+
+`requiredConsent` defaults to `'none'`: the container loads at boot, and its
+tags are expected to follow Consent Mode. With a category, nothing loads until
+that category is granted. The provider never sets `loadBeforeConsent`.
+
+| Hook       | Behavior                                                                                                                                                                                                                                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Script     | `https://www.googletagmanager.com/gtm.js?id=<containerId>`, or `<serverContainerUrl>/gtm.js?id=<containerId>` when `serverContainerUrl` is set. The URL must be HTTPS or a relative path, and a trailing `/` is removed.                                                                                           |
+| `setup`    | Creates `window.dataLayer` and `window.gtag` if absent. Unless a [`googleConsentMode()`](/internals/consent/#google-consent-mode) adapter set its window flag first, calls `gtag('consent', 'default', …)` with every key denied except `security_storage`, shared with `ga4()` so the defaults go out once.       |
+| `consent`  | Without the adapter, `gtag('consent', 'update', …)` mapped as for GA4, skipped while the visitor has never chosen. Whenever the consent changes, pushes `{ event: 'consentlayer_consent', consent }` to `dataLayer`. Pushes the user ID as for `identify` below.                                                   |
+| `load`     | Once per container ID per page: pushes `{ 'gtm.start': Date.now(), event: 'gtm.js' }`, then injects `gtm.js`. A failed load is reported with scope `provider-script-load` and the message `Failed to load Google Tag Manager container <containerId>`.                                                             |
+| `page`     | Pushes `{ event: 'page_view', page_location, page_path, page_title }`                                                                                                                                                                                                                                              |
+| `track`    | Pushes `{ ...params, ...providers.gtm, event: name }`. The name is not translated.                                                                                                                                                                                                                                 |
+| `identify` | Pushes `{ event: 'consentlayer_identify', user_id }` only while analytics is granted, and only when the user ID differs from the last one pushed.                                                                                                                                                                  |
+| `reset`    | Pushes `{ event: 'consentlayer_identify', user_id: null }` if a user ID was pushed before.                                                                                                                                                                                                                         |
+| Withdrawal | The `consent` hook sends the denied Consent Mode update, pushes the new consent and clears the user ID. With the default `'none'`, the manager keeps sending `page` and `track`, and the container's tags decide what to do under Consent Mode. With a category, the manager stops once the category is withdrawn. |
+
+The Consent Mode keys follow the same table as GA4. The container can
+trigger tags on the `consentlayer_consent`, `consentlayer_identify` and
+`page_view` events, and on each event name passed to `track`.
+
+**Personal data.** `user_id` with analytics consent, in the
+`consentlayer_identify` event. Email and phone are never pushed. `track`
+passes `params` through as they are, so anything you put in them reaches
+the data layer.
+
 ## Meta Pixel
 
 `meta({ pixelId, locale?, loadBeforeConsent? })` from
@@ -95,10 +129,10 @@ needed, and gtag hashes both itself.
 whitespace-only `pixelId` turns the provider off, and the factory throws if
 it is not an 8 to 20 digit string.
 
-| Hook                                     | Behaviour                                                                                                                                                                                                                                                                                                                              |
+| Hook                                     | Behavior                                                                                                                                                                                                                                                                                                                               |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Script                                   | `https://connect.facebook.net/<locale>/fbevents.js`, default locale `en_US`                                                                                                                                                                                                                                                            |
-| `load`                                   | Skipped if a pixel was already initialised on the page. Otherwise runs an inline bootstrap that defines the `fbq` queue, calls `fbq('consent', 'grant' \| 'revoke')` from the current consent, then `fbq('init', pixelId, advancedMatching)`; then injects `fbevents.js`. A failed load is reported with scope `provider-script-load`. |
+| `load`                                   | Skipped if a pixel was already initialized on the page. Otherwise runs an inline bootstrap that defines the `fbq` queue, calls `fbq('consent', 'grant' \| 'revoke')` from the current consent, then `fbq('init', pixelId, advancedMatching)`; then injects `fbevents.js`. A failed load is reported with scope `provider-script-load`. |
 | `consent`                                | `fbq('consent', 'grant')` with marketing consent, otherwise `fbq('consent', 'revoke')`.                                                                                                                                                                                                                                                |
 | `page`                                   | `fbq('track', 'PageView', {}, { eventID })`                                                                                                                                                                                                                                                                                            |
 | `track`                                  | `fbq('track' \| 'trackCustom', name, params, { eventID })`                                                                                                                                                                                                                                                                             |
@@ -122,7 +156,7 @@ after the pixel has loaded does not reach the pixel until the next page load;
 the server route still sends it (see [Server forwarding](/internals/server/)).
 
 **Withdrawal after matching.** The pixel keeps `init`'s email and phone for
-the lifetime of the page. If it was initialised with them and marketing is
+the lifetime of the page. If it was initialized with them and marketing is
 then withdrawn, the provider keeps the pixel revoked and silent until the page
 reloads, even if marketing is granted again.
 
@@ -135,7 +169,7 @@ server route sends to the Conversions API.
 from `consentlayer/providers/posthog`. `posthog-js` is imported dynamically
 in `load`.
 
-| Hook        | Behaviour                                                                                                                                                                                                                     |
+| Hook        | Behavior                                                                                                                                                                                                                      |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Requirement | `none` with `cookieless` (default); `analytics` with `cookieless: false`                                                                                                                                                      |
 | `load`      | Imports `posthog-js` and calls `init` with the options below, then applies the latest consent.                                                                                                                                |
@@ -188,7 +222,7 @@ analytics is granted.
 from `consentlayer/providers/sentry`. `@sentry/browser` is imported
 dynamically in `load`, and Replay and tracing are separate chunks.
 
-| Hook                     | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Hook                     | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Requirement              | `none`                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `load`                   | Imports the SDK and calls `init` (below), then applies the latest consent.                                                                                                                                                                                                                                                                                                                                                  |
@@ -232,16 +266,16 @@ marketing consent.
 
 `contentsquare({ tagId })` from `consentlayer/providers/contentsquare`.
 
-| Hook       | Behaviour                                                                                                                                                                                                                         |
+| Hook       | Behavior                                                                                                                                                                                                                          |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Script     | `https://t.contentsquare.net/uxa/<tagId>.js`                                                                                                                                                                                      |
-| `load`     | Skipped if the tag was already initialised on the page. Otherwise defines the `window._uxa` command queue, remembers the current path and injects the tag. The tag sends the first page view itself. Script failures are ignored. |
+| `load`     | Skipped if the tag was already initialized on the page. Otherwise defines the `window._uxa` command queue, remembers the current path and injects the tag. The tag sends the first page view itself. Script failures are ignored. |
 | `consent`  | With analytics consent, expires the `_cs_optout` cookie on the current host and every parent domain.                                                                                                                              |
 | `page`     | `['trackPageview', path]`, with the query string and hash removed. The first page view after `load` is skipped if its path equals the path the tag loaded on.                                                                     |
 | `track`    | `['trackPageEvent', name]`; params are not sent. `purchase` instead sends `['ec:transaction:create', { id: transaction_id, revenue: value, currency }]` followed by `['ec:transaction:send']`.                                    |
 | `identify` | `['identify', userId]` when there is a user ID                                                                                                                                                                                    |
 | `reset`    | `['resetIdentity']`                                                                                                                                                                                                               |
-| `teardown` | `['optout']`, only if analytics consent is no longer granted and the tag was initialised                                                                                                                                          |
+| `teardown` | `['optout']`, only if analytics consent is no longer granted and the tag was initialized                                                                                                                                          |
 
 `['optout']` is Contentsquare's opt-out command. Contentsquare has no web
 command to opt back in, so when analytics is granted again the provider
@@ -262,11 +296,11 @@ moved; `hotjar` will be removed in the next major version.
 `hotjar({ siteId, version, reloadOnRevoke? })` from
 `consentlayer/providers/hotjar`.
 
-| Hook       | Behaviour                                                                                                                                                                                                                                                                  |
+| Hook       | Behavior                                                                                                                                                                                                                                                                   |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Options    | `siteId` and `version` accept positive integers, as numbers or as strings of digits; surrounding whitespace is trimmed. Either one `undefined`, `''` or whitespace turns the provider off; any other value, such as `'1e3'` or `'12.0'`, throws when `hotjar()` is called. |
 | Script     | `https://static.hotjar.com/c/hotjar-<siteId>.js?sv=<version>`                                                                                                                                                                                                              |
-| `load`     | Skipped if Hotjar was already initialised on the page. Otherwise defines a queueing `window.hj` and `window._hjSettings = { hjid, hjsv }` and injects the script. Script failures are ignored.                                                                             |
+| `load`     | Skipped if Hotjar was already initialized on the page. Otherwise defines a queueing `window.hj` and `window._hjSettings = { hjid, hjsv }` and injects the script. Script failures are ignored.                                                                             |
 | `page`     | Not implemented; Hotjar tracks page views itself.                                                                                                                                                                                                                          |
 | `track`    | `hj('event', name)`; params are not sent.                                                                                                                                                                                                                                  |
 | `identify` | `hj('identify', userId ?? null, { ...traits, email? })`                                                                                                                                                                                                                    |
@@ -274,7 +308,7 @@ moved; `hotjar` will be removed in the next major version.
 | `teardown` | Only if analytics consent is no longer granted: expires every `_hj*` cookie on the current host and every parent domain, removes every key starting with `hj` or `_hj` from localStorage and sessionStorage, then reloads the page if `reloadOnRevoke` is set.             |
 
 Hotjar cannot be switched off once loaded: it keeps recording until the page
-unloads. Clearing its storage prevents it from recognising the visitor later,
+unloads. Clearing its storage prevents it from recognizing the visitor later,
 and `reloadOnRevoke: true` also ends the current recording.
 
 **Personal data.** User ID with analytics consent; email only when there is
@@ -285,7 +319,7 @@ also a user ID and marketing consent is granted.
 `vercel({ trackEvent })` from `consentlayer/providers/vercel`, where
 `trackEvent` is `track` from `@vercel/analytics`.
 
-| Hook            | Behaviour                                                                                                                                                                              |
+| Hook            | Behavior                                                                                                                                                                               |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `load`          | Not implemented. Render Vercel's `<Analytics />` yourself; it also counts page views.                                                                                                  |
 | `track`         | `trackEvent(name, params)` with params flattened: strings, numbers and booleans kept, `null` and `undefined` sent as `null`, `Date` values as ISO strings, objects and arrays dropped. |
@@ -299,10 +333,10 @@ also a user ID and marketing consent is granted.
 The value is trimmed; an `undefined`, empty or whitespace-only `pixelId` turns
 the provider off.
 
-| Hook                         | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Hook                         | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Script                       | `https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=<pixelId>&lib=ttq`                                                                                                                                                                                                                                                                                                                                                      |
-| `load`                       | Skipped if a pixel was already initialised on the page. Otherwise runs an inline bootstrap, TikTok's base code with the consent mode methods added and without its script injection and `ttq.page()`, that defines the `ttq` queue, calls `ttq.grantConsent()` or `ttq.holdConsent()` from the current consent, then `ttq.load(pixelId)`; then injects `events.js`. A failed load is reported with scope `provider-script-load`. |
+| `load`                       | Skipped if a pixel was already initialized on the page. Otherwise runs an inline bootstrap, TikTok's base code with the consent mode methods added and without its script injection and `ttq.page()`, that defines the `ttq` queue, calls `ttq.grantConsent()` or `ttq.holdConsent()` from the current consent, then `ttq.load(pixelId)`; then injects `events.js`. A failed load is reported with scope `provider-script-load`. |
 | `consent`                    | `ttq.grantConsent()` with marketing consent, otherwise `ttq.revokeConsent()`.                                                                                                                                                                                                                                                                                                                                                    |
 | `identify`                   | `ttq.identify({ email, phone_number, external_id })`, when the identity has any of them.                                                                                                                                                                                                                                                                                                                                         |
 | `page`                       | `ttq.page()`                                                                                                                                                                                                                                                                                                                                                                                                                     |

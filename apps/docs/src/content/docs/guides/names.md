@@ -84,11 +84,11 @@ first ones:
 
 ## Migrating from `acm_*`
 
-`@nicolopadovan/analytics-consent-manager`, and ConsentLayer before
-1.0.0-rc.2, used the prefix `acm`. With `names: { legacy: true }`,
-ConsentLayer reads the old names alongside the new ones:
+`@nicolopadovan/analytics-consent-manager` used the prefix `acm`. With
+`names: { legacy: true }`, ConsentLayer reads the old names alongside the new
+ones:
 
-| Name                  | Behaviour with `legacy: true`                                                                                                                                                                                      |
+| Name                  | Behavior with `legacy: true`                                                                                                                                                                                       |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Storage keys          | When the consent or identity key has no value, the value under `acm_consent` or `acm_user_identity` is moved to the new key on first read and the old key is removed. New values are written only to the new keys. |
 | DOM event and globals | `acm:consent` is dispatched, and `ACM_CONSENT` and `ACM_openConsent` are set, alongside the new names.                                                                                                             |

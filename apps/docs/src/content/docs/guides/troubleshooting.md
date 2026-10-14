@@ -48,19 +48,19 @@ caused it, and the original error as `cause`.
 
 ### Error scopes
 
-| Scope                             | Raised when                                                        |
-| --------------------------------- | ------------------------------------------------------------------ |
-| `provider-setup`                  | A plugin's `setup` hook threw, or two plugins use the same `id`    |
-| `provider-load`                   | A plugin's `load` hook threw                                       |
-| `provider-script-load`            | A provider's script failed to download                             |
-| `provider-consent`                | A plugin's `consent` hook threw                                    |
-| `provider-page`, `provider-track` | A plugin's `page` or `track` hook threw                            |
-| `provider-identify`               | A plugin's `identify`, `reset` or `group` hook threw               |
-| `provider-error`                  | A plugin's `error` hook threw while reporting an error             |
-| `provider-teardown`               | A plugin's `teardown` hook threw on withdrawal                     |
-| `consent-adapter`                 | A consent adapter, or the `server.consentEndpoint` request, failed |
-| `server-forward`                  | Forwarding an event to `server.endpoint` failed                    |
-| `queue-full`                      | More than 100 calls were waiting, and later ones were dropped      |
+| Scope                             | Raised when                                                                                                                        |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `provider-setup`                  | A plugin's `setup` hook threw, or two plugins use the same `id`                                                                    |
+| `provider-load`                   | A plugin's `load` hook threw                                                                                                       |
+| `provider-script-load`            | A provider's script failed to download                                                                                             |
+| `provider-consent`                | A plugin's `consent` hook threw                                                                                                    |
+| `provider-page`, `provider-track` | A plugin's `page` or `track` hook threw                                                                                            |
+| `provider-identify`               | A plugin's `identify`, `reset` or `group` hook threw                                                                               |
+| `provider-error`                  | A plugin's `error` hook threw while reporting an error                                                                             |
+| `provider-teardown`               | A plugin's `teardown` hook threw on withdrawal                                                                                     |
+| `consent-adapter`                 | A consent adapter's `bootstrap`, `apply` or `observe` failed, or the `server.consentEndpoint` request that records a choice failed |
+| `server-forward`                  | Forwarding an event to `server.endpoint` failed, or restoring the consent cookie at `server.consentEndpoint` failed                |
+| `queue-full`                      | More than 100 calls were waiting, and later ones were dropped                                                                      |
 
 A hook failure has the message `` `<provider id>.<hook> failed` ``, for example
 `ga4.load failed`, with the thrown error as `cause`.
@@ -110,7 +110,8 @@ Meta Pixel Helper and Google Tag Assistant find nothing.
 **The visitor has not granted the required consent.** Providers load only
 after the category they need is granted: analytics for GA4, Hotjar and PostHog;
 marketing for Meta; and the category set by `requiredConsent` for your own
-plugins. Before consent, the script is not requested at all. Accept the banner
+plugins and for `gtm()`, which defaults to `'none'`, so its container loads as
+soon as the instance boots. Before consent, the script is not requested at all. Accept the banner
 or call `analytics.consent.update({ analytics: true })`, then check again.
 `loadBeforeConsent: true` on `ga4()` or `meta()` only downloads the script at
 boot; GA4 still sends nothing, and the Meta Pixel stays revoked, until consent
@@ -257,14 +258,14 @@ Sending purchase to /api/analytics failed
 Its `cause` is `HTTP <status>` when the route answered with an error status.
 The route answers with an empty body, so the status code is the only clue:
 
-| Status | Cause and fix                                                                                                                                                                                                          |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 403    | The `Origin` header is missing, or neither `Origin` nor `Referer` matches the origin of the request URL. Behind a proxy that rewrites the host or protocol, the request URL the route sees must keep the public origin |
-| 415    | The request's `Content-Type` is not `application/json`                                                                                                                                                                 |
-| 400    | The body is empty, is not valid JSON, or is not an event: `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing`                                            |
-| 413    | The body is larger than 16 KB                                                                                                                                                                                          |
-| 500    | The route threw; the error is passed to the handler's `onError`                                                                                                                                                        |
-| 204    | The route accepted the event. A vendor that rejected it is reported to `onError`, not in the status                                                                                                                    |
+| Status | Cause and fix                                                                                                                                                                                                                                                                                       |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 403    | Neither `Origin` nor `Referer` was sent, the `Referer` is malformed, or the origin of `Origin` (or of `Referer`, when `Origin` is absent) differs from the origin of the request URL. Behind a proxy that rewrites the host or protocol, the request URL the route sees must keep the public origin |
+| 415    | The request's `Content-Type` is not `application/json`                                                                                                                                                                                                                                              |
+| 400    | The body is empty, is not valid JSON, or is not an event: `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing`                                                                                                                         |
+| 413    | The body is larger than 16 KB                                                                                                                                                                                                                                                                       |
+| 500    | The route threw; the error is passed to the handler's `onError`                                                                                                                                                                                                                                     |
+| 204    | The route accepted the event. A vendor that rejected it is reported to `onError`, not in the status                                                                                                                                                                                                 |
 
 A 204 does not mean the vendor received the event. Pass `onError` to
 `createAnalyticsHandler()` and check your server logs:
@@ -308,13 +309,21 @@ HMAC-SHA-256. Generate one with `openssl rand -base64 32`.
 A 400 from the consent endpoint means the browser sent consent without boolean
 categories. A store error, such as `[consentlayer] supabase insert failed`,
 becomes a 500 and is passed to the handler's `onError`. In the browser, a
-failed request is reported under `consent-adapter`:
+failed request that records a choice is reported under `consent-adapter`:
 
 ```text
 Consent adapter "consent-endpoint" failed to apply consent
 ```
 
 The visitor's choice is still saved locally, so the banner does not reappear.
+A failed request that restores a lost consent cookie is reported under
+`server-forward` instead:
+
+```text
+Restoring the consent cookie at /api/consent failed
+```
+
+Its `cause` is `HTTP <status>` when the route answered with an error status.
 See [Consent records](/guides/consent-records/).
 
 ## TypeScript cannot find a `consentlayer/*` module

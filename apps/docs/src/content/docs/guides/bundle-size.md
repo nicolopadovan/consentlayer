@@ -26,8 +26,8 @@ A provider turned off by an `undefined` ID, such as
 variable, still ships its code. To keep a provider out of the bundle, don't
 import it.
 
-From the root entry, only the exports you use are bundled. `createAnalytics()`
-alone measures 6.5 kB; `createConsentController()` alone 1.1 kB. The
+From the root entry, only the exports you use are bundled; the
+[bundle size table](/#bundle-size) lists `createAnalytics()` on its own. The
 consent engine, the event queue, auto-tracking and `debug` logging are part of
 `createAnalytics()` whether or not you turn them on.
 
@@ -48,14 +48,16 @@ posthog({ apiKey: process.env.NEXT_PUBLIC_POSTHOG_KEY, defer: 'idle' })
 
 See [Loading SDKs later](/guides/providers/#loading-sdks-later).
 
-The other providers ship no SDK: they inject their vendor's script tag in the
-browser, from the vendor's servers, once consent allows it.
+The other providers ship no SDK. Most inject their vendor's script tag in the
+browser, from the vendor's servers, once consent allows it. `vercel()` injects
+no script: it calls the `track` function you pass from `@vercel/analytics`.
 
 ## Prefer npm over the script tag
 
 The [script tag](/start/script-tag/) bundles every provider and adapter into
-one file, 14.0 kB, because it can't know which ones a page uses. Installed
-from npm, you ship only the core and the providers you import.
+one file, because it can't know which ones a page uses; its size is in the
+[bundle size table](/#bundle-size). Installed from npm, you ship only the core
+and the providers you import.
 
 ## Measure your own bundle
 

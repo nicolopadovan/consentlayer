@@ -10,15 +10,16 @@ The first public release.
   `reset`, `group`, `captureError` and `consent`. Each provider runs only
   while its consent category is granted; calls made before boot are held and
   delivered in order.
-- Categories `necessary`, `preferences`, `analytics` and `marketing`, plus
-  typed custom categories declared in `ConsentCategories`.
+- Categories `preferences`, `analytics` and `marketing`, plus typed custom
+  categories declared in `ConsentCategories`.
 - `createConsentController()` and each framework binding expose the state a
   banner needs; build your own banner on it.
 - Re-consent after `consent.maxAgeDays` or a new major `consent.policyVersion`,
   with `onStale: 'discard' | 'keep'`.
 - Global Privacy Control: while the browser sends it, `acceptAll()` leaves
   `marketing` denied; an explicit opt-in still wins. `consent.gpc: false`
-  turns it off, and the server honors `Sec-GPC`.
+  turns it off. The server follows each event's consent, which already
+  reflects the signal.
 - Consent records: `createConsentHandler()` appends each choice to Postgres,
   Supabase, Prisma, Drizzle or Upstash and sets a signed consent cookie, which
   `createAnalyticsHandler({ consentCookie })` trusts instead of the request
@@ -54,8 +55,8 @@ The first public release.
   `consentlayer/sentry/next` for Next.js.
 - `contentsquare()`, `vercel()`, and `hotjar()` (deprecated in favor of
   `contentsquare()`).
-- `definePlugin()`, `loadScript()` and `checkPlugin()` from
-  `consentlayer/testing`, for writing your own provider.
+- `definePlugin()` and `loadScript()` from `consentlayer`, and `checkPlugin()`
+  from `consentlayer/testing`, for writing your own provider.
 - Standard events with GA4 names, translated for each provider, and
   `productParams`, `cartParams` and `orderParams` in `consentlayer/ecommerce`.
 - Auto-tracking of page sessions, scroll depth, time on page and clicks.
