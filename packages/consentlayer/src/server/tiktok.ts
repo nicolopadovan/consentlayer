@@ -1,4 +1,4 @@
-import { tiktokUserData, toTikTokEvent } from '../core/tiktok-events'
+import { sendsToTikTok, tiktokUserData, toTikTokEvent } from '../core/tiktok-events'
 import { isValidEmail, isValidPhoneE164 } from '../core/validation'
 import type { ServerDestination } from './handler'
 import { sha256 } from './http'
@@ -11,6 +11,8 @@ export function tiktokEvents(options: {
   pixelId: string | undefined
   accessToken: string | undefined
   testEventCode?: string
+  /** Event names sent. Defaults to the events that have a TikTok standard event; custom events are sent only when listed. */
+  events?: readonly string[]
   fetchImpl?: typeof fetch
 }): ServerDestination<true> | undefined {
   const pixelId = options.pixelId?.trim()
@@ -26,7 +28,7 @@ export function tiktokEvents(options: {
     forwardBrowserEvents: true,
     async send(event, request) {
       // ttq.page() takes no event ID, so a server copy of a page view could not be deduplicated.
-      if (event.name === 'page_view') return
+      if (event.name === 'page_view' || !sendsToTikTok(event.name, options.events, event.only)) return
       const { name, params } = toTikTokEvent({
         id: event.id ?? '',
         name: event.name,

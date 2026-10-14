@@ -209,7 +209,9 @@ export function SignUpButton() {
 `track(name, params?, options?)` returns a promise that never rejects because
 of a provider: provider failures are passed to the `onError` option of
 `createAnalytics()`. Parameters are typed for the standard events, such as
-`sign_up` and `purchase`; any other name is sent as a custom event.
+`sign_up` and `purchase`; any other name is sent as a custom event. The
+Meta and TikTok pixels receive only standard events unless you
+[list others](/guides/providers/meta/#which-events-are-sent).
 
 `useConsent()` returns `{ consent, engine, setConsent, update }`. `consent` is
 the current consent, `null` before a choice, and the component re-renders when

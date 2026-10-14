@@ -1388,11 +1388,12 @@ The entry point also exports the type `GtmOptions`.
 Meta Pixel. Combine it with [`metaCapi`](#metacapioptions) to also send events
 through the Conversions API.
 
-| Option              | Type                  | Default   | Description                                                                                   |
-| ------------------- | --------------------- | --------- | --------------------------------------------------------------------------------------------- |
-| `pixelId`           | `string \| undefined` |           | **Required.** A numeric string of 8 to 20 digits; `undefined` or `''` turns the provider off. |
-| `locale`            | `string`              | `'en_US'` | The locale in the `fbevents.js` URL.                                                          |
-| `loadBeforeConsent` | `boolean`             | `false`   | `true` loads the pixel at boot with consent revoked.                                          |
+| Option              | Type                  | Default                | Description                                                                                   |
+| ------------------- | --------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| `pixelId`           | `string \| undefined` |                        | **Required.** A numeric string of 8 to 20 digits; `undefined` or `''` turns the provider off. |
+| `locale`            | `string`              | `'en_US'`              | The locale in the `fbevents.js` URL.                                                          |
+| `loadBeforeConsent` | `boolean`             | `false`                | `true` loads the pixel at boot with consent revoked.                                          |
+| `events`            | `string[]`            | Meta's standard events | The event names sent; an event whose `only` names the provider is always sent.                |
 
 **Throws** an `Error` when `pixelId` is invalid.
 
@@ -1488,10 +1489,11 @@ The options type is exported as `VercelOptions`.
 TikTok Pixel. Combine it with [`tiktokEvents`](#tiktokeventsoptions) to also
 send events through the Events API.
 
-| Option              | Type                  | Default | Description                                               |
-| ------------------- | --------------------- | ------- | --------------------------------------------------------- |
-| `pixelId`           | `string \| undefined` |         | **Required.** `undefined` or `''` turns the provider off. |
-| `loadBeforeConsent` | `boolean`             | `false` | `true` loads the pixel at boot with `ttq.holdConsent()`.  |
+| Option              | Type                  | Default                  | Description                                                                    |
+| ------------------- | --------------------- | ------------------------ | ------------------------------------------------------------------------------ |
+| `pixelId`           | `string \| undefined` |                          | **Required.** `undefined` or `''` turns the provider off.                      |
+| `loadBeforeConsent` | `boolean`             | `false`                  | `true` loads the pixel at boot with `ttq.holdConsent()`.                       |
+| `events`            | `string[]`            | TikTok's standard events | The event names sent; an event whose `only` names the provider is always sent. |
 
 The entry point also exports the options type `TikTokOptions` and two helpers:
 
@@ -1892,17 +1894,19 @@ function metaCapi(options: {
   accessToken: string | undefined
   testEventCode?: string
   apiVersion?: string
+  events?: readonly string[]
   fetchImpl?: typeof fetch
 }): ServerDestination<true> | undefined
 ```
 
-| Option          | Type                  | Default            | Description                                     |
-| --------------- | --------------------- | ------------------ | ----------------------------------------------- |
-| `pixelId`       | `string \| undefined` |                    | **Required.**                                   |
-| `accessToken`   | `string \| undefined` |                    | **Required.** The Conversions API access token. |
-| `testEventCode` | `string`              |                    | Sends events to Test Events in Events Manager.  |
-| `apiVersion`    | `string`              | `'v26.0'`          | The Graph API version.                          |
-| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` implementation.                     |
+| Option          | Type                  | Default                | Description                                                                    |
+| --------------- | --------------------- | ---------------------- | ------------------------------------------------------------------------------ |
+| `pixelId`       | `string \| undefined` |                        | **Required.**                                                                  |
+| `accessToken`   | `string \| undefined` |                        | **Required.** The Conversions API access token.                                |
+| `testEventCode` | `string`              |                        | Sends events to Test Events in Events Manager.                                 |
+| `apiVersion`    | `string`              | `'v26.0'`              | The Graph API version.                                                         |
+| `events`        | `string[]`            | Meta's standard events | The event names sent; an event whose `only` names the provider is always sent. |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch`     | The `fetch` implementation.                                                    |
 
 **Returns** `undefined` while `pixelId` or `accessToken` is unset, empty or
 only whitespace (both are trimmed), so
@@ -1927,16 +1931,18 @@ function tiktokEvents(options: {
   pixelId: string | undefined
   accessToken: string | undefined
   testEventCode?: string
+  events?: readonly string[]
   fetchImpl?: typeof fetch
 }): ServerDestination<true> | undefined
 ```
 
-| Option          | Type                  | Default            | Description                                    |
-| --------------- | --------------------- | ------------------ | ---------------------------------------------- |
-| `pixelId`       | `string \| undefined` |                    | **Required.**                                  |
-| `accessToken`   | `string \| undefined` |                    | **Required.** The Events API access token.     |
-| `testEventCode` | `string`              |                    | Sends events to Test Events in Events Manager. |
-| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` implementation.                    |
+| Option          | Type                  | Default                  | Description                                                                    |
+| --------------- | --------------------- | ------------------------ | ------------------------------------------------------------------------------ |
+| `pixelId`       | `string \| undefined` |                          | **Required.**                                                                  |
+| `accessToken`   | `string \| undefined` |                          | **Required.** The Events API access token.                                     |
+| `testEventCode` | `string`              |                          | Sends events to Test Events in Events Manager.                                 |
+| `events`        | `string[]`            | TikTok's standard events | The event names sent; an event whose `only` names the provider is always sent. |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch`       | The `fetch` implementation.                                                    |
 
 **Returns** `undefined` while `pixelId` or `accessToken`, both trimmed, is
 unset or empty, and calls `console.warn` once when exactly one of the two is

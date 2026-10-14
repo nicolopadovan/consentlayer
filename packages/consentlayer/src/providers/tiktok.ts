@@ -1,5 +1,5 @@
 import { definePlugin, getFlag, loadScript, runInlineScript, setFlag, skippedPlugin } from '../core/plugin'
-import { tiktokUserData, toTikTokEvent } from '../core/tiktok-events'
+import { sendsToTikTok, tiktokUserData, toTikTokEvent } from '../core/tiktok-events'
 import { expireCookies } from '../core/utils'
 
 export { tiktokUserData, toTikTokEvent }
@@ -25,6 +25,8 @@ export type TikTokOptions = {
    * `false` (default): nothing loads until marketing consent is granted.
    */
   loadBeforeConsent?: boolean
+  /** Event names sent to the pixel. Defaults to the events that have a TikTok standard event; custom events are sent only when listed. */
+  events?: readonly string[]
 }
 
 /** TikTok Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Events API. */
@@ -91,7 +93,13 @@ ttq.load(${JSON.stringify(pixelId).replace(/</g, '\\u003c')});
       window.ttq?.page()
     },
     track(event, context) {
-      if (!isReady() || stale || !context.consent?.marketing) return
+      if (
+        !isReady() ||
+        stale ||
+        !context.consent?.marketing ||
+        !sendsToTikTok(event.name, options.events, event.options.only)
+      )
+        return
       const { name, params } = toTikTokEvent(event)
       window.ttq?.track(name, params, { event_id: event.id })
     },

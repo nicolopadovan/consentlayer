@@ -83,6 +83,26 @@ describe('server destinations', () => {
     })
   })
 
+  it('sends Meta CAPI and the TikTok Events API only standard events, the names in events, or an event whose only names them', async () => {
+    const sentNames = async (events?: string[]) => {
+      const fetchImpl = vi.fn<typeof fetch>().mockImplementation(() => Promise.resolve(Response.json({ code: 0 })))
+      const POST = createAnalyticsHandler({
+        destinations: [
+          metaCapi({ pixelId: '123456789012345', accessToken: 'token', events, fetchImpl }),
+          tiktokEvents({ pixelId: 'CABC123', accessToken: 'token', events, fetchImpl }),
+        ],
+      })
+      for (const name of ['lead', 'scroll_depth', 'filter_changed']) await POST(post({ name, consent: granted }))
+      await POST(post({ name: 'share', consent: granted, only: ['meta', 'tiktok'] }))
+      return fetchImpl.mock.calls.map((_, call) => {
+        const [event] = sentBody(fetchImpl, call).data as { event_name?: string; event?: string }[]
+        return event?.event_name ?? event?.event
+      })
+    }
+    expect(await sentNames()).toEqual(['Lead', 'Lead', 'share', 'share'])
+    expect(await sentNames(['filter_changed'])).toEqual(['filter_changed', 'filter_changed', 'share', 'share'])
+  })
+
   it('rejects bad input and drops events whose consent excludes the destination', async () => {
     const fetchImpl = okFetch()
     const POST = createAnalyticsHandler({

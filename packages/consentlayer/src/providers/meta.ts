@@ -1,4 +1,4 @@
-import { metaUserData, toMetaEvent } from '../core/meta-events'
+import { metaUserData, sendsToMeta, toMetaEvent } from '../core/meta-events'
 import { definePlugin, getFlag, loadScript, runInlineScript, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 import { assertValidMetaPixelId } from '../core/validation'
@@ -27,6 +27,8 @@ export type MetaOptions = {
    * `false` (default): nothing loads until marketing consent is granted.
    */
   loadBeforeConsent?: boolean
+  /** Event names sent to the pixel. Defaults to the events that have a Meta standard event; custom events are sent only when listed. */
+  events?: readonly string[]
 }
 
 /** Meta Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Conversions API. */
@@ -84,7 +86,13 @@ fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(loadContex
       window.fbq?.('track', 'PageView', {}, { eventID: page.id })
     },
     track(event, context) {
-      if (!isReady() || stale || !context.consent?.marketing) return
+      if (
+        !isReady() ||
+        stale ||
+        !context.consent?.marketing ||
+        !sendsToMeta(event.name, options.events, event.options.only)
+      )
+        return
       const { method, name, params } = toMetaEvent(event)
       window.fbq?.(method, name, params, { eventID: event.id })
     },

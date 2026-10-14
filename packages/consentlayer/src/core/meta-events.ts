@@ -22,6 +22,12 @@ const META_EVENT_NAMES: Record<string, string> = {
 }
 const META_STANDARD = new Set([...Object.values(META_EVENT_NAMES), 'PageView'])
 
+/** Whether Meta receives an event: one `only` names Meta, else the names in `events`, else events with a Meta standard event. */
+export function sendsToMeta(name: string, events: readonly string[] | undefined, only?: readonly string[]): boolean {
+  if (only?.includes('meta')) return true
+  return events ? events.includes(name) : name in META_EVENT_NAMES || META_STANDARD.has(name)
+}
+
 /** Translates a standard event into a Meta standard event, or a custom one. */
 export function toMetaEvent(event: AnalyticsEventPayload): {
   method: 'track' | 'trackCustom'
