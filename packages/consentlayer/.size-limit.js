@@ -18,6 +18,7 @@ export default [
   ['vue', 'dist/vue.js', '2.5 kB'],
   ['svelte', 'dist/svelte.js', '2.5 kB'],
   ['sveltekit', 'dist/sveltekit.js', '2.5 kB'],
+  ['svelte/banner', 'dist/svelte/banner.js', '4.3 kB'],
   ['solid', 'dist/solid.js', '2.5 kB'],
   ['solidstart', 'dist/solidstart.js', '2.5 kB'],
   ['angular', 'dist/angular.js', '2.5 kB'],

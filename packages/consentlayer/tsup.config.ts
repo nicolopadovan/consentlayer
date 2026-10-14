@@ -42,6 +42,7 @@ export default defineConfig([
       vue: 'src/vue.ts',
       svelte: 'src/svelte.ts',
       sveltekit: 'src/sveltekit.ts',
+      'svelte/banner': 'src/svelte/banner.ts',
       solid: 'src/solid.ts',
       solidstart: 'src/solidstart.ts',
       angular: 'src/angular.ts',
