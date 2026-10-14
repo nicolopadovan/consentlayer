@@ -71,5 +71,6 @@ jobs:
         run: |
           version=$(node -p "require('./package.json').version")
           if [[ "$version" == *-* ]]; then npm publish --tag next; else npm publish; fi
-          git tag "consentlayer@$version"
+          git -c user.name=github-actions[bot] -c user.email=41898282+github-actions[bot]@users.noreply.github.com \
+            tag -a "consentlayer@$version" -m "consentlayer@$version"
           git push origin "consentlayer@$version"
