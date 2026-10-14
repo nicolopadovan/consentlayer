@@ -1,9 +1,9 @@
 ---
 title: IAB TCF
-description: "createTcfAdapter() reads the visitor's choice from an IAB TCF v2 CMP already on the page."
+description: "tcf() reads the visitor's choice from an IAB TCF v2 CMP already on the page."
 ---
 
-`createTcfAdapter()` reads the visitor's choice from a Consent Management
+`tcf()` reads the visitor's choice from a Consent Management
 Platform (CMP) that implements the
 [IAB Transparency and Consent Framework](https://github.com/InteractiveAdvertisingBureau/GDPR-Transparency-and-Consent-Framework)
 v2 and is already on the page. It talks to the CMP through the standard
@@ -11,11 +11,11 @@ v2 and is already on the page. It talks to the CMP through the standard
 onto ConsentLayer's categories, and follows every change the CMP reports.
 
 ```ts
-import { createTcfAdapter } from 'consentlayer/adapters/tcf'
+import { tcf } from 'consentlayer/adapters/tcf'
 
 createAnalytics({
   providers,
-  consent: { adapters: [createTcfAdapter()] },
+  consent: { adapters: [tcf()] },
 })
 ```
 
@@ -56,7 +56,7 @@ category at a time, so you name only the categories you change. A
 `purposes` maps it; a category mapped to an empty list is never granted.
 
 ```ts
-createTcfAdapter({
+tcf({
   purposes: { analytics: [1, 8, 9], functional: [1, 5, 6] },
 })
 ```

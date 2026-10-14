@@ -356,7 +356,7 @@ autoTracking: { clicks: { mode: 'attribute' }, pageViews: true, scroll: true, ti
 | `createTikTokConsentAdapter()` | `tiktok({ pixelId })`; see below |
 | `createVercelAdapter({ trackEvent })` | `vercel({ trackEvent })` |
 | `createShopifyAnalyticsAdapter(options)` | Removed. Its events went to a queue that no Shopify script reads. |
-| `createShopifyCustomerPrivacyAdapter(options)` | Unchanged, imported from `consentlayer/adapters/shopify`; pass it as `createAnalytics({ consent: { adapters: [...] } })` |
+| `createShopifyCustomerPrivacyAdapter(options)` | `shopifyCustomerPrivacy(options)` from `consentlayer/adapters/shopify`; pass it as `createAnalytics({ consent: { adapters: [...] } })` |
 
 Each factory is still imported from `consentlayer/providers/<name>`. Four
 providers behave differently:

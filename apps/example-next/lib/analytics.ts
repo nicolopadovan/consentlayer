@@ -4,7 +4,7 @@ import { hotjar } from 'consentlayer/providers/hotjar'
 import { meta } from 'consentlayer/providers/meta'
 import { posthog } from 'consentlayer/providers/posthog'
 import { sentry } from 'consentlayer/providers/sentry'
-import { createShopifyCustomerPrivacyAdapter } from 'consentlayer/adapters/shopify'
+import { shopifyCustomerPrivacy } from 'consentlayer/adapters/shopify'
 
 export const analytics = createAnalytics({
   providers: [
@@ -16,7 +16,7 @@ export const analytics = createAnalytics({
   ],
   consent: {
     adapters: [
-      createShopifyCustomerPrivacyAdapter({
+      shopifyCustomerPrivacy({
         loadFeature: true,
         headlessStorefront: { storefrontAccessToken: process.env.NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN },
       }),

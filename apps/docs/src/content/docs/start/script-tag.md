@@ -80,8 +80,8 @@ keys are the options of
 | Name in `adapters` | Adapter | Notes |
 |---|---|---|
 | `googleConsentMode` | `googleConsentMode()` | |
-| `shopify` | `createShopifyCustomerPrivacyAdapter()` | |
-| `tcf` | `createTcfAdapter()` | See [IAB TCF](#iab-tcf). |
+| `shopify` | `shopifyCustomerPrivacy()` | |
+| `tcf` | `tcf()` | See [IAB TCF](#iab-tcf). |
 
 ```html
 <script>

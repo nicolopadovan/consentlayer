@@ -10,7 +10,8 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 
 ### Breaking
 - Consent adapters have their own entry points, `consentlayer/adapters/*`:
-  the Shopify Customer Privacy adapter moved from `consentlayer/providers/shopify`.
+  `createShopifyCustomerPrivacyAdapter()` from `consentlayer/providers/shopify`
+  is now `shopifyCustomerPrivacy()` from `consentlayer/adapters/shopify`.
   The script tag takes adapters under `adapters`, next to `providers`.
 - `tiktok()` takes `{ pixelId, loadBeforeConsent? }` and loads the TikTok
   pixel itself. The consent-only mode, which forwarded
@@ -52,7 +53,7 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `metaCapi` defaults to Graph API v26.0 (v18.0 was retired by Meta) and takes
   `apiVersion`.
 - Removed the `shopify()` plugin: its events went to a queue no Shopify script
-  reads. `createShopifyCustomerPrivacyAdapter` stays.
+  reads. The Customer Privacy adapter stays, as `shopifyCustomerPrivacy()`.
 - `MetaPixelNoscript` moved from `consentlayer/providers/meta` to
   `consentlayer/react`, so the Meta provider no longer imports React;
   `renderMetaPixelNoscriptHtml` is removed.
@@ -94,7 +95,7 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   wins. `consent.gpc: false` ignores the signal. `analytics.consent.gpc` and
   the consent controller's `gpc` (in every framework binding) say whether it
   is honored, and the script-tag banner shows a `gpc` text line.
-- `createTcfAdapter()` from `consentlayer/adapters/tcf` reads the visitor's
+- `tcf()` from `consentlayer/adapters/tcf` reads the visitor's
   choice from an IAB TCF v2 CMP through `__tcfapi` and follows its updates.
   TCF purposes map to categories (overridable with `purposes`); only consent
   counts, not legitimate interest. Read-only. Returns no choice without a CMP

@@ -40,8 +40,8 @@ type ShopifyCustomerPrivacy = {
   }
 }
 
-/** Options for `createShopifyCustomerPrivacyAdapter`. `headlessStorefront` is needed off Shopify-hosted themes, and applies only once `storefrontAccessToken` is set. */
-export type ShopifyCustomerPrivacyAdapterOptions = {
+/** Options for `shopifyCustomerPrivacy`. `headlessStorefront` is needed off Shopify-hosted themes, and applies only once `storefrontAccessToken` is set. */
+export type ShopifyCustomerPrivacyOptions = {
   canBootstrap?: () => boolean
   headlessStorefront?: {
     checkoutRootDomain?: string
@@ -84,8 +84,8 @@ async function ensureCustomerPrivacyFeature(
 }
 
 /** Syncs consent with Shopify's Customer Privacy API, so Shopify and the store analytics agree. */
-export function createShopifyCustomerPrivacyAdapter(
-  options: ShopifyCustomerPrivacyAdapterOptions = {},
+export function shopifyCustomerPrivacy(
+  options: ShopifyCustomerPrivacyOptions = {},
 ): ConsentIntegrationAdapter {
   const doc = options.document ?? (typeof document !== 'undefined' ? document : undefined)
   const win = options.window ?? (typeof window !== 'undefined' ? window : undefined)

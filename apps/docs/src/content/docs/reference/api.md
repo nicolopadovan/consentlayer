@@ -106,7 +106,7 @@ type AnalyticsOptions = {
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `storage` | `ConsentStorageAdapter` | `localStorage`, under `names.consentStorageKey` | Where the choice is stored. See [Storage adapters](#storage-adapters). |
-| `adapters` | `ConsentIntegrationAdapter[]` | `[]` | External consent platforms to sync with, such as [`createTcfAdapter()`](#createtcfadapteroptions), [`createShopifyCustomerPrivacyAdapter()`](#createshopifycustomerprivacyadapteroptions) or [`googleConsentMode()`](#googleconsentmodeoptions). |
+| `adapters` | `ConsentIntegrationAdapter[]` | `[]` | External consent platforms to sync with, such as [`tcf()`](#tcfoptions), [`shopifyCustomerPrivacy()`](#shopifycustomerprivacyoptions) or [`googleConsentMode()`](#googleconsentmodeoptions). |
 | `initialConsent` | `ConsentState \| null` | `null` | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one. |
 | `broadcast` | `ConsentBroadcastConfig` | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set. |
 | `maxAgeDays` | `number` | None | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`. |
@@ -1412,7 +1412,7 @@ Each adapter is its own entry point, and each factory returns a
 [`ConsentIntegrationAdapter`](#storage-adapters). See
 [Consent adapters](/guides/adapters/).
 
-### `createShopifyCustomerPrivacyAdapter(options?)`
+### `shopifyCustomerPrivacy(options?)`
 
 From `consentlayer/adapters/shopify`. A
 [`ConsentIntegrationAdapter`](#storage-adapters), with `id`
@@ -1427,7 +1427,7 @@ Privacy API. Pass it to `createAnalytics({ consent: { adapters } })`.
 | `document` | `Document` | `document` | The document that receives `visitorConsentCollected` events. |
 | `window` | `Window` | `window` | The window that holds `Shopify`. |
 
-The options type is exported as `ShopifyCustomerPrivacyAdapterOptions`.
+The options type is exported as `ShopifyCustomerPrivacyOptions`.
 
 ### `getShopifyCustomerPrivacyScriptUrl()`
 
@@ -1439,7 +1439,7 @@ Content Security Policy or a preload hint.
 function getShopifyCustomerPrivacyScriptUrl(): string
 ```
 
-### `createTcfAdapter(options?)`
+### `tcf(options?)`
 
 From `consentlayer/adapters/tcf`. A read-only
 [`ConsentIntegrationAdapter`](#storage-adapters), with `id` `'tcf'`, that
@@ -1453,7 +1453,7 @@ reads consent from the IAB TCF v2 CMP on the page through `__tcfapi`. It has
 | `purposes` | `Partial<Record<ConsentCategory, number[]>>` | `{ preferences: [1], analytics: [1, 8], marketing: [1, 2, 3, 4, 7] }` | TCF purpose IDs per category, merged over the default. A category is granted when `purpose.consents` is `true` for every listed purpose; legitimate interest does not count, and an empty list is never granted. |
 | `window` | `Window` | `window` | The window that holds `__tcfapi`. |
 
-The options type is exported as `TcfAdapterOptions`.
+The options type is exported as `TcfOptions`.
 
 ### `googleConsentMode(options?)`
 

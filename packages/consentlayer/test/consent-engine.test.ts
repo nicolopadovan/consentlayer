@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import { createConsentEngine } from '../src/core/consent-engine'
 import { createMemoryConsentStorage } from '../src/core/storage'
-import { createShopifyCustomerPrivacyAdapter, getShopifyCustomerPrivacyScriptUrl } from '../src/adapters/shopify'
+import { shopifyCustomerPrivacy, getShopifyCustomerPrivacyScriptUrl } from '../src/adapters/shopify'
 
 describe('consent engine', () => {
   it('prefers stored consent over adapter bootstrap', async () => {
@@ -111,7 +111,7 @@ describe('consent engine', () => {
   })
 
   it('maps Shopify Customer Privacy bootstrap values', async () => {
-    const adapter = createShopifyCustomerPrivacyAdapter({
+    const adapter = shopifyCustomerPrivacy({
       loadFeature: false,
       window: {
         Shopify: {
@@ -137,7 +137,7 @@ describe('consent engine', () => {
   })
 
   it('leaves an undecided Shopify sale_of_data unset', async () => {
-    const adapter = createShopifyCustomerPrivacyAdapter({
+    const adapter = shopifyCustomerPrivacy({
       loadFeature: false,
       window: {
         Shopify: {
@@ -175,7 +175,7 @@ describe('Shopify Customer Privacy sync', () => {
     const analytics = createAnalytics({
       consent: {
         adapters: [
-          createShopifyCustomerPrivacyAdapter({
+          shopifyCustomerPrivacy({
             loadFeature: false,
             window: win,
             document,
@@ -208,7 +208,7 @@ describe('Shopify Customer Privacy sync', () => {
     let done: (() => void) | undefined
     const setTrackingConsent = vi.fn((_args: unknown, callback?: () => void) => (done = callback))
     const win = { Shopify: { customerPrivacy: { setTrackingConsent } } } as unknown as Window
-    const adapter = createShopifyCustomerPrivacyAdapter({ window: win, document })
+    const adapter = shopifyCustomerPrivacy({ window: win, document })
     let applied = false
     const apply = Promise.resolve(adapter.apply?.({ preferences: false, analytics: true, marketing: false })).then(() => (applied = true))
     await new Promise((resolve) => setTimeout(resolve, 0))
@@ -216,7 +216,7 @@ describe('Shopify Customer Privacy sync', () => {
     done?.()
     await apply
 
-    const headless = createShopifyCustomerPrivacyAdapter({
+    const headless = shopifyCustomerPrivacy({
       window: {} as Window,
       document,
       headlessStorefront: { storefrontAccessToken: 'tok' },
@@ -228,7 +228,7 @@ describe('Shopify Customer Privacy sync', () => {
   it('stays on the hosted-theme call while the storefront token is unset', async () => {
     const setTrackingConsent = vi.fn((_args: unknown, done?: () => void) => done?.())
     const win = { Shopify: { customerPrivacy: { setTrackingConsent } } } as unknown as Window
-    const adapter = createShopifyCustomerPrivacyAdapter({
+    const adapter = shopifyCustomerPrivacy({
       loadFeature: false,
       window: win,
       document,

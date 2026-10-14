@@ -1,9 +1,9 @@
 ---
 title: Shopify Customer Privacy
-description: "createShopifyCustomerPrivacyAdapter() keeps ConsentLayer and Shopify’s Customer Privacy API in agreement."
+description: "shopifyCustomerPrivacy() keeps ConsentLayer and Shopify’s Customer Privacy API in agreement."
 ---
 
-`createShopifyCustomerPrivacyAdapter()` keeps the instance and Shopify's
+`shopifyCustomerPrivacy()` keeps the instance and Shopify's
 Customer Privacy API in agreement. When no choice is stored locally, it reads
 the visitor's existing choice from `Shopify.customerPrivacy.currentVisitorConsent()`
 at bootstrap. Every choice made through ConsentLayer is written to Shopify with
@@ -12,13 +12,13 @@ applied back to the instance. The optional `sale_of_data` flag is passed
 through in both directions.
 
 ```ts
-import { createShopifyCustomerPrivacyAdapter } from 'consentlayer/adapters/shopify'
+import { shopifyCustomerPrivacy } from 'consentlayer/adapters/shopify'
 
 createAnalytics({
   providers,
   consent: {
     adapters: [
-      createShopifyCustomerPrivacyAdapter({
+      shopifyCustomerPrivacy({
         headlessStorefront: { storefrontAccessToken: process.env.NEXT_PUBLIC_SHOPIFY_PUBLIC_ACCESS_TOKEN },
       }),
     ],

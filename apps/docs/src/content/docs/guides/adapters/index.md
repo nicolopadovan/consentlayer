@@ -12,11 +12,11 @@ Adapters are passed to `createAnalytics({ consent: { adapters } })`, not to
 
 ```ts
 import { googleConsentMode } from 'consentlayer/adapters/google-consent-mode'
-import { createTcfAdapter } from 'consentlayer/adapters/tcf'
+import { tcf } from 'consentlayer/adapters/tcf'
 
 createAnalytics({
   providers,
-  consent: { adapters: [createTcfAdapter(), googleConsentMode()] },
+  consent: { adapters: [tcf(), googleConsentMode()] },
 })
 ```
 
@@ -27,8 +27,8 @@ Each adapter is a named export of its own entry point,
 
 | Adapter | Factory | Reads the choice | Writes the choice |
 |---|---|---|---|
-| [IAB TCF](/guides/adapters/tcf/) | `createTcfAdapter()` | From the TCF CMP | No |
-| [Shopify Customer Privacy](/guides/adapters/shopify/) | `createShopifyCustomerPrivacyAdapter()` | From Shopify | To Shopify |
+| [IAB TCF](/guides/adapters/tcf/) | `tcf()` | From the TCF CMP | No |
+| [Shopify Customer Privacy](/guides/adapters/shopify/) | `shopifyCustomerPrivacy()` | From Shopify | To Shopify |
 | [Google Consent Mode](/guides/adapters/google-consent-mode/) | `googleConsentMode()` | No | To Google tags, as Consent Mode signals |
 
 ## Order

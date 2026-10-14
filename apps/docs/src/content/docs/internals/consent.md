@@ -219,7 +219,7 @@ is reported with scope `consent-adapter`. See
 
 ### Shopify Customer Privacy
 
-`createShopifyCustomerPrivacyAdapter()` from `consentlayer/adapters/shopify`
+`shopifyCustomerPrivacy()` from `consentlayer/adapters/shopify`
 keeps Shopify's consent state and ConsentLayer's in step. Its adapter ID is
 `shopify-customer-privacy`.
 
@@ -242,7 +242,7 @@ occurs.
 
 ### IAB TCF
 
-`createTcfAdapter()` from `consentlayer/adapters/tcf` reads consent from the
+`tcf()` from `consentlayer/adapters/tcf` reads consent from the
 IAB TCF v2 CMP on the page. Its adapter ID is `tcf`.
 
 | Part | Behaviour |

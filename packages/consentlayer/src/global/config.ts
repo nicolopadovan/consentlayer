@@ -1,6 +1,6 @@
 import { googleConsentMode } from '../adapters/google-consent-mode'
-import { createShopifyCustomerPrivacyAdapter } from '../adapters/shopify'
-import { createTcfAdapter } from '../adapters/tcf'
+import { shopifyCustomerPrivacy } from '../adapters/shopify'
+import { tcf } from '../adapters/tcf'
 import { createAnalytics, type AnalyticsOptions } from '../core/create-analytics'
 import { createConsentController, type ConsentControllerOptions } from '../core/consent-controller'
 import type { AnalyticsPlugin, ConsentIntegrationAdapter } from '../core/types'
@@ -42,8 +42,8 @@ const factories: Record<string, (options: never) => AnalyticsPlugin> = {
 
 const adapterFactories: Record<string, (options: never) => ConsentIntegrationAdapter> = {
   googleConsentMode,
-  shopify: createShopifyCustomerPrivacyAdapter,
-  tcf: createTcfAdapter,
+  shopify: shopifyCustomerPrivacy,
+  tcf,
 }
 
 const attributes: Record<string, [provider: string, option?: string, flag?: boolean]> = {

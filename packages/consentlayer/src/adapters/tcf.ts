@@ -15,8 +15,8 @@ declare global {
   }
 }
 
-/** Options for `createTcfAdapter`. */
-export type TcfAdapterOptions = {
+/** Options for `tcf`. */
+export type TcfOptions = {
   /** TCF purpose IDs per category, merged over the defaults. A category is granted when every listed purpose has consent. */
   purposes?: Partial<Record<ConsentCategory, number[]>>
   window?: Window
@@ -44,7 +44,7 @@ function listen(api: TcfApi, onData: (tcData: TcData | null) => boolean | void):
 }
 
 /** Reads consent from the IAB TCF v2 CMP on the page through `__tcfapi`. Read-only: visitors change their choice in the CMP. */
-export function createTcfAdapter(options: TcfAdapterOptions = {}): ConsentIntegrationAdapter {
+export function tcf(options: TcfOptions = {}): ConsentIntegrationAdapter {
   const win = options.window ?? (typeof window !== 'undefined' ? window : undefined)
   const purposes = { ...defaultPurposes, ...options.purposes }
   const toConsent = (tcData: TcData) =>

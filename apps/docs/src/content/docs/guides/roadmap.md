@@ -31,7 +31,7 @@ planned ports set ConsentLayer up where those sites add code:
 | WordPress | A plugin that loads the [script tag](/start/script-tag/) and takes the configuration in the WordPress admin. |
 | Webflow | A snippet for the site's custom code settings. |
 | Framer, Squarespace and Wix | A snippet for each platform's custom code settings. |
-| Shopify themes | A theme app extension. In a headless storefront, `createShopifyCustomerPrivacyAdapter()` already keeps Shopify's consent in sync. |
+| Shopify themes | A theme app extension. In a headless storefront, `shopifyCustomerPrivacy()` already keeps Shopify's consent in sync. |
 | Google Tag Manager | A community template that loads the script tag from a GTM container. |
 
 ## Under consideration
