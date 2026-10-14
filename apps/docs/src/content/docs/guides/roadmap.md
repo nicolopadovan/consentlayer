@@ -6,15 +6,33 @@ description: What ConsentLayer plans to add, what it is considering, and the kno
 This page describes where ConsentLayer is heading and where the current
 release stops. It lists the work that is planned, the features under
 consideration that are not supported today, and the known gaps in the current
-behavior, each with a workaround where one exists. Items carry no dates or
-target versions; the [changelog](/guides/changelog/)
-records what each release actually ships.
+behavior, each with a workaround where one exists. Target dates are plans,
+not promises; the [changelog](/guides/changelog/) records what each release
+actually ships.
 
 ## Planned
 
-Ordered from the smallest change to the largest. The
+The sections below are ordered from the smallest change to the largest. The
 [comparison with c15t](/guides/c15t/) explains where several of these come
-from.
+from. Each ships in its own minor release, in order of priority:
+
+| Item                                                                              | Priority | Target        |
+| --------------------------------------------------------------------------------- | -------- | ------------- |
+| [Banner on npm](#banner-on-npm-consentlayerbanner)                                | High     | November 2026 |
+| [Banner translations](#banner-translations)                                       | High     | November 2026 |
+| [US opt-out model and region lookup](#privacy-laws-beyond-the-gdpr)               | High     | December 2026 |
+| [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027  |
+| [Astro and TanStack Start](#astro-and-tanstack-start)                             | Medium   | January 2027  |
+| [Google Ads, Microsoft Clarity and LinkedIn Insight](#more-providers)             | Medium   | February 2027 |
+| [Embeds behind consent](#embeds-behind-consent)                                   | Medium   | March 2027    |
+| [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027    |
+| [The other planned providers](#more-providers)                                    | Medium   | Q2 2027       |
+| [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027       |
+| [UK, Swiss and CNIL presets](#privacy-laws-beyond-the-gdpr)                       | Medium   | Q2 2027       |
+| [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027       |
+| [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027       |
+| [LGPD, PIPEDA and Law 25 presets](#privacy-laws-beyond-the-gdpr)                  | Low      | Q4 2027       |
+| [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028          |
 
 ### Banner on npm: `consentlayer/banner`
 
