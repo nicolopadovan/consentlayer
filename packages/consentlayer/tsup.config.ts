@@ -22,13 +22,14 @@ export default defineConfig({
     'server/meta': 'src/server/meta.ts',
     testing: 'src/testing.ts',
     next: 'src/next.tsx',
+    vue: 'src/vue.ts',
   },
   dts: true,
   format: ['esm'],
   clean: true,
   sourcemap: true,
   treeshake: true,
-  external: ['react', 'react-dom'],
+  external: ['react', 'react-dom', 'vue'],
   async onSuccess() {
     // esbuild drops module directives; prepended on line 1 so the sourcemaps stay aligned.
     for (const entry of ['dist/react/index.js', 'dist/next.js']) {

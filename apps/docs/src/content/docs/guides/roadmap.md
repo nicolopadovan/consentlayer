@@ -36,15 +36,15 @@ a single file you load with a `<script>` tag from a CDN, configured on the page
 without a build step. It is what the [website builder and CMS
 ports](#website-builders-and-cms) build on.
 
-### Vue, Svelte, Solid and Angular
+### Svelte, Solid and Angular
 
-The core runs in any browser code, but React is the only binding. Today, in
-other frameworks, use `createAnalytics()` and `analytics.consent` directly and
-build the banner state yourself. The planned bindings provide the equivalent of
-`<AnalyticsProvider>`, `useConsent()` and `useConsentController()` for Vue 3,
-Svelte 5, SolidJS and Angular, and send a page view on every navigation with
-Nuxt, SvelteKit, SolidStart and the Angular Router, like `consentlayer/next`
-does for Next.js.
+The core runs in any browser code, but React and [Vue](/start/vue/) are the
+only bindings. Today, in other frameworks, use `createAnalytics()` and
+`analytics.consent` directly and build the banner state yourself. The planned
+bindings provide the equivalent of `<AnalyticsProvider>`, `useConsent()` and
+`useConsentController()` for Svelte 5, SolidJS and Angular, and send a page
+view on every navigation with SvelteKit, SolidStart and the Angular Router,
+like `consentlayer/next` does for Next.js.
 
 ### Website builders and CMS
 

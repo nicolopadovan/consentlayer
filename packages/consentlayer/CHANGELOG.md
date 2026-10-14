@@ -79,6 +79,10 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `consentlayer/vue`: the `consentLayer` plugin boots the instance, sends a
+  page view per Vue Router navigation, reports errors from
+  `app.config.errorHandler`, and provides `useAnalytics()`, `useConsent()` and
+  `useConsentController()`. Works with Nuxt 4 through a Nuxt plugin.
 - `createAnalytics({ consent: { maxAgeDays, policyVersion, onStale } })` asks
   the visitor again when the stored choice is older than `maxAgeDays` or was
   made under another major `policyVersion` (`'3.x'` to `'4.0'`).

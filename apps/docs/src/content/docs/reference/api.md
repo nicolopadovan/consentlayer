@@ -13,6 +13,7 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer`](#consentlayer) | `createAnalytics`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types |
 | [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript` |
 | [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for Next.js |
+| [`consentlayer/vue`](#consentlayervue) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController` |
 | [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify consent adapter |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
@@ -794,6 +795,66 @@ Only the internal component that reads the route sits in a
 `<Suspense fallback={null}>` boundary, so your pages are still rendered on the
 server. Until that component reports the first route, `routeKey` is `null` and
 page views are held.
+
+## `consentlayer/vue`
+
+Requires `vue` 3.5 or later, an optional peer dependency. Vue Router is not a
+dependency; the plugin uses only `currentRoute`, `isReady()` and `afterEach()`
+of the router you pass.
+
+### `consentLayer`
+
+A Vue plugin. `app.use(consentLayer, options)` provides the instance and the
+consent UI state to every component. In the browser, it also bootstraps
+consent, schedules boot, sends page views and wraps `app.config.errorHandler`.
+On the server, it only provides them. `app.unmount()` stops it.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `analytics` | `Analytics` | | **Required.** The instance. |
+| `router` | `RouterLike` | | Sends a page view after every successful navigation, once per path and query string; the hash is ignored. A new path or query string also starts a new page session. Without it, one page view is sent for the page load. |
+| `page` | `PageViewPayload` | | Overrides the page view's `url`, `path` or `title`. |
+| `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | As on [`<AnalyticsProvider>`](#analyticsprovider). |
+| `autoShowBanner` | `boolean` | `true` | As on `<AnalyticsProvider>`. |
+| `openConsentGlobalKey` | `string` | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. |
+| `captureErrors` | `boolean` | `true` | Sends errors reaching `app.config.errorHandler` through `captureError` with `source: 'boundary'` and a `vue_info` tag, then calls the handler set before the plugin, else `console.error`. |
+
+The options type is exported as `ConsentLayerOptions`, and the router type as
+`RouterLike`.
+
+### `useAnalytics()` for Vue
+
+```ts
+function useAnalytics(): Analytics
+```
+
+**Returns** the instance passed to `consentLayer`, else the instance most
+recently created by `createAnalytics()`.
+
+**Throws** an `Error` when neither exists.
+
+### `useConsent()` for Vue
+
+```ts
+function useConsent(): {
+  consent: Readonly<Ref<ConsentState | null>>
+  engine: ConsentApi
+  setConsent: (consent: ConsentState) => Promise<void>
+  update: (partial: Partial<ConsentState>) => Promise<void>
+}
+```
+
+As the React [`useConsent()`](#useconsent), with `consent` as a ref. Called
+inside an effect scope, such as a component's `setup`, it stops listening when
+the scope is disposed.
+
+### `useConsentController()` for Vue
+
+The fields of the React [`useConsentController()`](#useconsentcontroller),
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories` and
+`prefs` as read-only refs. The return type is exported as `ConsentController`.
+
+**Throws** an `Error` when `consentLayer` is not installed.
 
 ## `consentlayer/providers/*`
 

@@ -6,7 +6,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**"],
+    ignores: ["**/dist/**", "**/.next/**", "**/.nuxt/**", "**/.output/**", "**/node_modules/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -37,5 +37,11 @@ export default tseslint.config(
         }
       ]
     }
+  },
+  {
+    files: ["packages/consentlayer/{src,test}/vue{,.test}.ts"],
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+    },
   }
 );

@@ -44,6 +44,7 @@ ConsentLayer has no runtime dependencies.
 | Browsers | The package is compiled to ES2022. Your bundler transpiles it if you target older browsers. |
 | React | 18.3 or 19, only for `consentlayer/react` and `consentlayer/next`. |
 | Next.js | 15 or 16, only for `consentlayer/next`, in the App Router or the Pages Router. |
+| Vue | 3.5 or later, only for `consentlayer/vue`. Nuxt 4 works through a Nuxt plugin. |
 | TypeScript | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`. |
 
 ## Optional peer dependencies
@@ -58,6 +59,7 @@ install and import yourself.
 |---|---|
 | `consentlayer/react` | `react`, `react-dom` |
 | `consentlayer/next` | `react`, `react-dom`, `next` |
+| `consentlayer/vue` | `vue` |
 | `consentlayer/providers/posthog` | `posthog-js` |
 | `consentlayer/providers/sentry` | `@sentry/browser` |
 | `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs` |
@@ -76,6 +78,7 @@ are loaded with dynamic `import()` when they are first needed.
 | `consentlayer` | `createAnalytics`, `definePlugin`, storage helpers and core types |
 | `consentlayer/react` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript` |
 | `consentlayer/next` | `AnalyticsProvider` for Next.js, which tracks navigation itself |
+| `consentlayer/vue` | The `consentLayer` Vue plugin and composables |
 | `consentlayer/providers/<name>` | One provider factory: `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, `shopify` |
 | `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
 | `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores |
@@ -131,8 +134,10 @@ ingestion hosts in `connect-src`, or none if you route them through
   track page views in a React application.
 - [Next.js](/start/nextjs/): the same in the Next.js App Router, plus
   server errors and a server-side tracking route.
+- [Vue and Nuxt](/start/vue/): the same with the `consentLayer` Vue plugin,
+  in Vite or Nuxt.
 - [Providers](/guides/providers/): the options and consent category of each
   provider.
-- Outside React, create the instance with `createAnalytics()` and call
+- In other frameworks, create the instance with `createAnalytics()` and call
   `analytics.consent.bootstrap()` followed by `analytics.boot()` once at
-  startup. `<AnalyticsProvider>` makes both calls for you.
+  startup. `<AnalyticsProvider>` and the Vue plugin make both calls for you.

@@ -6,6 +6,7 @@ description: Build a consent banner and settings dialog on useConsentController,
 import { Code } from '@astrojs/starlight/components'
 import banner from '../../../components/ConsentBanner.tsx?raw'
 import css from '../../../components/consent-banner.css?raw'
+import vueBanner from '../../../../../example-nuxt/app/components/ConsentBanner.vue?raw'
 
 ConsentLayer does not ship a consent banner, so its design, wording and
 languages remain yours. This page documents `useConsentController()`, the hook
@@ -188,6 +189,18 @@ export function AnalyticsShell({ children }: { children: ReactNode }) {
 In a Next.js app, import `AnalyticsProvider` from `consentlayer/next` instead
 so page views follow navigation, as shown in [Next.js](/start/nextjs/). The banner's text is plain strings in your
 component, so translate it with the i18n library your app already uses.
+
+## Vue
+
+`useConsentController()` from `consentlayer/vue` has the same fields, with the
+state as read-only refs: read `bannerVisible.value` in `<script>`, and
+`bannerVisible` in the template. It throws
+`useConsentController needs app.use(consentLayer)` when the plugin is not
+installed. This component uses the same CSS file as the React recipe:
+
+<Code code={vueBanner} lang="vue" title="components/ConsentBanner.vue" />
+
+[Vue and Nuxt](/start/vue/#3-add-the-banner) shows where to render it.
 
 ## Custom categories
 
