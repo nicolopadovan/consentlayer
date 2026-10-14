@@ -6,7 +6,7 @@ description: The built-in providers, their consent requirements and options, def
 This page covers what the providers that ship with ConsentLayer have in
 common: the consent category each one requires, deferred SDK loading, loading
 before consent, reverse proxies and error reporting. Each provider's options
-and exact behaviour are on its own page.
+and exact behavior are on its own page.
 
 A provider is a plugin that connects one vendor to the instance. Browser
 providers are passed to `createAnalytics({ providers })`. Other consent
@@ -30,13 +30,13 @@ Each provider is a named export of its own entry point,
 | [TikTok Pixel](/guides/providers/tiktok/)         | `tiktok()` from `consentlayer/providers/tiktok`               | `marketing`                                    | `pixelId`           |
 | [Hotjar (deprecated)](/guides/providers/hotjar/)  | `hotjar()` from `consentlayer/providers/hotjar`               | `analytics`                                    | `siteId`, `version` |
 
-The ID options of GA4, Meta, TikTok, PostHog, Sentry, Contentsquare and Hotjar may be
-`undefined` or empty: the provider is then turned off, and with `debug: true`
-it logs `[consentlayer] <id> is off: <option> is not set.` at boot. Pass
-`process.env` values directly instead of guarding each provider. String IDs
-are trimmed first, so a trailing newline in an environment variable is
-harmless and a whitespace-only value counts as unset. A value that is set but
-malformed still throws.
+The ID options of GA4, Meta, GTM, TikTok, PostHog, Sentry, Contentsquare and
+Hotjar may be `undefined` or empty: the provider is then turned off, and with
+`debug: true` it logs `[consentlayer] <id> is off: <option> is not set.` when
+`createAnalytics()` creates the instance in the browser. Pass `process.env`
+values directly instead of guarding each provider. String IDs are trimmed
+first, so a trailing newline in an environment variable is harmless and a
+whitespace-only value counts as unset.
 
 A provider whose required consent is `'none'` loads at boot and receives
 calls regardless of the visitor's choice. Every other provider loads only once
@@ -45,9 +45,19 @@ calls only while it stays granted, and is torn down when it is withdrawn.
 The exact order of these hooks is described in
 [Lifecycle](/internals/lifecycle/).
 
-`ga4()` and `meta()` validate their IDs when called and throw on a malformed
-value: `measurementId` must match `G-` followed by 4 to 16 uppercase letters
-or digits, and `pixelId` must be a string of 8 to 20 digits.
+`ga4()`, `meta()`, `gtm()` and `hotjar()` validate their IDs when called and
+throw on a value that is set but malformed:
+
+| Provider   | Option              | Accepted                                                |
+| ---------- | ------------------- | ------------------------------------------------------- |
+| `ga4()`    | `measurementId`     | `G-` followed by 4 to 16 uppercase letters or digits.   |
+| `meta()`   | `pixelId`           | A string of 8 to 20 digits.                             |
+| `gtm()`    | `containerId`       | `GTM-` followed by 4 to 12 uppercase letters or digits. |
+| `hotjar()` | `siteId`, `version` | A positive integer, as a number or a string of digits.  |
+
+`ga4()` and `gtm()` also throw when `serverContainerUrl` is neither an HTTPS
+URL nor a relative path starting with a single `/`. The other providers do not
+check the format of their IDs, so a wrong one fails at the vendor instead.
 
 Event names follow GA4 and each provider translates them to its own; see
 [Events and identity](/guides/events/). A
@@ -97,18 +107,26 @@ Google, Meta or TikTok before consent.
 
 Ad blockers drop requests to `posthog.com` and `sentry.io`. Serving them
 through your own domain avoids this; see [PostHog](/guides/providers/posthog/#reverse-proxy)
-and [Sentry](/guides/providers/sentry/#reverse-proxy). For GA4 and Meta, use
+and [Sentry](/guides/providers/sentry/#reverse-proxy).
+
+The other ad-blocked providers need a different approach. For GA4 and Google
+Tag Manager, set `serverContainerUrl` to a
+[server-side GTM](/guides/providers/gtm/#server-side-tagging) container on
+your own domain. For Meta and TikTok, use
 [server-side tracking](/guides/server-side-tracking/) instead.
 
 ## Errors
 
 `analytics.captureError(error, { level, tags, extra })` sends an error to
-every active provider that handles errors: Sentry, and PostHog unless
-`errors: false`. `level` is `'fatal'`, `'error'` or `'warning'`.
+every active provider that handles errors: Sentry, and PostHog unless it is
+created with `posthog({ errors: false })`. `level` is `'fatal'`, `'error'` or
+`'warning'`.
 
 ConsentLayer also reports the window's `error` events, with level `fatal`,
-and `unhandledrejection` events. Like every other call, errors captured before
-`boot()` are queued, up to 100 calls, and delivered once it completes.
+and `unhandledrejection` events. It attaches these handlers when `boot()`
+runs, so errors thrown before then are not captured by them. `captureError()`
+calls made before `boot()` completes are queued with every other call, up to
+100 together, and delivered once it completes.
 
 | `createAnalytics` option            | Effect                                           |
 | ----------------------------------- | ------------------------------------------------ |
@@ -116,10 +134,13 @@ and `unhandledrejection` events. Like every other call, errors captured before
 | `errors: { globalHandlers: false }` | `captureError` only.                             |
 | `errors: false`                     | No error reporting; `captureError` does nothing. |
 
+The `errors` option of `posthog()` is separate: it only decides whether
+PostHog receives the errors ConsentLayer reports.
+
 In React, wrap the tree in `ErrorBoundary` from `consentlayer/react`; see
-[Report errors](/start/react/#4-report-errors). In Next.js, also export
-`createGlobalError(analytics)` from `app/global-error.tsx`; see [Global
-errors](/start/nextjs/#global-errors).
+[Report errors](/start/react/#5-report-errors). In Next.js, also export
+`createGlobalError(analytics)` from `app/global-error.tsx`; see
+[Global errors](/start/nextjs/#global-errors).
 
 ## Writing your own
 

@@ -154,7 +154,7 @@ sends data to. ConsentLayer itself adds no inline scripts.
 | Contentsquare            | `https://*.contentsquare.net`                                                   | [Contentsquare's CSP guide](https://docs.contentsquare.com/en/web/content-security-policy/)                                    |
 | Hotjar                   | `https://*.hotjar.com`                                                          | [Hotjar's CSP guide](https://help.hotjar.com/hc/en-us/articles/36820026388881-Content-Security-Policies)                       |
 | Shopify Customer Privacy | `https://cdn.shopify.com`                                                       | Your checkout domain in `connect-src`                                                                                          |
-| PostHog                  | Bundled from npm; session recording loads from `https://*.posthog.com`          | `https://*.posthog.com` in `connect-src`; see [PostHog's CSP guide](https://posthog.com/docs/advanced/content-security-policy) |
+| PostHog                  | Bundled from npm                                                                | `https://*.posthog.com` in `connect-src`; see [PostHog's CSP guide](https://posthog.com/docs/advanced/content-security-policy) |
 | Sentry                   | Bundled from npm                                                                | The ingest host of your DSN in `connect-src`; Session Replay also needs `worker-src 'self' blob:`                              |
 | Vercel Analytics         | `'self'`                                                                        | `'self'`                                                                                                                       |
 
@@ -196,9 +196,9 @@ through your domain still goes to the vendor.
   the router's root or around your application.
 - [Angular](/start/angular/): the same with `provideConsentLayer()` in the
   application config.
-- [Providers](/guides/providers/): the options and consent category of each
-  provider.
 - [JavaScript and Astro](/start/javascript/): the same without a framework
   binding, with `createConsentController()`.
 - [Script tag](/start/script-tag/): ConsentLayer and a ready-made banner from
   a CDN, for sites without a build step.
+- [Providers](/guides/providers/): the options and consent category of each
+  provider.

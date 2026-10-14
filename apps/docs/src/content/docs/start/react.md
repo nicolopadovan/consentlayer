@@ -35,13 +35,19 @@ export const analytics = createAnalytics({
 ```
 
 A provider whose ID is `undefined`, empty or only whitespace is turned off, so
-the same code runs in environments where a variable is not set; with `debug: true` it logs
-`[consentlayer] ga4 is off: measurementId is not set.` at boot. A value that is
-set but malformed throws when the factory is called; surrounding whitespace,
-such as a trailing newline in a `.env` file, is trimmed first. For example
+the same code runs in environments where a variable is not set. With
+`debug: true`, it logs `[consentlayer] ga4 is off: measurementId is not set.`
+when `createAnalytics()` creates the instance. Surrounding whitespace, such as
+a trailing newline in a `.env` file, is trimmed first.
+
+`ga4()`, `meta()`, `gtm()` and `hotjar()` throw when their factory is called
+with an ID that is set but malformed, for example
 `[consentlayer] Invalid GA4 measurement ID: expected format "G-XXXXXXXX", received "UA-12345".`
 A GA4 measurement ID must match `G-` followed by 4 to 16 uppercase letters or
-digits; a Meta Pixel ID must be a string of 8 to 20 digits.
+digits, a Meta Pixel ID must be a string of 8 to 20 digits, a GTM container ID
+must match `GTM-` followed by 4 to 12 uppercase letters or digits, and a
+Hotjar `siteId` and `version` must each be a positive integer, as a number or a
+string of digits. The other providers do not check the format of their IDs.
 
 `createAnalytics()` loads nothing and sets no cookies; providers start when
 `analytics.boot()` runs, which `<AnalyticsProvider>` calls in the next step.
@@ -93,13 +99,65 @@ errors with `console.debug`; [`debug`](/reference/api/#debug) narrows it.
 
 </details>
 
-## 2. Add the provider and the banner
+## 2. Add the provider
+
+Wrap your application in `<AnalyticsProvider>`. Pass `routeKey` a string that
+changes on every navigation; with React Router, the path and query string from
+`useLocation()`:
+
+```tsx
+// src/analytics-shell.tsx
+import { AnalyticsProvider } from 'consentlayer/react'
+import type { ReactNode } from 'react'
+import { useLocation } from 'react-router'
+import { analytics } from './analytics'
+
+export function AnalyticsShell({ children }: { children: ReactNode }) {
+  const { pathname, search } = useLocation()
+  return (
+    <AnalyticsProvider analytics={analytics} routeKey={pathname + search}>
+      {children}
+    </AnalyticsProvider>
+  )
+}
+```
+
+Render the shell inside your router, around your routes. `useLocation()` only
+works below the router. Without a router, omit `routeKey`: the provider sends
+one page view for the page load.
+
+On mount, `<AnalyticsProvider>` performs these steps:
+
+1. It calls `analytics.consent.bootstrap()`, which reads the stored choice from
+   `localStorage`, or from your consent adapters if nothing is stored. When
+   neither yields a choice, or the stored choice is
+   [stale](/guides/consent-ui/#asking-again), `useConsentController()` reports
+   `bannerVisible: true`, unless `autoShowBanner` is `false`.
+2. It schedules `analytics.boot()` according to the [`boot`](#boot-timing)
+   prop. Boot runs each provider's `setup` and `consent` hooks, and `load` for
+   those whose consent requirement is met or that set `loadBeforeConsent`.
+3. After boot, it sends a page view to every active provider that has not
+   received one for the current route. A provider that becomes active
+   later, because the visitor grants its category, receives the current page
+   view at that point, so it is not sent twice and not lost.
+4. Whenever `routeKey` changes, it sends a page view to every active provider
+   and calls `analytics.newPageSession()`, which restarts the auto-tracking
+   scroll and time counters when auto-tracking is on.
+
+| Prop                   | Type                      | Default                         | Description                                                                                                                              |
+| ---------------------- | ------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `analytics`            | `Analytics`               | Required                        | The instance from `createAnalytics()`.                                                                                                   |
+| `routeKey`             | `string \| null`          | `'default'`                     | Changes on every navigation; a page view is sent once per value. `null` holds page views until the route is known.                       |
+| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                                                                                       |
+| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start. Read once, on mount. See [Boot timing](#boot-timing).                                                              |
+| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice or the stored choice is [stale](/guides/consent-ui/#asking-again). |
+| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside React.                                                                 |
+
+## 3. Add the banner
 
 Copy the [consent banner recipe](/guides/consent-ui/) into
-`src/consent-banner.tsx`. Then wrap your application in `<AnalyticsProvider>`,
-render the banner, and give visitors a way to reopen their settings. Pass
-`routeKey` a string that changes on every navigation; with React Router, the
-path and query string from `useLocation()`:
+`src/consent-banner.tsx`. Then render the banner inside the provider, and give
+visitors a way to reopen their settings:
 
 ```tsx
 // src/analytics-shell.tsx
@@ -131,35 +189,8 @@ export function AnalyticsShell({ children }: { children: ReactNode }) {
 }
 ```
 
-Render the shell inside your router, around your routes. `useLocation()` only
-works below the router. Without a router, omit `routeKey`: the provider sends
-one page view for the page load.
-
-On mount, `<AnalyticsProvider>` performs these steps:
-
-1. It calls `analytics.consent.bootstrap()`, which reads the stored choice from
-   `localStorage`, or from your consent adapters if nothing is stored. When
-   neither yields a choice, `useConsentController()` reports
-   `bannerVisible: true`, unless `autoShowBanner` is `false`.
-2. It schedules `analytics.boot()` according to the [`boot`](#boot-timing)
-   prop. Boot runs each provider's `setup` and `consent` hooks, and `load` for
-   those whose consent requirement is met or that set `loadBeforeConsent`.
-3. After boot, it sends a page view to every active provider that has not
-   received one for the current route. A provider that becomes active
-   later, because the visitor grants its category, receives the current page
-   view at that point, so it is not sent twice and not lost.
-4. Whenever `routeKey` changes, it sends a page view to every active provider
-   and calls `analytics.newPageSession()`, which restarts the auto-tracking
-   scroll and time counters when auto-tracking is on.
-
-| Prop                   | Type                      | Default                         | Description                                                                                                        |
-| ---------------------- | ------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `analytics`            | `Analytics`               | Required                        | The instance from `createAnalytics()`.                                                                             |
-| `routeKey`             | `string \| null`          | `'default'`                     | Changes on every navigation; a page view is sent once per value. `null` holds page views until the route is known. |
-| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                                                                 |
-| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start. Read once, on mount. See [Boot timing](#boot-timing).                                        |
-| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice.                                             |
-| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside React.                                           |
+`useConsentController()` returns the banner's state and actions. It throws when
+there is no `<AnalyticsProvider>` above it.
 
 <details>
 <summary>Meta Pixel and GTM without JavaScript</summary>
@@ -179,7 +210,7 @@ same for Google Tag Manager's `<noscript>` iframe; see
 
 </details>
 
-## 3. Track events
+## 4. Track events
 
 `useAnalytics()` returns the instance from the nearest `<AnalyticsProvider>`,
 or the most recently created instance when there is no provider above it.
@@ -198,13 +229,17 @@ export function SignUpButton() {
 of a provider: provider failures are passed to the `onError` option of
 `createAnalytics()`. Parameters are typed for the standard events, such as
 `sign_up` and `purchase`; any other name is sent as a custom event.
-`useConsent()` returns the current consent, `null` before a choice, and
-re-renders when it changes.
+
+`useConsent()` returns `{ consent, engine, setConsent, update }`. `consent` is
+the current consent, `null` before a choice, and the component re-renders when
+it changes. `engine` is `analytics.consent`; `setConsent(consent)` saves a
+complete choice and `update(partial)` merges a partial one into the current
+consent.
 
 [Events and identity](/guides/events/) lists the standard events, what each
 provider receives, and how `identify()` is gated by consent.
 
-## 4. Report errors
+## 5. Report errors
 
 Wrap parts of the tree in `ErrorBoundary` from `consentlayer/react`. When a
 child throws during rendering, it calls `captureError(error, { source: 'boundary', tags })`
@@ -260,9 +295,9 @@ Loading SDKs later in [Providers](/guides/providers/).
 
 ### Server-side tracking
 
-To also send events to the Meta Conversions API or GA4 from your server, set
-`server.endpoint` to a route on your backend and handle it with
-`createAnalyticsHandler()` from `consentlayer/server`. The handler takes a
-standard `Request` and returns a `Response`, so it runs in any server that
-uses the Fetch API. [Server-side tracking](/guides/server-side-tracking/)
+To also forward events to the Meta Conversions API, the TikTok Events API or a
+server-side GTM container, set `server.endpoint` to a route on your backend
+and handle it with `createAnalyticsHandler()` from `consentlayer/server`. The
+handler takes a standard `Request` and returns a `Response`, so it runs in any
+server that uses the Fetch API. [Server-side tracking](/guides/server-side-tracking/)
 covers the setup.

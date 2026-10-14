@@ -66,7 +66,8 @@ In the browser, `provideConsentLayer()` performs these steps:
 1. Once the application is stable, after hydration when the page was rendered
    on the server, it calls `analytics.consent.bootstrap()`, which reads the
    stored choice from `localStorage`, or from your consent adapters if nothing
-   is stored. When neither yields a choice, `bannerVisible()` becomes `true`,
+   is stored. When neither yields a choice, or the stored choice is
+   [stale](/guides/consent-ui/#asking-again), `bannerVisible()` becomes `true`,
    unless `autoShowBanner` is `false`.
 2. It schedules `analytics.boot()` according to the
    [`boot`](/start/react/#boot-timing) option.
@@ -83,7 +84,7 @@ On the server it only provides the instance and the state: `ready()` stays
 render in the browser.
 
 The other options are the props of the
-[React provider](/start/react/#2-add-the-provider-and-the-banner): `boot`,
+[React provider](/start/react/#2-add-the-provider): `boot`,
 `autoShowBanner`, `openConsentGlobalKey` and `page`.
 
 <details>
@@ -126,8 +127,8 @@ export class App {
 ```
 
 `injectConsentController()` returns the state as signals, `ready()`,
-`bannerVisible()`, `dialogVisible()`, `categories()`, `prefs()` and `error()`,
-and the actions as functions. Call it in an injection context, such as a field
+`error()`, `bannerVisible()`, `dialogVisible()`, `categories()`, `gpc()` and
+`prefs()`, and the actions as functions. Call it in an injection context, such as a field
 initializer. It throws when `provideConsentLayer()` is not in the application
 config.
 
@@ -176,10 +177,14 @@ export class SignUp {
 }
 ```
 
-`injectConsent()` returns an object whose `consent` property is a signal:
-`consent()` is the current consent, `null` before a choice, and updates when
-it changes. [Events and identity](/guides/events/) lists the standard events
-and what each provider receives.
+`injectConsent()` returns `{ consent, engine, setConsent, update }`. `consent`
+is a read-only signal: `consent()` is the current consent, `null` before a
+choice, and updates when it changes. Call it in an injection context. `engine`
+is `analytics.consent`; `setConsent(consent)` saves a complete choice and
+`update(partial)` merges a partial one into the current consent.
+
+[Events and identity](/guides/events/) lists the standard events and what each
+provider receives.
 
 ## 5. Report errors
 

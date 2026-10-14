@@ -21,6 +21,18 @@ The SDK is imported with a dynamic `import()` when the provider loads, and
 Session Replay and tracing, which pull in more code, are off by default and
 imported only once enabled and consented to.
 
+## Options
+
+| Option        | Type                                                                    | Default  | Description                                                                                                            |
+| ------------- | ----------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `dsn`         | `string \| undefined`                                                   | Required | The project DSN.                                                                                                       |
+| `environment` | `string`                                                                | None     | Passed to `Sentry.init`.                                                                                               |
+| `release`     | `string`                                                                | None     | Passed to `Sentry.init`.                                                                                               |
+| `replay`      | `boolean \| { sessionSampleRate?: number; onErrorSampleRate?: number }` | `false`  | Session Replay after analytics consent. `true` uses a session sample rate of `0.1` and an on-error sample rate of `1`. |
+| `tracing`     | `boolean \| { sampleRate?: number }`                                    | `false`  | Performance tracing after analytics consent. `true` uses a sample rate of `1`.                                         |
+| `tunnel`      | `string`                                                                | None     | Sends envelopes to this URL instead of the DSN host. See [Reverse proxy](#reverse-proxy).                              |
+| `defer`       | `false \| 'idle' \| 'interaction' \| number`                            | `false`  | See [Loading SDKs later](/guides/providers/#loading-sdks-later).                                                       |
+
 ## How it works
 
 Sentry reports errors regardless of consent and without personal data: user
@@ -42,28 +54,18 @@ For Next.js server and edge code, `sentryInstrumentation` from
 `consentlayer/sentry/server` configures `@sentry/nextjs` with the same data
 collection settings; see [Server errors](/start/nextjs/#server-errors).
 
-## Options
-
-| Option        | Type                                                                    | Default  | Description                                                                                                            |
-| ------------- | ----------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `dsn`         | `string \| undefined`                                                   | Required | The project DSN.                                                                                                       |
-| `environment` | `string`                                                                | None     | Passed to `Sentry.init`.                                                                                               |
-| `release`     | `string`                                                                | None     | Passed to `Sentry.init`.                                                                                               |
-| `replay`      | `boolean \| { sessionSampleRate?: number; onErrorSampleRate?: number }` | `false`  | Session Replay after analytics consent. `true` uses a session sample rate of `0.1` and an on-error sample rate of `1`. |
-| `tracing`     | `boolean \| { sampleRate?: number }`                                    | `false`  | Performance tracing after analytics consent. `true` uses a sample rate of `1`.                                         |
-| `tunnel`      | `string`                                                                | None     | Sends envelopes to this URL instead of the DSN host. See [Sentry](#reverse-proxy).                                     |
-| `defer`       | `false \| 'idle' \| 'interaction' \| number`                            | `false`  | See [Loading SDKs later](/guides/providers/#loading-sdks-later).                                                       |
-
 ## Reverse proxy
 
 Ad blockers drop requests to `sentry.io`. Serving them through your own
 domain avoids this.
 
+In Next.js, `withSentryConfig(config, { tunnelRoute: '/monitoring' })` from
+`consentlayer/sentry/next` adds a rewrite from
 `/monitoring?o=<orgId>&p=<projectId>` to
 `https://o<orgId>.ingest.sentry.io/api/<projectId>/envelope/`
 ([Sentry's guide](https://docs.sentry.io/platforms/javascript/troubleshooting/)).
 It configures the tunnel only for `@sentry/nextjs`'s own client, so pass it to
-`sentry()` as well, with the organisation and project IDs from your DSN,
+`sentry()` as well, with the organization and project IDs from your DSN,
 `https://<key>@o<orgId>.ingest.sentry.io/<projectId>`. If the DSN host is
 `o<orgId>.ingest.<region>.sentry.io`, append `&r=<region>`.
 

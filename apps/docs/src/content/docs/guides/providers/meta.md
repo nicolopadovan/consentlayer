@@ -36,7 +36,7 @@ deduplicates the pair (see [Server-side tracking](/guides/server-side-tracking/)
 ## Advanced matching
 
 Meta accepts advanced-matching data only in `fbq('init')`. If the pixel was
-initialised with an email address or phone number and marketing consent is
+initialized with an email address or phone number and marketing consent is
 then withdrawn, the pixel stays revoked and sends nothing for the rest of the
 page's lifetime, even if consent is granted again. It resumes after a reload.
 
@@ -44,8 +44,8 @@ page's lifetime, even if consent is granted again. It resumes after a reload.
 
 For visitors without JavaScript, `<MetaPixelNoscript>` from
 `consentlayer/react`, `consentlayer/vue`, `consentlayer/svelte`,
-`consentlayer/sveltekit`, `consentlayer/solid` or `consentlayer/solidstart` renders Meta's `<noscript>` image pixel; the Nuxt
-module registers it, and `provideMetaPixelNoscript()` from `consentlayer/angular`
-adds it. It fires without
-consent, since those visitors never see a banner. It renders nothing without
-`enabled` or while `pixelId` is `undefined` or empty.
+`consentlayer/sveltekit`, `consentlayer/solid` or `consentlayer/solidstart`
+renders Meta's `<noscript>` image pixel; the Nuxt module registers it, and
+`provideMetaPixelNoscript()` from `consentlayer/angular` adds it. It fires
+without consent, since those visitors never see a banner. It renders nothing
+without `enabled` or while `pixelId` is `undefined` or empty.

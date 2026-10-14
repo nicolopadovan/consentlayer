@@ -8,6 +8,12 @@ consent is granted. It is deprecated: Hotjar accounts are moving to
 Contentsquare, so switch to [`contentsquare()`](/guides/providers/contentsquare/)
 once yours has.
 
+```ts
+import { hotjar } from 'consentlayer/providers/hotjar'
+
+hotjar({ siteId: process.env.NEXT_PUBLIC_HOTJAR_SITE_ID, version: process.env.NEXT_PUBLIC_HOTJAR_VERSION })
+```
+
 ## Options
 
 | Option           | Type                            | Default  | Description                                                     |
@@ -18,8 +24,8 @@ once yours has.
 
 An unset, empty or whitespace-only `siteId` or `version` turns the provider
 off. Surrounding whitespace is trimmed. Any other value that is not a positive
-integer written in digits, such as `'1e3'` or `'12.0'`, throws `[consentlayer] Invalid Hotjar siteId or
-version: expected positive integers, …`.
+integer, written as a number or in digits, such as `'1e3'` or `'12.0'`, throws
+`[consentlayer] Invalid Hotjar siteId or version: expected positive integers, …`.
 
 ## How it works
 

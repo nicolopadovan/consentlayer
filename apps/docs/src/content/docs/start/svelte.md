@@ -20,9 +20,9 @@ SDKs of the providers you use.
 ## 1. Create the instance
 
 Create the instance once, at module level, in a file your components import.
-Pass each provider its ID from the environment. SvelteKit 3 declares
-environment variables in `src/env.ts`; a variable with `public: true` can be
-imported in browser code from `$app/env/public`:
+Pass each provider its ID from the environment. This page assumes SvelteKit 3,
+which declares environment variables in `src/env.ts`; a variable with
+`public: true` can be imported in browser code from `$app/env/public`:
 
 ```ts
 // src/env.ts
@@ -74,14 +74,28 @@ explains how missing IDs, `autoTracking`, `enabled` and `debug` behave.
 {/if}
 ```
 
+`#lib` is SvelteKit 3's alias for `src/lib`, which replaced `$lib`. It is a
+Node subpath import that you declare in the `imports` field of `package.json`,
+as new projects from `sv` already do, so imports from it include the file
+extension:
+
+```json
+{
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  }
+}
+```
+
 `consentLayer()` sets a context, so call it while the component initializes,
 in its `<script>`, not in a callback. Once the layout is mounted in the
 browser, it performs these steps:
 
 1. It calls `analytics.consent.bootstrap()`, which reads the stored choice from
    `localStorage`, or from your consent adapters if nothing is stored. When
-   neither yields a choice, `bannerVisible` becomes `true`, unless
-   `autoShowBanner` is `false`.
+   neither yields a choice, or the stored choice is
+   [stale](/guides/consent-ui/#asking-again), `bannerVisible` becomes `true`,
+   unless `autoShowBanner` is `false`.
 2. It schedules `analytics.boot()` according to the
    [`boot`](/start/react/#boot-timing) option.
 3. It sends a page view to every active provider. A provider that becomes
@@ -99,13 +113,13 @@ the first render in the browser.
 state is reactive properties, so read `consent.bannerVisible` directly;
 destructuring it reads the value once.
 
-| Option                 | Type                      | Default                         | Description                                                               |
-| ---------------------- | ------------------------- | ------------------------------- | ------------------------------------------------------------------------- |
-| `analytics`            | `Analytics`               | Required                        | The instance from `createAnalytics()`.                                    |
-| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                        |
-| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start.                                                     |
-| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice.    |
-| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside Svelte. |
+| Option                 | Type                      | Default                         | Description                                                                                                                              |
+| ---------------------- | ------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `analytics`            | `Analytics`               | Required                        | The instance from `createAnalytics()`.                                                                                                   |
+| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                                                                                       |
+| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start.                                                                                                                    |
+| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice or the stored choice is [stale](/guides/consent-ui/#asking-again). |
+| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside Svelte.                                                                |
 
 ## 3. Add the banner
 
@@ -163,11 +177,15 @@ initializes. Outside components, import the instance from
 <button onclick={() => analytics.track('sign_up', { method: 'email' })}>Sign up</button>
 ```
 
-`useConsent()` returns an object whose `consent` property holds the current
-consent, `null` before a choice, and updates when it changes. Read it in the
-template or in `$derived` or `$effect`; Svelte listens for changes only while
-something reads it. [Events and identity](/guides/events/) lists the standard
-events and what each provider receives.
+`useConsent()` returns `{ consent, engine, setConsent, update }`. `consent` is a
+reactive property holding the current consent, `null` before a choice, and it
+updates when consent changes. Read it in the template or in `$derived` or
+`$effect`; Svelte listens for changes only while something reads it. `engine`
+is `analytics.consent`; `setConsent(consent)` saves a complete choice and
+`update(partial)` merges a partial one into the current consent.
+
+[Events and identity](/guides/events/) lists the standard events and what each
+provider receives.
 
 ## 5. Report errors
 

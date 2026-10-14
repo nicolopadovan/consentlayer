@@ -26,7 +26,7 @@ Use GTM for the tags ConsentLayer has no provider for.
 | -------------------- | ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `containerId`        | `string \| undefined`  | Required | The `GTM-` container ID. `undefined` or `''` turns the provider off.                                                                |
 | `requiredConsent`    | `'none'` or a category | `'none'` | `'none'` loads the container at boot. A category, such as `'analytics'`, loads nothing until it is granted.                         |
-| `serverContainerUrl` | `string`               |          | Your tagging server. `gtm.js` loads from it instead of `www.googletagmanager.com`. See [Server-side tagging](#server-side-tagging). |
+| `serverContainerUrl` | `string`               | None     | Your tagging server. `gtm.js` loads from it instead of `www.googletagmanager.com`. See [Server-side tagging](#server-side-tagging). |
 
 ## How it works
 
@@ -52,10 +52,13 @@ Then `gtm()` pushes these messages:
 | Call                                                  | `dataLayer` message                                                                    |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `page()`                                              | `{ event: 'page_view', page_location, page_path, page_title }`                         |
-| `track(name, params)`                                 | `{ event: name, ...params }`, plus `providers: { gtm: { … } }` from the call's options |
+| `track(name, params, options)`                        | `{ ...params, ...options.providers.gtm, event: name }`                                 |
 | A consent change                                      | `{ event: 'consentlayer_consent', consent: { preferences, analytics, marketing, … } }` |
 | `identify()`, and analytics granted with a known user | `{ event: 'consentlayer_identify', user_id }`                                          |
 | `reset()`, or analytics withdrawn                     | `{ event: 'consentlayer_identify', user_id: null }`                                    |
+
+In a `track()` message, `event` is always the event name: a `params` or
+`options.providers.gtm` key named `event` is overwritten.
 
 The user ID is pushed only while `analytics` is granted. The email address
 and phone number are never pushed, since every tag in the container can read

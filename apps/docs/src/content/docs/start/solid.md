@@ -80,8 +80,9 @@ Once the provider is mounted, it performs these steps:
 
 1. It calls `analytics.consent.bootstrap()`, which reads the stored choice from
    `localStorage`, or from your consent adapters if nothing is stored. When
-   neither yields a choice, `bannerVisible` becomes `true`, unless
-   `autoShowBanner` is `false`.
+   neither yields a choice, or the stored choice is
+   [stale](/guides/consent-ui/#asking-again), `bannerVisible` becomes `true`,
+   unless `autoShowBanner` is `false`.
 2. It schedules `analytics.boot()` according to the
    [`boot`](/start/react/#boot-timing) prop.
 3. It sends a page view to every active provider. A provider that becomes
@@ -95,9 +96,12 @@ When the provider is disposed, it stops. On the server it does nothing, and
 `ready` stays `false`, so the banner is not rendered there and the HTML matches
 the first render in the browser.
 
-The props are those of the [React provider](/start/react/#2-add-the-provider-and-the-banner)
+The props are those of the [React provider](/start/react/#2-add-the-provider)
 except `routeKey`, which it sets from the path and query string of
-`useLocation()`. They are read once, when the provider is created.
+`useLocation()`. `analytics`, `boot`, `autoShowBanner` and
+`openConsentGlobalKey` are read once, when the provider is created. `page` is
+read reactively, together with the route, so a change applies to the page
+views sent after it.
 
 <details>
 <summary>When the page view is sent</summary>
@@ -178,10 +182,14 @@ export function SignUpButton() {
 }
 ```
 
-`useConsent()` returns an object whose `consent` property is an accessor:
-`consent()` is the current consent, `null` before a choice, and updates when
-it changes. [Events and identity](/guides/events/) lists the standard events
-and what each provider receives.
+`useConsent()` returns `{ consent, engine, setConsent, update }`. `consent` is
+an accessor: `consent()` is the current consent, `null` before a choice, and
+updates when it changes. `engine` is `analytics.consent`; `setConsent(consent)`
+saves a complete choice and `update(partial)` merges a partial one into the
+current consent.
+
+[Events and identity](/guides/events/) lists the standard events and what each
+provider receives.
 
 ## 5. Report errors
 

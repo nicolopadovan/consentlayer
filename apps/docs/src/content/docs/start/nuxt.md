@@ -81,13 +81,13 @@ export default defineNuxtConfig({
 })
 ```
 
-| Option                 | Type                      | Default                         | Description                                                            |
-| ---------------------- | ------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
-| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                     |
-| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start. See [Boot timing](/start/react/#boot-timing).    |
-| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice. |
-| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside Vue. |
-| `captureErrors`        | `boolean`                 | `true`                          | Reports component errors. See [Report errors](#5-report-errors).       |
+| Option                 | Type                      | Default                         | Description                                                                                                                              |
+| ---------------------- | ------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                                                                                       |
+| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start. See [Boot timing](/start/react/#boot-timing).                                                                      |
+| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice or the stored choice is [stale](/guides/consent-ui/#asking-again). |
+| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside Vue.                                                                   |
+| `captureErrors`        | `boolean`                 | `true`                          | Reports component errors. See [Report errors](#5-report-errors).                                                                         |
 
 ## 3. Add the banner
 
@@ -166,8 +166,11 @@ const analytics = useAnalytics()
 </template>
 ```
 
-`useConsent()` returns `consent`, a ref holding the current consent, `null`
-before a choice. [Vue](/start/vue/#4-track-events) describes both, and
+`useConsent()` returns `{ consent, engine, setConsent, update }`. `consent` is a
+read-only ref holding the current consent, `null` before a choice. `engine` is
+`analytics.consent`; `setConsent(consent)` saves a complete choice and
+`update(partial)` merges a partial one into the current consent.
+[Vue](/start/vue/#4-track-events) describes both, and
 [Events and identity](/guides/events/) lists the standard events and what each
 provider receives.
 

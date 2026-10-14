@@ -59,7 +59,8 @@ In the browser, `app.use(consentLayer, options)` performs these steps:
 
 1. It calls `analytics.consent.bootstrap()`, which reads the stored choice from
    `localStorage`, or from your consent adapters if nothing is stored. When
-   neither yields a choice, `useConsentController()` reports
+   neither yields a choice, or the stored choice is
+   [stale](/guides/consent-ui/#asking-again), `useConsentController()` reports
    `bannerVisible: true`, unless `autoShowBanner` is `false`.
 2. It schedules `analytics.boot()` according to the
    [`boot`](/start/react/#boot-timing) option.
@@ -73,15 +74,15 @@ In the browser, `app.use(consentLayer, options)` performs these steps:
 Without `router`, it sends one page view for the page load. On the server, it
 only provides the instance and the initial state.
 
-| Option                 | Type                      | Default                         | Description                                                                           |
-| ---------------------- | ------------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
-| `analytics`            | `Analytics`               | Required                        | The instance from `createAnalytics()`.                                                |
-| `router`               | Vue Router instance       |                                 | Sends a page view per navigation.                                                     |
-| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                                    |
-| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start.                                                                 |
-| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice.                |
-| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside Vue.                |
-| `captureErrors`        | `boolean`                 | `true`                          | Reports errors from `app.config.errorHandler`. See [Report errors](#5-report-errors). |
+| Option                 | Type                      | Default                         | Description                                                                                                                              |
+| ---------------------- | ------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `analytics`            | `Analytics`               | Required                        | The instance from `createAnalytics()`.                                                                                                   |
+| `router`               | Vue Router instance       | None                            | Sends a page view per navigation.                                                                                                        |
+| `page`                 | `{ url?, path?, title? }` | `location` and `document.title` | Overrides the page view's details.                                                                                                       |
+| `boot`                 | `{ mode?, timeoutMs? }`   | `{ mode: 'immediate' }`         | When providers start.                                                                                                                    |
+| `autoShowBanner`       | `boolean`                 | `true`                          | Whether `bannerVisible` becomes `true` when there is no stored choice or the stored choice is [stale](/guides/consent-ui/#asking-again). |
+| `openConsentGlobalKey` | `string`                  | `'CONSENTLAYER_openConsent'`    | The `window` function that opens the settings dialog from outside Vue.                                                                   |
+| `captureErrors`        | `boolean`                 | `true`                          | Reports errors from `app.config.errorHandler`. See [Report errors](#5-report-errors).                                                    |
 
 ## 3. Add the banner
 
@@ -156,10 +157,14 @@ const analytics = useAnalytics()
 </template>
 ```
 
-`useConsent()` returns `consent`, a ref holding the current consent, `null`
-before a choice. Called in a component's `setup`, it stops listening when the
-component unmounts. [Events and identity](/guides/events/) lists the standard
-events and what each provider receives.
+`useConsent()` returns `{ consent, engine, setConsent, update }`. `consent` is a
+read-only ref holding the current consent, `null` before a choice. Called in a
+component's `setup`, it stops listening when the component unmounts. `engine`
+is `analytics.consent`; `setConsent(consent)` saves a complete choice and
+`update(partial)` merges a partial one into the current consent.
+
+[Events and identity](/guides/events/) lists the standard events and what each
+provider receives.
 
 ## 5. Report errors
 

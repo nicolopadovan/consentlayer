@@ -33,6 +33,15 @@ page. To control upgrades, pin an exact version instead, such as
 [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity):
 jsDelivr shows the `integrity` hash of each file on the package's page.
 
+:::note
+`@1` matches stable releases only, so it resolves once ConsentLayer 1.0.0 is
+released. Until then, use `@next`, which serves the latest prerelease, or pin
+an exact prerelease version. ConsentLayer publishes prereleases under the npm
+tag `next`, and both CDNs accept an npm tag in place of a version. jsDelivr
+advises against tags in production, so pin an exact version there once you
+have tested it.
+:::
+
 The two scripts load in either order, and work with `defer` or `async`. The
 banner waits for the main script and for the document to be parsed.
 
@@ -66,16 +75,17 @@ keys are the options of
 `boot`, `autoShowBanner` and `openConsentGlobalKey`. `banner` configures the
 [banner](#3-the-banner).
 
-| Name in `providers` | Provider          | Notes                                                                      |
-| ------------------- | ----------------- | -------------------------------------------------------------------------- |
-| `ga4`               | `ga4()`           |                                                                            |
-| `meta`              | `meta()`          |                                                                            |
-| `tiktok`            | `tiktok()`        |                                                                            |
-| `contentsquare`     | `contentsquare()` |                                                                            |
-| `hotjar`            | `hotjar()`        | Deprecated, like the npm provider.                                         |
-| `posthog`           | `posthog()`       | Loads PostHog from its CDN; see [PostHog and Sentry](#posthog-and-sentry). |
-| `sentry`            | `sentry()`        | Loads Sentry from its CDN; see [PostHog and Sentry](#posthog-and-sentry).  |
-| `vercel`            | `vercel()`        | `trackEvent` defaults to `window.va`, set by the Vercel Analytics script.  |
+| Name in `providers` | Provider          | Notes                                                                          |
+| ------------------- | ----------------- | ------------------------------------------------------------------------------ |
+| `ga4`               | `ga4()`           |                                                                                |
+| `meta`              | `meta()`          |                                                                                |
+| `gtm`               | `gtm()`           | Loads the container at boot; see [Google Tag Manager](/guides/providers/gtm/). |
+| `tiktok`            | `tiktok()`        |                                                                                |
+| `contentsquare`     | `contentsquare()` |                                                                                |
+| `hotjar`            | `hotjar()`        | Deprecated, like the npm provider.                                             |
+| `posthog`           | `posthog()`       | Loads PostHog from its CDN; see [PostHog and Sentry](#posthog-and-sentry).     |
+| `sentry`            | `sentry()`        | Loads Sentry from its CDN; see [PostHog and Sentry](#posthog-and-sentry).      |
+| `vercel`            | `vercel()`        | `trackEvent` defaults to `window.va`, set by the Vercel Analytics script.      |
 
 | Name in `adapters`  | Adapter                    | Notes                    |
 | ------------------- | -------------------------- | ------------------------ |
@@ -166,7 +176,7 @@ runs before ConsentLayer, such as one marked `async`, can wait for the
 `consentlayer-banner.global.js` shows a banner at the bottom of the page until
 the visitor makes a choice, with three buttons: Reject non-essential,
 Customize and Accept all. Customize opens a settings dialog with a toggle for
-each category. The banner is labelled with its heading; the dialog is a modal
+each category. The banner is labeled with its heading; the dialog is a modal
 `<dialog>`, so it keeps focus inside while open, closes with Escape and
 returns focus to the button that opened it.
 
@@ -241,7 +251,7 @@ the [Global Privacy Control](/guides/consent-ui/#global-privacy-control)
 signal; Accept all then leaves marketing off. Set
 `window.ConsentLayer.consent.gpc` to `false` to ignore the signal.
 A [custom category](/guides/consent-ui/#custom-categories) named in
-`consent.categories` gets a toggle labelled with `<category>Label` and
+`consent.categories` gets a toggle labeled with `<category>Label` and
 `<category>Description`.
 
 ### Styling
@@ -301,16 +311,17 @@ Add the CDN that serves ConsentLayer, `https://cdn.jsdelivr.net` or
 `https://unpkg.com`, to `script-src`, along with the hosts of the providers
 you use:
 
-| Provider                 | `script-src`                                   |
-| ------------------------ | ---------------------------------------------- |
-| GA4                      | `https://www.googletagmanager.com`             |
-| Meta Pixel               | `https://connect.facebook.net`                 |
-| TikTok Pixel             | `https://analytics.tiktok.com`                 |
-| Contentsquare            | `https://t.contentsquare.net`                  |
-| Hotjar                   | `https://static.hotjar.com`                    |
-| Shopify Customer Privacy | `https://cdn.shopify.com`                      |
-| PostHog                  | `https://*.posthog.com`, or your reverse proxy |
-| Sentry                   | `https://browser.sentry-cdn.com`               |
+| Provider                 | `script-src`                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| GA4                      | `https://www.googletagmanager.com`                                              |
+| Google Tag Manager       | `https://www.googletagmanager.com`, plus the hosts of each tag in the container |
+| Meta Pixel               | `https://connect.facebook.net`                                                  |
+| TikTok Pixel             | `https://analytics.tiktok.com`                                                  |
+| Contentsquare            | `https://t.contentsquare.net`                                                   |
+| Hotjar                   | `https://static.hotjar.com`                                                     |
+| Shopify Customer Privacy | `https://cdn.shopify.com`                                                       |
+| PostHog                  | `https://*.posthog.com`, or your reverse proxy                                  |
+| Sentry                   | `https://browser.sentry-cdn.com`                                                |
 
 The banner injects a `<style>` element. With a nonce-based `style-src`, put
 the nonce on the banner's script tag: the banner copies it to the style.

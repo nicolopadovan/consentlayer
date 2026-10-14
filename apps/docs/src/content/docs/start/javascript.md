@@ -29,7 +29,7 @@ controller.start()
 controller.setRoute(location.pathname + location.search)
 ```
 
-`start()` performs the steps listed in [React](/start/react/#2-add-the-provider-and-the-banner):
+`start()` performs the steps listed in [React](/start/react/#2-add-the-provider):
 it calls `analytics.consent.bootstrap()`, schedules `analytics.boot()`, and
 sends a page view to each provider once it is active. It returns a function
 that stops it. `setRoute(key)` sends a page view to each provider when the key
@@ -37,11 +37,11 @@ changes, and starts a new page session. Call it again after every client-side
 navigation; on a site where every navigation loads a new page, the call above
 is enough.
 
-| Option                 | Type                    | Default                      | Description                                                             |
-| ---------------------- | ----------------------- | ---------------------------- | ----------------------------------------------------------------------- |
-| `boot`                 | `{ mode?, timeoutMs? }` | `{ mode: 'immediate' }`      | When providers start. See [Boot timing](/start/react/#boot-timing).     |
-| `autoShowBanner`       | `boolean`               | `true`                       | Whether `bannerVisible` becomes `true` when there is no stored choice.  |
-| `openConsentGlobalKey` | `string`                | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog, set by `start()`. |
+| Option                 | Type                    | Default                      | Description                                                                                                                              |
+| ---------------------- | ----------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `boot`                 | `{ mode?, timeoutMs? }` | `{ mode: 'immediate' }`      | When providers start. See [Boot timing](/start/react/#boot-timing).                                                                      |
+| `autoShowBanner`       | `boolean`               | `true`                       | Whether `bannerVisible` becomes `true` when there is no stored choice or the stored choice is [stale](/guides/consent-ui/#asking-again). |
+| `openConsentGlobalKey` | `string`                | `'CONSENTLAYER_openConsent'` | The `window` function that opens the settings dialog, set by `start()`.                                                                  |
 
 ## 2. Render the banner
 
@@ -135,6 +135,26 @@ document.querySelector('#sign-up')?.addEventListener('click', () => {
 `analytics.consent.getConsent()` returns the current consent, `null` before a
 choice, and `analytics.consent.subscribe(listener)` reports each change.
 [Events and identity](/guides/events/) lists the standard events.
+
+## 4. Report errors
+
+There is no error boundary without a framework, so pass the errors you catch
+to `analytics.captureError()`:
+
+```ts
+try {
+  await checkout()
+} catch (error) {
+  void analytics.captureError(error, { level: 'error', tags: { area: 'checkout' } })
+}
+```
+
+`captureError` delivers errors to the providers that implement error
+reporting, Sentry and PostHog, while their consent requirement is met. An
+error without a `source` is reported with `source: 'manual'`. Unless you set
+`errors: { globalHandlers: false }`, ConsentLayer also reports the window's
+`error` and `unhandledrejection` events after boot. `errors: false` disables
+both. [Providers](/guides/providers/#errors) covers the details.
 
 ## Astro
 

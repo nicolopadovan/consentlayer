@@ -74,7 +74,9 @@ On startup, `analytics.consent.bootstrap()` reads the stored choice. If there
 is none, it asks each consent adapter in order, such as the Shopify Customer
 Privacy adapter, and keeps the first non-null answer. If neither yields a
 choice, consent stays `null`, which satisfies no requirement other than
-`'none'`, and `<AnalyticsProvider>` shows the banner. The full sequence is described in
+`'none'`, and `<AnalyticsProvider>` shows the banner. It shows the banner too
+when the stored choice is stale: made under an earlier major policy version or
+longer ago than `maxAgeDays`. The full sequence is described in
 [Consent](/internals/consent/).
 
 </details>
@@ -119,16 +121,17 @@ ConsentLayer runs on both sides of your application:
 - **On the server**, `consentlayer/server` provides web-standard route
   handlers of the form `(request: Request) => Promise<Response>`.
   `createAnalyticsHandler` receives the events the browser forwards when you set
-  `server.endpoint` and sends them to the Meta Conversions API.
-  `sendServerEvent` sends events that never pass through the browser, such as a
-  confirmed payment from a webhook, to the Meta Conversions API and the GA4
-  Measurement Protocol. `createConsentHandler` appends each consent choice to
-  your database and sets a signed cookie that proves it.
+  `server.endpoint` and sends them to the Meta Conversions API, the TikTok
+  Events API or a server-side GTM container. `sendServerEvent` sends events
+  that never pass through the browser, such as a confirmed payment from a
+  webhook, to those destinations and to the GA4 Measurement Protocol.
+  `createConsentHandler` appends each consent choice to your database and sets
+  a signed cookie that proves it.
 
 The browser forwards an event to the server only while `analytics` or
 `marketing` is granted, and the server sends it only to the destinations whose
 own category is granted in the event's consent: `marketing` for Meta and
-`analytics` for GA4. Each event carries one ID, the `eventId` you pass to
+TikTok, and `analytics` for server-side GTM and GA4. Each event carries one ID, the `eventId` you pass to
 `track()` or a generated UUID, which is used both in the browser and on the
 server, so Meta can deduplicate an event it receives from both.
 

@@ -9,7 +9,7 @@ and events to Google Analytics 4 once `analytics` consent is granted.
 ```ts
 import { ga4 } from 'consentlayer/providers/ga4'
 
-ga4({ measurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID })
+ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID })
 ```
 
 ## Options
@@ -19,7 +19,7 @@ ga4({ measurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID })
 | `measurementId`      | `string \| undefined`   | Required  | The `G-` measurement ID.                                                                                                                                  |
 | `loadBeforeConsent`  | `boolean`               | `false`   | Loads gtag.js at boot with Consent Mode denied. See [Loading before consent](/guides/providers/#loading-before-consent).                                  |
 | `consentMode`        | `'basic' \| 'advanced'` | `'basic'` | `'advanced'` loads gtag.js and configures the tag at boot. See [Advanced mode](#advanced-mode).                                                           |
-| `serverContainerUrl` | `string`                |           | Your [server-side GTM](/guides/providers/gtm/#server-side-tagging) tagging server, set as `server_container_url`, so GA4 hits go to it instead of Google. |
+| `serverContainerUrl` | `string`                | None      | Your [server-side GTM](/guides/providers/gtm/#server-side-tagging) tagging server, set as `server_container_url`, so GA4 hits go to it instead of Google. |
 
 ## How it works
 
@@ -53,7 +53,7 @@ nothing before consent. `consentMode: 'advanced'` loads gtag.js and
 configures the tag at boot instead:
 
 ```ts
-ga4({ measurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID, consentMode: 'advanced' })
+ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID, consentMode: 'advanced' })
 ```
 
 In advanced mode the tag is configured at boot, before the visitor chooses.
@@ -64,7 +64,8 @@ signals decide what Google does with them. `user_id` and `user_data` are set
 only while `analytics` is granted.
 
 Advanced mode sends data to Google before consent. Whether that is allowed
-depends on the regions you serve and your legal basis.
+depends on the regions you serve and your legal basis; see the
+[legal notice](/guides/legal/).
 
 ## Consent Mode settings
 
