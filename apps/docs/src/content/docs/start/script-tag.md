@@ -170,6 +170,10 @@ each category. The banner is labelled with its heading; the dialog is a modal
 `<dialog>`, so it keeps focus inside while open, closes with Escape and
 returns focus to the button that opened it.
 
+The banner's default text and layout have not been legally reviewed. Whether
+they are enough where you and your visitors are is your responsibility; see
+the [legal notice](/guides/legal/).
+
 To let visitors change their choice later, call `CONSENTLAYER_openConsent()`
 from a link in your footer. The `openConsentGlobalKey` option renames it.
 

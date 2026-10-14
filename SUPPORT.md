@@ -1,27 +1,19 @@
 # Support
 
-## Start Here
+- Read the [documentation](https://consentlayer.vercel.app), including
+  [Troubleshooting](https://consentlayer.vercel.app/guides/troubleshooting/).
+- Search the [issues](https://github.com/nicolopadovan/analytics-consent-manager-npm/issues),
+  then open a new one for a bug or a feature request.
 
-- Read the [docs](https://consentlayer.vercel.app).
-- Check the working reference app in [`apps/example-next`](./apps/example-next).
-- Review the latest publish workflow runs in GitHub Actions if the issue is install or release related.
+When you report a bug, include:
 
-## When Asking For Help
+- the `consentlayer` version, your framework and its version;
+- the providers you use and their options, without secrets;
+- the consent state you expected and what you observed;
+- the output with `debug: true`, and the steps to reproduce.
 
-Include:
+ConsentLayer can't give legal advice. Whether your setup complies with the
+law where you operate is your responsibility; see the
+[legal notice](https://consentlayer.vercel.app/guides/legal/).
 
-- package version
-- consumer app framework and version
-- which providers are enabled
-- the consent state you expect versus what you observed
-- relevant non-secret environment variables
-- reproduction steps
-
-## Good Reference Files
-
-- consumer wiring: [`apps/example-next/components/analytics-shell.tsx`](./apps/example-next/components/analytics-shell.tsx)
-- Server route example: [`apps/example-next/app/api/analytics/route.ts`](./apps/example-next/app/api/analytics/route.ts)
-
-## Escalation
-
-For security-sensitive issues, use the process in [SECURITY.md](./SECURITY.md) instead of normal support handling.
+For security issues, follow [SECURITY.md](./SECURITY.md) instead.

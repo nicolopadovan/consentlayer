@@ -1,23 +1,26 @@
 # consentlayer
 
 Consent-first analytics for the browser and the server. You call one API;
-consentlayer decides, from the visitor's consent, which providers load, what
+ConsentLayer decides, from the visitor's consent, which providers load, what
 each one receives and when, and translates your events into each provider's
 format.
 
-- **Providers:** GA4, Meta Pixel and Conversions API, PostHog, Sentry, Contentsquare,
-  Vercel Analytics, and your own plugins. Consent syncs with Shopify's
-  Customer Privacy API.
-- **Consent:** three categories (preferences, analytics, marketing). A provider
-  loads only once its category is granted (or loads in its vendor's consent
-  mode), stops on withdrawal. Email and phone reach providers only with marketing consent.
-- **Light:** each provider and each heavy feature (Replay, tracing, session
-  recording) is a separate chunk loaded only when used; any provider can defer
-  loading until the browser is idle or the first interaction.
-- **React and Next.js:** a provider, hooks, an unstyled cookie banner and
-  dialog, an error boundary and a `global-error` page.
-- **Server:** one route forwards browser events to Meta CAPI with shared event
-  IDs for deduplication.
+- **Providers:** GA4, Google Tag Manager, Meta Pixel, TikTok Pixel, PostHog,
+  Sentry, Contentsquare, Vercel Analytics, and your own plugins.
+- **Consent:** categories `preferences`, `analytics` and `marketing`, plus
+  your own. A provider loads only once its category is granted, or in its
+  vendor's consent mode, and stops on withdrawal. Global Privacy Control is
+  honored. Consent adapters read an IAB TCF CMP, sync Shopify's Customer
+  Privacy API and send Google Consent Mode signals.
+- **Light:** each provider is its own entry point, and vendor SDKs and heavy
+  features (Replay, tracing, session recording) are chunks loaded only when
+  used.
+- **Frameworks:** bindings for React, Next.js, Vue, Nuxt, Svelte, SvelteKit,
+  Solid, SolidStart and Angular, plus a script-tag build with an optional
+  banner. On npm you build your own banner on `useConsentController()`.
+- **Server:** forward browser events to the Meta Conversions API, the TikTok
+  Events API or a server-side GTM container, with shared event IDs for
+  deduplication, and keep signed consent records.
 
 ## Install
 
@@ -25,8 +28,8 @@ format.
 npm install consentlayer
 ```
 
-Then install the SDK of each provider you use (`posthog-js`,
-`@sentry/browser`), and `react` for the React parts.
+Then install the SDK of each provider that needs one (`posthog-js`,
+`@sentry/browser`).
 
 ## Quick start
 
@@ -71,9 +74,16 @@ analytics.identify('user_123', { email: 'ada@example.com' })
 
 ## Documentation
 
-**[consentlayer.vercel.app](https://consentlayer.vercel.app)**: concepts, the
-lifecycle of each provider, every option, and guides for Next.js and the server.
+**[consentlayer.vercel.app](https://consentlayer.vercel.app)**: a setup guide
+for each framework, every provider and option, and the server.
+
+## Legal notice
+
+ConsentLayer has not been legally reviewed and is not legal advice. Whether
+your implementation complies with the law where you and your visitors are is
+your responsibility; see the
+[legal notice](https://consentlayer.vercel.app/guides/legal/).
 
 ## License
 
-MIT
+[MIT](./LICENSE)
