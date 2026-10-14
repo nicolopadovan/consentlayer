@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { SDK_VERSION } from '@sentry/browser'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createConsentController } from '../src/core/consent-controller'
 import { createAnalytics } from '../src/core/create-analytics'
@@ -201,5 +203,12 @@ describe('banner', () => {
     expect(dialog.open).toBe(false)
     unmount()
     analytics.destroy()
+  })
+})
+
+describe('the Sentry CDN bundle', () => {
+  it('has the version of the installed @sentry/browser', () => {
+    const source = readFileSync('src/global/cdn/sentry.ts', 'utf8')
+    expect(source).toContain(`https://browser.sentry-cdn.com/${SDK_VERSION}/`)
   })
 })
