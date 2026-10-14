@@ -27,7 +27,7 @@ export default [
   ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.2 kB'],
   ['providers/posthog', 'dist/providers/posthog.js', '1.2 kB'],
   ['providers/sentry', 'dist/providers/sentry.js', '1.2 kB'],
-  ['server', 'dist/server/index.js', '2.5 kB'],
+  ['server', 'dist/server/index.js', '2.6 kB'],
   ['server/meta', 'dist/server/meta.js', '1.5 kB'],
   ['server/tiktok', 'dist/server/tiktok.js', '1.4 kB'],
   ['server/sgtm', 'dist/server/sgtm.js', '1.5 kB'],

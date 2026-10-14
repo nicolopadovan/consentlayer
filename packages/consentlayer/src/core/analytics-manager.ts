@@ -182,8 +182,10 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       )
   }
 
+  let serverEvents: string[] | undefined
   const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
     if (!serverEndpoint || !(consent?.analytics || consent?.marketing)) return
+    if (serverEvents && !event.only && !serverEvents.includes(event.name)) return
     const body = JSON.stringify({ ...event, consent, identity: sharedIdentity() })
     const fail = (cause: unknown) =>
       emitError({ scope: 'server-forward', message: `Sending ${event.name} to ${serverEndpoint} failed`, cause })
@@ -202,6 +204,8 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         if (response.headers.get('consentlayer-forwarding') === 'off') serverEndpoint = undefined
+        const names = response.headers.get('consentlayer-events')
+        if (names !== null) serverEvents = names ? names.split(',') : []
         if (response.headers.get('consentlayer-consent') === 'missing') restoreConsentCookie()
       })
       .catch(fail)

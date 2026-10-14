@@ -120,7 +120,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 `<AnalyticsProvider>` from `consentlayer/next` takes the route from the App
 Router, so it replaces the `routeKey={usePathname()}` you passed before and
-also counts query-string changes. Remove any `<Suspense>` boundary you added
+also counts query-string changes: a search or filter page that writes its
+state to the URL sends a page view for each change. To keep one page view per
+path, use `<AnalyticsProvider>` from `consentlayer/react` with
+`routeKey={usePathname()}` instead. Remove any `<Suspense>` boundary you added
 around the provider for `useSearchParams()`: it made every page inside it
 render only on the client. The [Next.js guide](/start/nextjs/) explains why. In
 other React apps, keep `<AnalyticsProvider>` from `consentlayer/react` and

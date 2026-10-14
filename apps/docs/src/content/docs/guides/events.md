@@ -234,8 +234,9 @@ createAnalytics({
 })
 ```
 
-A list sends exactly those names, and `false` sends none; page views are not
-affected. To send a single event elsewhere, name the providers in its
+A list sends exactly those names, and `false` sends none; a provider's page
+views are not affected. A server destination's `events` also covers
+`page_view`; see [Server-side tracking](/guides/server-side-tracking/). To send a single event elsewhere, name the providers in its
 [`only`](#event-options) option. `only` wins over `events`: the event goes to
 every provider it names and to no other.
 
