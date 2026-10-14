@@ -6,7 +6,6 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
-    "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
