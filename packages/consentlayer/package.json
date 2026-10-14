@@ -27,11 +27,11 @@
   "author": "nicolopadovan",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nicolopadovan/analytics-consent-manager-npm.git",
+    "url": "git+https://github.com/nicolopadovan/consentlayer.git",
     "directory": "packages/consentlayer"
   },
-  "homepage": "https://consentlayer.vercel.app",
-  "bugs": "https://github.com/nicolopadovan/analytics-consent-manager-npm/issues",
+  "homepage": "https://consentlayer.nicolopadovan.com",
+  "bugs": "https://github.com/nicolopadovan/consentlayer/issues",
   "publishConfig": {
     "access": "public"
   },

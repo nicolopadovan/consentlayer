@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Report vulnerabilities privately, through
-[GitHub's private vulnerability reporting](https://github.com/nicolopadovan/analytics-consent-manager-npm/security/advisories/new),
+[GitHub's private vulnerability reporting](https://github.com/nicolopadovan/consentlayer/security/advisories/new),
 not in a public issue. Include the affected version, the steps to reproduce
 and the impact you expect.
 

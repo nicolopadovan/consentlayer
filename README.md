@@ -5,7 +5,7 @@ SolidStart, Angular, plain JavaScript and the server: one instance tracks to
 GA4, Google Tag Manager, Meta Pixel, TikTok Pixel, PostHog, Sentry and more,
 and loads each provider only once the visitor has agreed to its category.
 
-**Docs: [consentlayer.vercel.app](https://consentlayer.vercel.app)**
+**Docs: [consentlayer.nicolopadovan.com](https://consentlayer.nicolopadovan.com)**
 
 ```bash
 pnpm add consentlayer
@@ -22,6 +22,6 @@ pnpm add consentlayer
 ConsentLayer has not been legally reviewed and is not legal advice. Whether
 your implementation complies with the law where you and your visitors are is
 your responsibility; see the
-[legal notice](https://consentlayer.vercel.app/guides/legal/).
+[legal notice](https://consentlayer.nicolopadovan.com/guides/legal/).
 
 [MIT License](./LICENSE) · [Contributing](./CONTRIBUTING.md) · [Code of Conduct](./CODE_OF_CONDUCT.md) · [Security](./SECURITY.md) · [Support](./SUPPORT.md)

@@ -74,7 +74,7 @@ analytics.identify('user_123', { email: 'ada@example.com' })
 
 ## Documentation
 
-**[consentlayer.vercel.app](https://consentlayer.vercel.app)**: a setup guide
+**[consentlayer.nicolopadovan.com](https://consentlayer.nicolopadovan.com)**: a setup guide
 for each framework, every provider and option, and the server.
 
 ## Legal notice
@@ -82,7 +82,7 @@ for each framework, every provider and option, and the server.
 ConsentLayer has not been legally reviewed and is not legal advice. Whether
 your implementation complies with the law where you and your visitors are is
 your responsibility; see the
-[legal notice](https://consentlayer.vercel.app/guides/legal/).
+[legal notice](https://consentlayer.nicolopadovan.com/guides/legal/).
 
 ## License
 

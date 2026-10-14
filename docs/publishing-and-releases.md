@@ -6,16 +6,23 @@ Versions and the changelog are managed with [Changesets](https://changesets.dev)
 
 ## One-Time Setup
 
-1. Make the repository public. npm adds provenance only for public
-   repositories.
+1. Rename the repository to `consentlayer`, to match the `repository` field
+   in the package's `package.json`, and make it public. npm adds provenance
+   only for public repositories.
 2. In the repository settings → Environments, create `npm` with yourself as a
    required reviewer. The publish job waits there for your approval.
 3. In the repository settings → Actions → General, allow GitHub Actions to
    create and approve pull requests, so the release pull request can be opened.
 4. On npmjs.com, open the package settings → Trusted publishing → GitHub
    Actions, and enter owner `nicolopadovan`, repository
-   `analytics-consent-manager-npm`, workflow `publish-package.yml` and
+   `consentlayer`, workflow `publish-package.yml` and
    environment `npm`.
+5. In the repository settings → Pages, set the source to GitHub Actions and
+   the custom domain to `consentlayer.nicolopadovan.com`. At your DNS
+   provider, add a `CNAME` record from `consentlayer` to
+   `nicolopadovan.github.io`. Then turn on Enforce HTTPS.
+
+The Docs workflow deploys the documentation site on every push to `main`.
 
 ## Release Steps
 

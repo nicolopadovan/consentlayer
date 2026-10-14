@@ -13,8 +13,8 @@ A pnpm and Turborepo monorepo. Use Node.js 24 and the pnpm version in `packageMa
 - `apps/example-*`: one example application per framework.
 - `docs`: maintainer notes, including [publishing and releases](./docs/publishing-and-releases.md).
 
-The published docs are at https://consentlayer.vercel.app, and as Markdown for agents at
-https://consentlayer.vercel.app/llms-full.txt.
+The published docs are at https://consentlayer.nicolopadovan.com, and as Markdown for agents at
+https://consentlayer.nicolopadovan.com/llms-full.txt.
 
 ## Commands
 

@@ -5,7 +5,7 @@ import { defineConfig } from 'astro/config'
 import starlightLlmsTxt from 'starlight-llms-txt'
 
 export default defineConfig({
-  site: 'https://consentlayer.vercel.app',
+  site: 'https://consentlayer.nicolopadovan.com',
   redirects: { '/start/sveltekit': '/start/svelte/', '/start/solidstart': '/start/solid/' },
   integrations: [
     react(),
@@ -19,11 +19,9 @@ export default defineConfig({
           exclude: ['internals/**', 'playground', 'guides/migrating-to-v1', 'guides/changelog', 'guides/contributing'],
         }),
       ],
-      social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/nicolopadovan/analytics-consent-manager-npm' },
-      ],
+      social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/nicolopadovan/consentlayer' }],
       editLink: {
-        baseUrl: 'https://github.com/nicolopadovan/analytics-consent-manager-npm/edit/main/apps/docs/',
+        baseUrl: 'https://github.com/nicolopadovan/consentlayer/edit/main/apps/docs/',
       },
       customCss: ['./src/styles/custom.css'],
       routeMiddleware: './src/routeData.ts',
