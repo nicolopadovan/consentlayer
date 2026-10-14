@@ -298,6 +298,8 @@ export type AnalyticsManagerOptions = {
    * `false` turns both off; `{ globalHandlers: false }` keeps only `captureError`.
    */
   errors?: boolean | { globalHandlers?: boolean }
+  /** Set on every `<script>` ConsentLayer injects, for a Content Security Policy that allows scripts by nonce. */
+  nonce?: string
   /** HTTPS URLs or paths starting with "/". */
   server?: {
     /** Also send each event to this route (see `createAnalyticsHandler`). */

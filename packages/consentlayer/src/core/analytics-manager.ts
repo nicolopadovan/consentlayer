@@ -12,6 +12,7 @@ import type {
   UserIdentity,
   UserTraits,
 } from './types'
+import { setScriptNonce } from './plugin'
 import { createMemoryIdentityStorage } from './storage'
 import {
   createEventId,
@@ -75,6 +76,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     throw new Error('[consentlayer] autoTracking must be autoTracking() from consentlayer/auto-tracking')
   }
   const debugLog = createDebugLog(options.debug)
+  if (options.nonce) setScriptNonce(options.nonce)
   const listeners = new Set<(snapshot: AnalyticsManagerStateSnapshot) => void>()
   const providerStates = new Map<string, ProviderState>()
   const identityStorage = options.identityStorage ?? createMemoryIdentityStorage()

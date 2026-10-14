@@ -143,7 +143,24 @@ With `"moduleResolution": "node"` (also called `node10`), imports such as
 
 If your site sends a Content Security Policy, allow the scripts ConsentLayer
 injects for the providers you use, and the hosts each vendor's script then
-sends data to. ConsentLayer itself adds no inline scripts.
+sends data to. `meta()` and `tiktok()` also run their vendor's base code as an
+inline script.
+
+With a nonce-based `script-src`, pass the nonce of the current response to
+`createAnalytics()`. ConsentLayer sets it on every script it injects, inline
+or external, so neither the inline base code nor the vendors' hosts need to
+be listed when the policy also has `'strict-dynamic'`:
+
+```ts
+const nonce =
+  typeof document === 'undefined' ? undefined : document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce
+
+const analytics = createAnalytics({ nonce, providers: [meta({ pixelId })] })
+```
+
+The example reads the nonce from a script your server already gave one, as
+[Google Tag Manager's own snippet](https://developers.google.com/tag-platform/security/guides/csp)
+does.
 
 | Provider                 | `script-src`                                                                    | Data hosts                                                                                                                     |
 | ------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -160,8 +177,8 @@ sends data to. ConsentLayer itself adds no inline scripts.
 
 Google's guide lists more hosts when Google Signals or Ads features are on, and
 the Google Tag Manager container runs whatever its tags inject. Tags such as
-Custom HTML need `'unsafe-inline'`, since `gtm()` doesn't add a nonce to
-`gtm.js`. Meta and TikTok publish no CSP documentation: start from the hosts
+Custom HTML need `'unsafe-inline'`, unless you pass `nonce`: `gtm()` then
+sets it on `gtm.js`, and Google Tag Manager passes it to the scripts it adds. Meta and TikTok publish no CSP documentation: start from the hosts
 above and add those your browser console reports as blocked.
 
 ### Your own domain

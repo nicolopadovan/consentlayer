@@ -1,4 +1,4 @@
-import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
+import { definePlugin, getFlag, loadScript, runInlineScript, setFlag, skippedPlugin } from '../core/plugin'
 import { tiktokUserData, toTikTokEvent } from '../core/tiktok-events'
 import { expireCookies } from '../core/utils'
 
@@ -48,16 +48,15 @@ export function tiktok(options: TikTokOptions) {
     load(loadContext) {
       if (typeof window === 'undefined' || getFlag('TikTokPixelInitialized')) return
 
-      const bootstrap = document.createElement('script')
-      bootstrap.setAttribute('data-consentlayer', 'tiktok-pixel-bootstrap')
       // TikTok's base code with its consent mode methods; loadScript below injects events.js instead of ttq.load.
-      bootstrap.text = `!function (w, d, t) {
+      runInlineScript(
+        `!function (w, d, t) {
 w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{}};
 ttq.${loadContext.consent?.marketing ? 'grantConsent' : 'holdConsent'}();
 ttq.load(${JSON.stringify(pixelId).replace(/</g, '\\u003c')});
-}(window, document, 'ttq');`
-      document.head.appendChild(bootstrap)
-      bootstrap.remove()
+}(window, document, 'ttq');`,
+        'tiktok-pixel-bootstrap',
+      )
       loadScript(
         `https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=${encodeURIComponent(pixelId)}&lib=ttq`,
       ).catch(() =>
