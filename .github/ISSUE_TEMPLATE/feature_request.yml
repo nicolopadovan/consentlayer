@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest a provider, adapter, framework or option.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you're trying to do
+      description: The problem, not the solution. What does ConsentLayer not let you do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: The API or behavior you have in mind, if any.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds you've tried

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/nicolopadovan/analytics-consent-manager-npm/security/advisories/new
+    about: Report vulnerabilities privately, never in a public issue.
+  - name: Documentation
+    url: https://consentlayer.vercel.app
+    about: Setup guides, every provider and option, and Troubleshooting.

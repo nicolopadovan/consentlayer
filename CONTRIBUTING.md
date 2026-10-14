@@ -52,8 +52,9 @@ request.
 - Preserve consent-first behavior: no provider loads or receives data before
   its consent requirement is met, unless an option the user sets says so.
 - Update the docs in [`apps/docs`](./apps/docs) when public behavior, options
-  or install steps change, and add an entry to the
-  [changelog](./packages/consentlayer/CHANGELOG.md).
+  or install steps change.
+- Add a changeset when the published package changes: run `pnpm changeset`,
+  pick the bump and describe the change for the changelog.
 - Describe what changed and how you verified it.
 
 ## Security

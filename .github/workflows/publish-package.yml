@@ -1,45 +1,75 @@
-name: Publish Package
+name: Release
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-  release:
-    types: [published]
+
+concurrency: release
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  publish:
+  version:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      unpublished: ${{ steps.check.outputs.unpublished }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
-          version: 10.4.1
+          node-version: 24
+          package-manager-cache: false
+      - run: pnpm install --frozen-lockfile
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      # Opens or updates the "Release consentlayer" pull request while changesets are pending.
+      - uses: changesets/action@v2
+        with:
+          version-script: pnpm changeset version
+          commit-message: 'chore: release consentlayer'
+          pr-title: Release consentlayer
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: check
+        run: |
+          version=$(node -p "require('./packages/consentlayer/package.json').version")
+          if npm view "consentlayer@$version" version --silent >/dev/null 2>&1; then
+            echo "unpublished=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "unpublished=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: version
+    if: needs.version.outputs.unpublished == 'true'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Verify package
-        run: |
+      - run: pnpm install --frozen-lockfile
+      - run: |
           pnpm turbo run typecheck lint test build --filter consentlayer
           pnpm --filter consentlayer check:package
 
       # npm (not pnpm) publishes, so npm's trusted publishing (OIDC) applies: no token.
-      - name: Publish package
+      - name: Publish
         working-directory: packages/consentlayer
         run: |
           version=$(node -p "require('./package.json').version")
           if [[ "$version" == *-* ]]; then npm publish --tag next; else npm publish; fi
+          git tag "consentlayer@$version"
+          git push origin "consentlayer@$version"

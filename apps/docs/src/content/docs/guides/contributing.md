@@ -50,8 +50,9 @@ so. Lint warnings fail the build.
 
 A pull request should make one change, with tests for the behavior it adds or
 fixes, keep providers from loading or receiving data before their consent
-requirement is met, and update these docs and the
-[changelog](/guides/changelog/) when public behavior changes. The
+requirement is met, and update these docs when public behavior changes. When
+the published package changes, run `pnpm changeset` to add a changeset, which
+becomes the change's entry in the [changelog](/guides/changelog/). The
 [contributing guide](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/CONTRIBUTING.md) describes the repository
 layout and how to run the examples and the docs locally.
 

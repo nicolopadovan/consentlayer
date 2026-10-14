@@ -1,0 +1,47 @@
+name: Bug report
+description: Something in ConsentLayer doesn't work as documented.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: ConsentLayer version
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: framework
+    attributes:
+      label: Framework and version
+      description: Or "script tag" or "none".
+      placeholder: Next.js 16.0.1
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Providers and options
+      description: Your `createAnalytics()` configuration, without secrets.
+      render: ts
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what happened
+      description: Include the consent state, such as analytics granted and marketing denied.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: A minimal repository or the steps from a fresh page load.
+    validations:
+      required: true
+  - type: textarea
+    id: debug
+    attributes:
+      label: Debug output
+      description: "The console output with `debug: true`."
+      render: text

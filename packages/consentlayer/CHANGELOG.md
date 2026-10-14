@@ -1,10 +1,6 @@
-# Changelog
+# consentlayer
 
-All notable changes to `consentlayer` are documented here.
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
-project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
+## 1.0.0-rc.0
 
 The first public release.
 
