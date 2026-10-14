@@ -358,7 +358,8 @@ type Hook<Args extends unknown[] = []> = (
 
 /**
  * A provider. The manager decides when each hook runs:
- * `setup` at boot; `load` once, when `requiredConsent` is granted (at boot
+ * `setup` when the instance is created in the browser, or else at boot;
+ * `load` once, when `requiredConsent` is granted (at boot
  * with `loadBeforeConsent`, or when there is no `load`); then `consent` on
  * every consent change. `page`, `track`, `identify` and `group` run only
  * while consent is granted; a withdrawal runs `teardown`. Errors go to

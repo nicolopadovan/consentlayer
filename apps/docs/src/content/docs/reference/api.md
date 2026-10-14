@@ -635,7 +635,8 @@ What `createAnalytics({ server: { endpoint } })` posts, and what
 
 ### `AnalyticsPlugin`
 
-The interface every provider implements. ConsentLayer runs `setup` at boot;
+The interface every provider implements. ConsentLayer runs `setup` when the
+instance is created in the browser;
 `load` once, when `requiredConsent` is met (at boot with `loadBeforeConsent`);
 `consent` on every consent change. `page`, `track`, `identify` and `group` run
 only while consent is met, and a withdrawal runs `teardown`. Each hook receives
@@ -650,7 +651,7 @@ hook is reported to `onError` and does not affect other providers. See
 | `requiredConsent` | `ProviderConsentRequirement` | `'none'` | A category, `'none'`, or `(consent: ConsentState \| null) => boolean`. |
 | `loadBeforeConsent` | `boolean` | `false` | Runs `load` at boot, before consent; the provider relies on its own consent mode. |
 | `defer` | `LoadTiming` | `false` | When `load` runs once allowed: `false` immediately, `'idle'` on `requestIdleCallback` (5000 ms timeout), `'interaction'` on the first `pointerdown`, `keydown`, `scroll` or `touchstart`, or a number of milliseconds. Up to 100 calls are held meanwhile and delivered after `load`. |
-| `setup` | `(ctx) => void \| Promise<void>` | | Runs at boot. Must not use the network or set cookies. |
+| `setup` | `(ctx) => void \| Promise<void>` | | Runs when the instance is created in the browser, before boot. Must not use the network or set cookies. |
 | `load` | `(ctx) => void \| Promise<void>` | | Injects scripts. Runs once. |
 | `consent` | `(ctx) => void \| Promise<void>` | | Applies `ctx.consent`. |
 | `page` | `(page: PageEvent, ctx) => void \| Promise<void>` | | A page view. `PageEvent` is `PageViewPayload & { id: string }`. |

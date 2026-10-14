@@ -31,7 +31,9 @@ loads nothing. It performs these steps in order:
    the engine's current consent (the `initialConsent`, `null` by default).
    `server.endpoint` is validated here with the same rule as step 2.
 5. Registers each entry of `providers` as an internal record
-   `{ setup: false, loaded: false, active: false }`. No hook runs.
+   `{ setup: false, loaded: false, active: false }`. In the browser, while
+   `enabled` is true, it then starts each provider's `setup` without awaiting
+   it and marks the record `setup: true`. No other hook runs.
 6. Records the instance as the latest one, which hooks such as
    `useAnalytics()` fall back to outside `<AnalyticsProvider>`.
 
@@ -105,7 +107,8 @@ For each provider, `evaluateProvider` runs these steps:
    evaluated on every pass) is false, tear the provider down and stop.
 2. Compute `allowed` from the current consent and the provider's
    `requiredConsent`.
-3. On the first pass only, run `setup` and await it.
+3. If `setup` has not run yet, because `enabled` was false when the instance
+   was created or the provider was registered later, run it and await it.
 4. Run `consent` and await it. This happens on every pass, whether or not the
    provider is allowed.
 5. If the provider has not been loaded and it is either `allowed` or has
@@ -394,7 +397,8 @@ visitor with nothing stored.
 
 1. `<AnalyticsProvider>` mounts. Bootstrap finds no stored choice, so consent
    stays `null`, and `boot()` runs.
-2. The first pass runs PostHog's `setup` (it has none) and `consent`, which
+2. PostHog's `setup` (it has none) ran when the instance was created. The
+   first pass runs `consent`, which
    stores the context. `allowed` is false and there is no
    `loadBeforeConsent`, so nothing loads and the provider stays inactive. The
    `pending` queue is empty.

@@ -269,6 +269,9 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `createEnvConfig()`: pass `process.env` values to the providers directly.
 
 ### Fixed
+- With a deferred boot, a Google tag on the page could run before `ga4()` set
+  the Consent Mode defaults. Plugin `setup` hooks now run when the instance is
+  created in the browser, before boot, instead of at boot.
 - `captureError` reports each error object once, so an error that reaches both
   a framework's error handler and the window's `error` event is not sent twice.
 - `debug` logs `reached no provider` when the providers a call reaches have no

@@ -596,8 +596,9 @@ A provider you wrote yourself is now a plugin. Wrap it in `definePlugin()` from
 
 The lifecycle changes in three ways:
 
-- `setup` runs at boot, before consent, for every plugin. It must not load
-  scripts, send requests or set cookies. Move that work to `load`.
+- `setup` runs when the instance is created in the browser, before boot and
+  consent, for every plugin. It must not load scripts, send requests or set
+  cookies. Move that work to `load`.
 - `load` runs once. The old `init` ran each time the provider became active
   again after a withdrawal.
 - A plugin without `requiredConsent` was already active before consent, but

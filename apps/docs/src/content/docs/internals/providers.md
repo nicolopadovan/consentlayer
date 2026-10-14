@@ -19,7 +19,7 @@ The analytics manager drives every provider through the same contract (see
 
 | Hook | When it runs |
 |---|---|
-| `setup` | Once, on the first lifecycle pass after `boot()`, whatever the consent. |
+| `setup` | Once, whatever the consent: when the instance is created in the browser, or on the first lifecycle pass after `boot()` if `enabled` was false then or the provider was registered later. |
 | `consent` | On every lifecycle pass (boot, each consent change, each registration after boot), for every provider, before `load`. Providers that are not allowed to run still receive it, which is how vendor consent modes learn about a denial. |
 | `load` | Once, on the first pass where the provider's requirement is met, or at boot with `loadBeforeConsent`. With `defer`, later; calls made in the meantime are held, up to 100. |
 | `page`, `track`, `identify`, `group`, `error` | Only while the provider is active, which means its `requiredConsent` is met. |

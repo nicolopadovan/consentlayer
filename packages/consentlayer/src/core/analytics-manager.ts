@@ -335,14 +335,17 @@ export function createAnalyticsManager(
     await call(state, 'teardown', (plugin, ctx) => plugin.teardown?.(ctx))
   }
 
+  const setupProvider = async (state: ProviderState) => {
+    if (state.setup) return
+    state.setup = true
+    await call(state, 'setup', (p, ctx) => p.setup?.(ctx))
+  }
+
   const evaluateProvider = async (state: ProviderState) => {
     if (!booted || !runtimeEnabled()) return teardown(state)
     const { plugin } = state
     const allowed = hasRequiredConsent(consent, plugin.requiredConsent)
-    if (!state.setup) {
-      state.setup = true
-      await call(state, 'setup', (p, ctx) => p.setup?.(ctx))
-    }
+    await setupProvider(state)
     await call(state, 'consent', (p, ctx) => p.consent?.(ctx))
     if (!state.loaded && (allowed || plugin.loadBeforeConsent)) {
       state.loaded = true
@@ -517,7 +520,8 @@ export function createAnalyticsManager(
   }
 
   for (const provider of options.providers ?? []) {
-    ensureProviderState(provider)
+    const state = ensureProviderState(provider)
+    if (isBrowser() && runtimeEnabled()) void setupProvider(state)
   }
 
   const errorsEnabled = options.errors !== false

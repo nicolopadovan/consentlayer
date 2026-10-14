@@ -65,14 +65,14 @@ simulated `__tcfapi`, not with a named CMP; its page lists its other
 </details>
 
 <details>
-<summary>Consent Mode defaults are set when the instance boots</summary>
+<summary>Consent Mode defaults are set when your bundle runs</summary>
 
-`ga4()` sets the Consent Mode defaults in its `setup` hook, which runs at
-`analytics.boot()`. If you defer boot, for example with `boot={idleBoot}`,
-another Google tag on the page, such as one loaded by Google Tag Manager, can
-run before the defaults exist. If your page loads other Google tags, boot
-without a delay or set the defaults yourself in an inline script before those
-tags.
+`ga4()` sets the Consent Mode defaults in its `setup` hook, which runs when
+`createAnalytics()` creates the instance in the browser, whatever the
+[`boot`](/start/react/#boot-timing) timing. A Google tag that runs before
+your bundle, such as a Google Tag Manager snippet at the top of `<head>`,
+still runs before the defaults exist. Load such tags after your bundle, or
+set the defaults yourself in an inline script before them.
 
 </details>
 

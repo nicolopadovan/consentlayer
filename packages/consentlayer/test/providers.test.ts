@@ -194,6 +194,18 @@ describe('ga4 consent mode', () => {
     for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured']) delete win[key]
   })
 
+  it('sets the Consent Mode defaults when the manager is created, before boot', async () => {
+    const manager = createAnalyticsManager({ providers: [ga4({ measurementId: 'G-EARLY1' })] })
+    expect(entries()[0]).toEqual(['consent', 'default', expect.objectContaining({ analytics_storage: 'denied' })])
+    await manager.boot()
+    expect(entries().filter(([command]) => command === 'consent')).toHaveLength(1)
+    manager.destroy()
+
+    window.dataLayer = []
+    createAnalyticsManager({ providers: [ga4({ measurementId: 'G-EARLY1' })], enabled: false }).destroy()
+    expect(entries()).toEqual([])
+  })
+
   it('configures the tag at boot in advanced mode and keeps region defaults until a choice', async () => {
     const manager = createAnalyticsManager({
       providers: [

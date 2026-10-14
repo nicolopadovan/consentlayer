@@ -57,7 +57,7 @@ describe('analytics manager', () => {
     expect(marketingProvider.teardown).toHaveBeenCalledTimes(1)
   })
 
-  it('runs setup, consent and load in order, and load only once', async () => {
+  it('runs setup at creation, then consent and load at boot, and load only once', async () => {
     const calls: string[] = []
     const plugin = (id: string, loadBeforeConsent: boolean) => ({
       id,
@@ -73,8 +73,10 @@ describe('analytics manager', () => {
       providers: [plugin('early', true), plugin('late', false)],
       consent: denied,
     })
+    expect(calls).toEqual(['early.setup', 'late.setup'])
+    calls.length = 0
     await manager.boot()
-    expect(calls).toEqual(['early.setup', 'early.consent', 'early.load', 'late.setup', 'late.consent'])
+    expect(calls).toEqual(['early.consent', 'early.load', 'late.consent'])
     calls.length = 0
     await manager.updateConsent({ ...denied, analytics: true })
     await manager.updateConsent(denied)

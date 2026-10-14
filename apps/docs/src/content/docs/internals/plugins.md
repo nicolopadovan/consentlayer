@@ -62,7 +62,7 @@ each call:
 
 | Hook | When it runs | Arguments before `ctx` |
 |---|---|---|
-| `setup` | Once, on the first lifecycle pass after boot, whatever the consent. Must not touch the network or set cookies. | none |
+| `setup` | Once, whatever the consent: when the instance is created in the browser, or, if `enabled` was false then or the provider was registered later, on the first lifecycle pass after boot. Must not touch the network or set cookies. | none |
 | `consent` | On every lifecycle pass (boot, each consent change, each registration after boot), whether or not the plugin is allowed, before `load`. | none |
 | `load` | Once, on the first pass where the plugin is allowed, or at boot with `loadBeforeConsent`; with `defer`, when the timing is due. | none |
 | `page` | On `page()` while active. | `PageEvent`: `url`, `path`, `title`, `id` |

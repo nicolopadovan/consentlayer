@@ -22,7 +22,8 @@ ga4({ measurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID })
 
 ## How it works
 
-At setup, before any network request, `ga4()` creates `window.dataLayer` and
+At setup, when `createAnalytics()` creates the instance in the browser and
+before any network request, `ga4()` creates `window.dataLayer` and
 `window.gtag` and sets the Consent Mode v2 defaults: `ad_storage`,
 `ad_user_data`, `ad_personalization`, `analytics_storage` and
 `functionality_storage` denied, `security_storage` granted. Once the visitor
