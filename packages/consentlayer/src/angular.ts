@@ -87,6 +87,7 @@ export function provideConsentLayer(options: ConsentLayerOptions): EnvironmentPr
           bannerVisible: field('bannerVisible'),
           dialogVisible: field('dialogVisible'),
           categories: field('categories'),
+          gpc: field('gpc'),
           prefs: field('prefs'),
           ...controller.actions,
         }

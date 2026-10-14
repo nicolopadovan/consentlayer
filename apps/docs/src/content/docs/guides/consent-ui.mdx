@@ -37,7 +37,8 @@ instance.
 | `categories` | `readonly ConsentCategory[]` | The categories the dialog shows, from `analytics.consent.categories`: the built-in ones, then your custom ones. |
 | `prefs` | `Record<ConsentCategory, boolean>` | The dialog's draft, one entry per category in `analytics.consent.categories`. Initialised from the stored consent, all `false` when there is none. |
 | `setPrefs(next)` | `(next) => void` | Replaces the draft without saving it. |
-| `acceptAll()` | `() => Promise<void>` | Grants every category, then hides the banner and the dialog. |
+| `gpc` | `boolean` | Whether the visitor's [Global Privacy Control](#global-privacy-control) signal is honored. Use it to tell the visitor so. |
+| `acceptAll()` | `() => Promise<void>` | Grants every category, then hides the banner and the dialog. While `gpc` is `true`, `marketing` stays denied. |
 | `rejectNonEssential()` | `() => Promise<void>` | Denies every category, then hides both. |
 | `savePreferences()` | `() => Promise<void>` | Saves `prefs`, then hides both. |
 | `openDialog()`, `closeDialog()` | `() => void` | Show or hide the dialog. |
@@ -142,6 +143,50 @@ set, so turning on `maxAgeDays` or `policyVersion` asks every returning
 visitor once. Choices supplied by a consent adapter, such as Shopify Customer
 Privacy, are stored with the current date and version, since the adapter is
 their source.
+
+</details>
+
+### Global Privacy Control
+
+Global Privacy Control (GPC) is a browser signal by which a visitor asks sites
+not to sell or share their data. A browser that sends it exposes
+`navigator.globalPrivacyControl` as `true`. ConsentLayer honors it by keeping
+the `marketing` category off unless the visitor switches it on:
+
+- The banner is shown as usual. Analytics, preferences and custom categories
+  follow the visitor's choice.
+- `acceptAll()` grants every category except `marketing`.
+- An explicit `marketing: true`, from the settings dialog's toggle and
+  `savePreferences()`, or from `analytics.consent.update()` or `setConsent()`,
+  counts as consent and is stored like any other choice.
+- Before the visitor chooses, nothing changes: consent is `null`, so
+  `marketing` is already denied.
+
+`gpc` on `useConsentController()`, and `analytics.consent.gpc`, are `true`
+while the signal is honored, so your banner can say so:
+
+```tsx
+{gpc && <p>Your browser's Global Privacy Control signal is on, so marketing is off.</p>}
+```
+
+To ignore the signal, set `gpc: false`:
+
+```ts title="lib/analytics.ts"
+export const analytics = createAnalytics({ providers, consent: { gpc: false } })
+```
+
+<details>
+<summary>Stored choices and consent adapters</summary>
+
+The signal is read once, when `createAnalytics()` runs, and only changes what
+"Accept all" grants. A choice already stored, or one a consent adapter such
+as [Shopify Customer Privacy](/guides/providers/shopify/) supplies at
+bootstrap, was made by the visitor and is kept as it is, `marketing`
+included. The Shopify adapter supplies a choice only when the visitor has
+made one in Shopify.
+
+On the server, a request with `Sec-GPC: 1` sends no marketing events; see
+[Server-side tracking](/guides/server-side-tracking/#global-privacy-control).
 
 </details>
 

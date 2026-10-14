@@ -63,6 +63,7 @@ export const consentLayer: Plugin<[ConsentLayerOptions]> = {
       bannerVisible: field('bannerVisible'),
       dialogVisible: field('dialogVisible'),
       categories: field('categories'),
+      gpc: field('gpc'),
       prefs: field('prefs'),
       ...controller.actions,
     })

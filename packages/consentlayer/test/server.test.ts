@@ -95,6 +95,23 @@ describe('server destinations', () => {
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 
+  it('drops marketing destinations for a request with Sec-GPC: 1', async () => {
+    const fetchImpl = okFetch()
+    const analytics = { id: 'own', requiredConsent: 'analytics' as const, forwardBrowserEvents: true as const, send: vi.fn() }
+    const POST = createAnalyticsHandler({
+      destinations: [
+        metaCapi({ pixelId: '123456789012345', accessToken: 'token', fetchImpl }),
+        tiktokEvents({ pixelId: 'PIXEL', accessToken: 'token', fetchImpl }),
+        analytics,
+      ],
+    })
+    expect((await POST(post({ name: 'lead', consent: granted }, { 'sec-gpc': '1' }))).status).toBe(204)
+    expect(fetchImpl).not.toHaveBeenCalled()
+    expect(analytics.send).toHaveBeenCalledTimes(1)
+    await POST(post({ name: 'lead', consent: granted }))
+    expect(fetchImpl).toHaveBeenCalledTimes(2)
+  })
+
   it('never forwards browser events to server-only destinations', async () => {
     const fetchImpl = okFetch()
     const ga = ga4Server({ measurementId: 'G-ABC123', apiSecret: 's', fetchImpl })

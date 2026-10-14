@@ -97,4 +97,60 @@ describe('createConsentController', () => {
     stop()
     analytics.destroy()
   })
+
+  describe('Global Privacy Control', () => {
+    const signal = (value: boolean | undefined) =>
+      Object.defineProperty(navigator, 'globalPrivacyControl', { value, configurable: true })
+    afterEach(() => signal(undefined))
+    const started = async (options?: Parameters<typeof createAnalytics>[0]) => {
+      const analytics = createAnalytics({ providers: [], ...options })
+      const controller = createConsentController(analytics)
+      const stop = controller.start()
+      await settle()
+      return { analytics, controller, stop }
+    }
+
+    it('keeps marketing off when the visitor accepts all, and exposes the signal', async () => {
+      signal(true)
+      const { analytics, controller, stop } = await started()
+      expect(controller.getSnapshot()).toMatchObject({ gpc: true, bannerVisible: true, prefs: { marketing: false } })
+      expect(analytics.consent.gpc).toBe(true)
+      await controller.actions.acceptAll()
+      expect(analytics.consent.getConsent()).toMatchObject({ preferences: true, analytics: true, marketing: false })
+      stop()
+      analytics.destroy()
+    })
+
+    it('lets an explicit marketing choice win over the signal', async () => {
+      signal(true)
+      const { analytics, controller, stop } = await started()
+      controller.actions.setPrefs({ ...controller.getSnapshot().prefs, marketing: true })
+      await controller.actions.savePreferences()
+      expect(analytics.consent.getConsent()).toMatchObject({ marketing: true })
+      await analytics.consent.update({ marketing: false })
+      await analytics.consent.update({ marketing: true })
+      expect(analytics.consent.getConsent()).toMatchObject({ marketing: true })
+      stop()
+      analytics.destroy()
+    })
+
+    it('is ignored with consent.gpc set to false, or without the signal', async () => {
+      signal(true)
+      const off = await started({ consent: { gpc: false } })
+      expect(off.controller.getSnapshot().gpc).toBe(false)
+      await off.controller.actions.acceptAll()
+      expect(off.analytics.consent.getConsent()).toMatchObject({ marketing: true })
+      off.stop()
+      off.analytics.destroy()
+      localStorage.clear()
+
+      signal(false)
+      const absent = await started()
+      expect(absent.controller.getSnapshot().gpc).toBe(false)
+      await absent.controller.actions.acceptAll()
+      expect(absent.analytics.consent.getConsent()).toMatchObject({ marketing: true })
+      absent.stop()
+      absent.analytics.destroy()
+    })
+  })
 })

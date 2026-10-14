@@ -93,6 +93,8 @@ export type ConsentEngineOptions = {
   policyVersion?: string
   /** `'discard'` treats a stale choice as no choice; `'keep'` keeps it in force until the visitor chooses again. Either way the banner shows. */
   onStale?: 'discard' | 'keep'
+  /** Honor the browser's Global Privacy Control signal: "accept all" leaves marketing off while it is on. Defaults to `true`. */
+  gpc?: boolean
   debug?: boolean | DebugOptions
   onError?: AnalyticsErrorHandler
 }
@@ -105,6 +107,8 @@ export type ConsentEngineSnapshot = {
 export interface ConsentEngine {
   /** Every category the visitor can toggle, built-in first. */
   categories: readonly ConsentCategory[]
+  /** Whether the browser sends the Global Privacy Control signal and the `gpc` option honors it. */
+  gpc: boolean
   bootstrap: () => Promise<ConsentState | null>
   getConsent: () => ConsentState | null
   /** Whether the stored choice is stale and the visitor should be asked again. */

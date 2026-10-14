@@ -187,6 +187,7 @@ banner's script tag. An attribute wins.
 | `title` | `data-text-title` | Cookies |
 | `message` | `data-text-message` | We use cookies to run this site and, with your consent, for preferences, analytics and marketing. |
 | `privacyPolicy` | `data-text-privacy-policy` | Privacy policy |
+| `gpc` | `data-text-gpc` | Your browser's Global Privacy Control signal is on, so marketing is off unless you switch it on. |
 | `rejectNonEssential` | `data-text-reject-non-essential` | Reject non-essential |
 | `customize` | `data-text-customize` | Customize |
 | `acceptAll` | `data-text-accept-all` | Accept all |
@@ -202,7 +203,11 @@ banner's script tag. An attribute wins.
 | `close` | `data-text-close` | Close |
 | `save` | `data-text-save` | Save |
 
-The privacy policy link is shown only when `privacyPolicyUrl` is set.
+The privacy policy link is shown only when `privacyPolicyUrl` is set. The
+`gpc` line is shown under the message only while the visitor's browser sends
+the [Global Privacy Control](/guides/consent-ui/#global-privacy-control)
+signal; Accept all then leaves marketing off. Set
+`window.ConsentLayer.consent.gpc` to `false` to ignore the signal.
 A [custom category](/guides/consent-ui/#custom-categories) named in
 `consent.categories` gets a toggle labelled with `<category>Label` and
 `<category>Description`.

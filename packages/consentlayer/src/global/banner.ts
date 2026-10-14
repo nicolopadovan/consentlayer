@@ -4,6 +4,7 @@ const defaultText = {
   title: 'Cookies',
   message: 'We use cookies to run this site and, with your consent, for preferences, analytics and marketing.',
   privacyPolicy: 'Privacy policy',
+  gpc: "Your browser's Global Privacy Control signal is on, so marketing is off unless you switch it on.",
   rejectNonEssential: 'Reject non-essential',
   customize: 'Customize',
   acceptAll: 'Accept all',
@@ -85,6 +86,7 @@ export function mountBanner(controller: ConsentController, { privacyPolicyUrl, t
     { class: 'consentlayer-banner', role: 'dialog', 'aria-labelledby': 'consentlayer-banner-title', hidden: '' },
     element('h2', { id: 'consentlayer-banner-title' }, text.title),
     element('p', {}, text.message, ...(privacyPolicyUrl ? [' ', element('a', { href: privacyPolicyUrl }, text.privacyPolicy)] : [])),
+    ...(controller.getSnapshot().gpc ? [element('p', { class: 'consentlayer-gpc' }, text.gpc)] : []),
     actions(
       button(text.rejectNonEssential, 'rejectNonEssential'),
       button(text.customize, 'openDialog'),

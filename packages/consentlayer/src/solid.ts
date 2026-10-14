@@ -60,6 +60,9 @@ export function AnalyticsProvider(props: AnalyticsProviderProps): JSX.Element {
     get categories() {
       return state().categories
     },
+    get gpc() {
+      return state().gpc
+    },
     get prefs() {
       return state().prefs
     },
