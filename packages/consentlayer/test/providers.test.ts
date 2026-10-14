@@ -168,7 +168,13 @@ describe('providers', () => {
 
   it('configures GA4 only once analytics is granted', async () => {
     const win = window as unknown as Record<string, unknown>
-    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured', '__acmGa4Configured', '__consentlayerGtagLoaded'])
+    for (const key of [
+      'dataLayer',
+      'gtag',
+      '__consentlayerGa4Configured',
+      '__acmGa4Configured',
+      '__consentlayerGtagLoaded',
+    ])
       delete win[key]
     const denied = { preferences: false, analytics: false, marketing: false }
     const manager = createAnalyticsManager({

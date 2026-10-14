@@ -11,9 +11,15 @@ const all = { preferences: true, analytics: true, marketing: true }
 
 const win = window as unknown as Record<string, unknown>
 const scripts = (match: string) => [...document.scripts].filter((script) => script.src.includes(match))
-const cookieNames = () => document.cookie.split('; ').filter(Boolean).map((cookie) => cookie.split('=')[0])
+const cookieNames = () =>
+  document.cookie
+    .split('; ')
+    .filter(Boolean)
+    .map((cookie) => cookie.split('=')[0])
 const gtagCalls = () =>
-  (window.dataLayer ?? []).map((entry) => Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date)))
+  (window.dataLayer ?? []).map((entry) =>
+    Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date)),
+  )
 
 beforeEach(() => {
   for (const key of Object.keys(win)) {

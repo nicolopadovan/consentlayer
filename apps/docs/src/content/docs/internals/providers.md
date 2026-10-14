@@ -44,6 +44,9 @@ Providers receive `userId` under any consent they run with, and `email` and
 | Hotjar             | `hotjar`        | `analytics`                             | —                               | —       | yes        |
 | Vercel Analytics   | `vercel`        | `none`                                  | —                               | —       | —          |
 | TikTok Pixel       | `tiktok`        | `marketing`                             | option                          | —       | —          |
+| Google Ads         | `google-ads`    | `marketing`                             | —                               | option  | —          |
+| Microsoft Clarity  | `clarity`       | `analytics`                             | —                               | option  | yes        |
+| LinkedIn Insight   | `linkedin`      | `marketing`                             | —                               | option  | yes        |
 
 A dash means the provider does not set that field. The `id` is the value to
 use in `only` and the `providerId` in `onError`.
@@ -57,12 +60,12 @@ the skip in debug mode. Any other value that does not match `G-` followed by 4 t
 
 | Hook       | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Script     | `https://www.googletagmanager.com/gtag/js?id=<measurementId>`                                                                                                                                                                                                                                                                                                                                                                       |
+| Script     | `https://www.googletagmanager.com/gtag/js?id=<measurementId>`, unless another Google tag on the page loaded gtag.js first                                                                                                                                                                                                                                                                                                           |
 | `setup`    | Creates `window.dataLayer` and `window.gtag` if absent. Unless a [`googleConsentMode()`](/internals/consent/#google-consent-mode) adapter set its window flag first, calls `gtag('consent', 'default', …)` with every key denied except `security_storage`. Then `gtag('js', new Date())`, and in advanced mode `config`.                                                                                                           |
 | `consent`  | Without the adapter, `gtag('consent', 'update', …)` mapped as below, skipped while the visitor has never chosen so the defaults stay in force. In basic mode, on the first pass with analytics granted, also `gtag('config', measurementId, { send_page_view: false })`, once per measurement ID per page. In advanced mode, sets `user_id` and `user_data` from the identity while analytics is granted and clears them otherwise. |
-| `load`     | Injects gtag.js. A failed load is reported with scope `provider-script-load`.                                                                                                                                                                                                                                                                                                                                                       |
-| `page`     | `gtag('event', 'page_view', { page_location, page_path, page_title })`                                                                                                                                                                                                                                                                                                                                                              |
-| `track`    | `gtag('event', ga4EventName(name), { ...params, ...providers.ga4 })`                                                                                                                                                                                                                                                                                                                                                                |
+| `load`     | Injects gtag.js, once per page for every Google tag. A failed load is reported with scope `provider-script-load`.                                                                                                                                                                                                                                                                                                                   |
+| `page`     | `gtag('event', 'page_view', { page_location, page_path, page_title, send_to: measurementId })`                                                                                                                                                                                                                                                                                                                                      |
+| `track`    | `gtag('event', ga4EventName(name), { ...params, ...providers.ga4, send_to: measurementId })`                                                                                                                                                                                                                                                                                                                                        |
 | `identify` | `gtag('set', { user_id })` when there is a user ID, then `gtag('set', 'user_data', { email, phone_number })` with whichever fields are present. In advanced mode, only while analytics is granted.                                                                                                                                                                                                                                  |
 | `reset`    | `gtag('set', { user_id: null })` and `gtag('set', 'user_data', {})`                                                                                                                                                                                                                                                                                                                                                                 |
 | Withdrawal | The `consent` hook sends the denied Consent Mode update and, while analytics is denied, expires the `_ga`, `_ga_<id>` and `_gid` cookies on the current host and every parent domain; the manager stops sending events.                                                                                                                                                                                                             |
@@ -367,3 +370,63 @@ until the page reloads, even if marketing is granted again.
 **Deduplication.** Each `track` passes `event_id`, the same ID the server
 route sends to the Events API. `ttq.page()` takes no event ID, so the Events
 API destination skips page views.
+
+## Google Ads
+
+`googleAds({ conversionId, conversions?, pageViews?, defer? })` from
+`consentlayer/providers/google-ads`. The value is trimmed; an `undefined`,
+empty or whitespace-only `conversionId` turns the provider off, and any other
+value that does not match `AW-` followed by digits throws.
+
+| Hook        | Behavior                                                                                                                                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Script      | `https://www.googletagmanager.com/gtag/js?id=<conversionId>`, unless another Google tag on the page loaded gtag.js first                                                                                                                                |
+| `setup`     | Creates `window.dataLayer` and `window.gtag` if absent and, unless a `googleConsentMode()` adapter is on the page, sets the Consent Mode defaults, shared with `ga4()` and `gtm()` so they go out once.                                                 |
+| `consent`   | Without the adapter, `gtag('consent', 'update', …)` mapped as for GA4. While marketing is denied, expires the `_gcl_*` cookies on the current host and every parent domain.                                                                             |
+| `load`      | Once per conversion ID per page: `gtag('js', new Date())` unless another Google tag already sent it, then `gtag('config', conversionId, { send_page_view: false })`, then injects gtag.js. A failed load is reported with scope `provider-script-load`. |
+| `page`      | `gtag('event', 'page_view', { page_location, page_path, page_title, send_to: conversionId })`, unless `pageViews` is `false`                                                                                                                            |
+| `track`     | Only for event names in `conversions`: `gtag('event', 'conversion', { value, currency, transaction_id, ...providers['google-ads'], send_to: '<conversionId>/<label>' })`, with each of the three params only when set. Other events are not sent.       |
+| Other hooks | Not implemented.                                                                                                                                                                                                                                        |
+
+**Personal data.** None is passed; the tag sets its own cookies.
+
+## Microsoft Clarity
+
+`clarity({ projectId, events?, identify?, defer? })` from
+`consentlayer/providers/clarity`. The value is trimmed; an `undefined`, empty
+or whitespace-only `projectId` turns the provider off, and a value with other
+characters than letters and digits throws.
+
+| Hook        | Behavior                                                                                                                                                                                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Script      | `https://www.clarity.ms/tag/<projectId>`                                                                                                                                                                                                                           |
+| `load`      | Skipped if the provider already loaded Clarity on the page. Otherwise defines a queueing `window.clarity` if absent, calls `clarity('consentv2', …)` with the current consent and injects the script. A failed load is reported with scope `provider-script-load`. |
+| `consent`   | While analytics is granted and Clarity is loaded, `clarity('consentv2', { ad_Storage, analytics_Storage })` when either signal changed: `ad_Storage` follows marketing and `analytics_Storage` analytics.                                                          |
+| `track`     | `clarity('event', name)`; params are not sent. Skipped with `events: false`.                                                                                                                                                                                       |
+| `identify`  | `clarity('identify', userId)` when there is a user ID. Skipped with `identify: false`.                                                                                                                                                                             |
+| `teardown`  | Only if analytics consent is no longer granted: `clarity('consent', false)`, which erases Clarity's cookies and stops tracking until consent is given again.                                                                                                       |
+| Other hooks | Not implemented; Clarity records page views itself.                                                                                                                                                                                                                |
+
+See [Clarity's consent API](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-consent-api-v2).
+
+**Personal data.** User ID with analytics consent. Email is never sent.
+
+## LinkedIn Insight
+
+`linkedin({ partnerId, conversions?, defer? })` from
+`consentlayer/providers/linkedin`. `partnerId` is a number or a string of
+digits; the value is trimmed, `undefined`, empty or whitespace turns the
+provider off, and any other value throws.
+
+| Hook        | Behavior                                                                                                                                                                                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Script      | `https://snap.licdn.com/li.lms-analytics/insight.min.js`                                                                                                                                                                                                                                                |
+| `load`      | Skipped if the provider already loaded the tag on the page. Otherwise sets `window._linkedin_partner_id`, adds the partner ID to `window._linkedin_data_partner_ids`, defines a queueing `window.lintrk` if absent and injects the script. A failed load is reported with scope `provider-script-load`. |
+| `track`     | Only for event names in `conversions`: `lintrk('track', { conversion_id, event_id })`, where `event_id` is the event's ID. Other events are not sent.                                                                                                                                                   |
+| `teardown`  | Only if marketing consent is no longer granted: expires the first-party cookies in [LinkedIn's cookie table](https://www.linkedin.com/legal/l/cookie-table), `li_fat_id`, `li_giant`, `oribi_cookie_test`, `oribili_user_guid`, `ln_or` and `ar_debug`, on the current host and every parent domain.    |
+| Other hooks | Not implemented. The tag records the page load itself.                                                                                                                                                                                                                                                  |
+
+The Insight Tag has no consent switch: once loaded, it runs until the page
+unloads. After withdrawal, ConsentLayer stops sending conversions to it.
+
+**Personal data.** None is passed; the tag sets its own cookies.

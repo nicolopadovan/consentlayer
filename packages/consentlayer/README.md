@@ -5,8 +5,9 @@ ConsentLayer decides, from the visitor's consent, which providers load, what
 each one receives and when, and translates your events into each provider's
 format.
 
-- **Providers:** GA4, Google Tag Manager, Meta Pixel, TikTok Pixel, PostHog,
-  Sentry, Hotjar, Contentsquare, Vercel Analytics, and your own plugins.
+- **Providers:** GA4, Google Tag Manager, Meta Pixel, TikTok Pixel, Google Ads,
+  LinkedIn Insight, Microsoft Clarity, PostHog, Sentry, Hotjar, Contentsquare,
+  Vercel Analytics, and your own plugins.
 - **Consent:** categories `preferences`, `analytics` and `marketing`, plus
   your own. A provider loads only once its category is granted, or in its
   vendor's consent mode, and stops on withdrawal. Global Privacy Control is

@@ -172,16 +172,19 @@ other provider receives the name you passed to `track()`.
 
 The params each provider sends differ as follows:
 
-| Provider      | Call                                                       | Params                                                                                                                                              |
-| ------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GA4           | `gtag('event', name, params)`                              | The event params, merged with `providers.ga4`                                                                                                       |
-| GTM           | `dataLayer.push({ ...params, event: name })`               | The event params, merged with `providers.gtm`, pushed with the unchanged name as `event`                                                            |
-| Meta Pixel    | `fbq('track' \| 'trackCustom', name, params, { eventID })` | Translated as described below, merged with `providers.meta`                                                                                         |
-| TikTok Pixel  | `ttq.track(name, params, { event_id })`                    | Translated as described below, merged with `providers.tiktok`                                                                                       |
-| PostHog       | `posthog.capture(name, params)`                            | The event params, merged with `providers.posthog`                                                                                                   |
-| Vercel        | The `trackEvent` function you pass                         | Top-level strings, numbers, booleans and `null`; `undefined` becomes `null`, a `Date` becomes an ISO string, and every other value is dropped       |
-| Contentsquare | `_uxa.push(['trackPageEvent', name])`                      | None. `purchase` instead creates and sends an ecommerce transaction with `transaction_id`, `value` and `currency` as `id`, `revenue` and `currency` |
-| Hotjar        | `hj('event', name)`                                        | None                                                                                                                                                |
+| Provider      | Call                                                                             | Params                                                                                                                                              |
+| ------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GA4           | `gtag('event', name, params)`                                                    | The event params, merged with `providers.ga4`                                                                                                       |
+| GTM           | `dataLayer.push({ ...params, event: name })`                                     | The event params, merged with `providers.gtm`, pushed with the unchanged name as `event`                                                            |
+| Meta Pixel    | `fbq('track' \| 'trackCustom', name, params, { eventID })`                       | Translated as described below, merged with `providers.meta`                                                                                         |
+| TikTok Pixel  | `ttq.track(name, params, { event_id })`                                          | Translated as described below, merged with `providers.tiktok`                                                                                       |
+| PostHog       | `posthog.capture(name, params)`                                                  | The event params, merged with `providers.posthog`                                                                                                   |
+| Vercel        | The `trackEvent` function you pass                                               | Top-level strings, numbers, booleans and `null`; `undefined` becomes `null`, a `Date` becomes an ISO string, and every other value is dropped       |
+| Contentsquare | `_uxa.push(['trackPageEvent', name])`                                            | None. `purchase` instead creates and sends an ecommerce transaction with `transaction_id`, `value` and `currency` as `id`, `revenue` and `currency` |
+| Hotjar        | `hj('event', name)`                                                              | None                                                                                                                                                |
+| Google Ads    | `gtag('event', 'conversion', params)`, only for events in `conversions`          | `value`, `currency` and `transaction_id`, merged with `providers['google-ads']`, with `send_to` set to the conversion                               |
+| LinkedIn      | `lintrk('track', { conversion_id, event_id })`, only for events in `conversions` | None                                                                                                                                                |
+| Clarity       | `clarity('event', name)`                                                         | None                                                                                                                                                |
 
 Sentry receives no events, only errors from `captureError()`.
 
