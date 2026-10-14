@@ -86,6 +86,11 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `createTcfAdapter()` from `consentlayer/providers/tcf` reads the visitor's
+  choice from an IAB TCF v2 CMP through `__tcfapi` and follows its updates.
+  TCF purposes map to categories (overridable with `purposes`); only consent
+  counts, not legitimate interest. Read-only. Returns no choice without a CMP
+  or when GDPR does not apply. The script tag takes it as `tcf` or `data-tcf`.
 - `tiktok({ pixelId })` loads the TikTok pixel after marketing consent, with
   TikTok's consent mode (`holdConsent`, `grantConsent`, `revokeConsent`), and
   sends page views, events with `event_id` and advanced matching through

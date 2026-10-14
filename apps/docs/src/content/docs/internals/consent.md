@@ -234,6 +234,17 @@ causes Shopify to fire `visitorConsentCollected` with the same values, the
 merged result equals the current consent, `commit` skips it, and no loop
 occurs.
 
+### IAB TCF
+
+`createTcfAdapter()` from `consentlayer/providers/tcf` reads consent from the
+IAB TCF v2 CMP on the page. Its adapter ID is `tcf`.
+
+| Part | Behaviour |
+|---|---|
+| `bootstrap` | Returns `null` if `window.__tcfapi` is missing. Otherwise calls `__tcfapi('addEventListener', 2, callback)`, takes the first callback, removes the listener with `removeEventListener` and its `listenerId`, and returns `null` unless the call succeeded and `gdprApplies` is `true`. Otherwise maps `purpose.consents` as in the [mapping table](/guides/providers/tcf/#purposes-and-categories), including while the CMP shows its interface (`eventStatus: 'cmpuishown'`), when no purpose has consent yet. |
+| `apply` | None. TCF has no command for writing consent back to the CMP. |
+| `subscribe` | Adds a listener the same way and maps every callback with `gdprApplies: true`; the others are ignored. The returned function removes the listener, or removes it as soon as the CMP reports its `listenerId` if that has not happened yet. |
+
 ## Identity storage
 
 `identify(userId, { email, phone })` keeps an identity in memory and persists

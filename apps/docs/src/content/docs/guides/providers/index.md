@@ -10,7 +10,7 @@ and exact behaviour are on its own page.
 
 A provider is a plugin that connects one vendor to the instance. Browser
 providers are passed to `createAnalytics({ providers })`. Consent sources,
-such as Shopify Customer Privacy, are adapters and are passed to
+such as Shopify Customer Privacy and IAB TCF, are adapters and are passed to
 `createAnalytics({ consent: { adapters } })` instead.
 
 ## Available providers
@@ -29,6 +29,7 @@ Each provider is a named export of its own entry point,
 | [TikTok Pixel](/guides/providers/tiktok/) | `tiktok()` from `consentlayer/providers/tiktok` | `marketing` | `pixelId` |
 | [Hotjar (deprecated)](/guides/providers/hotjar/) | `hotjar()` from `consentlayer/providers/hotjar` | `analytics` | `siteId`, `version` |
 | [Shopify Customer Privacy](/guides/providers/shopify/) | `createShopifyCustomerPrivacyAdapter()` from `consentlayer/providers/shopify` | Consent source | None |
+| [IAB TCF](/guides/providers/tcf/) | `createTcfAdapter()` from `consentlayer/providers/tcf` | Consent source, read-only | None |
 
 The ID options of GA4, Meta, TikTok, PostHog, Sentry, Contentsquare and Hotjar may be
 `undefined` or empty: the provider is then turned off, and with `debug: true`

@@ -76,6 +76,7 @@ keys are the options of
 | `sentry` | `sentry()` | Loads Sentry from its CDN; see [PostHog and Sentry](#posthog-and-sentry). |
 | `vercel` | `vercel()` | `trackEvent` defaults to `window.va`, set by the Vercel Analytics script. |
 | `shopify` | `createShopifyCustomerPrivacyAdapter()` | Added as a consent adapter, not a provider. |
+| `tcf` | `createTcfAdapter()` | Added as a consent adapter, not a provider. See [IAB TCF](#iab-tcf). |
 
 An unknown name logs `[consentlayer] Unknown provider "<name>".` and is
 skipped.
@@ -107,6 +108,7 @@ skipped.
 | `data-sentry-replay` | `sentry.replay` |
 | `data-sentry-tracing` | `sentry.tracing` |
 | `data-shopify` | The Shopify Customer Privacy adapter, with no options |
+| `data-tcf` | The IAB TCF adapter, with no options |
 | `data-vercel` | `vercel()`, with no options |
 | `data-auto-tracking` | `autoTracking` |
 | `data-debug` | `debug` |
@@ -158,6 +160,16 @@ from a link in your footer. The `openConsentGlobalKey` option renames it.
 ```html
 <button type="button" onclick="CONSENTLAYER_openConsent()">Cookie settings</button>
 ```
+
+### IAB TCF
+
+With `tcf` or `data-tcf`, the [IAB TCF adapter](/guides/providers/tcf/) reads
+the choice from the TCF CMP on the page. Keep loading the banner script: the
+banner stays hidden while the CMP reports that GDPR applies, because the
+adapter then always provides a choice, and shows as usual when there is no
+CMP or the CMP reports `gdprApplies: false`. Link your footer to the CMP's
+settings rather than to `CONSENTLAYER_openConsent()`, since a choice made in
+ConsentLayer's dialog is not written back to the CMP.
 
 ### Text and privacy policy
 
