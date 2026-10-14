@@ -73,15 +73,15 @@ describe('readConfig', () => {
     })
   })
 
-  it('reads Google Ads, LinkedIn and Clarity, keeping the conversions maps from the object', () => {
+  it('reads Google Ads, LinkedIn and Clarity, keeping the events maps from the object', () => {
     const tag = script({ googleAds: 'AW-123', linkedinPartner: '456', clarityProject: 'abc123' })
     const config = readConfig(
-      { providers: { googleAds: { conversions: { purchase: 'label' } }, linkedin: { conversions: { sign_up: 7 } } } },
+      { providers: { googleAds: { events: { purchase: 'label' } }, linkedin: { events: { sign_up: 7 } } } },
       tag,
     )
     expect(config.providers).toEqual({
-      googleAds: { conversionId: 'AW-123', conversions: { purchase: 'label' } },
-      linkedin: { partnerId: '456', conversions: { sign_up: 7 } },
+      googleAds: { conversionId: 'AW-123', events: { purchase: 'label' } },
+      linkedin: { partnerId: '456', events: { sign_up: 7 } },
       clarity: { projectId: 'abc123' },
     })
     const warn = vi.spyOn(console, 'warn')

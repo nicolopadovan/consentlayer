@@ -39,7 +39,7 @@ describe('googleAds', () => {
 
   it('loads and sends nothing before marketing consent, then sends page views and mapped conversions only', async () => {
     const manager = createAnalyticsManager({
-      providers: [googleAds({ conversionId: 'AW-123', conversions: { purchase: 'buy', lead_form: 'lead' } })],
+      providers: [googleAds({ conversionId: 'AW-123', events: { purchase: 'buy', lead_form: 'lead' } })],
       consent: analyticsOnly,
     })
     await manager.boot()
@@ -71,6 +71,20 @@ describe('googleAds', () => {
       ],
       ['event', 'conversion', { value: 20, currency: 'EUR', transaction_id: 'o2', send_to: 'AW-123/buy' }],
       ['event', 'conversion', { send_to: 'AW-123/lead' }],
+    ])
+    manager.destroy()
+  })
+
+  it('sends no conversion for an unmapped event, even when only names it', async () => {
+    const manager = createAnalyticsManager({
+      providers: [googleAds({ conversionId: 'AW-123', events: { purchase: 'buy' } })],
+      consent: all,
+    })
+    await manager.boot()
+    await manager.track('sign_up', {}, { only: ['google-ads'] })
+    await manager.track('purchase', { transaction_id: 'o1' }, { only: ['google-ads'] })
+    expect(gtagCalls().filter(([, name]) => name === 'conversion')).toEqual([
+      ['event', 'conversion', { transaction_id: 'o1', send_to: 'AW-123/buy' }],
     ])
     manager.destroy()
   })
@@ -155,6 +169,18 @@ describe('clarity', () => {
     expect(queue().map(([command]) => command)).toEqual(['consentv2'])
     manager.destroy()
   })
+
+  it('sends only the listed events', async () => {
+    const manager = createAnalyticsManager({
+      providers: [clarity({ projectId: 'abc123', events: ['purchase'] })],
+      consent: analyticsOnly,
+    })
+    await manager.boot()
+    await manager.track('sign_up')
+    await manager.track('purchase', { transaction_id: 'o1' })
+    expect(queue().filter(([command]) => command === 'event')).toEqual([['event', 'purchase']])
+    manager.destroy()
+  })
 })
 
 describe('linkedin', () => {
@@ -165,7 +191,7 @@ describe('linkedin', () => {
 
   it('loads nothing before marketing consent, then sends mapped conversions only', async () => {
     const manager = createAnalyticsManager({
-      providers: [linkedin({ partnerId: ' 123\n', conversions: { purchase: 111, lead_form: 222 } })],
+      providers: [linkedin({ partnerId: ' 123\n', events: { purchase: 111, lead_form: 222 } })],
       consent: analyticsOnly,
     })
     await manager.boot()
@@ -199,7 +225,7 @@ describe('linkedin', () => {
   it('defers loading with defer', async () => {
     vi.useFakeTimers()
     const manager = createAnalyticsManager({
-      providers: [linkedin({ partnerId: 123, conversions: { purchase: 111 }, defer: 1000 })],
+      providers: [linkedin({ partnerId: 123, events: { purchase: 111 }, defer: 1000 })],
       consent: all,
     })
     await manager.boot()

@@ -12,21 +12,21 @@ import { linkedin } from 'consentlayer/providers/linkedin'
 
 linkedin({
   partnerId: process.env.NEXT_PUBLIC_LINKEDIN_PARTNER_ID,
-  conversions: { purchase: 12345678, lead_form: 23456789 },
+  events: { purchase: 12345678, lead_form: 23456789 },
 })
 ```
 
 ## Options
 
-| Option        | Type                            | Default  | Description                                                                                                       |
-| ------------- | ------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
-| `partnerId`   | `number \| string \| undefined` | Required | The Insight Tag partner ID, as a number or a string of digits.                                                    |
-| `conversions` | `Record<string, number>`        | `{}`     | LinkedIn conversion IDs keyed by the event name passed to `track()`. Events without a conversion ID are not sent. |
-| `defer`       | `LoadTiming`                    | `false`  | When to load the tag. See [Loading SDKs later](/guides/providers/#loading-sdks-later).                            |
+| Option      | Type                            | Default  | Description                                                                                                       |
+| ----------- | ------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `partnerId` | `number \| string \| undefined` | Required | The Insight Tag partner ID, as a number or a string of digits.                                                    |
+| `events`    | `Record<string, number>`        | `{}`     | LinkedIn conversion IDs keyed by the event name passed to `track()`. Events without a conversion ID are not sent. |
+| `defer`     | `LoadTiming`                    | `false`  | When to load the tag. See [Loading SDKs later](/guides/providers/#loading-sdks-later).                            |
 
 ## Conversions
 
-LinkedIn receives only the events named in `conversions`. Each key is the name
+LinkedIn receives only the events named in `events`. Each key is the name
 you pass to `analytics.track()`, a standard event such as `purchase` or one of
 your own, and each value is the ID of a conversion in Campaign Manager that is
 tracked with the event-specific JavaScript call.
@@ -37,7 +37,9 @@ analytics.track('lead_form')
 
 The event above is sent as
 `lintrk('track', { conversion_id: 23456789, event_id })`, where `event_id` is
-the event's ID. Event parameters are not sent.
+the event's ID. Event parameters are not sent. An event without a conversion
+ID is not sent even when its [`only`](/guides/events/#event-options) option
+names `linkedin`.
 
 ## How it works
 

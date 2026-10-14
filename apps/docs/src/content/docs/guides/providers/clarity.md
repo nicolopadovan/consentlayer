@@ -15,12 +15,12 @@ clarity({ projectId: process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID })
 
 ## Options
 
-| Option      | Type                  | Default  | Description                                                                                |
-| ----------- | --------------------- | -------- | ------------------------------------------------------------------------------------------ |
-| `projectId` | `string \| undefined` | Required | The project ID in your Clarity tracking code, `clarity.ms/tag/<projectId>`.                |
-| `events`    | `boolean`             | `true`   | Sends each `track()` event to Clarity as a custom event, by name. `false` sends no events. |
-| `identify`  | `boolean`             | `true`   | Sends the user ID from `identify()` as Clarity's custom ID. `false` sends no user ID.      |
-| `defer`     | `LoadTiming`          | `false`  | When to load the script. See [Loading SDKs later](/guides/providers/#loading-sdks-later).  |
+| Option      | Type                  | Default    | Description                                                                                                           |
+| ----------- | --------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| `projectId` | `string \| undefined` | Required   | The project ID in your Clarity tracking code, `clarity.ms/tag/<projectId>`.                                           |
+| `events`    | `string[] \| false`   | All events | The event names `track()` sends to Clarity; `false` sends none. See [Routing events](/guides/events/#routing-events). |
+| `identify`  | `boolean`             | `true`     | Sends the user ID from `identify()` as Clarity's custom ID. `false` sends no user ID.                                 |
+| `defer`     | `LoadTiming`          | `false`    | When to load the script. See [Loading SDKs later](/guides/providers/#loading-sdks-later).                             |
 
 ## How it works
 

@@ -12,7 +12,7 @@ import { googleAds } from 'consentlayer/providers/google-ads'
 
 googleAds({
   conversionId: process.env.NEXT_PUBLIC_GOOGLE_ADS_ID,
-  conversions: { purchase: 'AbC-D_efG-h12_34-567', lead_form: 'XyZ-1a2B3c' },
+  events: { purchase: 'AbC-D_efG-h12_34-567', lead_form: 'XyZ-1a2B3c' },
 })
 ```
 
@@ -21,13 +21,13 @@ googleAds({
 | Option         | Type                     | Default  | Description                                                                                                       |
 | -------------- | ------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------- |
 | `conversionId` | `string \| undefined`    | Required | The Google Ads tag ID, `AW-` followed by digits.                                                                  |
-| `conversions`  | `Record<string, string>` | `{}`     | Conversion labels keyed by the event name passed to `track()`. Events without a label are not sent to Google Ads. |
+| `events`       | `Record<string, string>` | `{}`     | Conversion labels keyed by the event name passed to `track()`. Events without a label are not sent to Google Ads. |
 | `pageViews`    | `boolean`                | `true`   | Sends a `page_view` to the tag on every page, for remarketing audiences. `false` sends conversions only.          |
 | `defer`        | `LoadTiming`             | `false`  | When to load the tag. See [Loading SDKs later](/guides/providers/#loading-sdks-later).                            |
 
 ## Conversions
 
-Google Ads receives only the events named in `conversions`. Each key is the
+Google Ads receives only the events named in `events`. Each key is the
 name you pass to `analytics.track()`, a standard event such as `purchase` or
 one of your own, and each value is the conversion label from the event
 snippet of a conversion action in Google Ads: the part after the slash in
@@ -47,6 +47,9 @@ gtag('event', 'conversion', {
   send_to: 'AW-123456789/AbC-D_efG-h12_34-567',
 })
 ```
+
+An event without a label is not sent even when its
+[`only`](/guides/events/#event-options) option names `google-ads`.
 
 `value`, `currency` and `transaction_id` are copied from the event's
 parameters when they are set; Google Ads uses `transaction_id` to count an

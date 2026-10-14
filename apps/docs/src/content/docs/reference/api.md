@@ -1538,7 +1538,7 @@ It shares gtag.js, `dataLayer` and the Consent Mode signals with `ga4()` and
 | Option         | Type                     | Default | Description                                                                                    |
 | -------------- | ------------------------ | ------- | ---------------------------------------------------------------------------------------------- |
 | `conversionId` | `string \| undefined`    |         | **Required.** Must match `AW-` followed by digits; `undefined` or `''` turns the provider off. |
-| `conversions`  | `Record<string, string>` | `{}`    | Conversion labels keyed by event name. Only these events are sent, as `conversion` events.     |
+| `events`       | `Record<string, string>` | `{}`    | Conversion labels keyed by event name. Only these events are sent, as `conversion` events.     |
 | `pageViews`    | `boolean`                | `true`  | Sends a `page_view` to the tag on every page.                                                  |
 | `defer`        | `LoadTiming`             | `false` | When to load gtag.js. See [`AnalyticsPlugin`](#analyticsplugin).                               |
 
@@ -1550,11 +1550,11 @@ The options type is exported as `GoogleAdsOptions`.
 
 LinkedIn Insight Tag. See [LinkedIn Insight](/guides/providers/linkedin/).
 
-| Option        | Type                            | Default | Description                                                                                |
-| ------------- | ------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
-| `partnerId`   | `number \| string \| undefined` |         | **Required.** Digits, as a number or a string; `undefined` or `''` turns the provider off. |
-| `conversions` | `Record<string, number>`        | `{}`    | Conversion IDs keyed by event name. Only these events are sent, with `lintrk('track')`.    |
-| `defer`       | `LoadTiming`                    | `false` | When to load the tag. See [`AnalyticsPlugin`](#analyticsplugin).                           |
+| Option      | Type                            | Default | Description                                                                                |
+| ----------- | ------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| `partnerId` | `number \| string \| undefined` |         | **Required.** Digits, as a number or a string; `undefined` or `''` turns the provider off. |
+| `events`    | `Record<string, number>`        | `{}`    | Conversion IDs keyed by event name. Only these events are sent, with `lintrk('track')`.    |
+| `defer`     | `LoadTiming`                    | `false` | When to load the tag. See [`AnalyticsPlugin`](#analyticsplugin).                           |
 
 **Throws** an `Error` when `partnerId` is invalid.
 
@@ -1565,12 +1565,12 @@ The options type is exported as `LinkedInOptions`.
 Microsoft Clarity, with its consent API following `analytics` and `marketing`.
 See [Microsoft Clarity](/guides/providers/clarity/).
 
-| Option      | Type                  | Default | Description                                                                   |
-| ----------- | --------------------- | ------- | ----------------------------------------------------------------------------- |
-| `projectId` | `string \| undefined` |         | **Required.** Letters and digits; `undefined` or `''` turns the provider off. |
-| `events`    | `boolean`             | `true`  | Sends each `track()` event as a Clarity custom event.                         |
-| `identify`  | `boolean`             | `true`  | Sends the user ID from `identify()` as Clarity's custom ID.                   |
-| `defer`     | `LoadTiming`          | `false` | When to load the script. See [`AnalyticsPlugin`](#analyticsplugin).           |
+| Option      | Type                  | Default    | Description                                                                                                                 |
+| ----------- | --------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `projectId` | `string \| undefined` |            | **Required.** Letters and digits; `undefined` or `''` turns the provider off.                                               |
+| `events`    | `string[] \| false`   | all events | The event names sent as Clarity custom events; `false` sends none. An event whose `only` names the provider is always sent. |
+| `identify`  | `boolean`             | `true`     | Sends the user ID from `identify()` as Clarity's custom ID.                                                                 |
+| `defer`     | `LoadTiming`          | `false`    | When to load the script. See [`AnalyticsPlugin`](#analyticsplugin).                                                         |
 
 **Throws** an `Error` when `projectId` is invalid.
 

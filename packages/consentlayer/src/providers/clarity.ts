@@ -1,5 +1,5 @@
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
-import type { ConsentState, LoadTiming } from '../core/types'
+import type { ConsentState, EventName, LoadTiming } from '../core/types'
 
 declare global {
   interface Window {
@@ -11,8 +11,8 @@ declare global {
 export type ClarityOptions = {
   /** The project ID in your tracking code: `clarity.ms/tag/<projectId>`. `undefined` or `''` turns the provider off. */
   projectId: string | undefined
-  /** Sends each `track()` event as a Clarity custom event. Defaults to `true`. */
-  events?: boolean
+  /** Event names sent to Clarity as custom events; all by default, `false` for none. */
+  events?: readonly EventName[] | false
   /** Sends the user ID from `identify()` as Clarity's custom ID. Defaults to `true`. */
   identify?: boolean
   defer?: LoadTiming
@@ -43,6 +43,7 @@ export function clarity(options: ClarityOptions) {
     id: 'clarity',
     requiredConsent: 'analytics',
     defer: options.defer,
+    events: options.events,
     load({ consent, emitError }) {
       if (typeof window === 'undefined' || getFlag('ClarityInitialized')) return
       window.clarity =
@@ -61,7 +62,7 @@ export function clarity(options: ClarityOptions) {
       if (typeof window !== 'undefined') sendConsent(consent)
     },
     track(event) {
-      if (options.events !== false) window.clarity?.('event', event.name)
+      window.clarity?.('event', event.name)
     },
     identify(identity) {
       if (options.identify !== false && identity.userId) window.clarity?.('identify', identity.userId)

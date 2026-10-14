@@ -1,5 +1,5 @@
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
-import type { LoadTiming } from '../core/types'
+import type { EventName, LoadTiming } from '../core/types'
 import { expireCookies } from '../core/utils'
 
 declare global {
@@ -15,7 +15,7 @@ export type LinkedInOptions = {
   /** The Insight Tag partner ID, as a number or a string of digits; `undefined` or `''` turns the provider off. */
   partnerId: number | string | undefined
   /** Conversion IDs keyed by the event name passed to `track()`. Other events are not sent. */
-  conversions?: Record<string, number>
+  events?: Partial<Record<EventName, number>>
   defer?: LoadTiming
 }
 
@@ -29,11 +29,12 @@ export function linkedin(options: LinkedInOptions) {
   if (!/^\d+$/.test(partnerId)) {
     throw new Error(`[consentlayer] Invalid LinkedIn partner ID: expected digits, received "${partnerId}".`)
   }
-  const conversions = options.conversions ?? {}
+  const conversionIds: Partial<Record<string, number>> = options.events ?? {}
   return definePlugin({
     id: 'linkedin',
     requiredConsent: 'marketing',
     defer: options.defer,
+    events: options.events ? Object.keys(options.events) : false,
     load({ emitError }) {
       if (typeof window === 'undefined' || getFlag('LinkedInInitialized')) return
       window._linkedin_partner_id = partnerId
@@ -50,7 +51,7 @@ export function linkedin(options: LinkedInOptions) {
       setFlag('LinkedInInitialized', true)
     },
     track(event) {
-      const conversionId = conversions[event.name]
+      const conversionId = conversionIds[event.name]
       if (conversionId !== undefined) window.lintrk?.('track', { conversion_id: conversionId, event_id: event.id })
     },
     teardown(context) {

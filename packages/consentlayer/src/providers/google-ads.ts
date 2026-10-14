@@ -1,6 +1,6 @@
 import { builtInConsentMode, ensureGtag, loadGtag } from '../core/consent-mode'
 import { definePlugin, getFlag, setFlag, skippedPlugin } from '../core/plugin'
-import type { LoadTiming } from '../core/types'
+import type { EventName, LoadTiming } from '../core/types'
 import { expireCookies } from '../core/utils'
 
 declare global {
@@ -15,7 +15,7 @@ export type GoogleAdsOptions = {
   /** The Google Ads tag ID, e.g. `AW-123456789`; `undefined` or `''` turns the provider off. */
   conversionId: string | undefined
   /** Conversion labels keyed by the event name passed to `track()`. Other events are not sent. */
-  conversions?: Record<string, string>
+  events?: Partial<Record<EventName, string>>
   /** Sends a `page_view` for remarketing on every page. Defaults to `true`. */
   pageViews?: boolean
   defer?: LoadTiming
@@ -32,13 +32,14 @@ export function googleAds(options: GoogleAdsOptions) {
       `[consentlayer] Invalid Google Ads conversion ID: expected format "AW-123456789", received "${conversionId}".`,
     )
   }
-  const conversions = options.conversions ?? {}
+  const labels: Partial<Record<string, string>> = options.events ?? {}
   let ownConsentMode = false
   const gtag = (...args: unknown[]) => window.gtag?.(...args)
   return definePlugin({
     id: 'google-ads',
     requiredConsent: 'marketing',
     defer: options.defer,
+    events: options.events ? Object.keys(options.events) : false,
     setup() {
       if (typeof window === 'undefined') return
       ownConsentMode = !getFlag('GoogleConsentMode')
@@ -74,7 +75,7 @@ export function googleAds(options: GoogleAdsOptions) {
       })
     },
     track(event) {
-      const label = conversions[event.name]
+      const label = labels[event.name]
       if (typeof window === 'undefined' || !label) return
       const { value, currency, transaction_id } = event.params
       gtag('event', 'conversion', {
