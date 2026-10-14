@@ -2,6 +2,8 @@
 
 - Read the [documentation](https://consentlayer.nicolopadovan.com), including
   [Troubleshooting](https://consentlayer.nicolopadovan.com/guides/troubleshooting/).
+- Ask a question in
+  [Discussions](https://github.com/nicolopadovan/consentlayer/discussions/categories/q-a).
 - Search the [issues](https://github.com/nicolopadovan/consentlayer/issues),
   then open a new one for a bug or a feature request.
 

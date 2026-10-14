@@ -183,7 +183,7 @@ describe('consent stores', () => {
   })
 
   it('inserts a Supabase row and throws its error', async () => {
-    const insert = vi.fn(() => Promise.resolve({ error: null as unknown }))
+    const insert = vi.fn((): Promise<{ error: unknown }> => Promise.resolve({ error: null }))
     const supabase = { from: vi.fn(() => ({ insert })) }
     await supabaseStore(supabase).append(record)
     expect(supabase.from).toHaveBeenCalledWith('consent_records')

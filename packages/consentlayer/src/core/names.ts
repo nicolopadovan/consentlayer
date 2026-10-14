@@ -100,8 +100,7 @@ export function getFlag<T>(name: string): T | undefined {
   if (typeof window === 'undefined') return undefined
   const win = window as unknown as FlagWindow
   return (win[`__${current.prefix}${name}`] ?? (current.legacy ? win[`__${legacyNames.prefix}${name}`] : undefined)) as
-    | T
-    | undefined
+    T | undefined
 }
 
 /** Sets a `window.__<prefix><name>` flag, so custom plugins can mark one-time setup. */

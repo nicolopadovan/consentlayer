@@ -31,7 +31,7 @@ describe('AnalyticsShell', () => {
       callback({
         didTimeout: false,
         timeRemaining: () => 10,
-      } as IdleDeadline)
+      })
       return 1
     })
     const idleWindow = window as IdleWindow

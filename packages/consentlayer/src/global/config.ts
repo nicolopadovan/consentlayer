@@ -131,9 +131,9 @@ export function createGlobal(config: GlobalConfig) {
   controller.start()
   const route = () => controller.setRoute(location.pathname + location.search)
   for (const method of ['pushState', 'replaceState'] as const) {
-    const original = history[method]
-    history[method] = function (this: History, ...args: Parameters<History['pushState']>) {
-      original.apply(this, args)
+    const original = history[method].bind(history)
+    history[method] = (...args: Parameters<History['pushState']>) => {
+      original(...args)
       route()
     }
   }

@@ -27,6 +27,13 @@ Versions and the changelog are managed with [Changesets](https://changesets.dev)
 
 The Docs workflow deploys the documentation site on every push to `main`.
 
+## Planning Versions
+
+Each version has a [milestone](https://github.com/nicolopadovan/consentlayer/milestones)
+with its target date, and each change in it an issue. A new request goes to
+the next open milestone, never to the version being released. Roadmap items
+with no target yet carry the `roadmap` label and no milestone.
+
 ## Release Steps
 
 1. Each pull request that changes the package adds a changeset
