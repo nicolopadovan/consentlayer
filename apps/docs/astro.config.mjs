@@ -2,6 +2,7 @@
 import react from '@astrojs/react'
 import starlight from '@astrojs/starlight'
 import { defineConfig } from 'astro/config'
+import starlightLlmsTxt from 'starlight-llms-txt'
 
 export default defineConfig({
   site: 'https://consentlayer.vercel.app',
@@ -11,7 +12,13 @@ export default defineConfig({
     starlight({
       title: 'ConsentLayer',
       disable404Route: true,
-      description: 'Consent-first analytics for React, Next.js and the server.',
+      description: 'Consent-first analytics for JavaScript frameworks, the script tag and the server.',
+      plugins: [
+        starlightLlmsTxt({
+          rawContent: true,
+          exclude: ['internals/**', 'playground', 'guides/migrating-to-v1', 'guides/changelog', 'guides/contributing'],
+        }),
+      ],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/nicolopadovan/analytics-consent-manager-npm' },
       ],

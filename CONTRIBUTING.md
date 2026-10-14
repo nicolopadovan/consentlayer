@@ -35,6 +35,8 @@ pnpm --filter docs dev
 CI runs these on every pull request, and they must pass:
 
 ```bash
+pnpm format:check
+pnpm knip
 pnpm turbo run typecheck lint test build
 pnpm --filter consentlayer check:package
 ```
@@ -42,7 +44,8 @@ pnpm --filter consentlayer check:package
 `check:package` validates the published package with publint and Are the Types
 Wrong, and checks every entry point against its size budget in
 [`.size-limit.js`](./packages/consentlayer/.size-limit.js). Lint warnings fail
-the build. A feature that adds code may raise a budget; say so in the pull
+the build. `pnpm format` formats the repository with Prettier, and `pnpm knip`
+reports unused files, exports and dependencies. A feature that adds code may raise a budget; say so in the pull
 request.
 
 ## Pull requests

@@ -39,6 +39,8 @@ pnpm 10:
 
 ```bash
 pnpm install
+pnpm format:check
+pnpm knip
 pnpm turbo run typecheck lint test build
 pnpm --filter consentlayer check:package
 ```
@@ -46,7 +48,8 @@ pnpm --filter consentlayer check:package
 CI runs the same checks on every pull request. `check:package` validates the
 published package and checks each entry point against its size budget; a
 feature that adds code may raise a budget, as long as the pull request says
-so. Lint warnings fail the build.
+so. Lint warnings fail the build. `pnpm format` formats the repository with
+Prettier, and `pnpm knip` reports unused files, exports and dependencies.
 
 A pull request should make one change, with tests for the behavior it adds or
 fixes, keep providers from loading or receiving data before their consent
