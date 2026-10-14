@@ -19,13 +19,20 @@ export const analytics = createAnalytics({
 })
 ```
 
-`debug` logs every consent change and every error to the browser console with
-`console.debug`, prefixed with `[consentlayer]`:
+`debug` logs every consent change, every page view and event each provider
+receives, each provider's lifecycle, and every error to the browser console
+with `console.debug`, prefixed with `[consentlayer]`:
 
 ```text
 [consentlayer] consent updated imperative {preferences: false, analytics: true, marketing: false}
+[consentlayer] ga4.page {url: 'https://example.com/', path: '/', title: 'Home', id: '…'}
 [consentlayer] [provider-script-load] Failed to load GA4 gtag.js for measurement ID G-ABC123
 ```
+
+An event that no line reports reached no provider, usually because its
+consent category is not granted. To narrow the output, pass an object, such as
+`debug: { events: true, only: ['ga4'] }`; [`debug`](/reference/api/#debug)
+lists the topics and the `logger` option.
 
 Browsers hide `console.debug` output by default. In Chrome, select
 **Verbose** in the console's log levels; in Firefox and Safari, enable

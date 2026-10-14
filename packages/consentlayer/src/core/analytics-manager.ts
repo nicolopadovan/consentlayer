@@ -6,6 +6,7 @@ import type {
   AnalyticsManagerStateSnapshot,
   AnalyticsPlugin,
   AutoTrackingConfig,
+  DebugTopic,
   LoadTiming,
   PluginContext,
   ServerEvent,
@@ -16,7 +17,7 @@ import { createMemoryIdentityStorage } from './storage'
 import { getNames } from './names'
 import {
   createEventId,
-  debugLog,
+  createDebugLog,
   getWindowLocation,
   hasRequiredConsent,
   isBrowser,
@@ -39,6 +40,18 @@ type HookName = Exclude<
 >
 
 const LIFECYCLE_HOOKS = new Set<HookName>(['setup', 'consent', 'load', 'teardown'])
+const HOOK_TOPICS: Record<HookName, DebugTopic> = {
+  setup: 'providers',
+  consent: 'providers',
+  load: 'providers',
+  teardown: 'providers',
+  page: 'events',
+  track: 'events',
+  identify: 'events',
+  group: 'events',
+  reset: 'events',
+  error: 'errors',
+}
 const INTERACTIONS = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const
 
 function whenDue(timing: Exclude<LoadTiming, false>): Promise<void> {
@@ -133,6 +146,7 @@ function resolveAutoTracking(
 export function createAnalyticsManager(
   options: AnalyticsManagerOptions = {},
 ): AnalyticsManager {
+  const debugLog = createDebugLog(options.debug)
   const listeners = new Set<(snapshot: AnalyticsManagerStateSnapshot) => void>()
   const providerStates = new Map<string, ProviderState>()
   const identityStorage = options.identityStorage ?? createMemoryIdentityStorage()
@@ -192,15 +206,11 @@ export function createAnalyticsManager(
   }
 
   const emitError = (error: AnalyticsError) => {
-    debugLog(options.debug ?? false, `[${error.scope}] ${error.message}`, error.cause)
+    debugLog('errors', error.providerId, `[${error.scope}] ${error.message}`, error.cause)
     try {
       options.onError?.(error)
     } catch (handlerError) {
-      debugLog(
-        options.debug ?? false,
-        'onError handler threw',
-        handlerError,
-      )
+      debugLog('errors', undefined, 'onError handler threw', handlerError)
     }
   }
 
@@ -286,7 +296,8 @@ export function createAnalyticsManager(
   const context = (providerId: string): PluginContext => ({
     consent,
     identity: sharedIdentity(),
-    debug: options.debug ?? false,
+    debug: Boolean(options.debug),
+    log: (message, ...data) => debugLog('providers', providerId, message, ...data),
     emitError: providerEmitError(providerId),
   })
 
@@ -294,13 +305,15 @@ export function createAnalyticsManager(
     state: ProviderState,
     hook: HookName,
     run: (plugin: AnalyticsPlugin, ctx: PluginContext) => Promise<void> | void,
+    ...detail: unknown[]
   ) => {
     if (destroyed) return
     const { plugin } = state
     if (state.backlog && !LIFECYCLE_HOOKS.has(hook)) {
-      enqueue(state.backlog, () => call(state, hook, run), plugin.id)
+      enqueue(state.backlog, () => call(state, hook, run, ...detail), plugin.id)
       return
     }
+    if (plugin[hook]) debugLog(HOOK_TOPICS[hook], plugin.id, `${plugin.id}.${hook}`, ...detail)
     try {
       await run(plugin, context(plugin.id))
     } catch (error) {
@@ -425,7 +438,7 @@ export function createAnalyticsManager(
 
   const identifyProviders = (traits: UserTraits, only?: string[]) =>
     trackAgainstProviders(only, async (state) => {
-      await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx))
+      await call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx), traits)
     })
 
   const clearSessionTimers = () => {
@@ -527,6 +540,7 @@ export function createAnalyticsManager(
     async boot() {
       if (destroyed || booted) return
       booted = true
+      debugLog('providers', undefined, 'boot')
       if (globalHandlers) {
         window.addEventListener('error', onWindowError)
         window.addEventListener('unhandledrejection', onRejection)
@@ -579,7 +593,7 @@ export function createAnalyticsManager(
       await trackAgainstProviders(
         pageOptions.only,
         async (state) => {
-          await call(state, 'page', (p, ctx) => p.page?.(page, ctx))
+          await call(state, 'page', (p, ctx) => p.page?.(page, ctx), page)
         },
         () => ({ id: page.id, name: 'page_view', url: page.url, only: pageOptions.only }),
       )
@@ -597,7 +611,7 @@ export function createAnalyticsManager(
       await trackAgainstProviders(
         optionsInput.only,
         async (state) => {
-          await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined))
+          if (allowed()) await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)
         },
         () =>
           allowed()
@@ -637,14 +651,14 @@ export function createAnalyticsManager(
     },
     async group(groupId, traits = {}) {
       await trackAgainstProviders(undefined, async (state) => {
-        await call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx))
+        await call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx), groupId, traits)
       })
     },
     async captureError(error, errorContext = {}) {
       if (!errorsEnabled) return
       const captured = { source: 'manual' as const, ...errorContext }
       await trackAgainstProviders(undefined, async (state) => {
-        await call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx))
+        await call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx), error)
       })
     },
     enableAutoTracking(config) {

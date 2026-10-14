@@ -56,7 +56,8 @@ each call:
 |---|---|
 | `consent` | The current `ConsentState`, or `null` before the visitor has chosen |
 | `identity` | `userId`, plus `email` and `phone` only with marketing consent |
-| `debug` | The `debug` option |
+| `debug` | Whether the `debug` option is on |
+| `log` | Logs a message under the `providers` debug topic, attributed to this plugin |
 | `emitError` | Reports an `AnalyticsError` to `onError`; `providerId` defaults to this plugin's `id` |
 
 | Hook | When it runs | Arguments before `ctx` |

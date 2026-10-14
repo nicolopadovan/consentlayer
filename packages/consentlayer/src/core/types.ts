@@ -93,7 +93,7 @@ export type ConsentEngineOptions = {
   policyVersion?: string
   /** `'discard'` treats a stale choice as no choice; `'keep'` keeps it in force until the visitor chooses again. Either way the banner shows. */
   onStale?: 'discard' | 'keep'
-  debug?: boolean
+  debug?: boolean | DebugOptions
   onError?: AnalyticsErrorHandler
 }
 
@@ -259,6 +259,19 @@ export type AnalyticsError = {
   cause?: unknown
 }
 
+/** `consent`: changes and stale choices. `events`: page views, `track`, `identify`, `group` and `reset`, per provider. `providers`: boot and each provider's setup, consent, load and teardown. `errors`: `AnalyticsError`s and `captureError` deliveries. */
+export type DebugTopic = 'consent' | 'events' | 'providers' | 'errors'
+
+export type DebugEntry = { topic: DebugTopic; provider?: string; message: string; data: unknown[] }
+
+/** Topics set to `true` are logged; with none set to `true`, every topic not set to `false` is. */
+export type DebugOptions = Partial<Record<DebugTopic, boolean>> & {
+  /** Drops entries about other providers. Entries about no provider are kept. */
+  only?: string[]
+  /** Receives each entry instead of `console.debug`. */
+  logger?: (entry: DebugEntry) => void
+}
+
 /** Receives every `AnalyticsError`. */
 export type AnalyticsErrorHandler = (error: AnalyticsError) => void
 
@@ -268,7 +281,7 @@ export type AnalyticsManagerOptions = {
   consentEngine?: ConsentEngine
   identityStorage?: IdentityStorageAdapter
   enabled?: boolean | (() => boolean)
-  debug?: boolean
+  debug?: boolean | DebugOptions
   /** Starts once analytics consent is granted. `true` turns everything on; off by default. */
   autoTracking?: AutoTrackingConfig | boolean
   onError?: AnalyticsErrorHandler
@@ -306,7 +319,10 @@ export type ServerEvent = {
 export type PluginContext = {
   consent: ConsentState | null
   identity: UserIdentity
+  /** Whether the `debug` option is on. */
   debug: boolean
+  /** Logs under the `providers` debug topic, attributed to this plugin. */
+  log: (message: string, ...data: unknown[]) => void
   emitError: AnalyticsErrorHandler
 }
 

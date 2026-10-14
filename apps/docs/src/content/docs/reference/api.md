@@ -46,7 +46,7 @@ function createAnalytics(options?: AnalyticsOptions): Analytics
 | `server` | `{ endpoint?: string; consentEndpoint?: string }` | | Server routes. See [`server`](#server). |
 | `errors` | `boolean \| { globalHandlers?: boolean }` | `true` | `false` disables `captureError` and the global handlers. `{ globalHandlers: false }` keeps `captureError` but does not listen to the window's `error` and `unhandledrejection` events. |
 | `enabled` | `boolean \| (() => boolean)` | `true` | When `false`, or when the function returns `false`, no provider runs and calls are dropped. The function is evaluated on every call. |
-| `debug` | `boolean` | `false` | Logs consent changes and errors with `console.debug`. |
+| `debug` | `boolean \| DebugOptions` | `false` | Logs what ConsentLayer does. See [`debug`](#debug). |
 | `onError` | `(error: AnalyticsError) => void` | | Receives every [`AnalyticsError`](#analyticserror), including consent adapter errors. Exceptions it throws are swallowed. |
 | `identityStorage` | `IdentityStorageAdapter` | `localStorage`, under `names.identityStorageKey` | Where the user identity is kept. |
 
@@ -66,7 +66,7 @@ type AnalyticsOptions = {
   providers?: AnalyticsPlugin[]
   identityStorage?: IdentityStorageAdapter
   enabled?: boolean | (() => boolean)
-  debug?: boolean
+  debug?: boolean | DebugOptions
   autoTracking?: AutoTrackingConfig | boolean
   onError?: AnalyticsErrorHandler
   errors?: boolean | { globalHandlers?: boolean }
@@ -141,6 +141,46 @@ Their names are listed in [Names](/guides/names/).
 | `scroll` | `boolean \| { thresholds?: number[] }` | `[25, 50, 75, 100]` | Scroll depths, in percent, that each send `scrollDepth` with `{ depth, session_id }` once per page session. `100` fires at 95%. |
 | `timeOnPage` | `boolean \| { intervals?: number[] }` | `[5, 15, 30, 60, 120]` | Seconds on the page that each send `timeOnPage` with `{ seconds, session_id }`. |
 | `only` | `string[]` | every provider | Sends automatic events only to these provider IDs. |
+
+#### `debug`
+
+`true` logs every topic with `console.debug`, prefixed with `[consentlayer]`.
+An object chooses the topics, the providers and where entries go:
+
+```ts
+createAnalytics({
+  providers,
+  debug: { events: true, errors: true, only: ['ga4'] },
+})
+```
+
+| Topic | Logs |
+|---|---|
+| `consent` | Each consent change, with its source, and a stored choice found stale. |
+| `events` | Each page view, `track`, `identify`, `group` and `reset`, once per provider that receives it, with its payload: `ga4.track sign_up {method: 'email'}`. |
+| `providers` | `boot`, and each provider's `setup`, `consent`, `load` and `teardown`, including `ga4 is off: measurementId is not set.` |
+| `errors` | Every [`AnalyticsError`](#analyticserror), and each provider a `captureError` call reaches. |
+
+Topics set to `true` are logged. When no topic is `true`, every topic is
+logged except those set to `false`, so `{ events: false }` logs everything but
+events.
+
+| Field | Type | Description |
+|---|---|---|
+| `consent`, `events`, `providers`, `errors` | `boolean` | Turns a topic on or off. |
+| `only` | `string[]` | Drops entries about providers whose `id` is not listed. Entries about no provider, such as consent changes, are kept. |
+| `logger` | `(entry: DebugEntry) => void` | Receives each entry in place of `console.debug`. |
+
+```ts
+type DebugEntry = {
+  topic: 'consent' | 'events' | 'providers' | 'errors'
+  provider?: string
+  message: string
+  data: unknown[]
+}
+```
+
+The types are exported as `DebugOptions`, `DebugEntry` and `DebugTopic`.
 
 #### `server`
 
@@ -588,7 +628,8 @@ hook is reported to `onError` and does not affect other providers. See
 |---|---|---|
 | `consent` | `ConsentState \| null` | The current consent. |
 | `identity` | `UserIdentity` | The identity, with `email` and `phone` only under marketing consent. |
-| `debug` | `boolean` | The instance's `debug` option. |
+| `debug` | `boolean` | Whether the instance's `debug` option is on. |
+| `log` | `(message: string, ...data: unknown[]) => void` | Logs under the `providers` [`debug`](#debug) topic, attributed to the plugin. |
 | `emitError` | `(error: AnalyticsError) => void` | Reports an error; `providerId` defaults to the plugin's `id`. |
 
 ### `AnalyticsError`

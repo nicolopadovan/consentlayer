@@ -87,7 +87,8 @@ export const analytics = createAnalytics({
 
 While `enabled` is `false`, every provider is torn down and calls are dropped,
 so development builds send nothing unless you opt in. `debug: true` logs
-consent changes, skipped providers and provider errors with `console.debug`.
+consent changes, page views and events per provider, provider lifecycle and
+errors with `console.debug`; [`debug`](/reference/api/#debug) narrows it.
 
 </details>
 

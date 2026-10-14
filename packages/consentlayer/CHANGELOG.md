@@ -79,6 +79,11 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `debug` logs every page view and event each provider receives, provider
+  lifecycle and `boot`, alongside consent changes and errors. An object form,
+  `debug: { consent, events, providers, errors, only, logger }`, picks topics
+  and providers and sends entries to your own logger. `PluginContext.log`
+  logs on behalf of a plugin.
 - `consentlayer/vue`: the `consentLayer` plugin boots the instance, sends a
   page view per Vue Router navigation, reports errors from
   `app.config.errorHandler`, and provides `useAnalytics()`, `useConsent()` and

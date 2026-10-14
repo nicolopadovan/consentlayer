@@ -201,7 +201,7 @@ describe('createAnalytics', () => {
     const fbq = vi.fn()
     Object.assign(window, { fbq, __consentlayerMetaPixelInitialized: undefined, __acmMetaPixelInitialized: undefined })
     const pixel = meta({ pixelId: '123456789012345' })
-    const ctx = { debug: false, emitError: () => undefined }
+    const ctx = { debug: false, log: () => undefined, emitError: () => undefined }
     const on = { ...ctx, consent: granted, identity: { email: 'a@example.com' } }
     const off = { ...ctx, consent: { ...granted, marketing: false }, identity: {} }
     void pixel.load?.(on)
@@ -403,7 +403,7 @@ describe('provider identity', () => {
     sessionStorage.setItem('hjViewportId', 'x')
     localStorage.setItem('hjActiveViewportIds', 'x')
     const plugin = hotjar({ siteId: 1, version: 6 })
-    const ctx = { identity: {}, debug: false, emitError: () => undefined }
+    const ctx = { identity: {}, debug: false, log: () => undefined, emitError: () => undefined }
     void plugin.teardown?.({ ...ctx, consent: { preferences: false, analytics: true, marketing: false } })
     expect(document.cookie).toContain('_hjSessionUser_1')
     void plugin.teardown?.({ ...ctx, consent: { preferences: false, analytics: false, marketing: false } })

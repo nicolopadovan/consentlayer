@@ -10,7 +10,7 @@ import type {
 import {
   BUILT_IN_CATEGORIES,
   broadcastConsent,
-  debugLog,
+  createDebugLog,
   equalConsent,
   normalizeConsent,
 } from './utils'
@@ -19,6 +19,7 @@ import { assertValidConsent } from './validation'
 export function createConsentEngine(
   options: ConsentEngineOptions = {},
 ): ConsentEngine {
+  const debugLog = createDebugLog(options.debug)
   const categories = [...BUILT_IN_CATEGORIES, ...(options.categories ?? [])]
   const normalize = (consent: Partial<ConsentState> | null | undefined) =>
     normalizeConsent(consent, categories)
@@ -66,7 +67,7 @@ export function createConsentEngine(
       storage?.write({ consent: next, updatedAt: Date.now(), policyVersion })
     }
     broadcastConsent(next, options.broadcast)
-    debugLog(options.debug ?? false, 'consent updated', source, next)
+    debugLog('consent', undefined, 'consent updated', source, next)
     notify()
     if (!applyAdapters) return
     await Promise.all(
@@ -118,7 +119,7 @@ export function createConsentEngine(
       const record = storage?.read() ?? null
       const stored = normalize(record?.consent)
       stale = stored !== null && isStaleRecord(record!)
-      if (stale) debugLog(options.debug ?? false, 'stored consent is stale', record)
+      if (stale) debugLog('consent', undefined, 'stored consent is stale', record)
       if (stored && (!stale || options.onStale === 'keep')) {
         await commit(stored, 'bootstrap', {
           persist: false,

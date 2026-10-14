@@ -2,6 +2,8 @@ import type {
   ConsentBroadcastConfig,
   ConsentCategory,
   ConsentState,
+  DebugOptions,
+  DebugTopic,
   ProviderConsentRequirement,
   UserIdentity,
 } from './types'
@@ -128,9 +130,19 @@ export function broadcastConsent(
   }
 }
 
-export function debugLog(enabled: boolean, ...parts: unknown[]): void {
-  if (enabled) {
-    console.debug('[consentlayer]', ...parts)
+const DEBUG_TOPICS: DebugTopic[] = ['consent', 'events', 'providers', 'errors']
+
+export type DebugLog = (topic: DebugTopic, provider: string | undefined, message: string, ...data: unknown[]) => void
+
+export function createDebugLog(debug: boolean | DebugOptions | undefined): DebugLog {
+  if (!debug) return () => undefined
+  const options = debug === true ? {} : debug
+  const anyOn = DEBUG_TOPICS.some((topic) => options[topic])
+  return (topic, provider, message, ...data) => {
+    if (!(options[topic] ?? !anyOn)) return
+    if (provider && options.only && !options.only.includes(provider)) return
+    if (options.logger) options.logger({ topic, provider, message, data })
+    else console.debug('[consentlayer]', message, ...data)
   }
 }
 

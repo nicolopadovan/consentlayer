@@ -151,6 +151,7 @@ describe('providers', () => {
       consent: { preferences: false, analytics: false, marketing: false },
       identity: {},
       debug: false,
+      log: () => undefined,
       emitError: () => undefined,
     })
     const bootstrap = (append.mock.calls[0]?.[0] as HTMLScriptElement).text
