@@ -189,7 +189,14 @@ describe('providers', () => {
 
   it('configures GA4 only once analytics is granted', async () => {
     const win = window as unknown as Record<string, unknown>
-    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured', '__acmGa4Configured']) delete win[key]
+    for (const key of [
+      'dataLayer',
+      'gtag',
+      '__consentlayerGa4Configured',
+      '__acmGa4Configured',
+      '__consentlayerGtagLoaded',
+    ])
+      delete win[key]
     const denied = { preferences: false, analytics: false, marketing: false }
     const manager = createAnalyticsManager({
       providers: [ga4({ measurementId: 'G-ABC123' })],
@@ -224,6 +231,7 @@ describe('ga4 consent mode', () => {
       '__acmGoogleConsentMode',
       '__consentlayerBuiltInConsentMode',
       '__consentlayerGtmLoaded',
+      '__consentlayerGtagLoaded',
     ])
       delete win[key]
   })
@@ -279,7 +287,11 @@ describe('ga4 consent mode', () => {
       ['config', 'G-ADV123', { send_page_view: false }],
       ['set', { user_id: null }],
       ['set', 'user_data', {}],
-      ['event', 'page_view', { page_location: 'https://example.com/a', page_path: '/a', page_title: 'A' }],
+      [
+        'event',
+        'page_view',
+        { page_location: 'https://example.com/a', page_path: '/a', page_title: 'A', send_to: 'G-ADV123' },
+      ],
     ])
     expect(document.querySelector('script[src*="gtag/js?id=G-ADV123"]')).toBeTruthy()
 

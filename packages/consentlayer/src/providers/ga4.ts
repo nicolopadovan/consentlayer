@@ -1,6 +1,6 @@
-import { builtInConsentMode, ensureGtag } from '../core/consent-mode'
+import { builtInConsentMode, ensureGtag, loadGtag } from '../core/consent-mode'
 import type { EventName, UserIdentity } from '../core/types'
-import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
+import { definePlugin, getFlag, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 import { assertHttpsOrRelativeUrl, assertValidGa4MeasurementId } from '../core/validation'
 
@@ -97,7 +97,7 @@ export function ga4(options: Ga4Options) {
     },
     load({ emitError }) {
       if (typeof window === 'undefined') return
-      loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`).catch(() =>
+      loadGtag(measurementId).catch(() =>
         emitError({
           scope: 'provider-script-load',
           message: `Failed to load GA4 gtag.js for measurement ID ${measurementId}`,
@@ -110,6 +110,7 @@ export function ga4(options: Ga4Options) {
         page_location: page.url ?? window.location.href,
         page_path: page.path ?? window.location.pathname,
         page_title: page.title ?? document.title,
+        send_to: measurementId,
       })
     },
     track(event) {
@@ -117,6 +118,7 @@ export function ga4(options: Ga4Options) {
       gtag('event', ga4EventName(event.name), {
         ...event.params,
         ...event.options.providers?.ga4,
+        send_to: measurementId,
       })
     },
     identify(identity, _traits, { consent }) {

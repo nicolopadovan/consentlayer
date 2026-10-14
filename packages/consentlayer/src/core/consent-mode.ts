@@ -1,4 +1,4 @@
-import { getFlag, setFlag } from './plugin'
+import { getFlag, loadScript, setFlag } from './plugin'
 import type { ConsentState } from './types'
 
 export type GoogleConsentModeOptions = {
@@ -36,6 +36,14 @@ export function ensureGtag() {
       // eslint-disable-next-line prefer-rest-params
       window.dataLayer?.push(arguments)
     }
+}
+
+/** gtag.js loads once per page, with the first tag ID; every other Google tag is configured on it. */
+export function loadGtag(tagId: string): Promise<void> {
+  return (
+    getFlag<Promise<void>>('GtagLoaded') ??
+    setFlag('GtagLoaded', loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(tagId)}`))
+  )
 }
 
 /** Sets the Consent Mode defaults on the first call, then sends an update for each choice. */
