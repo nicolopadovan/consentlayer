@@ -4,7 +4,7 @@ import { defineConfig } from 'tsup'
 
 const cdnShims: Record<string, string> = {
   'posthog-js': 'posthog',
-  'posthog-js/dist/recorder': 'posthog-recorder',
+  'posthog-js/dist/posthog-recorder': 'posthog-recorder',
   './sentry-sdk': 'sentry',
   './sentry-replay': 'sentry',
   './sentry-tracing': 'sentry',
@@ -64,7 +64,7 @@ export default defineConfig([{
     {
       name: 'cdn-shims',
       setup(build) {
-        build.onResolve({ filter: /^(posthog-js(\/dist\/recorder)?|\.\/sentry-(sdk|replay|tracing))$/ }, ({ path }) => ({
+        build.onResolve({ filter: /^(posthog-js(\/dist\/posthog-recorder)?|\.\/sentry-(sdk|replay|tracing))$/ }, ({ path }) => ({
           path: resolve(import.meta.dirname, `src/global/cdn/${cdnShims[path]}.ts`),
         }))
       },

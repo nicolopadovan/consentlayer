@@ -45,7 +45,7 @@ export function posthog(options: PostHogOptions) {
     const userId = latest?.identity.userId
     if (userId) client.identify(userId)
     if (options.recording) {
-      await import('posthog-js/dist/recorder')
+      await import('posthog-js/dist/posthog-recorder')
       client.startSessionRecording()
     }
   }
@@ -75,7 +75,8 @@ export function posthog(options: PostHogOptions) {
           capture_dead_clicks: false,
           disable_session_recording: true,
           disable_surveys: true,
-          advanced_disable_flags: true,
+          advanced_disable_flags: !options.recording,
+          advanced_disable_feature_flags: true,
           disable_external_dependency_loading: true,
         })
         return client

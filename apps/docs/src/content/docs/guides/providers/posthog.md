@@ -47,7 +47,7 @@ re-applies the current consent.
 | `uiHost` | `string` | None | PostHog's app URL, such as `https://us.posthog.com`, for toolbar links when `apiHost` is a proxy. |
 | `cookieless` | `boolean` | `true` | `true` loads PostHog at boot in cookieless mode (`cookieless_mode: 'on_reject'`). `false` makes the provider require analytics consent and load nothing before it. |
 | `autocapture` | `boolean` | `false` | PostHog autocapture. |
-| `recording` | `boolean` | `false` | Session recording, started after analytics consent. Imports `posthog-js/dist/recorder` on first use. |
+| `recording` | `boolean` | `false` | Session recording, started after analytics consent. Imports `posthog-js/dist/posthog-recorder` on first use. Recording must also be enabled in the PostHog project settings. |
 | `errors` | `boolean` | `true` | Sends `captureError` errors to PostHog error tracking with `captureException`. |
 | `groupType` | `string` | `'company'` | The group type `analytics.group()` uses. |
 | `defer` | `false \| 'idle' \| 'interaction' \| number` | `false` | See [Loading SDKs later](/guides/providers/#loading-sdks-later). |

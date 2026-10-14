@@ -37,7 +37,7 @@ const sdk = vi.hoisted(() => {
 })
 
 vi.mock('posthog-js', () => ({ default: ph }))
-vi.mock('posthog-js/dist/recorder', () => ({}))
+vi.mock('posthog-js/dist/posthog-recorder', () => ({}))
 vi.mock('@sentry/browser', () => sdk)
 
 const denied: ConsentState = { preferences: false, analytics: false, marketing: false }
@@ -66,6 +66,7 @@ describe('posthog', () => {
       cookieless_mode: 'on_reject',
       autocapture: false,
       disable_session_recording: true,
+      advanced_disable_flags: true,
       disable_external_dependency_loading: true,
     })
     expect(ph.opt_out_capturing).toHaveBeenCalledTimes(1)
@@ -86,12 +87,13 @@ describe('posthog', () => {
 
   it('loads the recorder only with recording on and analytics granted', async () => {
     vi.resetModules()
-    vi.doMock('posthog-js/dist/recorder', () => {
+    vi.doMock('posthog-js/dist/posthog-recorder', () => {
       recorderLoaded()
       return {}
     })
     const fresh = await import('../src/providers/posthog')
     const manager = await start(fresh.posthog({ apiKey: 'phc_test', recording: true }))
+    expect(ph.init.mock.calls[0]?.[1]).toMatchObject({ advanced_disable_flags: false, advanced_disable_feature_flags: true })
     expect(recorderLoaded).not.toHaveBeenCalled()
     await manager.updateConsent(granted)
     expect(recorderLoaded).toHaveBeenCalledTimes(1)

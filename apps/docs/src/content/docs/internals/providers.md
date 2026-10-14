@@ -159,10 +159,15 @@ in `load`.
 | `opt_out_capturing_by_default`, `opt_out_persistence_by_default` | `true` |
 | `autocapture` | `autocapture`, default `false` |
 | `capture_pageview`, `capture_pageleave`, `capture_exceptions`, `capture_heatmaps`, `capture_dead_clicks` | `false` |
-| `disable_session_recording`, `disable_surveys`, `advanced_disable_flags`, `disable_external_dependency_loading` | `true` |
+| `disable_session_recording`, `disable_surveys`, `advanced_disable_feature_flags`, `disable_external_dependency_loading` | `true` |
+| `advanced_disable_flags` | `true`, or `false` with `recording` |
 
-The session recorder (`posthog-js/dist/recorder`) is imported only when
-`recording: true` and analytics consent is granted.
+PostHog starts a recording only when the project's remote config, fetched
+from `<apiHost>/array/<apiKey>/config` when PostHog loads, has recording
+enabled. `advanced_disable_flags` also turns that fetch off, so it stays on
+with `recording`; `advanced_disable_feature_flags` still keeps feature flags
+off. The session recorder (`posthog-js/dist/posthog-recorder`) is imported
+only when `recording: true` and analytics consent is granted.
 
 </details>
 
