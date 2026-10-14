@@ -1,5 +1,12 @@
 # consentlayer
 
+## 1.0.0-rc.2
+
+### Patch Changes
+
+- 15982df: Export the `StoredConsent` type from `consentlayer`, so a custom `ConsentStorageAdapter` can name the record it reads and writes.
+- fefddf8: A server destination's `events` option now covers `page_view` as well, so `metaCapi({ events: ['lead'] })` no longer receives page views. `createAnalyticsHandler` answers with a `consentlayer-events` header listing the event names its destinations take, and the browser then forwards only those events, plus events with `only`, instead of every event.
+
 ## 1.0.0-rc.1
 
 ### Minor Changes
