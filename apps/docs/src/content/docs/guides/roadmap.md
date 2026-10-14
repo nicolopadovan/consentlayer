@@ -32,6 +32,7 @@ from. Each ships in its own minor release, in order of priority:
 | [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027       |
 | [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027       |
 | [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027       |
+| [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027       |
 | [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028          |
 
 ### Banner on npm: `consentlayer/banner`
@@ -141,10 +142,24 @@ consent model, the defaults and the signals to honor per visitor region:
 | Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each.                                                                                                                                                                                                                              |
 
 Applying a preset per region needs the visitor's region. The planned region
-lookup reads it on the server, from the country header your host or CDN adds,
-such as Vercel's `x-vercel-ip-country` or Cloudflare's `CF-IPCountry`, and
-passes it to the browser with the page. No IP address is stored. The presets
-and the region lookup ship together, in one release.
+lookup reads it on the server, from the country and region headers your host
+or CDN adds, and passes it to the browser with the page. It comes with a
+one-line setup for the most used hosts: Vercel, Cloudflare, Netlify and AWS
+CloudFront. No IP address is stored. A visitor whose region is unknown gets
+the strictest rules, the EU's opt-in model, so a site that doesn't set up the
+lookup keeps today's behavior. The presets and the region lookup ship
+together, in one release.
+
+### A hosted consent service
+
+Consent records are stored in your own database through a
+[store](/guides/consent-records/#stores), and the region lookup needs a server
+that renders the page. The planned hosted service removes both requirements:
+it stores consent records, reads the visitor's region from the request and
+returns the rules that apply, so a static site or a single-page application
+can use per-region rules without a server of its own. A dashboard shows the
+records and exports them. Running the same backend on your own
+infrastructure stays supported.
 
 ### A full IAB TCF and GPP consent manager
 
@@ -166,7 +181,6 @@ commitment either way.
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys.                                                                                                                                                                                                                                                                                                                                   |
 | A setup CLI, after 1.0            | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed. `vercel()` calls the `track` function you pass from `@vercel/analytics`, and the other providers load their vendor's script in the browser. |
-| A hosted consent service          | Consent records are stored in your own database through a [store](/guides/consent-records/#stores).                                                                                                                                                                                                                                                                                                                                                                 |
 | Retention helpers                 | A `ConsentStore` only appends. Deleting old records is your application's job; see [Retention and deletion](/guides/consent-records/#retention-and-deletion).                                                                                                                                                                                                                                                                                                       |
 
 ## Known gaps
