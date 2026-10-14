@@ -23,6 +23,7 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer/providers/*`](#consentlayerproviders)      | `ga4`, `gtm`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`                                                                                   |
 | [`consentlayer/adapters/*`](#consentlayeradapters)        | `shopifyCustomerPrivacy`, `tcf`, `googleConsentMode`                                                                                                                       |
 | [`consentlayer/auto-tracking`](#autotracking)             | `autoTracking`                                                                                                                                                             |
+| [`consentlayer/banner`](#consentlayerbanner)              | `mountBanner`, `BannerOptions`                                                                                                                                             |
 | [`consentlayer/ecommerce`](#consentlayerecommerce)        | `productParams`, `cartParams`, `orderParams`, `toItem`                                                                                                                     |
 | [`consentlayer/server`](#consentlayerserver)              | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores                                                    |
 | [`consentlayer/server/meta`](#consentlayerservermeta)     | `metaCapi`                                                                                                                                                                 |
@@ -1606,6 +1607,30 @@ type GoogleConsentModeRegion = {
 **Throws** an `Error` when a `regions` code is not ISO 3166-2 or
 `waitForUpdate` is not a whole number of `0` or more. The options type is
 exported as `GoogleConsentModeOptions`.
+
+## `consentlayer/banner`
+
+### `mountBanner(controller, options?)`
+
+Renders the banner, the settings dialog and the badge from the state of a
+controller made by [`createConsentController()`](#createconsentcontrolleranalytics-options),
+and returns a function that removes them. [Banner](/guides/banner/) describes
+every option.
+
+```ts
+function mountBanner(controller: ConsentController, options?: BannerOptions): () => void
+```
+
+| Option                                            | Type                                                                                     |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `position`                                        | `'top' \| 'bottom' \| 'center'`, or `top-` or `bottom-` with `left`, `center` or `right` |
+| `overlay`, `blocking`, `closeButton`, `unstyled`  | `boolean`                                                                                |
+| `emphasis`                                        | `'equal' \| 'accept'`                                                                    |
+| `badge`                                           | `false \| { show?, position?, label?, attached? }`                                       |
+| `privacyPolicyUrl`, `cookiePolicyUrl`, `termsUrl` | `string`                                                                                 |
+| `text`                                            | `Partial<Record<string, string>>`                                                        |
+| `classNames`                                      | `Partial<Record<part, string>>`, with the [parts](/guides/banner/#classes-and-tailwind)  |
+| `nonce`                                           | `string`                                                                                 |
 
 ## `consentlayer/ecommerce`
 

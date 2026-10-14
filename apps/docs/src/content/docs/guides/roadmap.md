@@ -21,7 +21,6 @@ from. Each ships in its own minor release, in order of priority:
 | Item                                                                              | Priority | Target        |
 | --------------------------------------------------------------------------------- | -------- | ------------- |
 | [Privacy laws per visitor region](#privacy-laws-beyond-the-gdpr)                  | High     | December 2026 |
-| [Banner on npm](#banner-on-npm-consentlayerbanner)                                | High     | January 2027  |
 | [Banner translations](#banner-translations)                                       | High     | January 2027  |
 | [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027  |
 | [Astro and TanStack Start](#astro-and-tanstack-start)                             | Medium   | January 2027  |
@@ -37,16 +36,9 @@ from. Each ships in its own minor release, in order of priority:
 | [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027       |
 | [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028          |
 
-### Banner on npm: `consentlayer/banner`
-
-The banner of the [script tag](/start/script-tag/#3-the-banner) is available
-only from the CDN. The planned `consentlayer/banner` entry exports it for
-applications that install ConsentLayer from npm, as a function that mounts it
-on a consent controller.
-
 ### Banner translations
 
-The [script tag](/start/script-tag/)'s banner is in English; each string can
+The [banner](/guides/banner/) is in English; each string can
 be overridden, but no other language ships. The planned translations cover the
 banner's text in the main European languages and beyond, chosen from the
 page's `lang` attribute or set explicitly, and are used by the banner
@@ -54,7 +46,8 @@ components below.
 
 ### Banner components for UI libraries
 
-The npm package ships no banner; you build one on
+The [banner](/guides/banner/) mounts on a consent controller and does not use
+your framework's components; with a framework binding, you build one on
 [`useConsentController()`](/guides/consent-ui/), starting from the recipe. The
 planned components are first-party banners and settings dialogs built on the
 UI libraries applications already use, so they match the rest of the
