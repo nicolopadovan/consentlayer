@@ -14,6 +14,7 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript` |
 | [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for Next.js |
 | [`consentlayer/vue`](#consentlayervue) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController` |
+| [`consentlayer/svelte`](#consentlayersvelte) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController` |
 | [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify consent adapter |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
@@ -925,6 +926,74 @@ with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories` and
 `prefs` as read-only refs. The return type is exported as `ConsentController`.
 
 **Throws** an `Error` when `consentLayer` is not installed.
+
+## `consentlayer/svelte`
+
+Requires `svelte` 5.7 or later, an optional peer dependency. SvelteKit is not
+a dependency; you pass its `afterNavigate`. Every function here reads or sets a
+Svelte context, so call it while a component initializes.
+
+### `consentLayer(options)`
+
+```ts
+function consentLayer(options: ConsentLayerOptions): ConsentController
+```
+
+Provides the instance and the consent UI state to every component below the
+one that calls it, and returns the state. Once that component is mounted, it
+bootstraps consent, schedules boot and sends page views; when it is destroyed,
+it stops. On the server it only provides them.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `analytics` | `Analytics` | | **Required.** The instance. |
+| `afterNavigate` | `AfterNavigateLike` | | SvelteKit's `afterNavigate`. Sends a page view after the first render and every navigation, once per path and query string; the hash is ignored. A new path or query string also starts a new page session. Without it, one page view is sent for the page load. |
+| `page` | `PageViewPayload` | | Overrides the page view's `url`, `path` or `title`. |
+| `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | As on [`<AnalyticsProvider>`](#analyticsprovider). |
+| `autoShowBanner` | `boolean` | `true` | As on `<AnalyticsProvider>`. |
+| `openConsentGlobalKey` | `string` | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. |
+
+The options type is exported as `ConsentLayerOptions`, and the navigation type
+as `AfterNavigateLike`:
+
+```ts
+type AfterNavigateLike = (callback: (navigation: { to: { url: URL } | null }) => void) => void
+```
+
+### `useAnalytics()` for Svelte
+
+```ts
+function useAnalytics(): Analytics
+```
+
+**Returns** the instance passed to `consentLayer()`, else the instance most
+recently created by `createAnalytics()`.
+
+**Throws** an `Error` when neither exists.
+
+### `useConsent()` for Svelte
+
+```ts
+function useConsent(): {
+  readonly consent: ConsentState | null
+  engine: ConsentApi
+  setConsent: (consent: ConsentState) => Promise<void>
+  update: (partial: Partial<ConsentState>) => Promise<void>
+}
+```
+
+As the React [`useConsent()`](#useconsent), with `consent` as a reactive
+property. It listens for changes only while a template, `$derived` or
+`$effect` reads it.
+
+### `useConsentController()` for Svelte
+
+The fields of the React [`useConsentController()`](#useconsentcontroller),
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories` and
+`prefs` as reactive read-only properties. The return type is exported as
+`ConsentController`.
+
+**Throws** an `Error` when no parent component called `consentLayer()`.
 
 ## `consentlayer/providers/*`
 

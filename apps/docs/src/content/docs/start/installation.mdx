@@ -45,6 +45,7 @@ ConsentLayer has no runtime dependencies.
 | React | 18.3 or 19, only for `consentlayer/react` and `consentlayer/next`. |
 | Next.js | 15 or 16, only for `consentlayer/next`, in the App Router or the Pages Router. |
 | Vue | 3.5 or later, only for `consentlayer/vue`. Nuxt 4 works through a Nuxt plugin. |
+| Svelte | 5.7 or later, only for `consentlayer/svelte`. SvelteKit sends page views through `afterNavigate`. |
 | TypeScript | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`. |
 
 ## Optional peer dependencies
@@ -60,6 +61,7 @@ install and import yourself.
 | `consentlayer/react` | `react`, `react-dom` |
 | `consentlayer/next` | `react`, `react-dom`, `next` |
 | `consentlayer/vue` | `vue` |
+| `consentlayer/svelte` | `svelte` |
 | `consentlayer/providers/posthog` | `posthog-js` |
 | `consentlayer/providers/sentry` | `@sentry/browser` |
 | `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs` |
@@ -79,6 +81,7 @@ are loaded with dynamic `import()` when they are first needed.
 | `consentlayer/react` | `AnalyticsProvider`, hooks, `ErrorBoundary`, `MetaPixelNoscript` |
 | `consentlayer/next` | `AnalyticsProvider` for Next.js, which tracks navigation itself |
 | `consentlayer/vue` | The `consentLayer` Vue plugin and composables |
+| `consentlayer/svelte` | `consentLayer` for your root component, and the `use*` functions |
 | `consentlayer/providers/<name>` | One provider factory: `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, `shopify` |
 | `consentlayer/ecommerce` | `productParams`, `cartParams`, `orderParams` |
 | `consentlayer/server` | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `requestInfo`, consent stores |
@@ -136,6 +139,8 @@ ingestion hosts in `connect-src`, or none if you route them through
   server errors and a server-side tracking route.
 - [Vue and Nuxt](/start/vue/): the same with the `consentLayer` Vue plugin,
   in Vite or Nuxt.
+- [Svelte and SvelteKit](/start/svelte/): the same with `consentLayer()`
+  in your root layout.
 - [Providers](/guides/providers/): the options and consent category of each
   provider.
 - [JavaScript and Astro](/start/javascript/): the same without a framework

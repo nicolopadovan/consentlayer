@@ -95,6 +95,10 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   page view per Vue Router navigation, reports errors from
   `app.config.errorHandler`, and provides `useAnalytics()`, `useConsent()` and
   `useConsentController()`. Works with Nuxt 4 through a Nuxt plugin.
+- `consentlayer/svelte`: `consentLayer()` in the root component boots the
+  instance, sends a page view per SvelteKit navigation through
+  `afterNavigate`, and provides `useAnalytics()`, `useConsent()` and
+  `useConsentController()` with the state as reactive properties.
 - `createAnalytics({ consent: { maxAgeDays, policyVersion, onStale } })` asks
   the visitor again when the stored choice is older than `maxAgeDays` or was
   made under another major `policyVersion` (`'3.x'` to `'4.0'`).

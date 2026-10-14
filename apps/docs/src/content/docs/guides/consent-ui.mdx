@@ -7,6 +7,7 @@ import { Code } from '@astrojs/starlight/components'
 import banner from '../../../components/ConsentBanner.tsx?raw'
 import css from '../../../components/consent-banner.css?raw'
 import vueBanner from '../../../../../example-nuxt/app/components/ConsentBanner.vue?raw'
+import svelteBanner from '../../../../../example-sveltekit/src/lib/ConsentBanner.svelte?raw'
 
 ConsentLayer does not ship a consent banner, so its design, wording and
 languages remain yours. This page documents `useConsentController()`, the hook
@@ -201,6 +202,20 @@ installed. This component uses the same CSS file as the React recipe:
 <Code code={vueBanner} lang="vue" title="components/ConsentBanner.vue" />
 
 [Vue and Nuxt](/start/vue/#3-add-the-banner) shows where to render it.
+
+## Svelte
+
+`useConsentController()` from `consentlayer/svelte` has the same fields, with
+the state as reactive properties: read `consent.bannerVisible` rather than
+destructuring it. It throws
+`useConsentController needs consentLayer() in a parent component` when no
+parent component called `consentLayer()`. This component uses the same CSS
+file as the React recipe:
+
+<Code code={svelteBanner} lang="svelte" title="src/lib/ConsentBanner.svelte" />
+
+[Svelte and SvelteKit](/start/svelte/#2-call-consentlayer-in-the-root-layout)
+shows where to render it.
 
 ## Custom categories
 

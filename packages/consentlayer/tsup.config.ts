@@ -23,13 +23,14 @@ export default defineConfig({
     testing: 'src/testing.ts',
     next: 'src/next.tsx',
     vue: 'src/vue.ts',
+    svelte: 'src/svelte.ts',
   },
   dts: true,
   format: ['esm'],
   clean: true,
   sourcemap: true,
   treeshake: true,
-  external: ['react', 'react-dom', 'vue'],
+  external: ['react', 'react-dom', 'vue', 'svelte'],
   async onSuccess() {
     // esbuild drops module directives; prepended on line 1 so the sourcemaps stay aligned.
     for (const entry of ['dist/react/index.js', 'dist/next.js']) {

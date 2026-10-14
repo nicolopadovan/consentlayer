@@ -4,6 +4,8 @@ dist
 .next
 .nuxt
 .output
+.svelte-kit
+build
 coverage
 .env.local
 apps/*/.env.local

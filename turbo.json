@@ -3,9 +3,9 @@
   "cacheMaxSize": "5GB",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "typecheck"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**", ".output/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", ".output/**", "build/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -15,7 +15,7 @@
       "outputs": []
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"]
+      "dependsOn": ["^typecheck", "^build"]
     },
     "dev": {
       "cache": false,
