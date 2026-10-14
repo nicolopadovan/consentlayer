@@ -126,8 +126,11 @@ type ConsentBroadcastConfig = {
 
 #### `autoTracking`
 
-`true` enables every kind of event with its defaults. An object enables every
-kind it does not set to `false`. Automatic events start after `boot()`, once
+`true` enables every kind of event with its defaults. An object that turns on
+a kind, with `true` or its options, enables only the kinds it turns on. An
+object that turns none on, such as `{ scroll: false }` or `{ only: ['ga4'] }`,
+enables every kind it does not set to `false`, the same rule as
+[`debug`](#debug). Automatic events start after `boot()`, once
 analytics consent is granted, and are sent with `requireAnalyticsConsent: true`.
 Their names are listed in [Names](/guides/names/).
 

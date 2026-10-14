@@ -22,6 +22,7 @@ route handler.
 | The engine, manager, default runtime and React components are replaced | [Create one instance](#replace-the-setup-with-one-instance) with `createAnalytics()` |
 | Storage keys, DOM events and globals use the `consentlayer` prefix | [Opt in to the legacy names](#keep-stored-consent) or visitors see the banner again |
 | Auto-tracking events are renamed from `acm.*` to `consentlayer.*` | [Update dashboards](#rename-auto-tracking-events) or set `names.prefix` |
+| An auto-tracking config that names a kind turns on only the kinds it names | [Name every kind you want](#rename-auto-tracking-events) |
 | Provider factories are renamed; GA4 and Meta no longer load before consent | [Rename the providers](#rename-the-providers) |
 | The `track*` e-commerce helpers are removed; events use GA4 names | [Replace the helpers](#replace-the-e-commerce-helpers) with `track()` and the param builders |
 | `track()` no longer requires analytics consent | [Check what each provider receives](#review-what-each-provider-receives) |
@@ -332,6 +333,18 @@ Auto-tracking is configured with the `autoTracking` option instead of the
 `<AutoTracking config>` prop. It accepts the same `AutoTrackingConfig`, or
 `true` for the defaults, and still starts only once analytics consent is
 granted.
+
+A config that turns on a kind, with `true` or its options, now turns on only
+the kinds it names; before, every other kind stayed on unless set to `false`.
+A config that turns nothing on, such as `{ scroll: false }` or
+`{ only: ['ga4'] }`, still keeps every other kind on.
+
+```ts
+// Before: clicks in attribute mode, plus page sessions, scroll and time on page
+autoTracking: { clicks: { mode: 'attribute' } }
+// Now: name each kind you want
+autoTracking: { clicks: { mode: 'attribute' }, pageViews: true, scroll: true, timeOnPage: true }
+```
 
 ## Rename the providers
 

@@ -103,43 +103,28 @@ type ResolvedAutoTracking = {
 function resolveAutoTracking(
   config: AutoTrackingConfig | undefined,
 ): ResolvedAutoTracking {
-  const clicks = config?.clicks
-  const scroll = config?.scroll
-  const time = config?.timeOnPage
+  const { clicks, scroll, timeOnPage, pageViews } = config ?? {}
+  const named = [clicks, scroll, timeOnPage, pageViews].some((kind) => kind != null && kind !== false)
+  const on = (kind: unknown) => (kind == null ? !named : kind !== false)
+  const settings = <T extends object>(kind: boolean | T | undefined): Partial<T> =>
+    typeof kind === 'object' ? kind : {}
 
   return {
-    clicks:
-      clicks === false
-        ? { enabled: false }
-        : {
-            enabled: true,
-            mode: (clicks === true || clicks == null ? undefined : clicks.mode) ?? 'all',
-            attribute:
-              (clicks === true || clicks == null ? undefined : clicks.attribute) ??
-              DEFAULT_CLICK_ATTRIBUTE,
-            selectors:
-              (clicks === true || clicks == null ? undefined : clicks.selectors) ??
-              DEFAULT_CLICK_SELECTORS,
-          },
-    scroll:
-      scroll === false
-        ? { enabled: false }
-        : {
-            enabled: true,
-            thresholds:
-              (scroll === true || scroll == null ? undefined : scroll.thresholds) ??
-              DEFAULT_SCROLL_THRESHOLDS,
-          },
-    timeOnPage:
-      time === false
-        ? { enabled: false }
-        : {
-            enabled: true,
-            intervals:
-              (time === true || time == null ? undefined : time.intervals) ??
-              DEFAULT_TIME_INTERVALS,
-          },
-    pageViews: config?.pageViews ?? true,
+    clicks: on(clicks)
+      ? {
+          enabled: true,
+          mode: settings(clicks).mode ?? 'all',
+          attribute: settings(clicks).attribute ?? DEFAULT_CLICK_ATTRIBUTE,
+          selectors: settings(clicks).selectors ?? DEFAULT_CLICK_SELECTORS,
+        }
+      : { enabled: false },
+    scroll: on(scroll)
+      ? { enabled: true, thresholds: settings(scroll).thresholds ?? DEFAULT_SCROLL_THRESHOLDS }
+      : { enabled: false },
+    timeOnPage: on(timeOnPage)
+      ? { enabled: true, intervals: settings(timeOnPage).intervals ?? DEFAULT_TIME_INTERVALS }
+      : { enabled: false },
+    pageViews: on(pageViews),
   }
 }
 

@@ -55,8 +55,9 @@ are shared by the whole page, so creating a second instance with different
 
 Auto-tracking starts after boot, once `analytics` consent is granted, and sends
 each event to every active provider, or only to the provider IDs listed in
-`autoTracking.only`. `true` enables every kind with its defaults; pass an
-object to configure or disable each kind.
+`autoTracking.only`. `true` enables every kind with its defaults. An object
+that turns kinds on enables only those: `{ clicks: { mode: 'attribute' } }`
+sends clicks alone, while `{ scroll: false }` keeps every kind but scroll.
 
 | Option | Default | Event | Params |
 |---|---|---|---|

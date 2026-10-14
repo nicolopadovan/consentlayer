@@ -152,6 +152,20 @@ describe('granular auto-tracking', () => {
     ).toBeUndefined()
   })
 
+  it('turns on only the kinds an object names, else every kind it does not turn off', async () => {
+    const sessionStarts = async (config: Parameters<ReturnType<typeof setupManager>['enableAutoTracking']>[0]) => {
+      const events: CollectedEvent[] = []
+      const manager = setupManager(events)
+      await boot(manager)
+      manager.enableAutoTracking(config)
+      return events.filter((e) => e.name === 'consentlayer.page_session_start').length
+    }
+    expect(await sessionStarts({ clicks: { mode: 'attribute' } })).toBe(0)
+    expect(await sessionStarts({ scroll: true, pageViews: true })).toBe(1)
+    expect(await sessionStarts({ scroll: false })).toBe(1)
+    expect(await sessionStarts({ only: ['collector'] })).toBe(1)
+  })
+
   it('preserves current behaviour when called with no config', async () => {
     const events: CollectedEvent[] = []
     const manager = setupManager(events)

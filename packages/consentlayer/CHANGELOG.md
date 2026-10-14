@@ -9,6 +9,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating-to-v1/).
 
 ### Breaking
+- An `autoTracking` object that turns on a kind, with `true` or its options,
+  enables only the kinds it turns on, like `debug`. An object that turns none
+  on, such as `{ scroll: false }`, still enables every other kind.
 - The consent storage key holds `{ consent, updatedAt, policyVersion }`
   instead of the bare `ConsentState`; values stored the old way are still read.
   `ConsentStorageAdapter.read()` and `write()` take this `StoredConsent` record.
