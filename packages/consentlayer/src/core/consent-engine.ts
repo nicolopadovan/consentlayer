@@ -136,8 +136,8 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     const ask = async (adapter: ConsentIntegrationAdapter) => {
       try {
         const answer = await adapter.bootstrap?.()
-        provisional = typeof answer?.consent === 'object'
-        return normalize(provisional ? (answer as { consent: ConsentState }).consent : (answer as ConsentState))
+        provisional = answer != null && 'consent' in answer && typeof answer.consent === 'object'
+        return normalize(provisional ? (answer as { consent: ConsentState }).consent : (answer as ConsentState | null))
       } catch (cause) {
         options.onError?.({
           scope: 'consent-adapter',
