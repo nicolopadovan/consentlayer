@@ -224,7 +224,7 @@ Each destination follows its vendor's recommended setup (decided
 |---|---|---|---|
 | GA4 | ✓ | ✓ Measurement Protocol | consent mode |
 | Meta Pixel | ✓ | ✓ CAPI | consent mode; sets consent before `init` |
-| PostHog | ✓ | later | cookieless until analytics consent; replaces the adapters in Scriptie and Bruciami |
+| PostHog | ✓ | later | cookieless until analytics consent; replaces hand-written PostHog adapters |
 | Sentry | ✓ | ✓ Next instrumentation | errors without consent or personal data; Replay, tracing and the user after analytics consent |
 | Hotjar | ✓ | — | gains `teardown` |
 | Shopify | ✓ | — | analytics + Customer Privacy sync |
@@ -262,7 +262,7 @@ Each stage ships as its own release candidate with a migration-guide section.
 | `trackEvent('ViewContent', …)`, `trackViewContent()` | `track('view_item', productParams(product))` with `/ecommerce` |
 | `saveIdentity({ email })` | `identify(userId?, { email })` |
 | `sendMetaCapiEvent`, `sendGa4MeasurementEvent` + a hand-written route | `createAnalyticsHandler({ destinations })` |
-| Custom `ProviderAdapter` (PostHog in Scriptie / Bruciami) | `definePlugin()` or the built-in `posthog()` |
+| Custom `ProviderAdapter`, such as one for PostHog | `definePlugin()` or the built-in `posthog()` |
 
 ## Out of scope
 

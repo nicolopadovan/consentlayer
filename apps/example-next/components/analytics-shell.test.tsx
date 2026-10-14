@@ -46,7 +46,7 @@ describe('AnalyticsShell', () => {
 
   it('boots lazily, wires children into consent context, and registers Meta in the client runtime', async () => {
     Object.assign(process.env, {
-      NEXT_PUBLIC_FACEBOOK_PIXEL_ID: '1959498944961766',
+      NEXT_PUBLIC_FACEBOOK_PIXEL_ID: '123456789012345',
     })
     const { useConsent } = await import(
       'consentlayer/react'

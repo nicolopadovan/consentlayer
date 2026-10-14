@@ -7,8 +7,11 @@ dist
 .svelte-kit
 build
 coverage
-.env.local
-apps/*/.env.local
+.env
+.env.*
+!.env.example
+.vercel
+.claude
 .playwright-cli
 .DS_Store
 .angular
