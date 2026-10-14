@@ -139,8 +139,8 @@ An unknown name logs `[consentlayer] Unknown provider "<name>".` or
 | `data-auto-tracking`       | `autoTracking`                                        |
 | `data-debug`               | `debug`                                               |
 
-An attribute that sets a boolean is `true` when present, unless its value is
-`"false"`. You can combine both ways: an attribute wins over the same option in
+An attribute that sets a boolean, or turns on an adapter or `vercel()`, is
+`true` when present, unless its value is `"false"`. You can combine both ways: an attribute wins over the same option in
 `window.ConsentLayer`, so a shared object can hold the options that have no
 attribute.
 

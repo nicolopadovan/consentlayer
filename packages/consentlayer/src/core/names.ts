@@ -44,7 +44,7 @@ function derive(prefix: string, legacy: boolean): Names {
   }
 }
 
-/** Names used before 1.0.0-rc.2. Read and written too when `legacy` is on. */
+/** Names used by the old `@nicolopadovan/analytics-consent-manager` package. Read and written too when `legacy` is on. */
 const legacyNames: Names = derive('acm', false)
 
 let current = derive(DEFAULT_PREFIX, false)

@@ -71,6 +71,12 @@ describe('readConfig', () => {
       adapters: { tcf: {}, googleConsentMode: {} },
     })
   })
+
+  it('turns an adapter or an option-less provider off with "false"', () => {
+    const tag = script({ vercel: 'false', tcf: 'false', shopify: 'false', googleConsentMode: 'false' })
+    const config = readConfig({ providers: { vercel: {} }, adapters: { tcf: {} } }, tag)
+    expect(config).toEqual({ providers: {} })
+  })
 })
 
 describe('createGlobal', () => {

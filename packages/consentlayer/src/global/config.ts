@@ -80,15 +80,19 @@ export function readConfig(global: GlobalConfig | undefined, script: HTMLOrSVGSc
     if (value === undefined) continue
     if (key === 'autoTracking') config.autoTracking = flag(value)
     else if (key === 'debug') config.debug = flag(value)
-    else if (adapterFactories[key]) adapters[key] ??= {}
-    else if (attributes[key]) {
+    else if (adapterFactories[key]) {
+      if (flag(value)) adapters[key] ??= {}
+      else delete adapters[key]
+    } else if (attributes[key]) {
       const [provider, option, isFlag] = attributes[key]
-      providers[provider] ??= {}
+      if (!option && !flag(value)) delete providers[provider]
+      else providers[provider] ??= {}
       if (option) providers[provider][option] = isFlag ? flag(value) : value
     }
   }
   config.providers = providers
   if (Object.keys(adapters).length) config.adapters = adapters
+  else delete config.adapters
   return config
 }
 
