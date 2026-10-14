@@ -247,6 +247,17 @@ describe('server destinations', () => {
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 
+  it('sends only to destinations that require one of the event categories', async () => {
+    const fetchImpl = okFetch()
+    const ga = ga4Server({ measurementId: 'G-ABC123', apiSecret: 's', fetchImpl })
+    const meta = metaCapi({ pixelId: '123456789012345', accessToken: 't', fetchImpl })
+    const results = await sendServerEvent(
+      { name: 'page_view', consent: granted, url: 'https://example.com/', categories: ['marketing'] },
+      { destinations: [ga, meta] },
+    )
+    expect(results).toEqual([{ id: 'meta', ok: true }])
+  })
+
   it('forwards a browser event to the TikTok Events API with the browser event id and hashed identity', async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ code: 0, message: 'OK' }))
     const POST = createAnalyticsHandler({

@@ -456,7 +456,13 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         () =>
           server === false
             ? undefined
-            : { id: page.id, name: 'page_view', url: page.url, only: server ? undefined : only },
+            : {
+                id: page.id,
+                name: 'page_view',
+                url: page.url,
+                only: server ? undefined : only,
+                categories: Array.isArray(server) ? server : undefined,
+              },
       )
     },
     async track(name, params, optionsInput = {}) {

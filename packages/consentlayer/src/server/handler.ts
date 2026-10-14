@@ -32,7 +32,8 @@ export async function sendServerEvent(
     (destination): destination is ServerDestination =>
       destination !== undefined &&
       event.consent[destination.requiredConsent] === true &&
-      (!event.only || event.only.includes(destination.id)),
+      (!event.only || event.only.includes(destination.id)) &&
+      (!event.categories || event.categories.includes(destination.requiredConsent)),
   )
   const results = await Promise.allSettled(targets.map((destination) => destination.send(event, options.request)))
   return targets.map((destination, index) => {
@@ -74,6 +75,7 @@ function parseServerEvent(body: unknown): ServerEvent {
     isOptional(body.params, isObject) &&
     isOptional(body.providers, isObject) &&
     isOptional(body.only, isStringArray) &&
+    isOptional(body.categories, isStringArray) &&
     isOptional(
       body.identity,
       (identity) => isObject(identity) && Object.values(identity).every((value) => isOptional(value, isString)),

@@ -322,6 +322,8 @@ export type ServerEvent = {
   /** GA4 client ID; read from the `_ga` cookie when omitted. */
   clientId?: string
   only?: string[]
+  /** Send only to destinations whose `requiredConsent` is one of these. */
+  categories?: (keyof ConsentState)[]
   providers?: Record<string, Record<string, unknown>>
 }
 
@@ -398,8 +400,14 @@ export interface AnalyticsManager {
   registerProvider: (provider: AnalyticsPlugin) => () => void
   updateConsent: (consent: ConsentState | null) => Promise<void>
   getConsent: () => ConsentState | null
-  /** `only` limits which providers and server destinations receive it; `server: true` ignores it for the server, `false` skips the server. */
-  page: (payload?: PageViewPayload, options?: { only?: string[]; server?: boolean }) => Promise<void>
+  /**
+   * `only` limits which providers and server destinations receive it; `server: true` ignores it for the server, `false` skips the server.
+   * An array of categories ignores `only` for the server and sends to the destinations that require one of them.
+   */
+  page: (
+    payload?: PageViewPayload,
+    options?: { only?: string[]; server?: boolean | (keyof ConsentState)[] },
+  ) => Promise<void>
   track: <Name extends string>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>
   identify: (userId?: string, traits?: UserTraits) => Promise<void>
   reset: () => Promise<void>
