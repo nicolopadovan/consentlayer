@@ -16,10 +16,10 @@ export async function checkPlugin(plugin: AnalyticsPlugin): Promise<string[]> {
   const before = { scripts: scripts(), cookies: document.cookie }
   const realFetch = globalThis.fetch
   let requests = 0
-  globalThis.fetch = (() => {
+  globalThis.fetch = () => {
     requests += 1
     return Promise.resolve(new Response(null, { status: 204 }))
-  }) as typeof fetch
+  }
 
   const manager = createAnalyticsManager({
     providers: [plugin],
