@@ -9,6 +9,7 @@ import {
 import { latestAnalytics } from './core/create-analytics'
 import type { Analytics, ConsentApi, ConsentState, PageViewPayload } from './core/types'
 import type { HTMLIframeAttributes, HTMLImgAttributes } from 'svelte/elements'
+import { CoreControllerKey } from './svelte/context'
 import GtmNoscriptComponent from './svelte/GtmNoscript.svelte'
 import MetaPixelNoscriptComponent from './svelte/MetaPixelNoscript.svelte'
 
@@ -81,6 +82,7 @@ export function consentLayer({ analytics, afterNavigate, page, ...options }: Con
   }
   setContext(AnalyticsKey, analytics)
   setContext(ControllerKey, ui)
+  setContext(CoreControllerKey, controller)
 
   afterNavigate?.(({ to }) => {
     if (to) controller.setRoute(to.url.pathname + to.url.search, page)
