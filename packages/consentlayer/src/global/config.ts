@@ -78,6 +78,7 @@ export function readConfig(global: GlobalConfig | undefined, script: HTMLOrSVGSc
   const adapters: Record<string, Record<string, unknown>> = {}
   for (const [name, options] of Object.entries(global?.providers ?? {})) providers[name] = { ...options }
   for (const [name, options] of Object.entries(global?.adapters ?? {})) adapters[name] = { ...options }
+  if (script instanceof HTMLScriptElement && script.nonce) config.nonce ??= script.nonce
   const dataset = script instanceof HTMLScriptElement ? script.dataset : {}
   for (const [key, value] of Object.entries(dataset)) {
     if (value === undefined) continue

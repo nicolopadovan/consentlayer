@@ -22,7 +22,7 @@ export default [
   ['angular', 'dist/angular.js', '2.5 kB'],
   ['providers/ga4', 'dist/providers/ga4.js', '2.5 kB'],
   ['providers/meta', 'dist/providers/meta.js', '2.5 kB'],
-  ['providers/tiktok', 'dist/providers/tiktok.js', '2 kB'],
+  ['providers/tiktok', 'dist/providers/tiktok.js', '2.1 kB'],
   ['providers/gtm', 'dist/providers/gtm.js', '2 kB'],
   ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.2 kB'],
   ['providers/posthog', 'dist/providers/posthog.js', '1.2 kB'],

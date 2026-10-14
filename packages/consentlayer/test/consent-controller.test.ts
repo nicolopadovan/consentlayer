@@ -75,10 +75,13 @@ describe('createConsentController', () => {
     analytics.destroy()
   })
 
-  it('forwards one page view per route to every server destination', async () => {
+  it('forwards a page view per route to each server destination once, and again to those a later grant allows', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }))
     const forwarded = () =>
-      fetchMock.mock.calls.map(([, init]) => JSON.parse(init?.body as string) as { name: string; only?: string[] })
+      fetchMock.mock.calls.map(
+        ([, init]) =>
+          JSON.parse(init?.body as string) as { id: string; name: string; only?: string[]; categories?: string[] },
+      )
     const ga4 = spyProvider('ga4')
     const meta = spyProvider('meta', 'marketing')
     const analytics = createAnalytics({ providers: [ga4, meta], server: { endpoint: '/api/analytics' } })
@@ -90,12 +93,23 @@ describe('createConsentController', () => {
     await analytics.consent.update({ marketing: true })
     await settle()
     expect(meta.page).toHaveBeenCalledTimes(1)
-    expect(forwarded()).toEqual([expect.objectContaining({ name: 'page_view' })])
+    expect(forwarded()).toEqual([
+      expect.objectContaining({ name: 'page_view' }),
+      expect.objectContaining({ name: 'page_view', categories: ['marketing'] }),
+    ])
     expect(forwarded()[0]).not.toHaveProperty('only')
+    expect(forwarded()[0]).not.toHaveProperty('categories')
+    expect(forwarded()[0]?.id).not.toBe(forwarded()[1]?.id)
+
+    await analytics.consent.update({ marketing: false })
+    await analytics.consent.update({ marketing: true })
+    await settle()
+    expect(forwarded()).toHaveLength(2)
 
     controller.setRoute('/b')
     await settle()
-    expect(forwarded()).toHaveLength(2)
+    expect(forwarded()).toHaveLength(3)
+    expect(forwarded()[2]).not.toHaveProperty('categories')
     stop()
     analytics.destroy()
 
@@ -105,7 +119,7 @@ describe('createConsentController', () => {
     const stopServerOnly = serverOnlyController.start()
     serverOnlyController.setRoute('/')
     await settle()
-    expect(forwarded()).toHaveLength(3)
+    expect(forwarded()).toHaveLength(4)
     stopServerOnly()
     serverOnly.destroy()
     fetchMock.mockRestore()

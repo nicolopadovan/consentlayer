@@ -68,15 +68,20 @@ For `track('add_to_cart', params, options)`:
 ```
 
 For `page()`, the body has `id`, `name: "page_view"`, `url`, `only` (if
-passed and `server` is not `true`), `consent` and `identity`, and no `params`
-or `providers`. Automatic page views are forwarded once per route without
-`only`.
+passed and `server` is not `true`), `categories` (if `server` is an array),
+`consent` and `identity`, and no `params` or `providers`. Automatic page views
+are forwarded once per route without `only`. When the visitor grants analytics
+or marketing later on the same route, the page view is forwarded again with
+`categories` set to the newly granted ones, so only the destinations that
+require them receive it, under the same `id` as the browser providers that
+the grant activates.
 
 | Field               | Source                                                                                                                         |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `id`                | The event ID shared with browser providers: `options.eventId`, or a new `crypto.randomUUID()`                                  |
 | `url`               | `location.href` at send time; for `page`, the page's `url`                                                                     |
 | `only`, `providers` | The call's options; omitted when not set                                                                                       |
+| `categories`        | `page()`'s `server` option when it is an array; omitted otherwise                                                              |
 | `consent`           | The current consent, including custom categories and `sale_of_data` when set                                                   |
 | `identity`          | `{}`, `{ userId }`, or, with marketing consent, also `email` and `phone` (see [Consent](/internals/consent/#identity-storage)) |
 

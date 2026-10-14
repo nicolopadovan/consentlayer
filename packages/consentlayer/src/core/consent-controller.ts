@@ -90,16 +90,19 @@ export function createConsentController(
   let routeKey: string | null = null
   let sessionRouteKey: string | null | undefined
   let page: PageViewPayload | undefined
-  let paged = { routeKey: null as string | null, providers: new Set<string>(), forwarded: false }
+  let paged = { routeKey: null as string | null, providers: new Set<string>(), forwarded: new Set<ConsentCategory>() }
   const sendPageViews = () => {
     const snapshot = analytics.getSnapshot()
     if (!snapshot.booted || routeKey === null) return
-    if (paged.routeKey !== routeKey) paged = { routeKey, providers: new Set(), forwarded: false }
+    if (paged.routeKey !== routeKey) paged = { routeKey, providers: new Set(), forwarded: new Set() }
     const fresh = snapshot.activeProviders.filter((id) => !paged.providers.has(id))
-    const server = !paged.forwarded && Boolean(snapshot.consent?.analytics || snapshot.consent?.marketing)
-    if (!fresh.length && !server) return
+    const granted = (['analytics', 'marketing'] as const).filter(
+      (category) => snapshot.consent?.[category] && !paged.forwarded.has(category),
+    )
+    if (!fresh.length && !granted.length) return
     fresh.forEach((id) => paged.providers.add(id))
-    if (server) paged.forwarded = true
+    const server = granted.length > 0 && (paged.forwarded.size ? granted : true)
+    granted.forEach((category) => paged.forwarded.add(category))
     void analytics.page(page, { only: fresh, server })
   }
 

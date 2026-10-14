@@ -323,8 +323,11 @@ you use:
 | PostHog                  | `https://*.posthog.com`, or your reverse proxy                                  |
 | Sentry                   | `https://browser.sentry-cdn.com`                                                |
 
-The banner injects a `<style>` element. With a nonce-based `style-src`, put
-the nonce on the banner's script tag: the banner copies it to the style.
+With a nonce-based `script-src`, put the nonce on the ConsentLayer script
+tag. ConsentLayer copies it to every script it injects, as the
+[`nonce` option](/start/installation/#content-security-policy) does. The
+banner injects a `<style>` element: with a nonce-based `style-src`, put the
+nonce on the banner's script tag, and the banner copies it to the style.
 [Installation](/start/installation/#content-security-policy) covers the
 vendors' `connect-src` and `img-src` hosts.
 

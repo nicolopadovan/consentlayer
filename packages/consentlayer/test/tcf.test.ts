@@ -46,6 +46,10 @@ describe('tcf', () => {
     const cmp = fakeCmp(loaded([1, 8]), true)
     const adapter = tcf({ window: cmp.window })
     await expect(adapter.bootstrap?.()).resolves.toEqual({ preferences: true, analytics: true, marketing: false })
+    await expect(tcf({ window: fakeCmp(loaded([1], 'cmpuishown')).window }).bootstrap?.()).resolves.toEqual({
+      consent: { preferences: true, analytics: false, marketing: false },
+      provisional: true,
+    })
     expect(cmp.tcfapi).toHaveBeenCalledWith('removeEventListener', 2, expect.any(Function), 1)
     expect(cmp.listeners.size).toBe(0)
 
@@ -90,7 +94,8 @@ describe('tcf', () => {
     expect(onConsent).not.toHaveBeenCalled()
   })
 
-  it('reads an unanswered CMP as denied, hides the banner and takes the choice through subscribe', async () => {
+  it('reads an unanswered CMP as denied without storing it, hides the banner and takes the choice through subscribe', async () => {
+    localStorage.clear()
     const cmp = fakeCmp(loaded([], 'cmpuishown'))
     const analytics = createAnalytics({ consent: { adapters: [tcf({ window: cmp.window })] } })
     const controller = createConsentController(analytics, { boot: { mode: 'manual' } })
@@ -98,11 +103,13 @@ describe('tcf', () => {
     await vi.waitFor(() => expect(controller.getSnapshot().ready).toBe(true))
     expect(controller.getSnapshot().bannerVisible).toBe(false)
     expect(analytics.consent.getConsent()).toEqual({ preferences: false, analytics: false, marketing: false })
+    expect(localStorage.length).toBe(0)
 
     cmp.update(loaded([1, 8], 'useractioncomplete'))
     await vi.waitFor(() =>
       expect(analytics.consent.getConsent()).toEqual({ preferences: true, analytics: true, marketing: false }),
     )
+    expect(localStorage.length).toBe(1)
     expect(cmp.listeners.size).toBe(1)
     stop()
     analytics.destroy()

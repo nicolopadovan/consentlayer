@@ -132,9 +132,12 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     stale = stored !== null && isStaleRecord(record!)
     if (stale) debugLog('consent', undefined, 'stored consent is stale', record)
     const seen = changes
+    let provisional = false
     const ask = async (adapter: ConsentIntegrationAdapter) => {
       try {
-        return normalize(await adapter.bootstrap?.())
+        const answer = await adapter.bootstrap?.()
+        provisional = answer != null && 'consent' in answer && typeof answer.consent === 'object'
+        return normalize(provisional ? (answer as { consent: ConsentState }).consent : (answer as ConsentState | null))
       } catch (cause) {
         options.onError?.({
           scope: 'consent-adapter',
@@ -155,7 +158,11 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       const next = adapter ? await ask(adapter) : stored && (!stale || options.onStale === 'keep') ? stored : null
       if (changes !== seen) return current
       if (!next) continue
-      await commit(next, 'bootstrap', { persist: adapter !== undefined, applyAdapters: false, excludeAdapter: adapter })
+      await commit(next, 'bootstrap', {
+        persist: adapter !== undefined && !provisional,
+        applyAdapters: false,
+        excludeAdapter: adapter,
+      })
       return current
     }
 

@@ -88,16 +88,17 @@ returned `null` and no choice is stored.
 
 On a first visit the CMP reports `eventStatus: 'cmpuishown'` before the
 visitor has chosen. Its TC data then has no purpose consents, so the adapter
-returns every category denied. From ConsentLayer's side that is a choice:
-`ready` becomes `true`, `bannerVisible` stays `false`, providers that need no
+returns every category denied, marked as provisional. ConsentLayer applies it
+but does not store it: `ready` becomes `true`, `bannerVisible` stays `false`, providers that need no
 consent boot, and the others wait. When the visitor confirms in the CMP, it
 reports `eventStatus: 'useractioncomplete'`, and the adapter's subscription
-applies the new consent.
+applies and stores the new consent.
 
-The denied state is stored like any other adapter choice. The adapter is
-authoritative, so on the next visit ConsentLayer asks the CMP before it reads
-the stored choice, nothing that needs consent boots until the CMP answers, and
-the CMP's answer replaces the stored choice.
+A visitor who leaves without choosing has nothing stored, so the next visit
+starts the same way. The adapter is authoritative, so on every visit
+ConsentLayer asks the CMP before it reads the stored choice, nothing that
+needs consent boots until the CMP answers, and the CMP's answer replaces the
+stored choice.
 
 </details>
 
@@ -130,13 +131,6 @@ to its own banner when nothing is stored.
   falls back to the stored choice or shows its banner, and the CMP may then
   show its own on top. The subscription still applies the CMP's choice once
   it answers. Raise `timeout` if your CMP loads slowly.
-- **The denied state from a first visit is stored.** A visitor who leaves
-  while the CMP shows its interface has every category denied in
-  ConsentLayer's storage. If you later remove the adapter, ConsentLayer reads
-  that stored choice and does not show its banner to those visitors until
-  the choice becomes stale. Change
-  [`policyVersion`](/guides/consent-ui/#asking-again) when you remove the
-  adapter, so every visitor is asked again.
 - **Tested against the specification, not against named CMPs.** The adapter
   is tested with a simulated `__tcfapi` that follows the IAB CMP API v2, not
   with Usercentrics, OneTrust, Didomi or another CMP.

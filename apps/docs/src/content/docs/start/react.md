@@ -240,6 +240,12 @@ import { ErrorBoundary } from 'consentlayer/react'
 | `tags`      | `Record<string, string>`                         | Attached to the reported error.                                                                                        |
 | `analytics` | `Analytics`                                      | The instance to report to. Defaults to the one from `<AnalyticsProvider>`, then to the most recently created instance. |
 
+In a React 18 development build, an error thrown while rendering is reported
+up to three times: React replays the failed render and rethrows a new error
+object through the window, which the global handlers report with `source:
+'global'`, before the boundary reports it with `source: 'boundary'`. React 18
+production builds and React 19 report it once, from the boundary.
+
 `captureError` delivers errors to the providers that implement error
 reporting, Sentry and PostHog, while their consent requirement is met. Add
 `sentry({ dsn })` from `consentlayer/providers/sentry` to your providers to

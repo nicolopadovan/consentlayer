@@ -74,7 +74,9 @@ export function tcf(options: TcfOptions = {}): ConsentIntegrationAdapter {
         }, timeout)
         const stop = listen(api, (tcData) => {
           clearTimeout(timer)
-          resolve(tcData?.gdprApplies === true ? toConsent(tcData) : null)
+          if (tcData?.gdprApplies !== true) resolve(null)
+          else if (tcData.eventStatus === 'cmpuishown') resolve({ consent: toConsent(tcData), provisional: true })
+          else resolve(toConsent(tcData))
           return true
         })
       })
@@ -83,7 +85,7 @@ export function tcf(options: TcfOptions = {}): ConsentIntegrationAdapter {
       const api = win?.__tcfapi
       if (!api) return
       return listen(api, (tcData) => {
-        if (tcData?.gdprApplies === true) onConsent(toConsent(tcData))
+        if (tcData?.gdprApplies === true && tcData.eventStatus !== 'cmpuishown') onConsent(toConsent(tcData))
       })
     },
   }

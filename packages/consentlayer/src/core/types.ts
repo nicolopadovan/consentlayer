@@ -62,12 +62,15 @@ export interface IdentityStorageAdapter {
   clear?(): void
 }
 
+export type ConsentBootstrapAnswer = ConsentState | { consent: ConsentState; provisional: true } | null
+
 /** Syncs consent with an outside consent platform: reads its choice at boot, pushes changes to it, and listens for its updates. */
 export interface ConsentIntegrationAdapter {
   id: string
   /** Its bootstrap answer replaces the stored choice, which is used only when it answers `null` or fails. */
   authoritative?: boolean
-  bootstrap?(): Promise<ConsentState | null> | ConsentState | null
+  /** Answers `{ consent, provisional: true }` for a state the visitor has not chosen yet: it applies but is not stored. */
+  bootstrap?(): Promise<ConsentBootstrapAnswer> | ConsentBootstrapAnswer
   apply?(consent: ConsentState): Promise<void> | void
   subscribe?(onConsent: (consent: ConsentState) => void): (() => void) | void
   /** Runs when the engine is created and after every consent change, whatever its source. */
@@ -295,6 +298,8 @@ export type AnalyticsManagerOptions = {
    * `false` turns both off; `{ globalHandlers: false }` keeps only `captureError`.
    */
   errors?: boolean | { globalHandlers?: boolean }
+  /** Set on every `<script>` ConsentLayer injects, for a Content Security Policy that allows scripts by nonce. */
+  nonce?: string
   /** HTTPS URLs or paths starting with "/". */
   server?: {
     /** Also send each event to this route (see `createAnalyticsHandler`). */
@@ -317,6 +322,8 @@ export type ServerEvent = {
   /** GA4 client ID; read from the `_ga` cookie when omitted. */
   clientId?: string
   only?: string[]
+  /** Send only to destinations whose `requiredConsent` is one of these. */
+  categories?: (keyof ConsentState)[]
   providers?: Record<string, Record<string, unknown>>
 }
 
@@ -393,8 +400,14 @@ export interface AnalyticsManager {
   registerProvider: (provider: AnalyticsPlugin) => () => void
   updateConsent: (consent: ConsentState | null) => Promise<void>
   getConsent: () => ConsentState | null
-  /** `only` limits which providers and server destinations receive it; `server: true` ignores it for the server, `false` skips the server. */
-  page: (payload?: PageViewPayload, options?: { only?: string[]; server?: boolean }) => Promise<void>
+  /**
+   * `only` limits which providers and server destinations receive it; `server: true` ignores it for the server, `false` skips the server.
+   * An array of categories ignores `only` for the server and sends to the destinations that require one of them.
+   */
+  page: (
+    payload?: PageViewPayload,
+    options?: { only?: string[]; server?: boolean | (keyof ConsentState)[] },
+  ) => Promise<void>
   track: <Name extends string>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>
   identify: (userId?: string, traits?: UserTraits) => Promise<void>
   reset: () => Promise<void>
