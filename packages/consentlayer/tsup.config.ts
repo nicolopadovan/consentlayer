@@ -41,6 +41,7 @@ export default defineConfig([
       testing: 'src/testing.ts',
       next: 'src/next.tsx',
       vue: 'src/vue.ts',
+      'vue/banner': 'src/vue/banner.ts',
       svelte: 'src/svelte.ts',
       sveltekit: 'src/sveltekit.ts',
       solid: 'src/solid.ts',
