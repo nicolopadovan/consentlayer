@@ -1,0 +1,59 @@
+---
+import { ClientRouter } from 'astro:transitions'
+
+const { title } = Astro.props
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <ClientRouter />
+  </head>
+  <body>
+    <main>
+      <nav><a href="/">Home</a> <a href="/shop?page=2">Shop</a></nav>
+      <slot />
+    </main>
+    <div transition:persist="consent">
+      <section id="consent-banner" hidden>
+        <p>We use cookies to run this site and, with your consent, for analytics.</p>
+        <button type="button" data-action="rejectNonEssential">Reject non-essential</button>
+        <button type="button" data-action="openDialog">Customize</button>
+        <button type="button" data-action="acceptAll">Accept all</button>
+      </section>
+      <dialog id="consent-dialog">
+        <form method="dialog">
+          <div id="consent-categories"></div>
+          <button type="button" data-action="closeDialog">Close</button>
+          <button type="button" data-action="savePreferences">Save</button>
+        </form>
+      </dialog>
+      <button type="button" id="cookie-settings" data-action="openDialog" hidden>Cookie settings</button>
+    </div>
+    <script>
+      import '../consent-banner'
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  #consent-banner {
+    position: fixed;
+    inset: auto 1rem 1rem;
+    max-width: 40rem;
+    margin-inline: auto;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.12);
+    font:
+      0.95rem/1.45 system-ui,
+      sans-serif;
+  }
+  #consent-categories label {
+    display: block;
+  }
+</style>

@@ -12,7 +12,8 @@ By contributing, you agree that your contributions are licensed under the
 - [`packages/consentlayer`](./packages/consentlayer): the npm package.
 - [`apps/docs`](./apps/docs): the documentation site, built with Astro Starlight.
 - `apps/example-*`: one example application per framework: Next.js, Nuxt,
-  SvelteKit, SolidStart, Angular, and plain HTML with the script tag.
+  SvelteKit, SolidStart, TanStack Start, Astro, Angular, and plain HTML with the
+  script tag.
 
 ## Setup
 

@@ -210,7 +210,7 @@
     "@sentry/browser": "^11.0.0",
     "@sentry/nextjs": "^11.0.0",
     "@solidjs/router": ">=0.16.0 <2.0.0",
-    "@tanstack/react-router": "^1.0.0",
+    "@tanstack/react-router": "^1.29.0",
     "next": "^15.0.0 || ^16.0.0",
     "nuxt": "^4.0.0",
     "posthog-js": "^1.438.0",
