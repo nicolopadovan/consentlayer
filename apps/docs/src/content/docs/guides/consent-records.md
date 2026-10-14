@@ -45,7 +45,7 @@ has a fixed lifetime:
 | Data                                     | Where                                        | Kept for                                                                                                                                                     |
 | ---------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Consent records                          | Your database, through the [store](#stores)  | Until you delete them. See [Retention and deletion](#retention-and-deletion).                                                                                |
-| The consent cookie, `consentlayer_proof` | The visitor's browser                        | 400 days from the last recorded choice (`Max-Age=34560000`), the longest lifetime browsers allow, or until the visitor clears cookies.                       |
+| The consent cookie, `__Host-consentlayer_proof` | The visitor's browser                        | 400 days from the last recorded choice (`Max-Age=34560000`), the longest lifetime browsers allow, or until the visitor clears cookies.                       |
 | The `consentId`                          | Inside the consent cookie                    | As long as the cookie. Each recorded choice reuses the ID from a valid cookie; without one, a new ID is generated.                                           |
 | The visitor's choice                     | `localStorage`, under `consentlayer_consent` | Until the visitor changes it or clears site data, unless you set [`consent.maxAgeDays`](/guides/consent-ui/#asking-again), after which they are asked again. |
 
@@ -115,7 +115,7 @@ response is reported to `onError` with scope `consent-adapter` and provider ID
 | `policyVersion` | `string`                                                                    | Required               | Written to every record and to the cookie. Pass the same value to `createAnalytics({ consent: { policyVersion } })`; a new major version asks visitors again. See [Asking again](/guides/consent-ui/#asking-again). |
 | `categories`    | `string[]`                                                                  | `[]`                   | Your custom categories, as passed to `createAnalytics({ categories })`. Categories not listed are dropped from the record.                                                                                          |
 | `userId`        | `(request: Request) => string \| undefined \| Promise<string \| undefined>` | None                   | Returns the signed-in user from your session. The request body is never used for it.                                                                                                                                |
-| `cookie`        | `string`                                                                    | `'consentlayer_proof'` | The cookie name.                                                                                                                                                                                                    |
+| `cookie`        | `string`                                                                    | `'__Host-consentlayer_proof'` | The cookie name. The default is `'consentlayer_proof'` on `localhost`, `127.0.0.1` and `[::1]`.                                                                                                                                                                                                    |
 | `onError`       | `(error: unknown) => void`                                                  | None                   | Receives unexpected errors, such as a store failure.                                                                                                                                                                |
 
 </details>
@@ -145,20 +145,22 @@ to `onError`, the response is 500 and no cookie is set.
 ### The consent cookie
 
 ```http
-Set-Cookie: consentlayer_proof=<payload>.<signature>; Path=/; Max-Age=34560000; HttpOnly; SameSite=Lax; Secure
+Set-Cookie: __Host-consentlayer_proof=<payload>.<signature>; Path=/; Max-Age=34560000; HttpOnly; SameSite=Lax; Secure
 ```
 
 `Secure` is left out when the request's host is `localhost`, `127.0.0.1` or
 `[::1]`, because Safari does not store `Secure` cookies on
-`http://localhost`.
+`http://localhost`. Browsers accept a `__Host-` cookie only with `Secure`, so
+there the default name is `consentlayer_proof`.
 
 `Max-Age` is 400 days, the longest lifetime browsers allow. The payload is the
 base64url-encoded JSON of `{ consentId, consent, policyVersion }`; the
 signature is the base64url-encoded HMAC-SHA-256 of the encoded payload, keyed
 with the secret. Both use the URL-safe alphabet without padding.
 
-With `consentCookie` set, the tracking route ignores the `consent` in the
-request body. A missing cookie, a malformed value or a signature that does not
+With `consentCookie` set, the cookie can only narrow the `consent` in the
+request body: a category counts as granted only when both the cookie and the
+body grant it. A missing cookie, a malformed value or a signature that does not
 verify counts as every category denied. In your own server code, read the
 verified contents with `readConsentCookie(request, { secret })`, which
 resolves to `{ consentId, consent, policyVersion }` or `null`.

@@ -88,7 +88,7 @@ function parseServerEvent(body: unknown): ServerEvent {
  */
 export function createAnalyticsHandler(options: {
   destinations: (ServerDestination<true> | undefined)[]
-  /** Take consent from the cookie `createConsentHandler` signs, ignoring the body's; no valid cookie means denied. */
+  /** Grant only categories both the cookie `createConsentHandler` signs and the body grant; no valid cookie means denied. */
   consentCookie?: ConsentCookieOptions
   onError?: (error: unknown) => void
 }): (request: Request) => Promise<Response> {
@@ -105,7 +105,10 @@ export function createAnalyticsHandler(options: {
       const event = parseServerEvent(await parseJsonWithLimit(request, ANALYTICS_MAX_BODY))
       const proof = options.consentCookie && (await readConsentCookie(request, options.consentCookie))
       if (options.consentCookie) {
-        event.consent = proof?.consent ?? { preferences: false, analytics: false, marketing: false }
+        const recorded = proof?.consent ?? { preferences: false, analytics: false, marketing: false }
+        event.consent = Object.fromEntries(
+          Object.entries(recorded).map(([key, value]) => [key, value === true && event.consent[key] === true]),
+        ) as ConsentState
       }
       const results = await sendServerEvent(event, {
         destinations,

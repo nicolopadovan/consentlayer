@@ -29,13 +29,15 @@ export type ConsentProof = {
 export type ConsentCookieOptions = {
   /** At least 32 characters, e.g. `process.env.CONSENT_SECRET`. */
   secret: string | undefined
-  /** Default `consentlayer_proof`. */
+  /** Default `__Host-consentlayer_proof`, or `consentlayer_proof` on `localhost`, `127.0.0.1` and `[::1]`. */
   cookie?: string
 }
 
-const DEFAULT_COOKIE = 'consentlayer_proof'
-// Safari drops Secure cookies on http://localhost.
+// Safari drops Secure cookies on http://localhost, and __Host- requires Secure.
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
+const isLocal = (request: Request) => LOCAL_HOSTS.has(new URL(request.url).hostname)
+const cookieName = (request: Request, options: ConsentCookieOptions) =>
+  options.cookie ?? (isLocal(request) ? 'consentlayer_proof' : '__Host-consentlayer_proof')
 // ponytail: browsers cap cookie lifetimes at 400 days
 const MAX_AGE = 400 * 24 * 60 * 60
 
@@ -69,7 +71,7 @@ async function sign(proof: ConsentProof, secret: string): Promise<string> {
 
 /** The verified proof from the request's consent cookie, or `null` if it is missing or tampered with. */
 export async function readConsentCookie(request: Request, options: ConsentCookieOptions): Promise<ConsentProof | null> {
-  const value = parseCookieHeader(request.headers.get('cookie') ?? '')[options.cookie ?? DEFAULT_COOKIE]
+  const value = parseCookieHeader(request.headers.get('cookie') ?? '')[cookieName(request, options)]
   const [payload, signature] = value?.split('.') ?? []
   if (!payload || !signature) return null
   try {
@@ -129,7 +131,7 @@ export function createConsentHandler(
       return new Response(null, {
         status: 204,
         headers: {
-          'set-cookie': `${options.cookie ?? DEFAULT_COOKIE}=${cookie}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${LOCAL_HOSTS.has(new URL(request.url).hostname) ? '' : '; Secure'}`,
+          'set-cookie': `${cookieName(request, options)}=${cookie}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; SameSite=Lax${isLocal(request) ? '' : '; Secure'}`,
         },
       })
     } catch (error) {

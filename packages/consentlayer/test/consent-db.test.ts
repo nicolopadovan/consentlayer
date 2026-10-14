@@ -43,7 +43,7 @@ describe('consent handler', () => {
     const first = await handler(post('/api/consent', { consent: granted }))
     expect(first.status).toBe(204)
     expect(first.headers.get('set-cookie')).toMatch(
-      /^consentlayer_proof=.+; Path=\/; Max-Age=\d+; HttpOnly; SameSite=Lax; Secure$/,
+      /^__Host-consentlayer_proof=.+; Path=\/; Max-Age=\d+; HttpOnly; SameSite=Lax; Secure$/,
     )
 
     const second = await handler(
@@ -91,14 +91,14 @@ describe('consent handler', () => {
     warn.mockRestore()
   })
 
-  it('drops Secure from the cookie on localhost only', async () => {
+  it('drops Secure and the __Host- prefix from the cookie on localhost only', async () => {
     const consent = createConsentHandler({ secret, policyVersion: '1', store: { append: vi.fn() } })
     const local = new Request('http://localhost:3000/api/consent', {
       method: 'POST',
       body: JSON.stringify({ consent: granted }),
       headers: { 'content-type': 'application/json', origin: 'http://localhost:3000' },
     })
-    expect((await consent(local)).headers.get('set-cookie')).toMatch(/SameSite=Lax$/)
+    expect((await consent(local)).headers.get('set-cookie')).toMatch(/^consentlayer_proof=.+; SameSite=Lax$/)
   })
 
   it('exports requestInfo for sendServerEvent', () => {
@@ -120,7 +120,7 @@ describe('consent handler', () => {
     expect(records).toEqual([])
   })
 
-  it('makes the tracking route trust the cookie, not the body, and reject a tampered cookie', async () => {
+  it('lets the cookie only narrow the body consent and rejects a tampered cookie', async () => {
     const { handler } = setup()
     const cookie = cookieOf(await handler(post('/api/consent', { consent: { ...denied, marketing: true } })))
     const send = vi.fn(() => Promise.resolve())
@@ -128,8 +128,11 @@ describe('consent handler', () => {
     const analytics = createAnalyticsHandler({ destinations: [meta], consentCookie: { secret } })
     const event = (consent: object) => ({ name: 'purchase', consent })
 
-    const valid = await analytics(post('/api/analytics', event(denied), cookie))
+    await analytics(post('/api/analytics', event(denied), cookie))
+    expect(send).not.toHaveBeenCalled()
+    const valid = await analytics(post('/api/analytics', event(granted), cookie))
     expect(send).toHaveBeenCalledTimes(1)
+    expect(send).toHaveBeenCalledWith(expect.objectContaining({ consent: { ...denied, marketing: true } }), expect.anything())
     expect(valid.headers.get('consentlayer-consent')).toBeNull()
 
     const [name, value] = cookie.split('=') as [string, string]

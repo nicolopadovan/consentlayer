@@ -21,8 +21,8 @@ deduplicate, and its Measurement Protocol is meant to supplement gtag rather
 than mirror it, so `ga4Server` receives only server-only events. `sgtm`
 accepts browser events too; see [Server-side GTM](#server-side-gtm).
 
-To make the route trust only consent you recorded, instead of the consent the
-browser reports, see [Consent records](/guides/consent-records/).
+To make the route trust only consent you recorded, so that the consent the
+browser reports can only be narrowed, see [Consent records](/guides/consent-records/).
 
 ## Forward browser events
 
@@ -90,9 +90,9 @@ each request it:
    body over 16 KB (16,384 bytes) gets 413, and an empty body or invalid JSON
    gets 400.
 3. Validates the event and answers 400 if it is invalid.
-4. With `consentCookie` set, replaces the body's `consent` with the consent in
-   the signed cookie, or with everything denied if the cookie is missing or
-   its signature does not verify.
+4. With `consentCookie` set, keeps only the categories that both the body's
+   `consent` and the signed cookie grant, or denies everything if the cookie
+   is missing or its signature does not verify.
 5. Selects the destinations whose `requiredConsent` category is `true` in the
    event's consent and, when the event has `only`, whose `id` is listed in it.
 6. Reads the client IP address, the user agent and the cookies (including
@@ -119,7 +119,7 @@ or later.
 | Option          | Type                                               | Description                                                                                                                                                                                                                                                                                               |
 | --------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `destinations`  | `(ServerDestination<true> \| undefined)[]`         | Destinations that accept browser events. Passing `ga4Server(…)` is a type error, any destination with `forwardBrowserEvents: false` is skipped at runtime, and `undefined` entries are ignored.                                                                                                           |
-| `consentCookie` | `{ secret: string \| undefined; cookie?: string }` | Takes consent from the signed cookie set by `createConsentHandler`. With `secret` unset, every event is treated as denied and the handler logs a `console.warn` once when created; a secret shorter than 32 characters makes every request answer `500`. See [Consent records](/guides/consent-records/). |
+| `consentCookie` | `{ secret: string \| undefined; cookie?: string }` | Grants only the categories that both the body and the signed cookie set by `createConsentHandler` grant. With `secret` unset, every event is treated as denied and the handler logs a `console.warn` once when created; a secret shorter than 32 characters makes every request answer `500`. See [Consent records](/guides/consent-records/). |
 | `onError`       | `(error: unknown) => void`                         | Receives destination failures and unexpected errors.                                                                                                                                                                                                                                                      |
 
 An event is valid when:

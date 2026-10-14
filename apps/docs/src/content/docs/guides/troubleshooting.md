@@ -278,11 +278,11 @@ ga4Server needs event.clientId or the _ga cookie
 ```
 
 **Meta receives nothing despite a 204.** `metaCapi()` sends only events whose
-consent includes marketing. With `consentCookie`, the route ignores the
-consent in the body and reads the signed cookie instead; when the cookie is
-missing or invalid, every category counts as denied and the route still
-answers 204. Check that the consent records endpoint has set the
-`consentlayer_proof` cookie on the same site.
+consent includes marketing. With `consentCookie`, marketing must be granted
+in both the body and the signed cookie; when the cookie is missing or invalid,
+every category counts as denied and the route still answers 204. Check that
+the consent records endpoint has set the `__Host-consentlayer_proof` cookie
+(`consentlayer_proof` on `localhost`) on the same site.
 
 **Events arrive but aren't attributed.** Use Meta's **Test events** tool with
 `metaCapi({ testEventCode })` to see what Meta receives. Pixel and server
