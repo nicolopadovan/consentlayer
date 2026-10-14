@@ -136,23 +136,44 @@ With `"moduleResolution": "node"` (also called `node10`), imports such as
 
 ## Content Security Policy
 
-If your site sends a Content Security Policy, allow the origins of the scripts
-that ConsentLayer injects for the providers you use:
+If your site sends a Content Security Policy, allow the scripts ConsentLayer
+injects for the providers you use, and the hosts each vendor's script then
+sends data to. ConsentLayer itself adds no inline scripts.
 
-| Provider | `script-src` |
-|---|---|
-| GA4 | `https://www.googletagmanager.com` |
-| Meta Pixel | `https://connect.facebook.net` |
-| TikTok Pixel | `https://analytics.tiktok.com` |
-| Contentsquare | `https://t.contentsquare.net` |
-| Hotjar | `https://static.hotjar.com` |
-| Shopify Customer Privacy | `https://cdn.shopify.com` |
+| Provider | `script-src` | Data hosts |
+|---|---|---|
+| GA4 | `https://www.googletagmanager.com` | [Google's CSP guide](https://developers.google.com/tag-platform/security/guides/csp) |
+| Google Tag Manager | `https://www.googletagmanager.com`, plus the hosts of each tag in the container | [Google's CSP guide](https://developers.google.com/tag-platform/security/guides/csp) |
+| Meta Pixel | `https://connect.facebook.net` | `https://www.facebook.com` in `connect-src` and `img-src` |
+| TikTok Pixel | `https://analytics.tiktok.com` | Not documented by TikTok |
+| Contentsquare | `https://*.contentsquare.net` | [Contentsquare's CSP guide](https://docs.contentsquare.com/en/web/content-security-policy/) |
+| Hotjar | `https://*.hotjar.com` | [Hotjar's CSP guide](https://help.hotjar.com/hc/en-us/articles/36820026388881-Content-Security-Policies) |
+| Shopify Customer Privacy | `https://cdn.shopify.com` | Your checkout domain in `connect-src` |
+| PostHog | Bundled from npm; session recording loads from `https://*.posthog.com` | `https://*.posthog.com` in `connect-src`; see [PostHog's CSP guide](https://posthog.com/docs/advanced/content-security-policy) |
+| Sentry | Bundled from npm | The ingest host of your DSN in `connect-src`; Session Replay also needs `worker-src 'self' blob:` |
+| Vercel Analytics | `'self'` | `'self'` |
 
-Once loaded, each vendor's script sends data to its own endpoints. Add those to
-`connect-src` and `img-src` as described in the vendor's CSP documentation.
-PostHog, Sentry and Vercel Analytics are bundled from npm and need only their
-ingestion hosts in `connect-src`, or none if you route them through
-[a reverse proxy](/guides/providers/#reverse-proxies).
+Google's guide lists more hosts when Google Signals or Ads features are on, and
+the Google Tag Manager container runs whatever its tags inject. Tags such as
+Custom HTML need `'unsafe-inline'`, since `gtm()` doesn't add a nonce to
+`gtm.js`. Meta and TikTok publish no CSP documentation: start from the hosts
+above and add those your browser console reports as blocked.
+
+### Your own domain
+
+Where a vendor supports it, sending data through your own domain shortens
+the policy, and keeps working when browsers or extensions block the vendor's
+hosts:
+
+| Provider | Option | Policy |
+|---|---|---|
+| GA4, Google Tag Manager | `serverContainerUrl`, with a [server-side GTM](/guides/providers/gtm/#server-side-tagging) container on your domain | Your container's origin in `connect-src` and `img-src`, and in `script-src` when it serves the scripts |
+| PostHog | `apiHost`, pointing to a [reverse proxy](/guides/providers/posthog/#reverse-proxy) | `'self'` or your proxy's origin |
+| Sentry | `tunnel`, a [route on your server](/guides/providers/sentry/#reverse-proxy) | `'self'` in `connect-src` |
+
+A first-party endpoint is something you run and maintain. ConsentLayer
+doesn't require it, and it doesn't change what consent is needed: data sent
+through your domain still goes to the vendor.
 
 ## Next steps
 
