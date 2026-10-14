@@ -3,10 +3,9 @@ title: Consent adapters
 description: "Adapters connect ConsentLayer to other consent systems: IAB TCF, Shopify Customer Privacy and Google Consent Mode."
 ---
 
-A consent adapter connects ConsentLayer to another system that holds or reads
-consent. Providers sit above ConsentLayer and follow the visitor's choice;
-adapters sit beside it and keep that choice in step with the other system:
-reading it from a CMP, writing it to Shopify, or signalling it to Google tags.
+A consent adapter keeps ConsentLayer's consent in sync with another consent
+system: it reads the visitor's choice from a TCF CMP, syncs it with Shopify, or
+sends it to Google tags as Consent Mode signals.
 
 Adapters are passed to `createAnalytics({ consent: { adapters } })`, not to
 `providers`:
