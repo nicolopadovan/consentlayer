@@ -73,6 +73,23 @@ describe('readConfig', () => {
     })
   })
 
+  it('reads Google Ads, LinkedIn and Clarity, keeping the conversions maps from the object', () => {
+    const tag = script({ googleAds: 'AW-123', linkedinPartner: '456', clarityProject: 'abc123' })
+    const config = readConfig(
+      { providers: { googleAds: { conversions: { purchase: 'label' } }, linkedin: { conversions: { sign_up: 7 } } } },
+      tag,
+    )
+    expect(config.providers).toEqual({
+      googleAds: { conversionId: 'AW-123', conversions: { purchase: 'label' } },
+      linkedin: { partnerId: '456', conversions: { sign_up: 7 } },
+      clarity: { projectId: 'abc123' },
+    })
+    const warn = vi.spyOn(console, 'warn')
+    createGlobal(config).destroy()
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
   it('turns an adapter or an option-less provider off with "false"', () => {
     const tag = script({ vercel: 'false', tcf: 'false', shopify: 'false', googleConsentMode: 'false' })
     const config = readConfig({ providers: { vercel: {} }, adapters: { tcf: {} } }, tag)
