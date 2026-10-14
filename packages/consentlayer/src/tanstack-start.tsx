@@ -11,7 +11,8 @@ export type TanStackStartAnalyticsProviderProps = Omit<AnalyticsProviderProps, '
  */
 export function AnalyticsProvider(props: TanStackStartAnalyticsProviderProps) {
   const routeKey = useRouterState({
-    select: ({ resolvedLocation }) => (resolvedLocation ? resolvedLocation.pathname + resolvedLocation.searchStr : null),
+    select: ({ resolvedLocation }) =>
+      resolvedLocation ? resolvedLocation.pathname + resolvedLocation.searchStr : null,
   })
   return <BaseAnalyticsProvider {...props} routeKey={routeKey} />
 }

@@ -15,7 +15,8 @@ function renderCategories() {
       const input = document.createElement('input')
       input.type = 'checkbox'
       input.checked = prefs[category]
-      input.onchange = () => controller.actions.setPrefs({ ...controller.getSnapshot().prefs, [category]: input.checked })
+      input.onchange = () =>
+        controller.actions.setPrefs({ ...controller.getSnapshot().prefs, [category]: input.checked })
       label.append(input, ` ${category}`)
       return label
     }),
