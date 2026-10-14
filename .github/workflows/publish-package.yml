@@ -38,7 +38,7 @@ jobs:
 
       # The action leaves the release branch checked out, so check only once no changeset is pending.
       - id: check
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.has-changesets == 'false'
         run: |
           version=$(node -p "require('./packages/consentlayer/package.json').version")
           if npm view "consentlayer@$version" version --silent >/dev/null 2>&1; then
