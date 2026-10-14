@@ -86,6 +86,13 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- Global Privacy Control: while `navigator.globalPrivacyControl` is `true`,
+  `acceptAll()` leaves `marketing` denied; an explicit `marketing: true` still
+  wins. `consent.gpc: false` ignores the signal. `analytics.consent.gpc` and
+  the consent controller's `gpc` (in every framework binding) say whether it
+  is honored, and the script-tag banner shows a `gpc` text line.
+  `createAnalyticsHandler` treats a request with `Sec-GPC: 1` as denying
+  marketing, so `metaCapi()` and `tiktokEvents()` drop it.
 - `tiktok({ pixelId })` loads the TikTok pixel after marketing consent, with
   TikTok's consent mode (`holdConsent`, `grantConsent`, `revokeConsent`), and
   sends page views, events with `event_id` and advanced matching through

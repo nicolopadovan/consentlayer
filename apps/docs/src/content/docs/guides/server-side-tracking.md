@@ -90,11 +90,13 @@ each request it:
 4. With `consentCookie` set, replaces the body's `consent` with the consent in
    the signed cookie, or with everything denied if the cookie is missing or
    its signature does not verify.
-5. Selects the destinations whose `requiredConsent` category is `true` in the
+5. With the header `Sec-GPC: 1`, sets the event's `marketing` consent to
+   `false`. See [Global Privacy Control](#global-privacy-control).
+6. Selects the destinations whose `requiredConsent` category is `true` in the
    event's consent and, when the event has `only`, whose `id` is listed in it.
-6. Reads the client IP address, the user agent and the cookies (including
+7. Reads the client IP address, the user agent and the cookies (including
    `_fbp`, `_fbc` and `_ga`) and passes them to each destination.
-7. Sends to the selected destinations in parallel and answers 204 once all
+8. Sends to the selected destinations in parallel and answers 204 once all
    have settled. Each destination failure is passed to `onError`; it does not
    change the response.
 
@@ -132,6 +134,19 @@ An event is valid when:
   `undefined`.
 
 </details>
+
+### Global Privacy Control
+
+A browser that sends the Global Privacy Control signal adds the header
+`Sec-GPC: 1` to its requests. `createAnalyticsHandler` then treats the event's
+`marketing` consent as `false`, whatever the body or the consent cookie says,
+so `metaCapi()` and `tiktokEvents()` receive nothing. Destinations under other
+categories are unaffected. The header is honored even when the visitor
+switched marketing on in the browser, where the
+[browser side](/guides/consent-ui/#global-privacy-control) lets that choice
+win; there is no option to turn it off. `sendServerEvent()` does not read
+request headers, so server-only events, such as those to `ga4Server()`, are
+sent as their `consent` says.
 
 ## Send server-only events
 
