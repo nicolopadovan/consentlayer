@@ -3,6 +3,9 @@ contact_links:
   - name: Security vulnerability
     url: https://github.com/nicolopadovan/consentlayer/security/advisories/new
     about: Report vulnerabilities privately, never in a public issue.
+  - name: Question
+    url: https://github.com/nicolopadovan/consentlayer/discussions/categories/q-a
+    about: Ask how to set something up or why it behaves as it does.
   - name: Documentation
     url: https://consentlayer.nicolopadovan.com
     about: Setup guides, every provider and option, and Troubleshooting.
