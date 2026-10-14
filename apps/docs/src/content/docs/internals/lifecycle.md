@@ -148,9 +148,10 @@ in cookieless mode use `'none'`; GA4, Contentsquare, Hotjar and PostHog with
 With `loadBeforeConsent: true`, `load` runs on the first pass after boot even
 though the provider is not allowed. The provider still is not active: it
 receives no page views, events or identity until `allowed` becomes true, and
-it learns about consent only through its `consent` hook. The GA4 and Meta
-Pixel providers expose this as an option, relying on Google Consent Mode and
-`fbq('consent', 'revoke')` respectively.
+it learns about consent only through its `consent` hook. The GA4, Meta
+Pixel and TikTok Pixel providers expose this as an option, relying on Google
+Consent Mode, `fbq('consent', 'revoke')` and `ttq.holdConsent()`
+respectively.
 
 ## Deferred loading
 

@@ -108,8 +108,9 @@ The provider's script is missing from the Network panel, or tools such as
 Meta Pixel Helper and Google Tag Assistant find nothing.
 
 **The visitor has not granted the required consent.** Providers load only
-after the category they need is granted: analytics for GA4, Hotjar and PostHog;
-marketing for Meta; and the category set by `requiredConsent` for your own
+after the category they need is granted: analytics for GA4, Hotjar, PostHog and Contentsquare;
+marketing for Meta and TikTok; none for GA4 in advanced Consent Mode and
+PostHog in cookieless mode; and the category set by `requiredConsent` for your own
 plugins and for `gtm()`, which defaults to `'none'`, so its container loads as
 soon as the instance boots. Before consent, the script is not requested at all. Accept the banner
 or call `analytics.consent.update({ analytics: true })`, then check again.

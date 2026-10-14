@@ -247,5 +247,5 @@ page view and calls `analytics.newPageSession()` whenever it changes.
 `routeKey` is read reactively, so pass it a signal's value, such as
 `routeKey={location.pathname}`.
 
-The [SolidStart example](https://github.com/nicolopadovan/analytics-consent-manager-npm/tree/main/apps/example-solidstart)
+The [SolidStart example](https://github.com/nicolopadovan/consentlayer/tree/main/apps/example-solidstart)
 in the repository runs the setup on this page.

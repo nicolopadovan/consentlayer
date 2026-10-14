@@ -67,7 +67,7 @@ The first public release.
 
 - `createAnalyticsHandler()` forwards browser events to server destinations;
   `sendServerEvent()` sends server-only events such as webhooks. Both check
-  the event's consent, hash personal data and run on edge runtimes.
+  the event's consent, hash email addresses and phone numbers, and run on edge runtimes.
 - Destinations: `metaCapi()` (Meta Conversions API), `tiktokEvents()` (TikTok
   Events API), `sgtm()` (a server-side Google Tag Manager container) and
   `ga4Server()` (GA4 Measurement Protocol, server-only events).

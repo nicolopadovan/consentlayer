@@ -7,7 +7,7 @@ This guide sets up ConsentLayer in the Next.js App Router: a module-level
 analytics instance, a client component that provides consent state and renders
 your consent banner, page views on every navigation, event tracking, and error
 reporting on the client and the server. The
-[example app](https://github.com/nicolopadovan/analytics-consent-manager-npm/tree/main/apps/example-next)
+[example app](https://github.com/nicolopadovan/consentlayer/tree/main/apps/example-next)
 in the repository is a complete implementation of this guide, built on
 Next.js 16.1 and React 19.1.
 

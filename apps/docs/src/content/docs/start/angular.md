@@ -199,5 +199,5 @@ reporting, Sentry and PostHog, and the window's `error` and
 `unhandledrejection` events are reported after boot unless you set
 `errors: { globalHandlers: false }`.
 
-The [Angular example](https://github.com/nicolopadovan/analytics-consent-manager-npm/tree/main/apps/example-angular)
+The [Angular example](https://github.com/nicolopadovan/consentlayer/tree/main/apps/example-angular)
 in the repository runs this setup, with server-side rendering.

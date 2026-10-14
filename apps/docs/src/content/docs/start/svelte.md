@@ -254,5 +254,5 @@ call the callback once for the first page too.
 </svelte:boundary>
 ```
 
-The [SvelteKit example](https://github.com/nicolopadovan/analytics-consent-manager-npm/tree/main/apps/example-sveltekit)
+The [SvelteKit example](https://github.com/nicolopadovan/consentlayer/tree/main/apps/example-sveltekit)
 in the repository runs the setup on this page.

@@ -22,6 +22,6 @@ jurisdiction it applies to. Have it reviewed by a qualified lawyer before you
 rely on it.
 
 ConsentLayer is provided under the
-[MIT License](https://github.com/nicolopadovan/analytics-consent-manager-npm/blob/main/LICENSE),
+[MIT License](https://github.com/nicolopadovan/consentlayer/blob/main/LICENSE),
 "as is", without warranty of any kind, and its authors are not liable for
 any claim or damages arising from its use.
