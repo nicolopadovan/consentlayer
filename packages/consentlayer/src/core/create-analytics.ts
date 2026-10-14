@@ -87,6 +87,7 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     subscribe: manager.subscribe,
     consent: {
       categories: engine.categories,
+      gpc: engine.gpc,
       bootstrap: engine.bootstrap,
       getConsent: engine.getConsent,
       isStale: engine.isStale,

@@ -17,6 +17,8 @@ export type ConsentControllerState = {
   dialogVisible: boolean
   /** The categories the dialog shows, from `analytics.consent.categories`. */
   categories: readonly ConsentCategory[]
+  /** Whether the browser's Global Privacy Control signal is honored: `acceptAll` then leaves marketing off. */
+  gpc: boolean
   /** The dialog's toggles, one per category in `analytics.consent.categories`. */
   prefs: Prefs
 }
@@ -88,6 +90,7 @@ export function createConsentController(
     bannerVisible: false,
     dialogVisible: false,
     categories: engine.categories,
+    gpc: engine.gpc,
     prefs: all(false),
   }
   const listeners = new Set<() => void>()
@@ -174,7 +177,7 @@ export function createConsentController(
       hideBanner: () => set({ bannerVisible: false }),
       openDialog: () => set({ dialogVisible: true }),
       closeDialog: () => set({ dialogVisible: false }),
-      acceptAll: () => applyAndClose(all(true)),
+      acceptAll: () => applyAndClose(all((category) => !(engine.gpc && category === 'marketing'))),
       rejectNonEssential: () => applyAndClose(all(false)),
       savePreferences: () => applyAndClose(all((category) => state.prefs[category])),
     },

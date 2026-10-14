@@ -157,6 +157,10 @@ export function createConsentEngine(
 
   return {
     categories,
+    gpc:
+      options.gpc !== false &&
+      typeof navigator !== 'undefined' &&
+      (navigator as { globalPrivacyControl?: boolean }).globalPrivacyControl === true,
     bootstrap() {
       bootstrapping ??= runBootstrap()
       return bootstrapping

@@ -137,6 +137,20 @@ describe('banner', () => {
     analytics.destroy()
   })
 
+  it('says when the Global Privacy Control signal is on', async () => {
+    const text = () => document.querySelector('.consentlayer-gpc')?.textContent
+    const first = await setup()
+    expect(text()).toBeUndefined()
+    first.unmount()
+    first.analytics.destroy()
+    Object.defineProperty(navigator, 'globalPrivacyControl', { value: true, configurable: true })
+    const { analytics, unmount } = await setup({ text: { gpc: 'GPC honored' } })
+    expect(text()).toBe('GPC honored')
+    Object.defineProperty(navigator, 'globalPrivacyControl', { value: undefined, configurable: true })
+    unmount()
+    analytics.destroy()
+  })
+
   it('rejects non-essential categories', async () => {
     const { analytics, unmount } = await setup()
     await click('.consentlayer-banner', 'Reject non-essential')
