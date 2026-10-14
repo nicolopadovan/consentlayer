@@ -58,12 +58,16 @@ the storage key and reload the page.
 same promise. `<AnalyticsProvider>` calls it on mount. It tries these sources in order and stops at the first that yields
 a value:
 
-| Step | Source                                                                                                                     | Written to storage  | Broadcast | Adapters applied |
-| ---- | -------------------------------------------------------------------------------------------------------------------------- | ------------------- | --------- | ---------------- |
-| 0    | Each `authoritative` adapter's `bootstrap()`, such as `tcf()`'s, awaited one at a time                                     | yes                 | yes       | none             |
-| 1    | The storage adapter, by default `localStorage["consentlayer_consent"]`, unless the choice there is [stale](#stale-choices) | no (already stored) | yes       | none             |
-| 2    | Each other adapter's `bootstrap()`, in the order given, awaited one at a time                                              | yes                 | yes       | none             |
-| 3    | Nothing found: the engine keeps `initialConsent` (default `null`)                                                          | no                  | no        | none             |
+| Step | Source                                                                                                                     | Written to storage      | Broadcast | Adapters applied |
+| ---- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------- | ---------------- |
+| 0    | Each `authoritative` adapter's `bootstrap()`, such as `tcf()`'s, awaited one at a time                                     | yes, unless provisional | yes       | none             |
+| 1    | The storage adapter, by default `localStorage["consentlayer_consent"]`, unless the choice there is [stale](#stale-choices) | no (already stored)     | yes       | none             |
+| 2    | Each other adapter's `bootstrap()`, in the order given, awaited one at a time                                              | yes, unless provisional | yes       | none             |
+| 3    | Nothing found: the engine keeps `initialConsent` (default `null`)                                                          | no                      | no        | none             |
+
+An adapter answers `{ consent, provisional: true }` for a state the visitor
+has not chosen yet, such as `tcf()` while the CMP shows its interface. The
+engine applies and broadcasts it but does not store it.
 
 Until bootstrap resolves, the engine holds `consent.initialConsent`, and the
 manager starts from the same value. If step 0, 1 or 2 yields a value equal to the

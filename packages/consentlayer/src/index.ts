@@ -33,6 +33,7 @@ export type {
   ConsentBroadcastConfig,
   ConsentChangeSource,
   ConsentApi,
+  ConsentBootstrapAnswer,
   ConsentCategories,
   ConsentCategory,
   ConsentEngineSnapshot,

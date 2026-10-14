@@ -267,7 +267,7 @@ provider's `identify` hook.
 | Member       | Signature                                                                         | Description                                                                                                                                                                                                                                                                                                                        |
 | ------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `categories` | `readonly ConsentCategory[]`                                                      | Every category: `preferences`, `analytics`, `marketing`, then the custom ones.                                                                                                                                                                                                                                                     |
-| `bootstrap`  | `() => Promise<ConsentState \| null>`                                             | Asks every `authoritative` adapter, then reads the stored choice, else asks the other adapters' `bootstrap` in order, and stores the first adapter answer. A choice committed meanwhile wins. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you.                                              |
+| `bootstrap`  | `() => Promise<ConsentState \| null>`                                             | Asks every `authoritative` adapter, then reads the stored choice, else asks the other adapters' `bootstrap` in order, and stores the first adapter answer unless it is provisional. A choice committed meanwhile wins. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you.                     |
 | `gpc`        | `boolean`                                                                         | `true` when `navigator.globalPrivacyControl` is `true` and the `gpc` option is not `false`. Read once, when the instance is created.                                                                                                                                                                                               |
 | `getConsent` | `() => ConsentState \| null`                                                      | The current choice, or `null` before the visitor has made one.                                                                                                                                                                                                                                                                     |
 | `isStale`    | `() => boolean`                                                                   | Whether `bootstrap()` found a stored choice that is too old or was made under another major `policyVersion`. `false` again once the visitor chooses.                                                                                                                                                                               |
@@ -442,12 +442,17 @@ interface IdentityStorageAdapter {
   clear?(): void
 }
 
+type ConsentBootstrapAnswer = ConsentState | { consent: ConsentState; provisional: true } | null
+
 interface ConsentIntegrationAdapter {
   id: string
   /** Its bootstrap answer replaces the stored choice, which is used only when it answers null or fails. */
   authoritative?: boolean
-  /** Called by bootstrap() when no valid choice is stored, or first when authoritative. Errors go to onError with scope 'consent-adapter'. */
-  bootstrap?(): Promise<ConsentState | null> | ConsentState | null
+  /**
+   * Called by bootstrap() when no valid choice is stored, or first when authoritative. Errors go to onError with scope 'consent-adapter'.
+   * Answer { consent, provisional: true } for a state the visitor has not chosen yet: it applies but is not stored.
+   */
+  bootstrap?(): Promise<ConsentBootstrapAnswer> | ConsentBootstrapAnswer
   /** Called on every change not made by this adapter. Errors go to onError with scope 'consent-adapter'. */
   apply?(consent: ConsentState): Promise<void> | void
   /** Reports changes made in the external platform. */

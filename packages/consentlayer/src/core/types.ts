@@ -62,12 +62,15 @@ export interface IdentityStorageAdapter {
   clear?(): void
 }
 
+export type ConsentBootstrapAnswer = ConsentState | { consent: ConsentState; provisional: true } | null
+
 /** Syncs consent with an outside consent platform: reads its choice at boot, pushes changes to it, and listens for its updates. */
 export interface ConsentIntegrationAdapter {
   id: string
   /** Its bootstrap answer replaces the stored choice, which is used only when it answers `null` or fails. */
   authoritative?: boolean
-  bootstrap?(): Promise<ConsentState | null> | ConsentState | null
+  /** Answers `{ consent, provisional: true }` for a state the visitor has not chosen yet: it applies but is not stored. */
+  bootstrap?(): Promise<ConsentBootstrapAnswer> | ConsentBootstrapAnswer
   apply?(consent: ConsentState): Promise<void> | void
   subscribe?(onConsent: (consent: ConsentState) => void): (() => void) | void
   /** Runs when the engine is created and after every consent change, whatever its source. */
