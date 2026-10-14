@@ -24,4 +24,8 @@ your implementation complies with the law where you and your visitors are is
 your responsibility; see the
 [legal notice](https://consentlayer.nicolopadovan.com/guides/legal/).
 
+AI tools, mainly Claude Code, were used to write this repository's code,
+tests and documentation. Every change goes through the same tests and CI
+checks before it is released.
+
 [MIT License](./LICENSE) · [Contributing](./CONTRIBUTING.md) · [Code of Conduct](./CODE_OF_CONDUCT.md) · [Security](./SECURITY.md) · [Support](./SUPPORT.md)
