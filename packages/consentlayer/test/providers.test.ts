@@ -125,6 +125,31 @@ describe('providers', () => {
     manager.destroy()
   })
 
+  it('forwards only the events the route reports, and events with `only`', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 204, headers: { 'consentlayer-events': 'lead' } })),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const manager = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await manager.boot()
+    await manager.page()
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    await Promise.resolve()
+    await manager.page()
+    await manager.track('scroll_depth')
+    await manager.track('lead')
+    await manager.track('share', {}, { only: ['meta'] })
+    vi.unstubAllGlobals()
+    const names = fetchMock.mock.calls.map(([, init]) => (JSON.parse(init!.body as string) as { name: string }).name)
+    expect(names).toEqual(['page_view', 'lead', 'share'])
+    manager.destroy()
+  })
+
   it('posts the choice to the consent route once when the consent cookie is missing', async () => {
     const fetchMock = vi.fn<typeof fetch>((url) =>
       Promise.resolve(
