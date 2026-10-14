@@ -60,6 +60,7 @@ commitment either way.
 | Microsoft Clarity | No provider. Write one with [`definePlugin()`](/internals/plugins/). |
 | IAB TCF | ConsentLayer does not read or write a TCF consent string. |
 | PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys. |
+| A setup CLI, after 1.0 | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed; the other providers load their vendor's script in the browser. |
 | A bundled consent banner | ConsentLayer ships no UI. The [Consent UI](/guides/consent-ui/) guide provides a banner to copy and restyle. |
 | A hosted consent service | Consent records are stored in your own database through a [store](/guides/consent-records/#stores). |
 | Global Privacy Control | ConsentLayer does not read `navigator.globalPrivacyControl`, so a visitor who sends the signal sees the banner like any other. Some US state privacy laws require treating the signal as an opt-out of sale or sharing. |
