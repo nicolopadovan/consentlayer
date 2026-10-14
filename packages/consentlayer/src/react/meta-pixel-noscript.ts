@@ -1,4 +1,5 @@
 import { createElement, type ComponentPropsWithoutRef } from 'react'
+import { metaNoscriptSrc } from '../core/meta-noscript'
 
 /**
  * Meta's `<noscript>` PageView pixel. It fires only for visitors without
@@ -23,7 +24,7 @@ export function MetaPixelNoscript(
       height: imageProps.height ?? 1,
       width: imageProps.width ?? 1,
       style: { display: 'none', ...imageProps.style },
-      src: `https://www.facebook.com/tr?id=${encodeURIComponent(pixelId)}&ev=PageView&noscript=1`,
+      src: metaNoscriptSrc(pixelId),
     }),
   )
 }

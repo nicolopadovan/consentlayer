@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ConsentCategory } from 'consentlayer'
-  import { useConsentController } from 'consentlayer/svelte'
+  import { useConsentController } from 'consentlayer/sveltekit'
   import './consent-banner.css'
 
   let { privacyPolicyUrl }: { privacyPolicyUrl?: string } = $props()

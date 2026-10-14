@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const config = useRuntimeConfig().public
+</script>
+
 <template>
   <main>
     <nav>
@@ -9,5 +13,6 @@
       <ConsentBanner privacy-policy-url="/privacy" />
       <CookieSettingsButton />
     </ClientOnly>
+    <MetaPixelNoscript :pixel-id="String(config.facebookPixelId)" :enabled="config.facebookPixelNoscript" />
   </main>
 </template>

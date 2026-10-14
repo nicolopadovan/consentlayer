@@ -38,14 +38,15 @@ ports](#website-builders-and-cms) build on.
 
 ### Solid and Angular
 
-The core runs in any browser code, but React, [Vue](/start/vue/) and
-[Svelte](/start/svelte/) are the only bindings. Today, in other frameworks, use
+The core runs in any browser code, but React, [Vue](/start/vue/),
+[Nuxt](/start/nuxt/), [Svelte](/start/svelte/) and
+[SvelteKit](/start/sveltekit/) are the only bindings. Today, in other frameworks, use
 [`createConsentController()`](/start/javascript/) and connect it to the
 framework yourself. The planned
 bindings provide the equivalent of `<AnalyticsProvider>`, `useConsent()` and
 `useConsentController()` for SolidJS and Angular, and send a page
 view on every navigation with SolidStart and the Angular Router,
-like `consentlayer/next` does for Next.js.
+like `consentlayer/next`, `consentlayer/nuxt` and `consentlayer/sveltekit` do.
 
 ### Website builders and CMS
 

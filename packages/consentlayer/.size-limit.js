@@ -1,5 +1,11 @@
 // esbuild flags tsup's chunk-ordering `import './chunk.js'` lines as ignored under sideEffects: false; they are inert.
-const modifyEsbuildConfig = (config) => ({ ...config, logOverride: { 'ignored-bare-import': 'silent' } })
+// The Svelte component ships as source the app compiles, so it counts at its source size; `$app/*` is SvelteKit's.
+const modifyEsbuildConfig = (config) => ({
+  ...config,
+  logOverride: { 'ignored-bare-import': 'silent' },
+  loader: { ...config.loader, '.svelte': 'text' },
+  external: [...(config.external ?? []), '$app/*'],
+})
 
 export default [
   ['core', 'dist/index.js', '8 kB'],
@@ -7,6 +13,7 @@ export default [
   ['next', 'dist/next.js', '2.5 kB'],
   ['vue', 'dist/vue.js', '2.5 kB'],
   ['svelte', 'dist/svelte.js', '2.5 kB'],
+  ['sveltekit', 'dist/sveltekit.js', '2.5 kB'],
   ['providers/ga4', 'dist/providers/ga4.js', '1.8 kB'],
   ['providers/meta', 'dist/providers/meta.js', '2.5 kB'],
   ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.2 kB'],

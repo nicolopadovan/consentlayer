@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config'
-import rootConfig from '../../vitest.config'
+import rootConfig from '../../vitest.config.ts'
 
 export default defineConfig({
   ...rootConfig,

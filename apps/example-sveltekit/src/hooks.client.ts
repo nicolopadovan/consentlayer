@@ -1,6 +1,4 @@
-import type { HandleClientError } from '@sveltejs/kit/hooks'
+import { handleErrorWith } from 'consentlayer/sveltekit'
 import { analytics } from '#lib/analytics.ts'
 
-export const handleError: HandleClientError = ({ kind, error }) => {
-  if (kind === 'unknown') void analytics.captureError(error, { source: 'boundary' })
-}
+export const handleError = handleErrorWith(analytics)

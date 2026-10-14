@@ -24,13 +24,17 @@ export default defineConfig({
     next: 'src/next.tsx',
     vue: 'src/vue.ts',
     svelte: 'src/svelte.ts',
+    sveltekit: 'src/sveltekit.ts',
+    'nuxt/index': 'src/nuxt/index.ts',
+    'nuxt/plugin': 'src/nuxt/plugin.ts',
+    'nuxt/config': 'src/nuxt/config.ts',
   },
   dts: true,
   format: ['esm'],
   clean: true,
   sourcemap: true,
   treeshake: true,
-  external: ['react', 'react-dom', 'vue', 'svelte'],
+  external: ['react', 'react-dom', 'vue', 'svelte', 'nuxt', /^consentlayer/, /^#build\//, /^\$app\//, /\.svelte$/],
   async onSuccess() {
     // esbuild drops module directives; prepended on line 1 so the sourcemaps stay aligned.
     for (const entry of ['dist/react/index.js', 'dist/next.js']) {

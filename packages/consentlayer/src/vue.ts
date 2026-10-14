@@ -1,6 +1,8 @@
 import {
   computed,
+  defineComponent,
   getCurrentScope,
+  h,
   inject,
   onScopeDispose,
   shallowRef,
@@ -16,6 +18,7 @@ import {
   type ConsentControllerState,
 } from './core/consent-controller'
 import { latestAnalytics } from './core/create-analytics'
+import { metaNoscriptSrc } from './core/meta-noscript'
 import type { Analytics, ConsentApi, ConsentState, PageViewPayload } from './core/types'
 
 type RouteLike = { fullPath: string }
@@ -129,3 +132,31 @@ export function useConsentController(): ConsentController {
   if (!controller) throw new Error('useConsentController needs app.use(consentLayer)')
   return controller
 }
+
+const entities: Record<string, string> = { '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }
+const escapeAttribute = (value: unknown) => String(value).replace(/[&"<>]/g, (char) => entities[char])
+
+// Browsers with JavaScript parse `<noscript>` content as text, so it hydrates only as an HTML string.
+const metaNoscriptImg = (pixelId: string, attrs: Record<string, unknown>) =>
+  `<img ${Object.entries<unknown>({ height: 1, width: 1, style: 'display:none', ...attrs, alt: '', src: metaNoscriptSrc(pixelId) })
+    .filter(([name, value]) => /^[\w:-]+$/.test(name) && value != null && value !== false && typeof value !== 'function')
+    .map(([name, value]) => (value === true ? name : `${name}="${escapeAttribute(value)}"`))
+    .join(' ')}>`
+
+/**
+ * Meta's `<noscript>` PageView pixel. It fires only for visitors without
+ * JavaScript, who never see the consent banner, so it tracks them without
+ * consent. Render it only where that is lawful for you. Renders nothing without
+ * `enabled` or while `pixelId` is unset. Other attributes go to the `<img>`.
+ */
+export const MetaPixelNoscript = defineComponent({
+  name: 'MetaPixelNoscript',
+  inheritAttrs: false,
+  props: { pixelId: { type: String, default: undefined }, enabled: Boolean },
+  setup(props, { attrs }) {
+    return () =>
+      props.enabled && props.pixelId
+        ? h('noscript', { innerHTML: metaNoscriptImg(props.pixelId, attrs) })
+        : null
+  },
+})

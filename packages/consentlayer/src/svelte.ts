@@ -1,4 +1,4 @@
-import { getContext, onMount, setContext } from 'svelte'
+import { getContext, onMount, setContext, type Component } from 'svelte'
 import { createSubscriber } from 'svelte/reactivity'
 import {
   createConsentController,
@@ -8,6 +8,8 @@ import {
 } from './core/consent-controller'
 import { latestAnalytics } from './core/create-analytics'
 import type { Analytics, ConsentApi, ConsentState, PageViewPayload } from './core/types'
+import type { HTMLImgAttributes } from 'svelte/elements'
+import MetaPixelNoscriptComponent from './svelte/MetaPixelNoscript.svelte'
 
 /** The part of SvelteKit's `afterNavigate` ConsentLayer uses. */
 export type AfterNavigateLike = (callback: (navigation: { to: { url: URL } | null }) => void) => void
@@ -22,6 +24,15 @@ export type ConsentLayerOptions = ConsentControllerOptions & {
 
 /** What `useConsentController()` returns: the UI state as reactive properties, and the actions. */
 export type ConsentController = Readonly<ConsentControllerState> & ConsentControllerActions
+
+/**
+ * Meta's `<noscript>` PageView pixel. It fires only for visitors without
+ * JavaScript, who never see the consent banner, so it tracks them without
+ * consent. Render it only where that is lawful for you. Renders nothing without
+ * `enabled` or while `pixelId` is unset. Other attributes go to the `<img>`.
+ */
+export const MetaPixelNoscript: Component<{ pixelId: string | undefined; enabled?: boolean } & HTMLImgAttributes> =
+  MetaPixelNoscriptComponent
 
 const AnalyticsKey = Symbol('consentlayer.analytics')
 const ControllerKey = Symbol('consentlayer.controller')

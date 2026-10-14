@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createApp, defineComponent, h, nextTick, type App, type Component } from 'vue'
+import { createApp, createSSRApp, defineComponent, h, nextTick, type App, type Component } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import { createAnalytics } from '../src/core/create-analytics'
 import type { AnalyticsPlugin } from '../src/core/types'
-import { consentLayer, useAnalytics, useConsent, useConsentController } from '../src/vue'
+import { renderToString } from 'vue/server-renderer'
+import { consentLayer, MetaPixelNoscript, useAnalytics, useConsent, useConsentController } from '../src/vue'
 
 const spyProvider = (id: string) =>
   ({ id, requiredConsent: 'analytics', page: vi.fn(), track: vi.fn() }) satisfies AnalyticsPlugin
@@ -107,5 +108,17 @@ describe('consentlayer/vue', () => {
     mount(defineComponent({ setup: () => { found = useAnalytics(); return () => null } }), () => {})
     expect(found).toBe(analytics)
     analytics.destroy()
+  })
+})
+
+describe('MetaPixelNoscript for Vue', () => {
+  it('renders the pixel only when enabled with an ID', async () => {
+    const render = (props: Record<string, unknown>) => renderToString(createSSRApp({ render: () => h(MetaPixelNoscript, props) }))
+    expect(await render({ pixelId: '123', enabled: true, loading: 'lazy' })).toBe(
+      '<noscript><img height="1" width="1" style="display:none" loading="lazy" alt="" src="https://www.facebook.com/tr?id=123&amp;ev=PageView&amp;noscript=1"></noscript>',
+    )
+    expect(await render({ pixelId: '123', enabled: true, title: '"><script>' })).toContain('title="&quot;&gt;&lt;script&gt;"')
+    expect(await render({ pixelId: '123' })).toBe('<!---->')
+    expect(await render({ pixelId: undefined, enabled: true })).toBe('<!---->')
   })
 })

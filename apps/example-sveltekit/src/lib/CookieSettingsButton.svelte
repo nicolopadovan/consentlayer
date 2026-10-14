@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { useConsentController } from 'consentlayer/svelte'
+  import { useConsentController } from 'consentlayer/sveltekit'
 
   const consent = useConsentController()
 </script>

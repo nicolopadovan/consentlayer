@@ -113,8 +113,10 @@ initialised with an email address or phone number and marketing consent is
 then withdrawn, the pixel stays revoked and sends nothing for the rest of the
 page's lifetime, even if consent is granted again. It resumes after a reload.
 
-For visitors without JavaScript, `<MetaPixelNoscript pixelId enabled />` from
-`consentlayer/react` renders Meta's `<noscript>` image pixel. It fires without
+For visitors without JavaScript, `<MetaPixelNoscript>` from
+`consentlayer/react`, `consentlayer/vue`, `consentlayer/svelte` or
+`consentlayer/sveltekit` renders Meta's `<noscript>` image pixel; the Nuxt
+module registers it. It fires without
 consent, since those visitors never see a banner. It renders nothing without
 `enabled` or while `pixelId` is `undefined` or empty.
 

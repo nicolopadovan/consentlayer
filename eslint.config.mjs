@@ -39,7 +39,7 @@ export default tseslint.config(
     }
   },
   {
-    files: ["packages/consentlayer/{src,test}/vue{,.test}.ts"],
+    files: ["packages/consentlayer/{src,test}/vue{,.test}.ts", "packages/consentlayer/src/nuxt/*.ts"],
     rules: {
       "react-hooks/rules-of-hooks": "off",
     },

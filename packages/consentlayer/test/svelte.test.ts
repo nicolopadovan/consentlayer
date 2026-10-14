@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import type { AnalyticsPlugin } from '../src/core/types'
 import type { AfterNavigateLike } from '../src/svelte'
+import { handleErrorWith } from '../src/sveltekit'
 import App from './svelte/App.svelte'
 
 const spyProvider = (id: string) =>
@@ -64,6 +65,19 @@ describe('consentlayer/svelte', () => {
     await settle()
     expect(ga4.page).toHaveBeenCalledTimes(1)
     void unmount(app)
+    analytics.destroy()
+  })
+})
+
+describe('handleErrorWith', () => {
+  it('sends only the errors your code threw', () => {
+    const analytics = createAnalytics({ providers: [] })
+    const captureError = vi.spyOn(analytics, 'captureError').mockResolvedValue(undefined)
+    const handleError = handleErrorWith(analytics)
+    const error = new Error('boom')
+    handleError({ kind: 'unknown', error })
+    handleError({ kind: 'framework', error: { status: 404, message: 'Not Found' } })
+    expect(captureError).toHaveBeenCalledExactlyOnceWith(error, { source: 'boundary' })
     analytics.destroy()
   })
 })

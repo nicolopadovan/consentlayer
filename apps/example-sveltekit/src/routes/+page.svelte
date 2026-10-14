@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { useAnalytics } from 'consentlayer/svelte'
+  import { useAnalytics } from 'consentlayer/sveltekit'
   import ConsentState from '#lib/ConsentState.svelte'
 
   const analytics = useAnalytics()

@@ -1,13 +1,13 @@
 ---
-title: Vue and Nuxt
-description: Set up ConsentLayer in a Vue 3 or Nuxt application with consentlayer/vue.
+title: Vue
+description: Set up ConsentLayer in a Vue 3 application with consentlayer/vue.
 ---
 
-This guide sets up ConsentLayer in a Vue application, with Vite and Vue Router
-or with Nuxt: a module-level analytics instance, a Vue plugin that holds
-consent state for your consent banner, page views on every navigation, event
-tracking, and error reporting. `consentlayer/vue` supports Vue 3.5 and later;
-with Nuxt, it needs Nuxt 4.
+This guide sets up ConsentLayer in a Vue application with Vite and Vue Router:
+a module-level analytics instance, a Vue plugin that holds consent state for
+your consent banner, page views on every navigation, event tracking, and error
+reporting. `consentlayer/vue` supports Vue 3.5 and later. For Nuxt, follow
+[Nuxt](/start/nuxt/) instead.
 
 It assumes you have [installed](/start/installation/) `consentlayer` and the
 SDKs of the providers you use.
@@ -34,8 +34,7 @@ export const analytics = createAnalytics({
 ```
 
 The options are the same as in React; [React](/start/react/#1-create-the-instance)
-explains how missing IDs, `autoTracking`, `enabled` and `debug` behave. With
-Nuxt, create the instance in a plugin instead, as shown in [Nuxt](#nuxt).
+explains how missing IDs, `autoTracking`, `enabled` and `debug` behave.
 
 ## 2. Install the plugin
 
@@ -109,6 +108,32 @@ const { bannerVisible, openDialog } = useConsentController()
 `useConsentController()` returns the state as read-only refs and the actions
 as functions. It throws when `consentLayer` is not installed.
 
+<details>
+<summary>Meta Pixel without JavaScript</summary>
+
+`<MetaPixelNoscript>` renders Meta's `<noscript>` PageView image,
+`https://www.facebook.com/tr?id=<pixelId>&ev=PageView&noscript=1`, for visitors
+with JavaScript disabled:
+
+```vue
+<script setup lang="ts">
+import { MetaPixelNoscript } from 'consentlayer/vue'
+</script>
+
+<template>
+  <MetaPixelNoscript :pixel-id="pixelId" enabled />
+</template>
+```
+
+Those visitors never see the consent banner, so the image tracks them without
+consent. For that reason it renders nothing unless you pass `enabled`, and
+nothing while `pixel-id` is `undefined` or empty. Other attributes are passed
+to the image. It only has an effect in HTML rendered on the server, as with
+Nuxt or Vue's `renderToString`; an application rendered only in the browser
+never shows it.
+
+</details>
+
 ## 4. Track events
 
 `useAnalytics()` returns the instance passed to `consentLayer`, or the most
@@ -147,79 +172,3 @@ As in React, `captureError` reaches the providers that implement error
 reporting, Sentry and PostHog, and the window's `error` and
 `unhandledrejection` events are reported after boot unless you set
 `errors: { globalHandlers: false }`.
-
-## Nuxt
-
-Create the instance and install the plugin in a Nuxt plugin. Nuxt runs it on
-the server for each request and once in the browser, so `useAnalytics()` and
-`useConsentController()` work in every component:
-
-```ts
-// app/plugins/consentlayer.ts
-import { createAnalytics } from 'consentlayer'
-import { ga4 } from 'consentlayer/providers/ga4'
-import { consentLayer } from 'consentlayer/vue'
-
-export default defineNuxtPlugin((nuxtApp) => {
-  const config = useRuntimeConfig().public
-  const analytics = createAnalytics({
-    providers: [ga4({ measurementId: config.ga4MeasurementId })],
-    autoTracking: true,
-    debug: config.analyticsDebug,
-  })
-  nuxtApp.vueApp.use(consentLayer, { analytics, router: nuxtApp.$router })
-})
-```
-
-```ts
-// nuxt.config.ts
-export default defineNuxtConfig({
-  runtimeConfig: {
-    public: {
-      ga4MeasurementId: '',
-      analyticsDebug: false,
-    },
-  },
-})
-```
-
-Nuxt fills `runtimeConfig.public` from environment variables at runtime:
-`NUXT_PUBLIC_GA4_MEASUREMENT_ID` sets `ga4MeasurementId`. Nuxt parses a value
-such as `true` into a boolean, so compare with `true`, not `'true'`.
-
-The consent choice is only known in the browser. Render the banner, the
-settings button and anything that reads `useConsent()` inside `<ClientOnly>`,
-so the HTML rendered on the server matches the first render in the browser:
-
-```vue
-<!-- app/app.vue -->
-<template>
-  <NuxtPage />
-  <ClientOnly>
-    <ConsentBanner privacy-policy-url="/privacy" />
-    <CookieSettingsButton />
-  </ClientOnly>
-</template>
-```
-
-<details>
-<summary>Meta Pixel without JavaScript</summary>
-
-`<MetaPixelNoscript>` is only exported from `consentlayer/react`. In Vue, add
-Meta's image to the HTML rendered on the server yourself, replacing
-`PIXEL_ID`:
-
-```html
-<noscript>
-  <img height="1" width="1" style="display:none" alt=""
-    src="https://www.facebook.com/tr?id=PIXEL_ID&ev=PageView&noscript=1" />
-</noscript>
-```
-
-Visitors with JavaScript disabled never see the consent banner, so the image
-tracks them without consent. Add it only where that is lawful.
-
-</details>
-
-The [Nuxt example](https://github.com/nicolopadovan/analytics-consent-manager-npm/tree/main/apps/example-nuxt)
-in the repository runs this setup.

@@ -94,11 +94,18 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
 - `consentlayer/vue`: the `consentLayer` plugin boots the instance, sends a
   page view per Vue Router navigation, reports errors from
   `app.config.errorHandler`, and provides `useAnalytics()`, `useConsent()` and
-  `useConsentController()`. Works with Nuxt 4 through a Nuxt plugin.
+  `useConsentController()`.
+- `consentlayer/nuxt`: a Nuxt 4 module that creates the instance from
+  `app/consentlayer.config.ts` (`defineConsentLayerConfig()`), installs the Vue
+  plugin with Nuxt's router, reports component errors through Nuxt's
+  `vue:error` hook, and auto-imports the composables and `<MetaPixelNoscript>`.
 - `consentlayer/svelte`: `consentLayer()` in the root component boots the
-  instance, sends a page view per SvelteKit navigation through
-  `afterNavigate`, and provides `useAnalytics()`, `useConsent()` and
-  `useConsentController()` with the state as reactive properties.
+  instance, sends page views, and provides `useAnalytics()`, `useConsent()`
+  and `useConsentController()` with the state as reactive properties.
+- `consentlayer/sveltekit`: the same, with page views per SvelteKit navigation,
+  and `handleErrorWith(analytics)` for the client `handleError` hook.
+- `<MetaPixelNoscript>` is exported from `consentlayer/vue`, `consentlayer/svelte`
+  and `consentlayer/sveltekit` too, not only `consentlayer/react`.
 - `createAnalytics({ consent: { maxAgeDays, policyVersion, onStale } })` asks
   the visitor again when the stored choice is older than `maxAgeDays` or was
   made under another major `policyVersion` (`'3.x'` to `'4.0'`).

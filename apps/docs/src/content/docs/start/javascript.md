@@ -3,8 +3,8 @@ title: JavaScript and Astro
 description: Set up ConsentLayer without a framework binding, with createConsentController, in plain JavaScript or an Astro site.
 ---
 
-This guide sets up ConsentLayer in code that uses no framework binding: a
-site built with a bundler such as Vite, or an Astro site. You create the
+This guide sets up ConsentLayer in code that uses no framework binding: plain
+JavaScript or TypeScript bundled by any bundler, or an Astro site. You create the
 instance, then a consent controller, which does what the React provider and the
 Vue plugin do for you: it reads the stored choice, boots the providers, holds
 your banner's state and sends page views.

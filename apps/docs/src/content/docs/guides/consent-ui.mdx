@@ -201,11 +201,12 @@ installed. This component uses the same CSS file as the React recipe:
 
 <Code code={vueBanner} lang="vue" title="components/ConsentBanner.vue" />
 
-[Vue and Nuxt](/start/vue/#3-add-the-banner) shows where to render it.
+[Vue](/start/vue/#3-add-the-banner) and [Nuxt](/start/nuxt/#3-add-the-banner)
+show where to render it.
 
 ## Svelte
 
-`useConsentController()` from `consentlayer/svelte` has the same fields, with
+`useConsentController()` from `consentlayer/svelte` and `consentlayer/sveltekit` has the same fields, with
 the state as reactive properties: read `consent.bannerVisible` rather than
 destructuring it. It throws
 `useConsentController needs consentLayer() in a parent component` when no
@@ -214,8 +215,10 @@ file as the React recipe:
 
 <Code code={svelteBanner} lang="svelte" title="src/lib/ConsentBanner.svelte" />
 
-[Svelte and SvelteKit](/start/svelte/#2-call-consentlayer-in-the-root-layout)
-shows where to render it.
+Without SvelteKit, import from `consentlayer/svelte` instead.
+[SvelteKit](/start/sveltekit/#2-call-consentlayer-in-the-root-layout) and
+[Svelte](/start/svelte/#2-call-consentlayer-in-the-root-component) show where
+to render it.
 
 ## Custom categories
 

@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: ConsentLayer is a consent-first analytics library for React, Next.js and the server.
+description: ConsentLayer is a consent-first analytics library for React, Next.js, Vue, Nuxt, Svelte, SvelteKit and the server.
 ---
 
 This page describes what ConsentLayer does, how the documentation is organized,
@@ -75,8 +75,8 @@ choice, consent stays `null`, which satisfies no requirement other than
 
 The docs are organized into the following sections:
 
-- **Getting started**: Installation, a step-by-step setup for the Next.js App
-  Router, and an interactive [Playground](/playground/) that logs every
+- **Getting started**: Installation, a step-by-step setup for React, Next.js,
+  Vue, Nuxt, Svelte, SvelteKit and plain JavaScript, and an interactive [Playground](/playground/) that logs every
   provider hook as you change consent.
 - **Guides**: Task-oriented pages for tracking [events and identity](/guides/events/),
   building the [consent UI](/guides/consent-ui/), configuring
@@ -133,6 +133,7 @@ npm or loaded from the vendor's CDN, are not included in these figures.
 | `consentlayer/next` | 2.5 kB |
 | `consentlayer/vue` | 2.5 kB |
 | `consentlayer/svelte` | 2.5 kB |
+| `consentlayer/sveltekit` | 2.5 kB |
 | `consentlayer/providers/ga4` | 1.8 kB |
 | `consentlayer/providers/meta` | 2.5 kB |
 | `consentlayer/providers/contentsquare` | 1.2 kB |
@@ -142,5 +143,9 @@ npm or loaded from the vendor's CDN, are not included in these figures.
 | `consentlayer/server/meta` | 1.5 kB |
 
 The core currently measures 7.6 kB, `consentlayer/react` 2.0 kB,
-`consentlayer/next` 1.6 kB, `consentlayer/vue` 1.7 kB and
-`consentlayer/svelte` 1.6 kB.
+`consentlayer/next` 1.6 kB, `consentlayer/vue` 2.0 kB,
+`consentlayer/svelte` 1.8 kB and `consentlayer/sveltekit` 1.8 kB. The Svelte
+figures count the `MetaPixelNoscript` component as source, which your Svelte
+compiler builds.
+`consentlayer/nuxt` runs at build time, and adds `consentlayer/vue` to your
+application.

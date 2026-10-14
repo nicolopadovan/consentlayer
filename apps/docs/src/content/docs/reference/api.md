@@ -13,8 +13,10 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer`](#consentlayer) | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types |
 | [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript` |
 | [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for Next.js |
-| [`consentlayer/vue`](#consentlayervue) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController` |
-| [`consentlayer/svelte`](#consentlayersvelte) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController` |
+| [`consentlayer/vue`](#consentlayervue) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript` |
+| [`consentlayer/nuxt`](#consentlayernuxt) | The Nuxt module, which auto-imports `defineConsentLayerConfig` |
+| [`consentlayer/svelte`](#consentlayersvelte) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript` |
+| [`consentlayer/sveltekit`](#consentlayersveltekit) | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte` |
 | [`consentlayer/providers/*`](#consentlayerproviders) | `ga4`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`, the Shopify consent adapter |
 | [`consentlayer/ecommerce`](#consentlayerecommerce) | `productParams`, `cartParams`, `orderParams`, `toItem` |
 | [`consentlayer/server`](#consentlayerserver) | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores |
@@ -927,11 +929,51 @@ with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories` and
 
 **Throws** an `Error` when `consentLayer` is not installed.
 
+### `<MetaPixelNoscript>` for Vue
+
+The React [`<MetaPixelNoscript>`](#metapixelnoscript) as a Vue component, with
+the props `pixel-id` and `enabled`. Other attributes are passed to the image.
+It renders the image as the `<noscript>` element's HTML, so hydration doesn't
+compare it with the text browsers parse there when JavaScript is on.
+
+## `consentlayer/nuxt`
+
+A Nuxt module for Nuxt 4, an optional peer dependency. Add it to `modules` in
+`nuxt.config.ts`. At build time it:
+
+- reads `app/consentlayer.config.ts`, and throws when the file is missing;
+- adds a plugin that calls the config file's function, passes the result to
+  `createAnalytics()`, and installs [`consentLayer`](#consentlayer-1) with that
+  instance, Nuxt's router and the module options, with `captureErrors: false`;
+- in the browser, unless the `captureErrors` option is `false`, sends errors
+  from Nuxt's `vue:error` hook through `captureError` with `source: 'boundary'`
+  and a `vue_info` tag;
+- auto-imports `defineConsentLayerConfig`, `useAnalytics`, `useConsent` and
+  `useConsentController`, and registers the `<MetaPixelNoscript>` component.
+
+The module options, under the `consentlayer` key of `nuxt.config.ts`, are the
+[`consentLayer`](#consentlayer-1) options except `analytics` and `router`. They
+are serialized into the build, so they can't hold functions. The type is
+exported as `ModuleOptions`.
+
+### `defineConsentLayerConfig(factory)`
+
+```ts
+function defineConsentLayerConfig(factory: () => AnalyticsOptions): () => AnalyticsOptions
+```
+
+Returns `factory`, typed. Export its result as the default export of
+`app/consentlayer.config.ts`. The plugin calls `factory` on the server for each
+request and once in the browser, inside the Nuxt app context, so composables
+such as `useRuntimeConfig()` work in it. `AnalyticsOptions` are the options of
+[`createAnalytics()`](#createanalyticsoptions).
+
 ## `consentlayer/svelte`
 
 Requires `svelte` 5.7 or later, an optional peer dependency. SvelteKit is not
-a dependency; you pass its `afterNavigate`. Every function here reads or sets a
-Svelte context, so call it while a component initializes.
+a dependency; with SvelteKit, use [`consentlayer/sveltekit`](#consentlayersveltekit).
+Every function here reads or sets a Svelte context, so call it while a
+component initializes.
 
 ### `consentLayer(options)`
 
@@ -947,7 +989,7 @@ it stops. On the server it only provides them.
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `analytics` | `Analytics` | | **Required.** The instance. |
-| `afterNavigate` | `AfterNavigateLike` | | SvelteKit's `afterNavigate`. Sends a page view after the first render and every navigation, once per path and query string; the hash is ignored. A new path or query string also starts a new page session. Without it, one page view is sent for the page load. |
+| `afterNavigate` | `AfterNavigateLike` | | A function shaped like SvelteKit's `afterNavigate`. Sends a page view after the first render and every navigation, once per path and query string; the hash is ignored. A new path or query string also starts a new page session. Without it, one page view is sent for the page load. |
 | `page` | `PageViewPayload` | | Overrides the page view's `url`, `path` or `title`. |
 | `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | As on [`<AnalyticsProvider>`](#analyticsprovider). |
 | `autoShowBanner` | `boolean` | `true` | As on `<AnalyticsProvider>`. |
@@ -994,6 +1036,43 @@ with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories` and
 `ConsentController`.
 
 **Throws** an `Error` when no parent component called `consentLayer()`.
+
+### `<MetaPixelNoscript>` for Svelte
+
+The React [`<MetaPixelNoscript>`](#metapixelnoscript) as a Svelte component,
+with the props `pixelId` and `enabled`. Other attributes are passed to the
+image. It ships as Svelte source, which your Svelte compiler builds; the
+package's `svelte` export condition points Vite at it.
+
+## `consentlayer/sveltekit`
+
+`MetaPixelNoscript`, `useAnalytics`, `useConsent`, `useConsentController` and
+the `ConsentController` type from `consentlayer/svelte`, plus the two functions
+below. It imports `afterNavigate` from
+SvelteKit's `$app/navigation`, so it only works inside a SvelteKit
+application.
+
+### `consentLayer(options)` for SvelteKit
+
+```ts
+function consentLayer(options: SvelteKitConsentLayerOptions): ConsentController
+type SvelteKitConsentLayerOptions = Omit<ConsentLayerOptions, 'afterNavigate'>
+```
+
+The Svelte [`consentLayer()`](#consentlayeroptions) with SvelteKit's
+`afterNavigate`. Call it in the root layout.
+
+### `handleErrorWith(analytics)`
+
+```ts
+function handleErrorWith(analytics: Analytics): (input: { kind: string; error: unknown }) => void
+```
+
+Returns a client [`handleError`](https://svelte.dev/docs/kit/hooks)
+hook. It calls `analytics.captureError(error, { source: 'boundary' })` when
+`kind` is `'unknown'`, the errors your code threw, and skips `'app'` and
+`'framework'` errors. It returns nothing, so SvelteKit shows its default
+message.
 
 ## `consentlayer/providers/*`
 
