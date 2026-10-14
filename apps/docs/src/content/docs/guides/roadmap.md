@@ -32,6 +32,7 @@ from. Each ships in its own minor release, in order of priority:
 | [Detailed settings dialog](#detailed-settings-dialog)                             | Medium   | Q2 2027       |
 | [Rich banner text](#rich-banner-text)                                             | Low      | Q2 2027       |
 | [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027       |
+| [Native banner components per framework](#banner-components-for-ui-libraries)     | Low      | Q3 2027       |
 | [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027       |
 | [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027       |
 | [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028          |
@@ -46,10 +47,12 @@ components below.
 
 ### Banner components for UI libraries
 
-The [banner](/guides/banner/) mounts on a consent controller and does not use
-your framework's components; with a framework binding, you build one on
-[`useConsentController()`](/guides/consent-ui/), starting from the recipe. The
-planned components are first-party banners and settings dialogs built on the
+The [banner](/guides/banner/) ships for every framework binding as a thin
+component that mounts the same banner, built from plain DOM elements rather
+than your framework's templates. The planned native components render the
+banner and settings dialog in each framework's own templates, so you can
+compose and restyle them like the rest of your components. The planned
+library components are first-party banners and settings dialogs built on the
 UI libraries applications already use, so they match the rest of the
 interface:
 
