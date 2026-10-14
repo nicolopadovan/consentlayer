@@ -5,6 +5,7 @@ import type { Analytics, ConsentApi, ConsentState, LazyBootConfig, PageViewPaylo
 import { latestAnalytics } from '../core/create-analytics'
 import {
   createConsentController,
+  type ConsentController,
   type ConsentControllerActions,
   type ConsentControllerState,
 } from '../core/consent-controller'
@@ -14,6 +15,8 @@ export const AnalyticsContext = createContext<Analytics | undefined>(undefined)
 type ConsentControllerValue = ConsentControllerState & ConsentControllerActions
 
 const ConsentControllerContext = createContext<ConsentControllerValue | undefined>(undefined)
+
+export const CoreControllerContext = createContext<ConsentController | undefined>(undefined)
 
 /** Props for `<AnalyticsProvider>`. */
 export type AnalyticsProviderProps = {
@@ -50,7 +53,9 @@ export function AnalyticsProvider({
 
   return (
     <AnalyticsContext.Provider value={analytics}>
-      <ConsentControllerContext.Provider value={value}>{children}</ConsentControllerContext.Provider>
+      <CoreControllerContext.Provider value={controller}>
+        <ConsentControllerContext.Provider value={value}>{children}</ConsentControllerContext.Provider>
+      </CoreControllerContext.Provider>
     </AnalyticsContext.Provider>
   )
 }

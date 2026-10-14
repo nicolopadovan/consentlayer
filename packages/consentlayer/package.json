@@ -75,6 +75,10 @@
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
     },
+    "./react/banner": {
+      "types": "./dist/react/banner.d.ts",
+      "import": "./dist/react/banner.js"
+    },
     "./next": {
       "types": "./dist/next.d.ts",
       "import": "./dist/next.js"
