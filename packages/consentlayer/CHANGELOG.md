@@ -22,13 +22,13 @@ The first public release.
   reflects the signal.
 - Consent records: `createConsentHandler()` appends each choice to Postgres,
   Supabase, Prisma, Drizzle or Upstash and sets a signed consent cookie, which
-  `createAnalyticsHandler({ consentCookie })` trusts instead of the request
-  body. A lost cookie is restored from the browser's stored choice.
+  `createAnalyticsHandler({ consentCookie })` uses to deny what the request
+  body grants beyond it. A lost cookie is restored from the browser's stored choice.
 
 ### Consent adapters
 
 - `tcf()` from `consentlayer/adapters/tcf` follows the choice an IAB TCF v2
-  CMP collects, read-only.
+  CMP collects, read-only, ahead of the stored choice.
 - `shopifyCustomerPrivacy()` from `consentlayer/adapters/shopify` keeps
   Shopify's Customer Privacy API in sync, and loads it on headless
   storefronts.
@@ -59,7 +59,8 @@ The first public release.
   from `consentlayer/testing`, for writing your own provider.
 - Standard events with GA4 names, translated for each provider, and
   `productParams`, `cartParams` and `orderParams` in `consentlayer/ecommerce`.
-- Auto-tracking of page sessions, scroll depth, time on page and clicks.
+- `autoTracking()` from `consentlayer/auto-tracking`: page sessions, scroll
+  depth, time on page and clicks.
 - `<MetaPixelNoscript>` and `<GtmNoscript>` render the vendors' `<noscript>`
   markup for visitors without JavaScript, opt-in.
 
