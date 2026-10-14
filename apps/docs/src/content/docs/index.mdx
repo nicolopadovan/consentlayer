@@ -45,10 +45,12 @@ runs, which `<AnalyticsProvider>` calls for you. Calls made before then are held
 up to 100, and delivered when boot completes to the providers whose requirement
 is met at that moment.
 
-ConsentLayer ships no consent banner. `useConsentController()` exposes the
+The npm package ships no consent banner. `useConsentController()` exposes the
 banner's state and actions, and the [Consent UI](/guides/consent-ui/) guide
 provides a recipe to copy and restyle, so the markup, wording and translations
-stay in your codebase.
+stay in your codebase. On a site without a build step, the
+[script tag](/start/script-tag/) loads ConsentLayer and a ready-made banner
+from a CDN.
 
 <details>
 <summary>Where consent is stored and how it is announced</summary>

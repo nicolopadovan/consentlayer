@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ConsentLayer script tag: window.ConsentLayer</title>
+    <script>
+      window.ConsentLayer = {
+        providers: {
+          ga4: { measurementId: 'G-XXXXXXXXXX' },
+          meta: { pixelId: '000000000000000' },
+        },
+        autoTracking: true,
+        debug: true,
+        banner: { privacyPolicyUrl: '/privacy', text: { acceptAll: 'Accept all cookies' } },
+      }
+    </script>
+    <!-- On a real site: https://cdn.jsdelivr.net/npm/consentlayer@1/dist/consentlayer.global.js -->
+    <script src="/consentlayer.global.js"></script>
+    <script src="/consentlayer-banner.global.js"></script>
+  </head>
+  <body>
+    <h1>Configured with <code>window.ConsentLayer</code></h1>
+    <p><a href="/data-attributes.html">The same setup with data- attributes</a></p>
+    <button type="button" id="sign-up">Track sign_up</button>
+    <button type="button" id="navigate">Navigate with history.pushState</button>
+    <button type="button" id="settings">Cookie settings</button>
+    <script>
+      document.getElementById('sign-up').addEventListener('click', () => ConsentLayer.track('sign_up', { method: 'email' }))
+      document.getElementById('navigate').addEventListener('click', () => history.pushState({}, '', `?page=${Date.now()}`))
+      document.getElementById('settings').addEventListener('click', () => CONSENTLAYER_openConsent())
+    </script>
+  </body>
+</html>

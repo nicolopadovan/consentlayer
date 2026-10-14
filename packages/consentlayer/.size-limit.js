@@ -24,4 +24,6 @@ export default [
   ['providers/sentry', 'dist/providers/sentry.js', '1.2 kB'],
   ['server', 'dist/server/index.js', '2.5 kB'],
   ['server/meta', 'dist/server/meta.js', '1.5 kB'],
+  ['script tag', 'dist/consentlayer.global.js', '13.5 kB'],
+  ['script tag banner', 'dist/consentlayer-banner.global.js', '2 kB'],
 ].map(([name, path, limit]) => ({ name, path, limit, modifyEsbuildConfig }))

@@ -82,6 +82,15 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- A script-tag build, `dist/consentlayer.global.js`, served from jsDelivr and
+  unpkg: every browser provider in one file, configured with
+  `window.ConsentLayer` or `data-` attributes on the script tag, with page
+  views on load and on history navigation. PostHog and Sentry load from their
+  vendor's CDN. See [Script tag](https://consentlayer.vercel.app/start/script-tag/).
+- A consent banner for the script tag, `dist/consentlayer-banner.global.js`:
+  a banner and a settings dialog with a toggle per category, English text
+  overridable per string, a privacy policy link and `--consentlayer-*` CSS
+  custom properties.
 - `createConsentController(analytics, options?)` is exported from
   `consentlayer`: what the React provider and the Vue plugin do, without a
   framework, for plain JavaScript and Astro sites.

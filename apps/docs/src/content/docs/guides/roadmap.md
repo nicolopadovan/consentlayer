@@ -29,12 +29,12 @@ pixel once `marketing` is granted and sends page views and events, like
 the TikTok Events API under `marketing` consent, sharing each event's ID with
 the [TikTok pixel](#tiktok-pixel) so TikTok can deduplicate the two.
 
-### Script-tag build
+### Banner on npm: `consentlayer/banner`
 
-The package ships ES modules only, so it needs a bundler. The planned build is
-a single file you load with a `<script>` tag from a CDN, configured on the page
-without a build step. It is what the [website builder and CMS
-ports](#website-builders-and-cms) build on.
+The banner of the [script tag](/start/script-tag/#3-the-banner) is available
+only from the CDN. The planned `consentlayer/banner` entry exports it for
+applications that install ConsentLayer from npm, as a function that mounts it
+on a consent controller.
 
 ### Website builders and CMS
 
@@ -43,11 +43,11 @@ planned ports set ConsentLayer up where those sites add code:
 
 | Platform | Planned port |
 |---|---|
-| WordPress | A plugin that loads the script-tag build and takes the configuration in the WordPress admin. |
+| WordPress | A plugin that loads the [script tag](/start/script-tag/) and takes the configuration in the WordPress admin. |
 | Webflow | A snippet for the site's custom code settings. |
 | Framer, Squarespace and Wix | A snippet for each platform's custom code settings. |
 | Shopify themes | A theme app extension. In a headless storefront, `createShopifyCustomerPrivacyAdapter()` already keeps Shopify's consent in sync. |
-| Google Tag Manager | A community template that loads the script-tag build from a GTM container. |
+| Google Tag Manager | A community template that loads the script tag from a GTM container. |
 
 ## Under consideration
 
@@ -61,7 +61,6 @@ commitment either way.
 | IAB TCF | ConsentLayer does not read or write a TCF consent string. |
 | PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys. |
 | A setup CLI, after 1.0 | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed; the other providers load their vendor's script in the browser. |
-| A bundled consent banner | ConsentLayer ships no UI. The [Consent UI](/guides/consent-ui/) guide provides a banner to copy and restyle. |
 | A hosted consent service | Consent records are stored in your own database through a [store](/guides/consent-records/#stores). |
 | Global Privacy Control | ConsentLayer does not read `navigator.globalPrivacyControl`, so a visitor who sends the signal sees the banner like any other. Some US state privacy laws require treating the signal as an opt-out of sale or sharing. |
 | Retention helpers | A `ConsentStore` only appends. Deleting old records is your application's job; see [Retention and deletion](/guides/consent-records/#retention-and-deletion). |
