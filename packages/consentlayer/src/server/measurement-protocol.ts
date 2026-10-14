@@ -21,7 +21,10 @@ export async function sendMeasurementProtocol(
   const clientId = event.clientId ?? clientIdFromCookie(request?.cookies._ga)
   if (!clientId) throw new Error(`${sender} needs event.clientId or the _ga cookie`)
   const marketing = event.consent.marketing
-  const email = event.identity?.email?.trim().toLowerCase()
+  const email = event.identity?.email
+    ?.trim()
+    .toLowerCase()
+    .replace(/^(.+)@(gmail|googlemail)\.com$/, (_, local: string, domain: string) => `${local.replace(/\./g, '')}@${domain}.com`)
   const phone = event.identity?.phone && `+${event.identity.phone.replace(/\D/g, '')}`
   const userData = marketing
     ? Object.fromEntries(

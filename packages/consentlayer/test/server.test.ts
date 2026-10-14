@@ -221,6 +221,15 @@ describe('server destinations', () => {
       { destinations: [ga] },
     )
     expect(sentBody(fetchImpl, 2)).not.toHaveProperty('user_data')
+ 
+    for (const email of ['Ada.Love.Lace@GMail.com', 'ada.lovelace@googlemail.com', 'ada.love@example.com']) {
+      await sendServerEvent({ name: 'x', consent: granted, clientId: 'c.1', identity: { email } }, { destinations: [ga] })
+    }
+    expect([3, 4, 5].map((call) => sentBody(fetchImpl, call).user_data)).toEqual([
+      { sha256_email_address: sha256('adalovelace@gmail.com') },
+      { sha256_email_address: sha256('adalovelace@googlemail.com') },
+      { sha256_email_address: sha256('ada.love@example.com') },
+    ])
   })
 
   it('fails GA4 without a client id and honours only', async () => {

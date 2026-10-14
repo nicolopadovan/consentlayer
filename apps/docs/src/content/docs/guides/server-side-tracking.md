@@ -389,7 +389,7 @@ with `measurement_id` and `api_secret` in the query string and this body:
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `client_id`        | `event.clientId`, or the client ID from the request's `_ga` cookie.                                                                                                  |
 | `user_id`          | `event.identity.userId`.                                                                                                                                             |
-| `user_data`        | With marketing consent only: `sha256_email_address` (trimmed, lowercased) and `sha256_phone_number` (digits prefixed with `+`), each when valid. Omitted when empty. |
+| `user_data`        | With marketing consent only: `sha256_email_address` (trimmed, lowercased, without dots before the `@` for `gmail.com` and `googlemail.com`) and `sha256_phone_number` (digits prefixed with `+`), each when valid. Omitted when empty. |
 | `consent`          | `ad_user_data` and `ad_personalization`, both `GRANTED` with marketing consent and `DENIED` without it.                                                              |
 | `events[0].name`   | The event name with every character outside `A–Z`, `a–z`, `0–9` and `_` replaced by `_`; `lead` becomes `generate_lead`.                                             |
 | `events[0].params` | The params merged with `providers.ga4`, plus `page_location` from `event.url` when there is one.                                                                     |
