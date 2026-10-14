@@ -2,7 +2,7 @@
 const modifyEsbuildConfig = (config) => ({ ...config, logOverride: { 'ignored-bare-import': 'silent' } })
 
 export default [
-  ['core', 'dist/index.js', '7 kB'],
+  ['core', 'dist/index.js', '8 kB'],
   ['react', 'dist/react/index.js', '2.5 kB'],
   ['next', 'dist/next.js', '2.5 kB'],
   ['vue', 'dist/vue.js', '2.5 kB'],

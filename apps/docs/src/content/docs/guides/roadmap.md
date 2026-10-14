@@ -39,8 +39,9 @@ ports](#website-builders-and-cms) build on.
 ### Svelte, Solid and Angular
 
 The core runs in any browser code, but React and [Vue](/start/vue/) are the
-only bindings. Today, in other frameworks, use `createAnalytics()` and
-`analytics.consent` directly and build the banner state yourself. The planned
+only bindings. Today, in other frameworks, use
+[`createConsentController()`](/start/javascript/) and connect it to the
+framework yourself. The planned
 bindings provide the equivalent of `<AnalyticsProvider>`, `useConsent()` and
 `useConsentController()` for Svelte 5, SolidJS and Angular, and send a page
 view on every navigation with SvelteKit, SolidStart and the Angular Router,

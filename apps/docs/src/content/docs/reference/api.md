@@ -10,7 +10,7 @@ return value and the errors it throws. Options are optional unless marked
 
 | Entry point | Exports |
 |---|---|
-| [`consentlayer`](#consentlayer) | `createAnalytics`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types |
+| [`consentlayer`](#consentlayer) | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, storage adapters, core types |
 | [`consentlayer/react`](#consentlayerreact) | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript` |
 | [`consentlayer/next`](#consentlayernext) | `AnalyticsProvider` for Next.js |
 | [`consentlayer/vue`](#consentlayervue) | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController` |
@@ -254,6 +254,32 @@ provider's `identify` hook.
 
 **Errors.** `setConsent` and `update` reject with a `TypeError` when a category
 is not a boolean, or when `sale_of_data` is present and not a boolean.
+
+### `createConsentController(analytics, options?)`
+
+Holds what `<AnalyticsProvider>` and the Vue plugin hold, for code without a
+framework binding: it bootstraps consent, schedules boot, sends page views and
+keeps the state of a consent banner and settings dialog. See
+[JavaScript and Astro](/start/javascript/).
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `boot` | `LazyBootConfig` | `{ mode: 'immediate' }` | As on [`<AnalyticsProvider>`](#analyticsprovider). |
+| `autoShowBanner` | `boolean` | `true` | As on `<AnalyticsProvider>`. |
+| `openConsentGlobalKey` | `string` | `names.openConsentGlobalKey`, plus `ACM_openConsent` with `names.legacy` | As on `<AnalyticsProvider>`. Set by `start()`. |
+
+It returns a `ConsentController`:
+
+| Field | Type | Description |
+|---|---|---|
+| `start` | `() => () => void` | Bootstraps consent, schedules boot and starts sending page views. Returns a function that stops it. |
+| `setRoute` | `(routeKey: string \| null, page?: PageViewPayload) => void` | Sends a page view to each active provider when `routeKey` changes, and to providers that become active later. A change after the first key starts a new page session. `null` holds page views; `page` overrides their `url`, `path` or `title`. |
+| `getSnapshot` | `() => ConsentControllerState` | `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories` and `prefs`, as in [`useConsentController()`](#useconsentcontroller). |
+| `subscribe` | `(listener: () => void) => () => void` | Calls `listener` after each state change. Returns an unsubscribe function. |
+| `actions` | `ConsentControllerActions` | `setPrefs`, `showBanner`, `hideBanner`, `openDialog`, `closeDialog`, `acceptAll`, `rejectNonEssential` and `savePreferences`, as in `useConsentController()`. |
+
+The types `ConsentControllerOptions`, `ConsentControllerState` and
+`ConsentControllerActions` are exported too.
 
 ### `definePlugin(plugin)`
 

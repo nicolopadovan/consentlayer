@@ -79,6 +79,9 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   event shape for `createAnalyticsHandler`.
 
 ### Added
+- `createConsentController(analytics, options?)` is exported from
+  `consentlayer`: what the React provider and the Vue plugin do, without a
+  framework, for plain JavaScript and Astro sites.
 - `debug` logs every page view and event each provider receives, provider
   lifecycle and `boot`, alongside consent changes and errors, and says when a
   call reaches no provider, is held until boot or is dropped by `enabled`. An object form,

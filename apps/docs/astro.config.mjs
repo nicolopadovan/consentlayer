@@ -19,7 +19,7 @@ export default defineConfig({
       },
       customCss: ['./src/styles/custom.css'],
       sidebar: [
-        { label: 'Getting started', items: [{ label: 'Introduction', link: '/' }, 'start/installation', 'start/react', 'start/nextjs', 'start/vue', 'playground'] },
+        { label: 'Getting started', items: [{ label: 'Introduction', link: '/' }, 'start/installation', 'start/react', 'start/nextjs', 'start/vue', 'start/javascript', 'playground'] },
         {
           label: 'Guides',
           items: [
