@@ -114,3 +114,24 @@ example because a content blocker stops it, the stub queues the call and
 bootstrap waits: `ready` stays `false` until the CMP answers.
 
 </details>
+
+## Limitations
+
+- **Choices made in ConsentLayer are overwritten.** The CMP's next update
+  replaces a choice made through ConsentLayer, as described in
+  [The CMP owns the choice](#the-cmp-owns-the-choice).
+- **A CMP that never loads blocks ConsentLayer.** With the CMP's `__tcfapi`
+  stub on the page but the CMP blocked, for example by a content blocker,
+  bootstrap waits and `ready` stays `false`. There is no timeout, because
+  showing ConsentLayer's banner after one would put it on top of the CMP's
+  once the CMP loads.
+- **The denied state from a first visit is stored.** A visitor who leaves
+  while the CMP shows its interface has every category denied in
+  ConsentLayer's storage. If you later remove the adapter, ConsentLayer reads
+  that stored choice and does not show its banner to those visitors until
+  the choice becomes stale. Change
+  [`policyVersion`](/guides/consent-ui/#asking-again) when you remove the
+  adapter, so every visitor is asked again.
+- **Tested against the specification, not against named CMPs.** The adapter
+  is tested with a simulated `__tcfapi` that follows the IAB CMP API v2, not
+  with Usercentrics, OneTrust, Didomi or another CMP.

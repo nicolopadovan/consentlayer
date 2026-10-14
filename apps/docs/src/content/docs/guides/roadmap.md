@@ -54,6 +54,17 @@ These are limits of the current release that are not tracked as planned work
 above.
 
 <details>
+<summary>Global Privacy Control and IAB TCF are tested against their specifications</summary>
+
+Global Privacy Control is tested with a simulated
+`navigator.globalPrivacyControl`, not in a browser that sends the signal
+itself. The [IAB TCF adapter](/guides/providers/tcf/) is tested with a
+simulated `__tcfapi`, not with a named CMP; its page lists its other
+[limitations](/guides/providers/tcf/#limitations).
+
+</details>
+
+<details>
 <summary>Consent Mode defaults are set when the instance boots</summary>
 
 `ga4()` sets the Consent Mode defaults in its `setup` hook, which runs at

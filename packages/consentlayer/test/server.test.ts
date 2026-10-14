@@ -95,21 +95,15 @@ describe('server destinations', () => {
     expect(fetchImpl).not.toHaveBeenCalled()
   })
 
-  it('drops marketing destinations for a request with Sec-GPC: 1', async () => {
+  it('follows the event consent for a request with Sec-GPC: 1', async () => {
     const fetchImpl = okFetch()
-    const analytics = { id: 'own', requiredConsent: 'analytics' as const, forwardBrowserEvents: true as const, send: vi.fn() }
     const POST = createAnalyticsHandler({
-      destinations: [
-        metaCapi({ pixelId: '123456789012345', accessToken: 'token', fetchImpl }),
-        tiktokEvents({ pixelId: 'PIXEL', accessToken: 'token', fetchImpl }),
-        analytics,
-      ],
+      destinations: [metaCapi({ pixelId: '123456789012345', accessToken: 'token', fetchImpl })],
     })
-    expect((await POST(post({ name: 'lead', consent: granted }, { 'sec-gpc': '1' }))).status).toBe(204)
+    await POST(post({ name: 'lead', consent: { ...granted, marketing: false } }, { 'sec-gpc': '1' }))
     expect(fetchImpl).not.toHaveBeenCalled()
-    expect(analytics.send).toHaveBeenCalledTimes(1)
-    await POST(post({ name: 'lead', consent: granted }))
-    expect(fetchImpl).toHaveBeenCalledTimes(2)
+    await POST(post({ name: 'lead', consent: granted }, { 'sec-gpc': '1' }))
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
   })
 
   it('never forwards browser events to server-only destinations', async () => {

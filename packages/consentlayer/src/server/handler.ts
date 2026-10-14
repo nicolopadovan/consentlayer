@@ -110,7 +110,6 @@ export function createAnalyticsHandler(options: {
       if (options.consentCookie) {
         event.consent = proof?.consent ?? { preferences: false, analytics: false, marketing: false }
       }
-      if (request.headers.get('sec-gpc') === '1') event.consent = { ...event.consent, marketing: false }
       const results = await sendServerEvent(event, {
         destinations,
         request: requestInfo(request),

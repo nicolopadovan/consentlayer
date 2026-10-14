@@ -91,8 +91,6 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   wins. `consent.gpc: false` ignores the signal. `analytics.consent.gpc` and
   the consent controller's `gpc` (in every framework binding) say whether it
   is honored, and the script-tag banner shows a `gpc` text line.
-  `createAnalyticsHandler` treats a request with `Sec-GPC: 1` as denying
-  marketing, so `metaCapi()` and `tiktokEvents()` drop it.
 - `createTcfAdapter()` from `consentlayer/providers/tcf` reads the visitor's
   choice from an IAB TCF v2 CMP through `__tcfapi` and follows its updates.
   TCF purposes map to categories (overridable with `purposes`); only consent
