@@ -63,6 +63,10 @@
       "types": "./dist/auto-tracking.d.ts",
       "import": "./dist/auto-tracking.js"
     },
+    "./banner": {
+      "types": "./dist/banner.d.ts",
+      "import": "./dist/banner.js"
+    },
     "./ecommerce": {
       "types": "./dist/ecommerce.d.ts",
       "import": "./dist/ecommerce.js"
@@ -191,6 +195,7 @@
     "build": "tsup --config tsup.config.ts && mkdir -p dist/svelte && cp src/svelte/MetaPixelNoscript.svelte src/svelte/GtmNoscript.svelte dist/svelte/",
     "lint": "eslint src test --max-warnings 0",
     "test": "vitest run --config vitest.config.ts",
+    "test:browser": "vitest run --config vitest.browser.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/types/tsconfig.json --noEmit",
     "check:package": "publint && attw --pack . --profile esm-only && size-limit && es-check checkBrowser --module --checkBrowser 'dist/**/*.js' --not dist/server,dist/nuxt,dist/sentry/server.js,dist/sentry/next.js"
   },
@@ -265,9 +270,11 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitest/browser-playwright": "5.0.4",
     "es-check": "^9.8.1",
     "next": "16.4.0",
     "nuxt": "^4.6.1",
+    "playwright": "^1.64.1",
     "posthog-js": "^1.438.9",
     "publint": "^0.3.25",
     "react": "^19.3.0",

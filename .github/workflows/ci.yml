@@ -22,6 +22,8 @@ jobs:
       - run: pnpm format:check
       - run: pnpm knip
       - run: pnpm turbo run typecheck lint test build
+      - run: pnpm --filter consentlayer exec playwright install --with-deps chromium-headless-shell
+      - run: pnpm --filter consentlayer test:browser
       - run: pnpm --filter consentlayer check:package
 
   min-versions:

@@ -15,3 +15,4 @@ coverage
 .playwright-cli
 .DS_Store
 .angular
+.vitest

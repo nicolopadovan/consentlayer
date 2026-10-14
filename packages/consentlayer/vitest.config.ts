@@ -16,6 +16,7 @@ export default defineConfig({
   test: {
     ...rootConfig.test,
     include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],
+    exclude: ['test/browser/**'],
     server: { deps: { inline: [/solid-js/, /@solidjs\/router/] } },
   },
 })

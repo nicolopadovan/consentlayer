@@ -30,6 +30,8 @@ from. Each ships in its own minor release, in order of priority:
 | [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027    |
 | [The other planned providers](#more-providers)                                    | Medium   | Q2 2027       |
 | [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027       |
+| [Detailed settings dialog](#detailed-settings-dialog)                             | Medium   | Q2 2027       |
+| [Rich banner text](#rich-banner-text)                                             | Low      | Q2 2027       |
 | [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027       |
 | [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027       |
 | [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027       |
@@ -171,6 +173,33 @@ answer the IAB's Global Privacy Platform (GPP) API for US and other
 regional frameworks. Each site that uses it must be covered by a CMP
 registered with IAB Europe, which charges a fee and reviews the banner, so
 this comes last.
+
+### Detailed settings dialog
+
+The settings dialog has one switch per category. The planned dialog adds, under
+each category, an expandable list of the providers it covers, with each
+provider's name, purpose and link to its privacy policy, taken from the
+providers you configured. It then adds a switch per provider, so a visitor
+can allow Google Analytics but not Hotjar, for example. Choices per provider
+need a change to the consent state, which today stores one flag per category,
+and to how providers check their consent requirement.
+
+### Rich banner text
+
+Banner text supports `[label](url)` links, `**bold**` and the
+`{privacyPolicy}`, `{cookiePolicy}` and `{terms}` placeholders. Two further
+forms are planned for content those do not cover:
+
+- **DOM nodes.** Each text option also accepts a `Node`, such as a
+  `DocumentFragment` you build, which the banner inserts as it is. This is
+  available from JavaScript only, since a script tag's `data-` attributes hold
+  strings.
+- **Trusted HTML.** Each text option also accepts `{ html: '…' }`, and the
+  script tag a `data-text-*-html` attribute. The banner inserts the HTML
+  without sanitizing it, so it must come from your own code and never from
+  visitors, a CMS that others edit, or another untrusted source. The explicit
+  `html` wrapper keeps that choice visible where the text is written. Where
+  the page enforces Trusted Types, the value must be a `TrustedHTML` object.
 
 ## Under consideration
 
