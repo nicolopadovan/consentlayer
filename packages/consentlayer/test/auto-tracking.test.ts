@@ -71,6 +71,28 @@ describe('granular auto-tracking', () => {
     expect(clickEvents[0]?.params.ui_target).toBe('checkout')
   })
 
+  it('labels a click only from the tracking attribute or aria-label, never from page text', async () => {
+    const events: CollectedEvent[] = []
+    const manager = setupManager(events)
+    await boot(manager)
+
+    const labels = [['aria-label', 'Close'], ['name', 'email'], []].map((attributes) => {
+      const button = document.createElement('button')
+      const [name, value] = attributes
+      if (name && value) button.setAttribute(name, value)
+      button.textContent = 'jane@example.com'
+      document.body.appendChild(button)
+      return button
+    })
+
+    manager.enableAutoTracking({ clicks: true })
+    labels.forEach((button) => button.click())
+
+    const clickEvents = events.filter((e) => e.name === 'consentlayer.ui_click')
+    expect(clickEvents.map((e) => e.params.ui_target)).toEqual(['Close', 'unknown', 'unknown'])
+    labels.forEach((button) => button.remove())
+  })
+
   it('honors a custom attribute name in attribute mode', async () => {
     const events: CollectedEvent[] = []
     const manager = setupManager(events)

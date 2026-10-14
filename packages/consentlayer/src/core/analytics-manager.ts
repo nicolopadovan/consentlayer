@@ -656,12 +656,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
             if (closest instanceof HTMLElement) element = closest
           }
           if (!element) return
-          const name =
-            element.getAttribute(clicks.attribute) ||
-            element.getAttribute('aria-label') ||
-            element.getAttribute('name') ||
-            element.textContent?.trim()?.slice(0, 80) ||
-            'unknown'
+          const name = element.getAttribute(clicks.attribute) || element.getAttribute('aria-label') || 'unknown'
           void autoTrack(getNames().autoTrackingEvents.uiClick, {
             ui_target: name,
             ui_element: element.tagName.toLowerCase(),

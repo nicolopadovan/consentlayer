@@ -73,8 +73,8 @@ sends clicks alone, while `{ scroll: false }` keeps every kind but scroll.
 | `timeOnPage` | `{ intervals: [5, 15, 30, 60, 120] }`      | `consentlayer.time_on_page`, after each interval in seconds                                                                | `seconds`, `session_id`                                  |
 
 With `clicks: { mode: 'attribute' }`, only elements carrying the attribute
-are tracked. `ui_target` is the first non-empty value of the attribute,
-`aria-label`, `name` and the first 80 characters of the element's text. The
+are tracked. `ui_target` is the first non-empty value of the attribute and
+`aria-label`, never the element's text. The
 event names derive from [`names.prefix`](/guides/names/).
 
 </details>

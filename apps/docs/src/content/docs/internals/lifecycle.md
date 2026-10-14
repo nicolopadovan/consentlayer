@@ -343,8 +343,8 @@ attached to every auto-tracked event.
 <summary>Click names and scroll thresholds</summary>
 
 A click's `ui_target` is the first non-empty value of: the tracking
-attribute, `aria-label`, `name`, the first 80 characters of the element's
-trimmed text, or `'unknown'`. The event also carries `ui_element` (the
+attribute, `aria-label`, or `'unknown'`. The element's text is never sent,
+since it can hold what the visitor typed or sees about themselves. The event also carries `ui_element` (the
 lowercase tag name), `ui_id`, `path` (`location.pathname`) and `session_id`.
 
 The 100 percent threshold fires from 95 percent, because scroll positions
