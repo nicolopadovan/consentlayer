@@ -141,7 +141,7 @@ follows the event's consent, which already reflects the signal. In the
 browser, "Accept all" leaves `marketing` denied while the signal is on, so the
 event's `marketing` is `true` only when the visitor switched it on
 explicitly, chose before the signal was on, or chose in a consent adapter
-such as a [TCF CMP](/guides/providers/tcf/). Those choices win on the
+such as a [TCF CMP](/guides/adapters/tcf/). Those choices win on the
 [browser side](/guides/consent-ui/#global-privacy-control), and the server
 matches it. A client other than ConsentLayer that posts events must apply the
 signal to the consent it sends.

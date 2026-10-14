@@ -9,6 +9,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating-to-v1/).
 
 ### Breaking
+- Consent adapters have their own entry points, `consentlayer/adapters/*`:
+  the Shopify Customer Privacy adapter moved from `consentlayer/providers/shopify`.
+  The script tag takes adapters under `adapters`, next to `providers`.
 - `tiktok()` takes `{ pixelId, loadBeforeConsent? }` and loads the TikTok
   pixel itself. The consent-only mode, which forwarded
   `ttq('consent', …)` to a `ttq` the app loaded, is removed; drop your own
@@ -91,11 +94,11 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   wins. `consent.gpc: false` ignores the signal. `analytics.consent.gpc` and
   the consent controller's `gpc` (in every framework binding) say whether it
   is honored, and the script-tag banner shows a `gpc` text line.
-- `createTcfAdapter()` from `consentlayer/providers/tcf` reads the visitor's
+- `createTcfAdapter()` from `consentlayer/adapters/tcf` reads the visitor's
   choice from an IAB TCF v2 CMP through `__tcfapi` and follows its updates.
   TCF purposes map to categories (overridable with `purposes`); only consent
   counts, not legitimate interest. Read-only. Returns no choice without a CMP
-  or when GDPR does not apply. The script tag takes it as `tcf` or `data-tcf`.
+  or when GDPR does not apply. The script tag takes it as `adapters: { tcf: {} }` or `data-tcf`.
 - `tiktok({ pixelId })` loads the TikTok pixel after marketing consent, with
   TikTok's consent mode (`holdConsent`, `grantConsent`, `revokeConsent`), and
   sends page views, events with `event_id` and advanced matching through
@@ -153,11 +156,18 @@ Breaking. See [Migrating to v1](https://consentlayer.vercel.app/guides/migrating
   made under another major `policyVersion` (`'3.x'` to `'4.0'`).
   `onStale: 'discard'` (default) treats it as no choice; `'keep'` keeps it in force while the banner is shown.
   `analytics.consent.isStale()` reports it.
-- `ga4({ consentMode })`: `mode: 'advanced'` configures the tag at boot so
-  Google receives cookieless pings while consent is denied; `regions` sets
-  defaults per ISO 3166-2 region in ConsentLayer categories; `waitForUpdate`,
-  `urlPassthrough` and `adsDataRedaction` map to Google's settings. The
-  Consent Mode update is no longer sent before the visitor's first choice.
+- `ga4({ consentMode: 'advanced' })` configures the tag at boot so Google
+  receives cookieless pings while consent is denied. The Consent Mode update
+  is no longer sent before the visitor's first choice.
+- `googleConsentMode()` from `consentlayer/adapters/google-consent-mode`, a
+  consent adapter that sends Consent Mode v2 signals to every Google tag, with
+  or without `ga4()`: `regions` sets defaults per ISO 3166-2 region in
+  ConsentLayer categories; `waitForUpdate`, `urlPassthrough` and
+  `adsDataRedaction` map to Google's settings. With it, `ga4()` leaves Consent
+  Mode to the adapter. The script tag takes it as
+  `adapters: { googleConsentMode }` or `data-google-consent-mode`.
+- `ConsentIntegrationAdapter.observe(consent)` runs when the engine is created
+  and after every consent change, whatever its source.
 - A lost consent cookie is restored: `createAnalyticsHandler({ consentCookie })`
   answers `consentlayer-consent: missing` when the cookie is missing or
   invalid, and the browser posts its stored choice to `server.consentEndpoint`

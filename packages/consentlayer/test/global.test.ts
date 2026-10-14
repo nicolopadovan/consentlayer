@@ -52,6 +52,7 @@ describe('readConfig', () => {
       sentryReplay: 'false',
       vercel: '',
       tcf: '',
+      googleConsentMode: '',
       autoTracking: '',
       debug: 'false',
     })
@@ -66,8 +67,8 @@ describe('readConfig', () => {
         posthog: { apiKey: 'phc_1', apiHost: 'https://eu.i.posthog.com', recording: true },
         sentry: { dsn: 'https://k@o1.ingest.sentry.io/1', replay: false },
         vercel: {},
-        tcf: {},
       },
+      adapters: { tcf: {}, googleConsentMode: {} },
     })
   })
 })
@@ -75,9 +76,10 @@ describe('readConfig', () => {
 describe('createGlobal', () => {
   it('warns about an unknown provider and returns the instance with its controller', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    const global = createGlobal({ providers: { nope: {} } })
+    const global = createGlobal({ providers: { nope: {} }, adapters: { nah: {} } })
     await settle()
     expect(warn).toHaveBeenCalledWith('[consentlayer] Unknown provider "nope".')
+    expect(warn).toHaveBeenCalledWith('[consentlayer] Unknown adapter "nah".')
     expect(global.controller.getSnapshot().ready).toBe(true)
     expect(typeof global.track).toBe('function')
     global.destroy()

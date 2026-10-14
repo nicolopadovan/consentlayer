@@ -11,7 +11,7 @@ v2 and is already on the page. It talks to the CMP through the standard
 onto ConsentLayer's categories, and follows every change the CMP reports.
 
 ```ts
-import { createTcfAdapter } from 'consentlayer/providers/tcf'
+import { createTcfAdapter } from 'consentlayer/adapters/tcf'
 
 createAnalytics({
   providers,

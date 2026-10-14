@@ -99,14 +99,6 @@
       "types": "./dist/providers/ga4.d.ts",
       "import": "./dist/providers/ga4.js"
     },
-    "./providers/shopify": {
-      "types": "./dist/providers/shopify.d.ts",
-      "import": "./dist/providers/shopify.js"
-    },
-    "./providers/tcf": {
-      "types": "./dist/providers/tcf.d.ts",
-      "import": "./dist/providers/tcf.js"
-    },
     "./providers/contentsquare": {
       "types": "./dist/providers/contentsquare.d.ts",
       "import": "./dist/providers/contentsquare.js"
@@ -130,6 +122,18 @@
     "./providers/tiktok": {
       "types": "./dist/providers/tiktok.d.ts",
       "import": "./dist/providers/tiktok.js"
+    },
+    "./adapters/google-consent-mode": {
+      "types": "./dist/adapters/google-consent-mode.d.ts",
+      "import": "./dist/adapters/google-consent-mode.js"
+    },
+    "./adapters/shopify": {
+      "types": "./dist/adapters/shopify.d.ts",
+      "import": "./dist/adapters/shopify.js"
+    },
+    "./adapters/tcf": {
+      "types": "./dist/adapters/tcf.d.ts",
+      "import": "./dist/adapters/tcf.js"
     },
     "./server": {
       "types": "./dist/server/index.d.ts",

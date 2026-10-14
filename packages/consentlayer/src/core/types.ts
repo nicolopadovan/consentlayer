@@ -78,6 +78,8 @@ export interface ConsentIntegrationAdapter {
   subscribe?(
     onConsent: (consent: ConsentState) => void,
   ): (() => void) | void
+  /** Runs when the engine is created and after every consent change, whatever its source. */
+  observe?(consent: ConsentState | null): void
 }
 
 export type ConsentEngineOptions = {

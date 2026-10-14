@@ -9,9 +9,9 @@ before consent, reverse proxies and error reporting. Each provider's options
 and exact behaviour are on its own page.
 
 A provider is a plugin that connects one vendor to the instance. Browser
-providers are passed to `createAnalytics({ providers })`. Consent sources,
-such as Shopify Customer Privacy and IAB TCF, are adapters and are passed to
-`createAnalytics({ consent: { adapters } })` instead.
+providers are passed to `createAnalytics({ providers })`. Other consent
+systems, such as IAB TCF, Shopify Customer Privacy and Google Consent Mode,
+are [consent adapters](/guides/adapters/) instead.
 
 ## Available providers
 
@@ -28,8 +28,6 @@ Each provider is a named export of its own entry point,
 | [Vercel Analytics](/guides/providers/vercel/) | `vercel()` from `consentlayer/providers/vercel` | `'none'` | `trackEvent` |
 | [TikTok Pixel](/guides/providers/tiktok/) | `tiktok()` from `consentlayer/providers/tiktok` | `marketing` | `pixelId` |
 | [Hotjar (deprecated)](/guides/providers/hotjar/) | `hotjar()` from `consentlayer/providers/hotjar` | `analytics` | `siteId`, `version` |
-| [Shopify Customer Privacy](/guides/providers/shopify/) | `createShopifyCustomerPrivacyAdapter()` from `consentlayer/providers/shopify` | Consent source | None |
-| [IAB TCF](/guides/providers/tcf/) | `createTcfAdapter()` from `consentlayer/providers/tcf` | Consent source, read-only | None |
 
 The ID options of GA4, Meta, TikTok, PostHog, Sentry, Contentsquare and Hotjar may be
 `undefined` or empty: the provider is then turned off, and with `debug: true`

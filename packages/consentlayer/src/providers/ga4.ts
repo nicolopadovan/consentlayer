@@ -1,4 +1,5 @@
-import type { ConsentState, UserIdentity } from '../core/types'
+import { consentModeSignals, ensureGtag } from '../adapters/google-consent-mode'
+import type { UserIdentity } from '../core/types'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { assertValidGa4MeasurementId } from '../core/validation'
 
@@ -21,43 +22,16 @@ export type Ga4Options = {
   consentMode?: Ga4ConsentMode
 }
 
-type Ga4ConsentSettings = {
-  /** Milliseconds gtag waits for a consent update before sending. */
-  waitForUpdate?: number
-  /** Pass ad click IDs through URLs while `ad_storage` is denied. */
-  urlPassthrough?: boolean
-  /** Redact ad click data while `ad_storage` is denied. */
-  adsDataRedaction?: boolean
-}
-
-/** Categories that count as granted before a choice in the listed ISO 3166-2 regions, e.g. `'US'` or `'US-CA'`. */
-export type Ga4RegionDefault = { region: string[] } & Partial<
-  Record<'preferences' | 'analytics' | 'marketing', boolean>
->
-
 /**
  * `'basic'` (default): the tag is configured once analytics is granted.
  * `'advanced'`: the tag loads and is configured at boot, so Google receives
- * cookieless pings while consent is denied; `regions` sets defaults per region.
+ * cookieless pings while consent is denied.
  */
-export type Ga4ConsentMode =
-  | (Ga4ConsentSettings & { mode?: 'basic'; regions?: never })
-  | (Ga4ConsentSettings & { mode: 'advanced'; regions?: Ga4RegionDefault[] })
+export type Ga4ConsentMode = 'basic' | 'advanced'
 
 const GA4_EVENT_NAMES: Record<string, string> = {
   lead: 'generate_lead',
 }
-
-const signals = (consent: Partial<Pick<ConsentState, 'preferences' | 'analytics' | 'marketing'>> | null) => ({
-  ad_user_data: consent?.marketing ? 'granted' : 'denied',
-  ad_personalization: consent?.marketing ? 'granted' : 'denied',
-  ad_storage: consent?.marketing ? 'granted' : 'denied',
-  analytics_storage: consent?.analytics ? 'granted' : 'denied',
-  functionality_storage: consent?.preferences ? 'granted' : 'denied',
-  security_storage: 'granted',
-})
-
-const REGION = /^[A-Z]{2}(-[A-Z0-9]{1,3})?$/
 
 /** GA4 event names allow only letters, digits and underscores. */
 export function ga4EventName(name: string): string {
@@ -76,18 +50,9 @@ export function ga4UserData(identity: UserIdentity): Record<string, string> {
 export function ga4(options: Ga4Options) {
   if (!options.measurementId?.trim()) return skippedPlugin('ga4', 'measurementId')
   const measurementId = assertValidGa4MeasurementId(options.measurementId.trim())
-  const { mode = 'basic', regions = [], waitForUpdate, urlPassthrough, adsDataRedaction } = options.consentMode ?? {}
-  const advanced = mode === 'advanced'
-  if (regions.length && !advanced) throw new Error("[consentlayer] ga4 consentMode.regions needs mode: 'advanced'")
-  for (const { region } of regions) {
-    if (!region.length || !region.every((code) => REGION.test(code))) {
-      throw new Error(`[consentlayer] ga4 consentMode.regions: ${JSON.stringify(region)} is not a list of ISO 3166-2 codes such as 'US' or 'US-CA'`)
-    }
-  }
-  if (waitForUpdate !== undefined && !(Number.isInteger(waitForUpdate) && waitForUpdate >= 0)) {
-    throw new Error(`[consentlayer] ga4 consentMode.waitForUpdate must be a whole number of milliseconds, received ${waitForUpdate}`)
-  }
-  const wait = waitForUpdate === undefined ? {} : { wait_for_update: waitForUpdate }
+  const advanced = options.consentMode === 'advanced'
+  const consentMode = consentModeSignals()
+  let ownConsentMode = false
   const gtag = (...args: unknown[]) => window.gtag?.(...args)
   const configure = () => {
     const configured = setFlag('Ga4Configured', getFlag<Record<string, boolean>>('Ga4Configured') ?? {})
@@ -99,35 +64,21 @@ export function ga4(options: Ga4Options) {
     gtag('set', { user_id: identity.userId ?? null })
     gtag('set', 'user_data', ga4UserData(identity))
   }
-  let updated = false
   return definePlugin({
     id: 'ga4',
     requiredConsent: advanced ? 'none' : 'analytics',
     loadBeforeConsent: advanced || (options.loadBeforeConsent ?? false),
     setup() {
       if (typeof window === 'undefined') return
-      window.dataLayer = window.dataLayer ?? []
-      // gtag.js only executes dataLayer entries that are real `arguments` objects.
-      window.gtag =
-        window.gtag ??
-        function gtag() {
-          // eslint-disable-next-line prefer-rest-params
-          window.dataLayer?.push(arguments)
-        }
-      gtag('consent', 'default', { ...signals(null), ...wait })
-      for (const { region, ...granted } of regions) gtag('consent', 'default', { ...signals(granted), ...wait, region })
-      if (urlPassthrough) gtag('set', 'url_passthrough', true)
-      if (adsDataRedaction) gtag('set', 'ads_data_redaction', true)
+      ownConsentMode = !getFlag('GoogleConsentMode')
+      if (ownConsentMode) consentMode(null)
+      else ensureGtag()
       gtag('js', new Date())
       if (advanced) configure()
     },
     consent({ consent, identity }) {
       if (typeof window === 'undefined') return
-      // Before any choice, the defaults (and their regions) stay in force.
-      if (consent || updated) {
-        gtag('consent', 'update', signals(consent))
-        updated = true
-      }
+      if (ownConsentMode) consentMode(consent)
       if (advanced) applyIdentity(consent?.analytics ? identity : {})
       // In basic mode, configured only after consent, so no cookieless pings are sent before it.
       else if (consent?.analytics) configure()

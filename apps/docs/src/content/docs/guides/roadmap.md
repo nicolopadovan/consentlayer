@@ -41,7 +41,7 @@ commitment either way.
 
 | Feature | Today |
 |---|---|
-| Google Ads | No provider. Only `ga4()` sends Consent Mode commands. |
+| Google Ads | No provider. [`googleConsentMode()`](/guides/adapters/google-consent-mode/) sends it Consent Mode signals, but nothing loads the Google Ads tag or sends conversions. |
 | Microsoft Clarity | No provider. Write one with [`definePlugin()`](/internals/plugins/). |
 | PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys. |
 | A setup CLI, after 1.0 | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed; the other providers load their vendor's script in the browser. |
@@ -58,18 +58,19 @@ above.
 
 Global Privacy Control is tested with a simulated
 `navigator.globalPrivacyControl`, not in a browser that sends the signal
-itself. The [IAB TCF adapter](/guides/providers/tcf/) is tested with a
+itself. The [IAB TCF adapter](/guides/adapters/tcf/) is tested with a
 simulated `__tcfapi`, not with a named CMP; its page lists its other
-[limitations](/guides/providers/tcf/#limitations).
+[limitations](/guides/adapters/tcf/#limitations).
 
 </details>
 
 <details>
 <summary>Consent Mode defaults are set when your bundle runs</summary>
 
-`ga4()` sets the Consent Mode defaults in its `setup` hook, which runs when
-`createAnalytics()` creates the instance in the browser, whatever the
-[`boot`](/start/react/#boot-timing) timing. A Google tag that runs before
+`ga4()` and the
+[Google Consent Mode adapter](/guides/adapters/google-consent-mode/) set the
+Consent Mode defaults when `createAnalytics()` creates the instance in the
+browser, whatever the [`boot`](/start/react/#boot-timing) timing. A Google tag that runs before
 your bundle, such as a Google Tag Manager snippet at the top of `<head>`,
 still runs before the defaults exist. Load such tags after your bundle, or
 set the defaults yourself in an inline script before them.

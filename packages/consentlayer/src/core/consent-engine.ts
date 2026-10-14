@@ -102,6 +102,24 @@ export function createConsentEngine(
   }
 
   for (const adapter of adapters) {
+    if (!adapter.observe) continue
+    const observe = (consent: ConsentState | null) => {
+      try {
+        adapter.observe?.(consent)
+      } catch (cause) {
+        options.onError?.({
+          scope: 'consent-adapter',
+          providerId: adapter.id,
+          message: `Consent adapter "${adapter.id}" failed to observe consent`,
+          cause,
+        })
+      }
+    }
+    observe(current)
+    listeners.add(({ consent }) => observe(consent))
+  }
+
+  for (const adapter of adapters) {
     if (!adapter.subscribe) continue
     const unsubscribe = adapter.subscribe((next) => {
       void commit(normalize({ ...current, ...next }), 'adapter', {

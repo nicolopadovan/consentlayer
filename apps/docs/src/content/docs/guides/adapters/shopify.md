@@ -12,7 +12,7 @@ applied back to the instance. The optional `sale_of_data` flag is passed
 through in both directions.
 
 ```ts
-import { createShopifyCustomerPrivacyAdapter } from 'consentlayer/providers/shopify'
+import { createShopifyCustomerPrivacyAdapter } from 'consentlayer/adapters/shopify'
 
 createAnalytics({
   providers,

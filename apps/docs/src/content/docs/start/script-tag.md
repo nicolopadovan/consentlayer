@@ -36,7 +36,7 @@ jsDelivr shows the `integrity` hash of each file on the package's page.
 The two scripts load in either order, and work with `defer` or `async`. The
 banner waits for the main script and for the document to be parsed.
 
-## 2. Configure the providers
+## 2. Configure the providers and adapters
 
 Configure ConsentLayer in one of two ways: a `window.ConsentLayer` object set
 before the script runs, or `data-` attributes on the script tag.
@@ -57,7 +57,8 @@ before the script runs, or `data-` attributes on the script tag.
 ```
 
 `providers` maps a provider's name to the options of its factory, documented
-on each [provider's page](/guides/providers/). The other
+on each [provider's page](/guides/providers/), and `adapters` does the same
+for [consent adapters](/guides/adapters/). The other
 keys are the options of
 [`createAnalytics()`](/reference/api/#createanalyticsoptions), such as
 `autoTracking`, `debug` and `consent`, and of
@@ -65,7 +66,7 @@ keys are the options of
 `boot`, `autoShowBanner` and `openConsentGlobalKey`. `banner` configures the
 [banner](#3-the-banner).
 
-| Name | Provider | Notes |
+| Name in `providers` | Provider | Notes |
 |---|---|---|
 | `ga4` | `ga4()` | |
 | `meta` | `meta()` | |
@@ -75,11 +76,24 @@ keys are the options of
 | `posthog` | `posthog()` | Loads PostHog from its CDN; see [PostHog and Sentry](#posthog-and-sentry). |
 | `sentry` | `sentry()` | Loads Sentry from its CDN; see [PostHog and Sentry](#posthog-and-sentry). |
 | `vercel` | `vercel()` | `trackEvent` defaults to `window.va`, set by the Vercel Analytics script. |
-| `shopify` | `createShopifyCustomerPrivacyAdapter()` | Added as a consent adapter, not a provider. |
-| `tcf` | `createTcfAdapter()` | Added as a consent adapter, not a provider. See [IAB TCF](#iab-tcf). |
 
-An unknown name logs `[consentlayer] Unknown provider "<name>".` and is
-skipped.
+| Name in `adapters` | Adapter | Notes |
+|---|---|---|
+| `googleConsentMode` | `googleConsentMode()` | |
+| `shopify` | `createShopifyCustomerPrivacyAdapter()` | |
+| `tcf` | `createTcfAdapter()` | See [IAB TCF](#iab-tcf). |
+
+```html
+<script>
+  window.ConsentLayer = {
+    providers: { ga4: { measurementId: 'G-XXXXXXXXXX' } },
+    adapters: { googleConsentMode: { regions: [{ region: ['US'], analytics: true }] } },
+  }
+</script>
+```
+
+An unknown name logs `[consentlayer] Unknown provider "<name>".` or
+`[consentlayer] Unknown adapter "<name>".` and is skipped.
 
 ### With `data-` attributes
 
@@ -107,6 +121,7 @@ skipped.
 | `data-sentry-environment` | `sentry.environment` |
 | `data-sentry-replay` | `sentry.replay` |
 | `data-sentry-tracing` | `sentry.tracing` |
+| `data-google-consent-mode` | The Google Consent Mode adapter, with no options |
 | `data-shopify` | The Shopify Customer Privacy adapter, with no options |
 | `data-tcf` | The IAB TCF adapter, with no options |
 | `data-vercel` | `vercel()`, with no options |
@@ -163,7 +178,7 @@ from a link in your footer. The `openConsentGlobalKey` option renames it.
 
 ### IAB TCF
 
-With `tcf` or `data-tcf`, the [IAB TCF adapter](/guides/providers/tcf/) reads
+With `adapters: { tcf: {} }` or `data-tcf`, the [IAB TCF adapter](/guides/adapters/tcf/) reads
 the choice from the TCF CMP on the page. Keep loading the banner script: the
 banner stays hidden while the CMP reports that GDPR applies, because the
 adapter then always provides a choice, and shows as usual when there is no

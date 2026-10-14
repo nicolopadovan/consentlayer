@@ -4,7 +4,7 @@ import { hotjar } from 'consentlayer/providers/hotjar'
 import { meta } from 'consentlayer/providers/meta'
 import { posthog } from 'consentlayer/providers/posthog'
 import { sentry } from 'consentlayer/providers/sentry'
-import { createShopifyCustomerPrivacyAdapter } from 'consentlayer/providers/shopify'
+import { createShopifyCustomerPrivacyAdapter } from 'consentlayer/adapters/shopify'
 
 export const analytics = createAnalytics({
   providers: [

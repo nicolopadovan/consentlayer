@@ -180,7 +180,7 @@ export const analytics = createAnalytics({ providers, consent: { gpc: false } })
 
 The signal is read once, when `createAnalytics()` runs, and only changes what
 "Accept all" grants. A choice already stored, or one a consent adapter such
-as [Shopify Customer Privacy](/guides/providers/shopify/) supplies at
+as [Shopify Customer Privacy](/guides/adapters/shopify/) supplies at
 bootstrap, was made by the visitor and is kept as it is, `marketing`
 included. The Shopify adapter supplies a choice only when the visitor has
 made one in Shopify.

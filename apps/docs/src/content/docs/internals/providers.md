@@ -57,8 +57,8 @@ the skip in debug mode. Any other value that does not match `G-` followed by 4 t
 | Hook | Behaviour |
 |---|---|
 | Script | `https://www.googletagmanager.com/gtag/js?id=<measurementId>` |
-| `setup` | Creates `window.dataLayer` and `window.gtag` if absent, then calls `gtag('consent', 'default', …)` with every key denied except `security_storage`, then one `default` with `region` per entry of `consentMode.regions`, each with `wait_for_update` when `waitForUpdate` is set. Then `gtag('set', 'url_passthrough', true)` and `gtag('set', 'ads_data_redaction', true)` when enabled, and `gtag('js', new Date())`. In advanced mode, also `config`. |
-| `consent` | `gtag('consent', 'update', …)` mapped as below, skipped while the visitor has never chosen so the defaults stay in force. In basic mode, on the first pass with analytics granted, also `gtag('config', measurementId, { send_page_view: false })`, once per measurement ID per page. In advanced mode, sets `user_id` and `user_data` from the identity while analytics is granted and clears them otherwise. |
+| `setup` | Creates `window.dataLayer` and `window.gtag` if absent. Unless a [`googleConsentMode()`](/internals/consent/#google-consent-mode) adapter set its window flag first, calls `gtag('consent', 'default', …)` with every key denied except `security_storage`. Then `gtag('js', new Date())`, and in advanced mode `config`. |
+| `consent` | Without the adapter, `gtag('consent', 'update', …)` mapped as below, skipped while the visitor has never chosen so the defaults stay in force. In basic mode, on the first pass with analytics granted, also `gtag('config', measurementId, { send_page_view: false })`, once per measurement ID per page. In advanced mode, sets `user_id` and `user_data` from the identity while analytics is granted and clears them otherwise. |
 | `load` | Injects gtag.js. A failed load is reported with scope `provider-script-load`. |
 | `page` | `gtag('event', 'page_view', { page_location, page_path, page_title })` |
 | `track` | `gtag('event', ga4EventName(name), { ...params, ...providers.ga4 })` |

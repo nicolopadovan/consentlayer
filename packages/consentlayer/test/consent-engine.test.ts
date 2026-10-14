@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import { createConsentEngine } from '../src/core/consent-engine'
 import { createMemoryConsentStorage } from '../src/core/storage'
-import { createShopifyCustomerPrivacyAdapter, getShopifyCustomerPrivacyScriptUrl } from '../src/providers/shopify'
+import { createShopifyCustomerPrivacyAdapter, getShopifyCustomerPrivacyScriptUrl } from '../src/adapters/shopify'
 
 describe('consent engine', () => {
   it('prefers stored consent over adapter bootstrap', async () => {
@@ -32,6 +32,29 @@ describe('consent engine', () => {
       analytics: true,
       marketing: false,
     })
+  })
+
+  it('shows observers the consent at creation and after every change, whatever its source', async () => {
+    const stored = { preferences: true, analytics: true, marketing: false }
+    const fromTab = { preferences: false, analytics: true, marketing: false }
+    const storage = createMemoryConsentStorage(stored)
+    const observe = vi.fn()
+    const onError = vi.fn()
+    const engine = createConsentEngine({
+      storage,
+      adapters: [
+        { id: 'observer', observe },
+        { id: 'broken', observe: () => { throw new Error('boom') } },
+      ],
+      onError,
+    })
+    expect(observe.mock.calls).toEqual([[null]])
+    await engine.bootstrap()
+    storage.write({ consent: fromTab })
+    await Promise.resolve()
+    await engine.setConsent({ ...fromTab, marketing: true })
+    expect(observe.mock.calls.slice(1)).toEqual([[stored], [fromTab], [{ ...fromTab, marketing: true }]])
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'consent-adapter', providerId: 'broken' }))
   })
 
   it('reacts to storage-driven updates', async () => {

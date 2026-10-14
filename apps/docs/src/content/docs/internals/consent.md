@@ -123,8 +123,9 @@ order:
    **write** it to the storage adapter.
 3. **Broadcast** it as a DOM event and a window global (see
    [Broadcast](#broadcast)).
-4. **Notify** subscribers synchronously. The analytics manager is one of them:
-   it starts `updateConsent` without awaiting it, so providers begin reacting
+4. **Notify** subscribers synchronously. The analytics manager and every
+   adapter's `observe` are among them. The analytics manager
+   starts `updateConsent` without awaiting it, so providers begin reacting
    before step 5.
 5. **Apply** it to every adapter that has an `apply` method, except the
    adapter the change came from, in parallel. `commit` awaits all of them.
@@ -190,6 +191,7 @@ interface ConsentIntegrationAdapter {
   bootstrap?(): Promise<ConsentState | null> | ConsentState | null
   apply?(consent: ConsentState): Promise<void> | void
   subscribe?(onConsent: (consent: ConsentState) => void): (() => void) | void
+  observe?(consent: ConsentState | null): void
 }
 ```
 
@@ -198,8 +200,12 @@ interface ConsentIntegrationAdapter {
 | `bootstrap` | During bootstrap, only if storage holds no value and no earlier adapter returned one | Read a choice the external platform already has |
 | `apply` | After every committed change except those from storage, bootstrap, or this adapter's own `subscribe` | Push the choice to the external platform |
 | `subscribe` | Once, when the engine is created | Receive choices made in the external platform |
+| `observe` | Once when the engine is created, with the current consent (`null` before a choice), then on every notify, whatever the change's source | Mirror the choice somewhere that has no consent of its own, such as Google's Consent Mode signals |
 
 Pass adapters with `createAnalytics({ consent: { adapters: [...] } })`.
+An `observe` that throws is reported to `onError` with scope
+`consent-adapter` and the message
+`Consent adapter "<id>" failed to observe consent`.
 `destroy()` calls every cleanup function returned by `subscribe`. A value from
 `subscribe` is merged over the current consent before it is normalised, so
 categories the external platform does not know, such as your own or
@@ -213,7 +219,7 @@ is reported with scope `consent-adapter`. See
 
 ### Shopify Customer Privacy
 
-`createShopifyCustomerPrivacyAdapter()` from `consentlayer/providers/shopify`
+`createShopifyCustomerPrivacyAdapter()` from `consentlayer/adapters/shopify`
 keeps Shopify's consent state and ConsentLayer's in step. Its adapter ID is
 `shopify-customer-privacy`.
 
@@ -236,14 +242,25 @@ occurs.
 
 ### IAB TCF
 
-`createTcfAdapter()` from `consentlayer/providers/tcf` reads consent from the
+`createTcfAdapter()` from `consentlayer/adapters/tcf` reads consent from the
 IAB TCF v2 CMP on the page. Its adapter ID is `tcf`.
 
 | Part | Behaviour |
 |---|---|
-| `bootstrap` | Returns `null` if `window.__tcfapi` is missing. Otherwise calls `__tcfapi('addEventListener', 2, callback)`, takes the first callback, removes the listener with `removeEventListener` and its `listenerId`, and returns `null` unless the call succeeded and `gdprApplies` is `true`. Otherwise maps `purpose.consents` as in the [mapping table](/guides/providers/tcf/#purposes-and-categories), including while the CMP shows its interface (`eventStatus: 'cmpuishown'`), when no purpose has consent yet. |
+| `bootstrap` | Returns `null` if `window.__tcfapi` is missing. Otherwise calls `__tcfapi('addEventListener', 2, callback)`, takes the first callback, removes the listener with `removeEventListener` and its `listenerId`, and returns `null` unless the call succeeded and `gdprApplies` is `true`. Otherwise maps `purpose.consents` as in the [mapping table](/guides/adapters/tcf/#purposes-and-categories), including while the CMP shows its interface (`eventStatus: 'cmpuishown'`), when no purpose has consent yet. |
 | `apply` | None. TCF has no command for writing consent back to the CMP. |
 | `subscribe` | Adds a listener the same way and maps every callback with `gdprApplies: true`; the others are ignored. The returned function removes the listener, or removes it as soon as the CMP reports its `listenerId` if that has not happened yet. |
+
+### Google Consent Mode
+
+`googleConsentMode()` from `consentlayer/adapters/google-consent-mode` sends
+the choice to Google tags. Its adapter ID is `google-consent-mode`, and it has
+only `observe`.
+
+| Call | Behaviour |
+|---|---|
+| First | Creates `window.dataLayer` and `window.gtag` if absent and sets the `__consentlayerGoogleConsentMode` window flag, which tells `ga4()` to skip its own Consent Mode calls. Calls `gtag('consent', 'default', …)` with every signal denied except `security_storage`, then one `default` per `regions` entry, then the `url_passthrough` and `ads_data_redaction` settings that are on. If the consent is not `null`, continues as below. |
+| Later | Calls `gtag('consent', 'update', …)` with the [signal mapping](/guides/adapters/google-consent-mode/#signals). While consent is `null` and no update was sent yet, nothing is sent, so the defaults stay in force. |
 
 ## Identity storage
 

@@ -1,14 +1,15 @@
+import { googleConsentMode } from '../adapters/google-consent-mode'
+import { createShopifyCustomerPrivacyAdapter } from '../adapters/shopify'
+import { createTcfAdapter } from '../adapters/tcf'
 import { createAnalytics, type AnalyticsOptions } from '../core/create-analytics'
 import { createConsentController, type ConsentControllerOptions } from '../core/consent-controller'
-import type { AnalyticsPlugin } from '../core/types'
+import type { AnalyticsPlugin, ConsentIntegrationAdapter } from '../core/types'
 import { contentsquare } from '../providers/contentsquare'
 import { ga4 } from '../providers/ga4'
 import { hotjar } from '../providers/hotjar'
 import { meta } from '../providers/meta'
 import { posthog } from '../providers/posthog'
 import { sentry } from '../providers/sentry'
-import { createShopifyCustomerPrivacyAdapter } from '../providers/shopify'
-import { createTcfAdapter } from '../providers/tcf'
 import { tiktok } from '../providers/tiktok'
 import { vercel } from '../providers/vercel'
 import type { BannerConfig } from './banner'
@@ -21,9 +22,12 @@ declare global {
   }
 }
 
-/** `window.ConsentLayer` before the script loads: `createAnalytics()` options, with `providers` keyed by provider name. */
+/** `window.ConsentLayer` before the script loads: `createAnalytics()` options, with `providers` and `adapters` keyed by name. */
 export type GlobalConfig = Omit<AnalyticsOptions, 'providers'> &
-  ConsentControllerOptions & { providers?: Record<string, Record<string, unknown>> }
+  ConsentControllerOptions & {
+    providers?: Record<string, Record<string, unknown>>
+    adapters?: Record<string, Record<string, unknown>>
+  }
 
 const factories: Record<string, (options: never) => AnalyticsPlugin> = {
   ga4,
@@ -34,6 +38,12 @@ const factories: Record<string, (options: never) => AnalyticsPlugin> = {
   posthog,
   sentry,
   vercel: (options: object) => vercel({ trackEvent: (name, data) => window.va?.('event', { name, data }), ...options }),
+}
+
+const adapterFactories: Record<string, (options: never) => ConsentIntegrationAdapter> = {
+  googleConsentMode,
+  shopify: createShopifyCustomerPrivacyAdapter,
+  tcf: createTcfAdapter,
 }
 
 const attributes: Record<string, [provider: string, option?: string, flag?: boolean]> = {
@@ -50,8 +60,6 @@ const attributes: Record<string, [provider: string, option?: string, flag?: bool
   sentryEnvironment: ['sentry', 'environment'],
   sentryReplay: ['sentry', 'replay', true],
   sentryTracing: ['sentry', 'tracing', true],
-  shopify: ['shopify'],
-  tcf: ['tcf'],
   vercel: ['vercel'],
 }
 
@@ -61,12 +69,15 @@ const flag = (value: string) => value !== 'false'
 export function readConfig(global: GlobalConfig | undefined, script: HTMLOrSVGScriptElement | null): GlobalConfig {
   const config: GlobalConfig = { ...global }
   const providers: Record<string, Record<string, unknown>> = {}
+  const adapters: Record<string, Record<string, unknown>> = {}
   for (const [name, options] of Object.entries(global?.providers ?? {})) providers[name] = { ...options }
+  for (const [name, options] of Object.entries(global?.adapters ?? {})) adapters[name] = { ...options }
   const dataset = script instanceof HTMLScriptElement ? script.dataset : {}
   for (const [key, value] of Object.entries(dataset)) {
     if (value === undefined) continue
     if (key === 'autoTracking') config.autoTracking = flag(value)
     else if (key === 'debug') config.debug = flag(value)
+    else if (adapterFactories[key]) adapters[key] ??= {}
     else if (attributes[key]) {
       const [provider, option, isFlag] = attributes[key]
       providers[provider] ??= {}
@@ -74,19 +85,22 @@ export function readConfig(global: GlobalConfig | undefined, script: HTMLOrSVGSc
     }
   }
   config.providers = providers
+  if (Object.keys(adapters).length) config.adapters = adapters
   return config
 }
 
 /** Creates the instance and its consent controller from a `GlobalConfig`, starts them and sends a page view per URL. */
 export function createGlobal(config: GlobalConfig) {
-  const { providers = {}, boot, autoShowBanner, openConsentGlobalKey, ...options } = config
+  const { providers = {}, adapters: adapterOptions = {}, boot, autoShowBanner, openConsentGlobalKey, ...options } = config
   const plugins: AnalyticsPlugin[] = []
   const adapters = [...(options.consent?.adapters ?? [])]
   for (const [name, providerOptions] of Object.entries(providers)) {
-    if (name === 'shopify') adapters.push(createShopifyCustomerPrivacyAdapter(providerOptions))
-    else if (name === 'tcf') adapters.push(createTcfAdapter(providerOptions))
-    else if (factories[name]) plugins.push(factories[name](providerOptions as never))
+    if (factories[name]) plugins.push(factories[name](providerOptions as never))
     else console.warn(`[consentlayer] Unknown provider "${name}".`)
+  }
+  for (const [name, settings] of Object.entries(adapterOptions)) {
+    if (adapterFactories[name]) adapters.push(adapterFactories[name](settings as never))
+    else console.warn(`[consentlayer] Unknown adapter "${name}".`)
   }
   setPostHogHost(providers.posthog?.apiHost as string | undefined)
   const analytics = createAnalytics({ ...options, providers: plugins, consent: { ...options.consent, adapters } })

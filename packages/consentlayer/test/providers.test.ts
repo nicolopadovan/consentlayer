@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { googleConsentMode } from '../src/adapters/google-consent-mode'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
+import { createAnalytics } from '../src/core/create-analytics'
 import { loadScript } from '../src/core/plugin'
 import { contentsquare } from '../src/providers/contentsquare'
 import { ga4 } from '../src/providers/ga4'
@@ -191,7 +193,7 @@ describe('ga4 consent mode', () => {
     (window.dataLayer ?? []).map((entry) => Array.from(entry as ArrayLike<unknown>).filter((arg) => !(arg instanceof Date)))
   beforeEach(() => {
     const win = window as unknown as Record<string, unknown>
-    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured']) delete win[key]
+    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured', '__consentlayerGoogleConsentMode', '__acmGoogleConsentMode']) delete win[key]
   })
 
   it('sets the Consent Mode defaults when the manager is created, before boot', async () => {
@@ -206,24 +208,24 @@ describe('ga4 consent mode', () => {
     expect(entries()).toEqual([])
   })
 
-  it('configures the tag at boot in advanced mode and keeps region defaults until a choice', async () => {
-    const manager = createAnalyticsManager({
-      providers: [
-        ga4({
-          measurementId: 'G-ADV123',
-          consentMode: {
-            mode: 'advanced',
+  it('leaves Consent Mode to googleConsentMode() when it is an adapter, with region defaults until a choice', async () => {
+    localStorage.clear()
+    const analytics = createAnalytics({
+      providers: [ga4({ measurementId: 'G-ADV123', consentMode: 'advanced' })],
+      consent: {
+        adapters: [
+          googleConsentMode({
             regions: [{ region: ['US', 'US-CA'], analytics: true }],
             waitForUpdate: 500,
             urlPassthrough: true,
             adsDataRedaction: true,
-          },
-        }),
-      ],
+          }),
+        ],
+      },
     })
-    await manager.boot()
-    await manager.identify('u1')
-    await manager.page({ path: '/a', url: 'https://example.com/a', title: 'A' })
+    await analytics.boot()
+    await analytics.identify('u1')
+    await analytics.page({ path: '/a', url: 'https://example.com/a', title: 'A' })
     const denied = { ad_user_data: 'denied', ad_personalization: 'denied', ad_storage: 'denied', analytics_storage: 'denied', functionality_storage: 'denied', security_storage: 'granted' }
     expect(entries()).toEqual([
       ['consent', 'default', { ...denied, wait_for_update: 500 }],
@@ -239,20 +241,23 @@ describe('ga4 consent mode', () => {
     expect(document.querySelector('script[src*="gtag/js?id=G-ADV123"]')).toBeTruthy()
 
     window.dataLayer = []
-    await manager.updateConsent({ preferences: false, analytics: true, marketing: false })
+    await analytics.consent.setConsent({ preferences: false, analytics: true, marketing: false })
     expect(entries()).toEqual([
       ['consent', 'update', { ...denied, analytics_storage: 'granted' }],
       ['set', { user_id: 'u1' }],
       ['set', 'user_data', {}],
     ])
-    manager.destroy()
+    analytics.destroy()
   })
 
-  it('rejects region defaults outside advanced mode and invalid values', () => {
-    // @ts-expect-error regions need mode: 'advanced'
-    expect(() => ga4({ measurementId: 'G-ABC123', consentMode: { regions: [{ region: ['US'] }] } })).toThrow("needs mode: 'advanced'")
-    expect(() => ga4({ measurementId: 'G-ABC123', consentMode: { mode: 'advanced', regions: [{ region: ['usa'] }] } })).toThrow('ISO 3166-2')
-    expect(() => ga4({ measurementId: 'G-ABC123', consentMode: { waitForUpdate: -1 } })).toThrow('whole number')
+  it('sends Consent Mode without GA4 and rejects invalid settings', () => {
+    googleConsentMode().observe!({ preferences: true, analytics: false, marketing: true })
+    expect(entries().map(([command, type, signals]) => [command, type, (signals as { ad_storage: string }).ad_storage])).toEqual([
+      ['consent', 'default', 'denied'],
+      ['consent', 'update', 'granted'],
+    ])
+    expect(() => googleConsentMode({ regions: [{ region: ['usa'] }] })).toThrow('ISO 3166-2')
+    expect(() => googleConsentMode({ waitForUpdate: -1 })).toThrow('whole number')
   })
 })
 

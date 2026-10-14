@@ -106,7 +106,7 @@ type AnalyticsOptions = {
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `storage` | `ConsentStorageAdapter` | `localStorage`, under `names.consentStorageKey` | Where the choice is stored. See [Storage adapters](#storage-adapters). |
-| `adapters` | `ConsentIntegrationAdapter[]` | `[]` | External consent platforms to sync with, such as [`createShopifyCustomerPrivacyAdapter()`](#createshopifycustomerprivacyadapteroptions) or [`createTcfAdapter()`](#createtcfadapteroptions). |
+| `adapters` | `ConsentIntegrationAdapter[]` | `[]` | External consent platforms to sync with, such as [`createTcfAdapter()`](#createtcfadapteroptions), [`createShopifyCustomerPrivacyAdapter()`](#createshopifycustomerprivacyadapteroptions) or [`googleConsentMode()`](#googleconsentmodeoptions). |
 | `initialConsent` | `ConsentState \| null` | `null` | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one. |
 | `broadcast` | `ConsentBroadcastConfig` | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set. |
 | `maxAgeDays` | `number` | None | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`. |
@@ -440,6 +440,8 @@ interface ConsentIntegrationAdapter {
   apply?(consent: ConsentState): Promise<void> | void
   /** Reports changes made in the external platform. */
   subscribe?(onConsent: (consent: ConsentState) => void): (() => void) | void
+  /** Called when the engine is created and after every change, whatever its source. Errors go to onError with scope 'consent-adapter'. */
+  observe?(consent: ConsentState | null): void
 }
 ```
 
@@ -1245,6 +1247,9 @@ attributes of the image.
 
 ## `consentlayer/providers/*`
 
+Consent adapters have their own entry points; see
+[`consentlayer/adapters/*`](#consentlayeradapters).
+
 Each provider is its own entry point, and each factory returns an
 `AnalyticsPlugin`. See [Providers](/guides/providers/) for setup and
 [Provider internals](/internals/providers/) for what each one sends.
@@ -1269,35 +1274,15 @@ marketing consent.
 |---|---|---|---|
 | `measurementId` | `string \| undefined` | | **Required.** Must match `G-` followed by 4 to 16 upper-case letters or digits; `undefined` or `''` turns the provider off. |
 | `loadBeforeConsent` | `boolean` | `false` | `true` loads gtag.js at boot with Consent Mode set to denied. |
-| `consentMode` | `Ga4ConsentMode` | `{ mode: 'basic' }` | See below and [Google Consent Mode](/guides/providers/ga4/#google-consent-mode). |
+| `consentMode` | `'basic' \| 'advanced'` | `'basic'` | `'advanced'` loads and configures the tag at boot, for cookieless pings. See [Advanced mode](/guides/providers/ga4/#advanced-mode). |
 
-```ts
-type Ga4ConsentMode = {
-  /** 'advanced' loads and configures the tag at boot, for cookieless pings. */
-  mode?: 'basic' | 'advanced'
-  /** Advanced mode only. */
-  regions?: Ga4RegionDefault[]
-  /** Milliseconds, as `wait_for_update`. */
-  waitForUpdate?: number
-  urlPassthrough?: boolean
-  adsDataRedaction?: boolean
-}
+`ga4()` sets the Consent Mode defaults and updates itself unless a
+[`googleConsentMode()`](#googleconsentmodeoptions) adapter is on the page.
 
-/** ISO 3166-2 codes, such as 'US' or 'US-CA', and the categories granted there before a choice. */
-type Ga4RegionDefault = {
-  region: string[]
-  preferences?: boolean
-  analytics?: boolean
-  marketing?: boolean
-}
-```
+**Throws** an `Error` when `measurementId` is invalid.
 
-**Throws** an `Error` when `measurementId` is invalid, when `regions` is set
-without `mode: 'advanced'` or holds a code that is not ISO 3166-2, or when
-`waitForUpdate` is not a whole number of `0` or more.
-
-The entry point also exports the types `Ga4Options`, `Ga4ConsentMode` and
-`Ga4RegionDefault`, and two helpers:
+The entry point also exports the types `Ga4Options` and `Ga4ConsentMode`, and
+two helpers:
 
 | Export | Signature | Description |
 |---|---|---|
@@ -1421,9 +1406,15 @@ The entry point also exports the options type `TikTokOptions` and two helpers:
 | `toTikTokEvent` | `(event: AnalyticsEventPayload) => { name: string; params: Record<string, unknown> }` | Maps a standard event to a TikTok standard event, such as `purchase` to `Purchase`, or keeps its name. Converts `items` to `content_ids`, `contents`, `content_type` and `num_items`, `search_term` to `search_string` and `transaction_id` to `order_id`. |
 | `tiktokUserData` | `(identity: UserIdentity) => Record<string, string>` | Advanced matching parameters for `ttq.identify`: `email` (trimmed, lowercased), `phone_number` (digits prefixed with `+`) and `external_id`. |
 
+## `consentlayer/adapters/*`
+
+Each adapter is its own entry point, and each factory returns a
+[`ConsentIntegrationAdapter`](#storage-adapters). See
+[Consent adapters](/guides/adapters/).
+
 ### `createShopifyCustomerPrivacyAdapter(options?)`
 
-From `consentlayer/providers/shopify`. A
+From `consentlayer/adapters/shopify`. A
 [`ConsentIntegrationAdapter`](#storage-adapters), with `id`
 `'shopify-customer-privacy'`, that syncs consent with Shopify's Customer
 Privacy API. Pass it to `createAnalytics({ consent: { adapters } })`.
@@ -1440,7 +1431,7 @@ The options type is exported as `ShopifyCustomerPrivacyAdapterOptions`.
 
 ### `getShopifyCustomerPrivacyScriptUrl()`
 
-From `consentlayer/providers/shopify`. Returns the URL of Shopify's Customer
+From `consentlayer/adapters/shopify`. Returns the URL of Shopify's Customer
 Privacy script, which the adapter loads on headless storefronts. Use it for a
 Content Security Policy or a preload hint.
 
@@ -1450,12 +1441,12 @@ function getShopifyCustomerPrivacyScriptUrl(): string
 
 ### `createTcfAdapter(options?)`
 
-From `consentlayer/providers/tcf`. A read-only
+From `consentlayer/adapters/tcf`. A read-only
 [`ConsentIntegrationAdapter`](#storage-adapters), with `id` `'tcf'`, that
 reads consent from the IAB TCF v2 CMP on the page through `__tcfapi`. It has
 `bootstrap` and `subscribe` but no `apply`. Bootstrap returns `null` when
 `__tcfapi` is missing or the CMP does not report `gdprApplies: true`. See
-[IAB TCF](/guides/providers/tcf/).
+[IAB TCF](/guides/adapters/tcf/).
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -1463,6 +1454,35 @@ reads consent from the IAB TCF v2 CMP on the page through `__tcfapi`. It has
 | `window` | `Window` | `window` | The window that holds `__tcfapi`. |
 
 The options type is exported as `TcfAdapterOptions`.
+
+### `googleConsentMode(options?)`
+
+From `consentlayer/adapters/google-consent-mode`. A
+[`ConsentIntegrationAdapter`](#storage-adapters), with `id`
+`'google-consent-mode'` and only `observe`, that sends Consent Mode v2
+defaults when the instance is created and an update after every change. See
+[Google Consent Mode](/guides/adapters/google-consent-mode/).
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `regions` | `GoogleConsentModeRegion[]` | `[]` | Categories granted before a choice in the listed regions. |
+| `waitForUpdate` | `number` | | Milliseconds, as `wait_for_update` in each default. |
+| `urlPassthrough` | `boolean` | `false` | `gtag('set', 'url_passthrough', true)`. |
+| `adsDataRedaction` | `boolean` | `false` | `gtag('set', 'ads_data_redaction', true)`. |
+
+```ts
+/** ISO 3166-2 codes, such as 'US' or 'US-CA', and the categories granted there before a choice. */
+type GoogleConsentModeRegion = {
+  region: string[]
+  preferences?: boolean
+  analytics?: boolean
+  marketing?: boolean
+}
+```
+
+**Throws** an `Error` when a `regions` code is not ISO 3166-2 or
+`waitForUpdate` is not a whole number of `0` or more. The options type is
+exported as `GoogleConsentModeOptions`.
 
 ## `consentlayer/ecommerce`
 

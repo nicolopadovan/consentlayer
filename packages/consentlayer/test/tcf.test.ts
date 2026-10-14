@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import { createConsentController } from '../src/core/consent-controller'
-import { createTcfAdapter } from '../src/providers/tcf'
+import { createTcfAdapter } from '../src/adapters/tcf'
 
 type Listener = (tcData: unknown, success: boolean) => void
 
