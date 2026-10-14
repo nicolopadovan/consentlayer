@@ -18,6 +18,7 @@ export default defineConfig([
       'auto-tracking': 'src/auto-tracking.ts',
       banner: 'src/banner.ts',
       'react/index': 'src/react/index.ts',
+      'react/banner': 'src/react/banner.tsx',
       'providers/meta': 'src/providers/meta.ts',
       'providers/ga4': 'src/providers/ga4.ts',
       'providers/gtm': 'src/providers/gtm.ts',
@@ -71,7 +72,7 @@ export default defineConfig([
     ],
     async onSuccess() {
       // esbuild drops module directives; prepended on line 1 so the sourcemaps stay aligned.
-      for (const entry of ['dist/react/index.js', 'dist/next.js']) {
+      for (const entry of ['dist/react/index.js', 'dist/react/banner.js', 'dist/next.js']) {
         await writeFile(entry, `'use client';${await readFile(entry, 'utf8')}`)
       }
     },
