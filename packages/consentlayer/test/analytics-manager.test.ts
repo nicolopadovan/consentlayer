@@ -188,6 +188,7 @@ describe('analytics manager', () => {
     const calls: string[] = []
     const provider = {
       id: 'heavy',
+      requiredConsent: 'none' as const,
       defer: 2000,
       load: () => {
         calls.push('load')
@@ -217,7 +218,7 @@ describe('analytics manager', () => {
   it('loads an interaction-deferred provider on the first interaction', async () => {
     const load = vi.fn()
     const manager = createAnalyticsManager({
-      providers: [{ id: 'later', defer: 'interaction', load }],
+      providers: [{ id: 'later', requiredConsent: 'none', defer: 'interaction', load }],
       consent: { preferences: false, analytics: false, marketing: false },
     })
     await manager.boot()
@@ -231,7 +232,7 @@ describe('analytics manager', () => {
   it('never loads a deferred provider after destroy', async () => {
     const load = vi.fn()
     const manager = createAnalyticsManager({
-      providers: [{ id: 'later', defer: 'interaction', loadBeforeConsent: true, load }],
+      providers: [{ id: 'later', requiredConsent: 'none', defer: 'interaction', loadBeforeConsent: true, load }],
       consent: { preferences: false, analytics: false, marketing: false },
     })
     await manager.boot()
@@ -276,7 +277,7 @@ describe('analytics manager', () => {
   it('sends caught and uncaught errors to providers with an error hook', async () => {
     const error = vi.fn()
     const manager = createAnalyticsManager({
-      providers: [{ id: 'monitor', error }],
+      providers: [{ id: 'monitor', requiredConsent: 'none', error }],
       consent: { preferences: false, analytics: false, marketing: false },
     })
     await manager.boot()
@@ -298,9 +299,13 @@ describe('analytics manager', () => {
     const off = vi.fn()
     const manual = vi.fn()
     const consent = { preferences: false, analytics: false, marketing: false }
-    const a = createAnalyticsManager({ providers: [{ id: 'a', error: off }], consent, errors: false })
+    const a = createAnalyticsManager({
+      providers: [{ id: 'a', requiredConsent: 'none', error: off }],
+      consent,
+      errors: false,
+    })
     const b = createAnalyticsManager({
-      providers: [{ id: 'b', error: manual }],
+      providers: [{ id: 'b', requiredConsent: 'none', error: manual }],
       consent,
       errors: { globalHandlers: false },
     })

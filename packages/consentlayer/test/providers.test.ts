@@ -24,7 +24,7 @@ describe('providers', () => {
       contentsquare({ tagId: undefined }),
       hotjar({ siteId: '', version: 6 }),
     ]
-    expect(skipped.map((plugin) => Object.keys(plugin))).toEqual(skipped.map(() => ['id', 'setup']))
+    expect(skipped.map((plugin) => Object.keys(plugin))).toEqual(skipped.map(() => ['id', 'requiredConsent', 'setup']))
 
     const manager = createAnalyticsManager({
       providers: skipped,
@@ -45,10 +45,10 @@ describe('providers', () => {
     for (const siteId of ['1e3', '0x10', '12.0', '0']) {
       expect(() => hotjar({ siteId, version: 6 })).toThrow(/Hotjar siteId or version/)
     }
-    expect(Object.keys(hotjar({ siteId: ' ', version: 6 }))).toEqual(['id', 'setup'])
+    expect(Object.keys(hotjar({ siteId: ' ', version: 6 }))).toEqual(['id', 'requiredConsent', 'setup'])
     expect(ga4({ measurementId: ' G-ABC123\n' }).load).toBeTypeOf('function')
     expect(meta({ pixelId: '123456789012345\n' }).load).toBeTypeOf('function')
-    expect(Object.keys(posthog({ apiKey: ' ' }))).toEqual(['id', 'setup'])
+    expect(Object.keys(posthog({ apiKey: ' ' }))).toEqual(['id', 'requiredConsent', 'setup'])
   })
 
   it('reuses the same Meta event id for browser and server dedupe', async () => {
@@ -422,8 +422,8 @@ describe('tiktok', () => {
   const queued = () => Array.from(window.ttq as unknown as unknown[][])
 
   it('is off without a pixel id', () => {
-    expect(Object.keys(tiktok({ pixelId: undefined }))).toEqual(['id', 'setup'])
-    expect(Object.keys(tiktok({ pixelId: ' ' }))).toEqual(['id', 'setup'])
+    expect(Object.keys(tiktok({ pixelId: undefined }))).toEqual(['id', 'requiredConsent', 'setup'])
+    expect(Object.keys(tiktok({ pixelId: ' ' }))).toEqual(['id', 'requiredConsent', 'setup'])
   })
 
   it('loads after consent, matches, tracks with the event id and stays off after a withdrawal', async () => {

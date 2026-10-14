@@ -420,7 +420,7 @@ describe('provider identity', () => {
 })
 
 describe('errors in React', () => {
-  const monitor = () => ({ id: 'monitor', error: vi.fn() }) satisfies AnalyticsPlugin
+  const monitor = () => ({ id: 'monitor', requiredConsent: 'none', error: vi.fn() }) satisfies AnalyticsPlugin
   function Boom(): never {
     throw new Error('render failed')
   }

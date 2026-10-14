@@ -605,7 +605,8 @@ The lifecycle changes in three ways:
   again after a withdrawal.
 - A plugin without `requiredConsent` was already active before consent, but
   its `trackEvent` waited for analytics consent. Its `track` now runs without
-  consent, so set `requiredConsent` explicitly.
+  consent. `requiredConsent` is now required: set it explicitly, to `'none'`
+  for a plugin that needs no consent.
 
 New optional hooks are `identify(identity, traits, ctx)`, `reset(ctx)`,
 `group(groupId, traits, ctx)` and `error(error, context, ctx)`. A plugin can

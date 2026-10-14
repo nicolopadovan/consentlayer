@@ -35,7 +35,7 @@ export async function checkPlugin(plugin: AnalyticsPlugin): Promise<string[]> {
   try {
     await manager.boot()
     await exercise()
-    if (plugin.requiredConsent && plugin.requiredConsent !== 'none') {
+    if (plugin.requiredConsent !== 'none') {
       if (!plugin.loadBeforeConsent && scripts() > before.scripts) {
         problems.push('loaded a script before consent')
       }

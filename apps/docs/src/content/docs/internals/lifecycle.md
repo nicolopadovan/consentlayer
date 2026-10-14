@@ -131,7 +131,7 @@ keep the context it received in `consent` and apply it once its SDK exists.
 
 | Value                                                                                                                                     | `allowed` when                                   |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| omitted or `'none'`                                                                                                                       | always, including before the visitor has chosen  |
+| `'none'`                                                                                                                                  | always, including before the visitor has chosen  |
 | a category: `'preferences'`, `'analytics'`, `'marketing'`, `'sale_of_data'` or a [custom category](/guides/consent-ui/#custom-categories) | consent is known and that key is `true`          |
 | a function `(consent) => boolean`                                                                                                         | consent is known and the function returns `true` |
 

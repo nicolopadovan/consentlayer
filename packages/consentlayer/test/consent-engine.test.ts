@@ -285,7 +285,7 @@ describe('bootstrap precedence', () => {
     answer(denied)
     expect(await bootstrapping).toEqual(denied)
 
-    expect(await engineWith(async () => null).bootstrap()).toEqual(stored)
+    expect(await engineWith(() => Promise.resolve(null)).bootstrap()).toEqual(stored)
     const onError = vi.fn()
     expect(await engineWith(() => Promise.reject(new Error('timeout')), onError).bootstrap()).toEqual(stored)
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'consent-adapter', providerId: 'cmp' }))

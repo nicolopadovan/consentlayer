@@ -359,8 +359,8 @@ type Hook<Args extends unknown[] = []> = (...args: [...Args, PluginContext]) => 
  */
 export interface AnalyticsPlugin {
   id: string
-  /** Defaults to `'none'`. */
-  requiredConsent?: ProviderConsentRequirement
+  /** The consent the provider needs. `'none'` runs it without consent. */
+  requiredConsent: ProviderConsentRequirement
   /** Load before consent and rely on the provider's own consent mode. */
   loadBeforeConsent?: boolean
   defer?: LoadTiming

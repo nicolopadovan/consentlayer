@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
+import { definePlugin } from '../src/core/plugin'
 import { createMemoryIdentityStorage } from '../src/core/storage'
 import type { AnalyticsError } from '../src/core/types'
 import { normalizeIdentity } from '../src/core/utils'
@@ -74,11 +75,20 @@ describe('adapter construction', () => {
   })
 })
 
+describe('definePlugin', () => {
+  it('requires every plugin to name the consent it needs', () => {
+    // @ts-expect-error requiredConsent has no default
+    expect(definePlugin({ id: 'implicit' }).id).toBe('implicit')
+    expect(definePlugin({ id: 'explicit', requiredConsent: 'none' }).requiredConsent).toBe('none')
+  })
+})
+
 describe('onError plumbing', () => {
   it('routes provider lifecycle errors to onError with provider id and scope', async () => {
     const onError = vi.fn<(error: AnalyticsError) => void>()
     const provider = {
       id: 'broken',
+      requiredConsent: 'none' as const,
       load: () => {
         throw new Error('boom')
       },
@@ -108,6 +118,7 @@ describe('onError plumbing', () => {
     const onError = vi.fn()
     const provider = {
       id: 'async-loader',
+      requiredConsent: 'none' as const,
       setup: (context: { emitError: (e: { scope: 'provider-script-load'; message: string }) => void }) => {
         context.emitError({
           scope: 'provider-script-load',

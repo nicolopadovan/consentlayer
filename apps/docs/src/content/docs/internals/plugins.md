@@ -24,7 +24,7 @@ type Hook<Args extends unknown[] = []> = (...args: [...Args, PluginContext]) => 
 
 interface AnalyticsPlugin {
   id: string
-  requiredConsent?: keyof ConsentState | 'none' | ((consent: ConsentState | null) => boolean)
+  requiredConsent: keyof ConsentState | 'none' | ((consent: ConsentState | null) => boolean)
   loadBeforeConsent?: boolean
   defer?: LoadTiming
   setup?: Hook
@@ -40,12 +40,12 @@ interface AnalyticsPlugin {
 }
 ```
 
-| Field               | Meaning                                                                                                                                                                                                                                                                                                   |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                | Unique per instance. It is the key for `only`, `activeProviders` and the `providerId` passed to `onError`. Registering a different object with an `id` already in use keeps the first and reports a `provider-setup` error; registering the same object again does nothing.                               |
-| `requiredConsent`   | Default `'none'`: the plugin is active from boot, before the visitor chooses. A category name (`preferences`, `analytics`, `marketing`, a custom category or `sale_of_data`) requires that category to be `true`. A function is called only once consent is known; before that the plugin is not allowed. |
-| `loadBeforeConsent` | Run `load` at boot even if the plugin is not yet allowed. It still receives no events until it is.                                                                                                                                                                                                        |
-| `defer`             | Delay `load` by a number of milliseconds, until the browser is idle (`'idle'`, with a 5 second cap), or until the first `pointerdown`, `keydown`, `scroll` or `touchstart` (`'interaction'`). Outside the browser it is due at once.                                                                      |
+| Field               | Meaning                                                                                                                                                                                                                                                                                                                      |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                | Unique per instance. It is the key for `only`, `activeProviders` and the `providerId` passed to `onError`. Registering a different object with an `id` already in use keeps the first and reports a `provider-setup` error; registering the same object again does nothing.                                                  |
+| `requiredConsent`   | Required, with no default. `'none'`: the plugin is active from boot, before the visitor chooses. A category name (`preferences`, `analytics`, `marketing`, a custom category or `sale_of_data`) requires that category to be `true`. A function is called only once consent is known; before that the plugin is not allowed. |
+| `loadBeforeConsent` | Run `load` at boot even if the plugin is not yet allowed. It still receives no events until it is.                                                                                                                                                                                                                           |
+| `defer`             | Delay `load` by a number of milliseconds, until the browser is idle (`'idle'`, with a 5 second cap), or until the first `pointerdown`, `keydown`, `scroll` or `touchstart` (`'interaction'`). Outside the browser it is due at once.                                                                                         |
 
 ### Hooks
 
@@ -171,7 +171,7 @@ returns the problems it found; an empty array means it passed.
 
 1. Boots with every category denied and calls `page`, `track`, `identify`
    and `group`.
-2. Unless `requiredConsent` is `'none'` or unset, reports a script added
+2. Unless `requiredConsent` is `'none'`, reports a script added
    (allowed with `loadBeforeConsent`), a `fetch` request, or a cookie change.
 3. Grants every category and repeats the calls, then calls `reset()`, then
    denies every category.
