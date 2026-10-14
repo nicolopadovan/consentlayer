@@ -425,7 +425,7 @@ describe('errors in React', () => {
   it('renders the fallback and captures the error', async () => {
     const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const plugin = monitor()
-    const analytics = createAnalytics({ providers: [plugin] })
+    const analytics = createAnalytics({ providers: [plugin], errors: { globalHandlers: false } })
     await analytics.boot()
     render(
       <AnalyticsProvider analytics={analytics}>

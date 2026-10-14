@@ -6,7 +6,7 @@ description: Set up ConsentLayer in a SvelteKit or Svelte 5 application with con
 This guide sets up ConsentLayer in a SvelteKit application: a module-level
 analytics instance, a root layout that holds consent state for your consent
 banner, page views on every navigation, event tracking, and error reporting.
-ConsentLayer supports Svelte 5.7 and later, with runes, with two entry points:
+ConsentLayer supports Svelte 5.14.3 and later, with runes, with two entry points:
 
 - `consentlayer/sveltekit` follows SvelteKit's navigation itself and adds
   `handleErrorWith()` for the client `handleError` hook.

@@ -6,7 +6,7 @@ description: Set up ConsentLayer in a Vue 3 application with consentlayer/vue.
 This guide sets up ConsentLayer in a Vue application with Vite and Vue Router:
 a module-level analytics instance, a Vue plugin that holds consent state for
 your consent banner, page views on every navigation, event tracking, and error
-reporting. `consentlayer/vue` supports Vue 3.5 and later. For Nuxt, follow
+reporting. `consentlayer/vue` supports Vue 3.5.17 and later. For Nuxt, follow
 [Nuxt](/start/nuxt/) instead.
 
 It assumes you have [installed](/start/installation/) `consentlayer` and the

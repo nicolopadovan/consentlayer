@@ -105,7 +105,11 @@ describe('consentlayer/angular', () => {
     const render = (options: Parameters<typeof provideMetaPixelNoscript>[0]) => {
       TestBed.resetTestingModule()
       TestBed.configureTestingModule({
-        providers: [{ provide: PLATFORM_ID, useValue: 'server' }, provideMetaPixelNoscript(options)],
+        providers: [
+          provideZonelessChangeDetection(),
+          { provide: PLATFORM_ID, useValue: 'server' },
+          provideMetaPixelNoscript(options),
+        ],
       })
       const document = TestBed.inject(DOCUMENT)
       const html = document.body.querySelector('noscript')?.innerHTML ?? null
@@ -123,7 +127,11 @@ describe('consentlayer/angular', () => {
     const render = (options: Parameters<typeof provideGtmNoscript>[0]) => {
       TestBed.resetTestingModule()
       TestBed.configureTestingModule({
-        providers: [{ provide: PLATFORM_ID, useValue: 'server' }, provideGtmNoscript(options)],
+        providers: [
+          provideZonelessChangeDetection(),
+          { provide: PLATFORM_ID, useValue: 'server' },
+          provideGtmNoscript(options),
+        ],
       })
       const document = TestBed.inject(DOCUMENT)
       const noscript = document.body.firstElementChild?.tagName === 'NOSCRIPT' ? document.body.firstElementChild : null

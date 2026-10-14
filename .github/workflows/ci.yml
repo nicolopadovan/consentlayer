@@ -22,6 +22,29 @@ jobs:
       - run: pnpm turbo run typecheck lint test build
       - run: pnpm --filter consentlayer check:package
 
+  min-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: >-
+          npm pkg set devDependencies.react=18.3.0 devDependencies.react-dom=18.3.0
+          pnpm.overrides.react=18.3.0 pnpm.overrides.react-dom=18.3.0
+          pnpm.overrides.@types/react=18.3.0 pnpm.overrides.@types/react-dom=18.3.0
+          pnpm.overrides.next=15.0.0 pnpm.overrides.vue=3.5.17 pnpm.overrides.nuxt=4.0.0
+          pnpm.overrides.svelte=5.14.3 pnpm.overrides.solid-js=1.9.0 pnpm.overrides.@solidjs/router=0.16.0
+          pnpm.overrides.@angular/common=20.0.0 pnpm.overrides.@angular/compiler=20.0.0
+          pnpm.overrides.@angular/core=20.0.0 pnpm.overrides.@angular/platform-browser=20.0.0
+          pnpm.overrides.@angular/router=20.0.0 pnpm.overrides.posthog-js=1.438.0
+          pnpm.overrides.@sentry/browser=11.0.0 pnpm.overrides.@sentry/nextjs=11.0.0
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm --filter consentlayer typecheck
+      - run: pnpm --filter consentlayer test
+
   secrets:
     runs-on: ubuntu-latest
     steps:

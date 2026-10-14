@@ -1001,7 +1001,7 @@ such as `useRuntimeConfig()` work in it. `AnalyticsOptions` are the options of
 
 ## `consentlayer/svelte`
 
-Requires `svelte` 5.7 or later, an optional peer dependency. SvelteKit is not
+Requires `svelte` 5.14.3 or later, an optional peer dependency. SvelteKit is not
 a dependency; with SvelteKit, use [`consentlayer/sveltekit`](#consentlayersveltekit).
 Every function here reads or sets a Svelte context, so call it while a
 component initializes.
