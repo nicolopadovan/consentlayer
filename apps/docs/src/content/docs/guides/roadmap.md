@@ -7,7 +7,9 @@ This page describes where ConsentLayer is heading and where the current
 release stops. It lists the work that is planned, the features under
 consideration that are not supported today, and the known gaps in the current
 behavior, each with a workaround where one exists. Target dates are plans,
-not promises; the [changelog](/guides/changelog/) records what each release
+not promises; each version's
+[milestone on GitHub](https://github.com/nicolopadovan/consentlayer/milestones)
+lists its issues, and the [changelog](/guides/changelog/) records what each release
 actually ships.
 
 ## Planned
