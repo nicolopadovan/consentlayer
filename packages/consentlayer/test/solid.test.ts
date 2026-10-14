@@ -12,6 +12,9 @@ const spyProvider = (id: string) =>
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
+// Solid Router scrolls to the top after a navigation; jsdom does not implement scrolling.
+window.scrollTo = () => undefined
+
 function Banner(): JSX.Element {
   const controller = useConsentController()
   const { consent } = useConsent()
