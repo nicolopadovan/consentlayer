@@ -1,5 +1,29 @@
 # consentlayer
 
+## 1.0.0
+
+### Major Changes
+
+- 452d11b: First stable release. The public API now follows semantic versioning: breaking changes wait for 2.0.0. If you used a release candidate or the earlier internal package, follow [Migrating to 1.0](https://consentlayer.nicolopadovan.com/guides/migrating-to-v1/).
+
+### Minor Changes
+
+- 3bec6da: Every provider and server destination takes an `events` option: the event names `track()` sends to it, or `false` for none. Analytics providers receive every event by default. The Meta and TikTok pixels, `metaCapi` and `tiktokEvents` now receive only events that map to one of their standard events; custom and auto-tracking events reach them only when listed. An event whose `only` option names a provider is always sent to it.
+
+  `autoTracking()` no longer takes `only`; use the providers' `events` option instead.
+
+  Declare your own events in a `Register` interface (`declare module 'consentlayer' { interface Register { events: { … } } }`) to type their params. Once declared, `track()` rejects undeclared names.
+
+- dfe1789: When a visitor grants marketing after analytics on the same route, the automatic page view now reaches marketing server destinations such as the Meta Conversions API, without being sent twice to those that already have it. `page()`'s `server` option accepts an array of categories, and `ServerEvent` has a `categories` field that `sendServerEvent` honors.
+- dfe1789: Add a `nonce` option to `createAnalytics()`. ConsentLayer sets it on every script it injects, including the inline base code of `meta()` and `tiktok()`, for a Content Security Policy that allows scripts by nonce. The script-tag build reads it from its own `<script>` tag.
+- dfe1789: `tcf()` no longer stores the denied state it reads while the CMP shows its interface, before the visitor has chosen. Consent adapters can answer `{ consent, provisional: true }` from `bootstrap()` for such a state: the engine applies it but does not store it. The new `ConsentBootstrapAnswer` type describes the answer.
+
+### Patch Changes
+
+- 2d887e6: `closeDialog()` now resets `prefs` to the stored choice, so toggles a visitor changed and then closed without saving are no longer granted by a later Save.
+- 15982df: Export the `StoredConsent` type from `consentlayer`, so a custom `ConsentStorageAdapter` can name the record it reads and writes.
+- fefddf8: A server destination's `events` option now covers `page_view` as well, so `metaCapi({ events: ['lead'] })` no longer receives page views. `createAnalyticsHandler` answers with a `consentlayer-events` header listing the event names its destinations take, and the browser then forwards only those events, plus events with `only`, instead of every event.
+
 ## 1.0.0-rc.2
 
 ### Patch Changes
