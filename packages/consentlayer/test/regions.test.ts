@@ -218,7 +218,10 @@ describe('laws', () => {
   it('take the stricter rule where several laws apply, and the fields a rule sets over its laws', async () => {
     const at = (laws: Law[], extra = {}) => rule({ region: 'XX', regions: { XX: { laws, ...extra } } })
     expect(await at(['ccpa', 'gdpr'])).toStrictEqual({ laws: ['ccpa', 'gdpr'] })
-    expect(await at(['ccpa', 'revfadp'])).toStrictEqual({ laws: ['ccpa', 'revfadp'], granted: ['preferences', 'analytics'] })
+    expect(await at(['ccpa', 'revfadp'])).toStrictEqual({
+      laws: ['ccpa', 'revfadp'],
+      granted: ['preferences', 'analytics'],
+    })
     expect(await at(['revfadp', 'cnil'])).toStrictEqual({ laws: ['revfadp', 'cnil'], maxAgeDays: 180 })
     expect(await at(['ccpa'], { banner: true })).toStrictEqual({ laws: ['ccpa'], granted: 'all', banner: true })
   })
@@ -226,7 +229,10 @@ describe('laws', () => {
   it('replace the rule of a law with a rule from regions, as in 1.1.0', async () => {
     expect(await rule({ region: 'FR', regions: { FR: {} } })).toStrictEqual({})
     expect(await rule({ region: 'US-CA', regions: { ...canadaRegions, US: {} } })).toStrictEqual({})
-    expect(await rule({ region: 'GB', regions: ukStatisticsRegions })).toStrictEqual({ laws: ['uk'], granted: ['analytics'] })
+    expect(await rule({ region: 'GB', regions: ukStatisticsRegions })).toStrictEqual({
+      laws: ['uk'],
+      granted: ['analytics'],
+    })
   })
 
   it.each([
@@ -260,18 +266,21 @@ describe('laws', () => {
   it.each([
     ['DE', undefined],
     ['US-CA', { 'US-CA': { laws: ['ccpa', 'gdpr'] as Law[] } }],
-  ])('grant nothing under Global Privacy Control and an opt-in law in %s, nor marketing after Accept all', async (region, regions) => {
-    signal(true)
-    const { analytics, controller, loaded, done } = await started({ region, regions })
-    expect(controller.getSnapshot()).toMatchObject({ gpc: true, bannerVisible: true })
-    expect(analytics.consent.getConsent()).toBeNull()
-    expect(loaded()).toEqual([])
-    await controller.actions.acceptAll()
-    await settle()
-    expect(analytics.consent.getConsent()).toEqual({ preferences: true, analytics: true, marketing: false })
-    expect(loaded()).toEqual(['stats'])
-    done()
-  })
+  ])(
+    'grant nothing under Global Privacy Control and an opt-in law in %s, nor marketing after Accept all',
+    async (region, regions) => {
+      signal(true)
+      const { analytics, controller, loaded, done } = await started({ region, regions })
+      expect(controller.getSnapshot()).toMatchObject({ gpc: true, bannerVisible: true })
+      expect(analytics.consent.getConsent()).toBeNull()
+      expect(loaded()).toEqual([])
+      await controller.actions.acceptAll()
+      await settle()
+      expect(analytics.consent.getConsent()).toEqual({ preferences: true, analytics: true, marketing: false })
+      expect(loaded()).toEqual(['stats'])
+      done()
+    },
+  )
 
   it('ask again in France six months after a refusal, not sooner', async () => {
     const refused = (days: number) =>
