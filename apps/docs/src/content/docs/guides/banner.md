@@ -42,7 +42,8 @@ the US rule does by default, and when `autoShowBanner` is `false`. It offers
 Accept all, Reject non-essential and Customize. Customize opens the settings
 dialog, a modal `<dialog>` with a switch for each category, which keeps focus
 inside while open, closes with Escape and returns focus to the button that
-opened it. Switches the visitor changes and then closes without saving are
+opened it, or to the [badge](#badge) when the visitor chose and that button is
+gone. Switches the visitor changes and then closes without saving are
 discarded.
 
 ## Frameworks
@@ -237,8 +238,10 @@ hidden, and it returns when the dialog closes without a choice.
 
 With `blocking: true`, the banner is a modal `<dialog>`: the rest of the page
 cannot be clicked, focused or scrolled, and Escape does not close it, until
-the visitor chooses. Combine it with `overlay: true` to also dim the page, so
-visitors can see why it does not respond.
+the visitor chooses. Focus starts on the banner itself, so a screen reader
+announces its title first, and the first Tab reaches Accept all. Combine it with
+`overlay: true` to also dim the page, so visitors can see why it does not
+respond.
 
 Whether a site may be blocked until a choice is made depends on the law where
 you and your visitors are. Check it before you turn this on; see the
@@ -252,8 +255,9 @@ visit where the banner stays hidden, such as in the US or with
 `autoShowBanner: false`, has no badge, and neither does a visit where the only
 consent in force is the [region's](/guides/regions/) defaults or a consent
 platform's provisional answer. `show: 'always'` shows it before a choice too.
-`badge: false` removes it; link to `CONSENTLAYER_openConsent()` from your
-footer instead, as
+When the visitor chooses, focus moves to the badge, since the button they
+pressed is gone. `badge: false` removes it, and focus is then left alone; link
+to `CONSENTLAYER_openConsent()` from your footer instead, as
 [Reopening the settings](/guides/consent-ui/#reopening-the-settings) shows.
 
 | Option     | Type                                                     | Default          | Description                                                                                                                                                        |
