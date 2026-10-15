@@ -455,6 +455,12 @@ it('leaves a placeholder inside a link label as text', async () => {
   expect(banner().querySelector('a')?.textContent).toBe('our {privacyPolicy}')
 })
 
+it('parses long unbalanced Markdown in linear time', async () => {
+  const started = performance.now()
+  await setup({ text: { message: '[' + '[\\'.repeat(50_000) + '[\\](' + '[!](!'.repeat(50_000) } })
+  expect(performance.now() - started).toBeLessThan(1000)
+})
+
 it('links the policy URLs that are http, https, mailto or relative, and shows the rest as text', async () => {
   await setup({
     privacyPolicyUrl: 'javascript:alert(1)',

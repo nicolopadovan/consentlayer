@@ -288,7 +288,7 @@ function show(
     const nodes: (Node | string)[] = []
     let last = 0
     for (const match of value.matchAll(
-      /\[([^\]]+)\]\(([^)\s]+)\)|\*\*(.+?)\*\*|\{(privacyPolicy|cookiePolicy|terms)\}/g,
+      /\[([^[\]]+)\]\(([^()\s]+)\)|\*\*([^*]+)\*\*|\{(privacyPolicy|cookiePolicy|terms)\}/g,
     )) {
       const [whole, label, href, bold, key] = match
       nodes.push(value.slice(last, match.index))
