@@ -26,7 +26,7 @@ const defaultText = {
   save: 'Save choices',
   badge: 'Cookie settings',
   doNotSell: 'Do not sell or share my personal information',
-  gpcHonored: '',
+  gpcHonored: 'Opt-Out Preference Signal Honored',
 }
 
 const lawText = {
@@ -39,7 +39,11 @@ const lawText = {
       'We use cookies to run this site and, with your consent, for preferences, analytics and marketing. Closing this banner means you refuse all but the necessary ones.',
   },
   ccpa: { badge: 'Your Privacy Choices' },
-  optOut: { settingsTitle: 'Your Privacy Choices' },
+  optOut: {
+    settingsTitle: 'Your Privacy Choices',
+    settingsMessage:
+      'You have the right to opt out of the sale or sharing of your personal information. Turn on the switch below and save to opt out.',
+  },
 }
 
 type BannerPart =
@@ -271,7 +275,7 @@ function show(
   const text: typeof defaultText & Record<string, string | undefined> = {
     ...defaultText,
     ...(has('revfadp') && !optIn && lawText.revfadp),
-    ...(has('cnil') && lawText.cnil),
+    ...(has('cnil') && closeButton && lawText.cnil),
     ...(has('ccpa') && lawText.ccpa),
     ...(optOut && lawText.optOut),
     ...overrides,
@@ -375,7 +379,7 @@ function show(
     { ...className('dialog', 'consentlayer-dialog'), 'aria-labelledby': 'consentlayer-dialog-title' },
     element('h2', { id: 'consentlayer-dialog-title', ...className('settingsTitle') }, ...content(text.settingsTitle)),
     ...(text.settingsMessage ? [element('p', className('settingsMessage'), ...content(text.settingsMessage))] : []),
-    ...(optOut && gpc && text.gpcHonored
+    ...(has('ccpa') && gpc && text.gpcHonored
       ? [element('p', { class: 'consentlayer-gpc' }, ...content(text.gpcHonored))]
       : []),
     closer('closeDialog', 'close', text.close),

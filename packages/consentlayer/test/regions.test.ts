@@ -183,41 +183,50 @@ describe('laws', () => {
   }
 
   it('turn on GDPR, the CNIL, the revFADP and the CCPA by default', async () => {
-    expect(await rule({ region: 'FR' })).toEqual({ laws: ['gdpr', 'cnil'], maxAgeDays: 180 })
-    expect(await rule({ region: 'RE' })).toEqual({ laws: ['gdpr', 'cnil'], maxAgeDays: 180 })
-    expect(await rule({ region: 'CH' })).toEqual({ laws: ['revfadp'], granted: ['preferences', 'analytics'] })
-    expect(await rule({ region: 'US-TX' })).toEqual({ laws: ['ccpa'], granted: 'all', banner: false })
-    for (const region of ['GB', 'BR', 'CA-QC']) expect(await rule({ region })).toEqual({})
+    expect(await rule({ region: 'FR' })).toStrictEqual({ laws: ['gdpr', 'cnil'], maxAgeDays: 180 })
+    expect(await rule({ region: 'RE' })).toStrictEqual({ laws: ['gdpr', 'cnil'], maxAgeDays: 180 })
+    expect(await rule({ region: 'CH' })).toStrictEqual({ laws: ['revfadp'], granted: ['preferences', 'analytics'] })
+    expect(await rule({ region: 'US-TX' })).toStrictEqual({ laws: ['ccpa'], granted: 'all', banner: false })
+    for (const region of ['GB', 'BR', 'CA-QC']) expect(await rule({ region })).toStrictEqual({})
+  })
+
+  it('leave the fields no law sets out of the rule, as in 1.1.0', async () => {
+    expect(await rule({ region: 'DE' })).toStrictEqual({ laws: ['gdpr'] })
+  })
+
+  it('reject an unknown law when created', () => {
+    expect(() => createConsentEngine({ laws: { CCPA: true } as never })).toThrow('unknown law "CCPA"')
+    expect(() => createConsentEngine({ regions: { XX: { laws: ['gpdr' as Law] } } })).toThrow('unknown law "gpdr"')
   })
 
   it('turn on the UK, LGPD and Quebec laws on request, each opt-in', async () => {
     const laws = { uk: true, lgpd: true, quebec: true }
-    expect(await rule({ region: 'GB', laws })).toEqual({ laws: ['uk'] })
-    expect(await rule({ region: 'BR', laws })).toEqual({ laws: ['lgpd'] })
-    expect(await rule({ region: 'CA-QC', laws })).toEqual({ laws: ['quebec'] })
-    expect(await rule({ region: 'CA-ON', laws })).toEqual({})
+    expect(await rule({ region: 'GB', laws })).toStrictEqual({ laws: ['uk'] })
+    expect(await rule({ region: 'BR', laws })).toStrictEqual({ laws: ['lgpd'] })
+    expect(await rule({ region: 'CA-QC', laws })).toStrictEqual({ laws: ['quebec'] })
+    expect(await rule({ region: 'CA-ON', laws })).toStrictEqual({})
   })
 
   it('turn each default law off on its own, falling back to opt-in', async () => {
-    expect(await rule({ region: 'US-CA', laws: { ccpa: false } })).toEqual({})
-    expect(await rule({ region: 'CH', laws: { revfadp: false } })).toEqual({})
-    expect(await rule({ region: 'FR', laws: { cnil: false } })).toEqual({ laws: ['gdpr'] })
-    expect(await rule({ region: 'FR', laws: { gdpr: false } })).toEqual({ laws: ['cnil'], maxAgeDays: 180 })
-    expect(await rule({ region: 'DE', laws: { gdpr: false } })).toEqual({})
+    expect(await rule({ region: 'US-CA', laws: { ccpa: false } })).toStrictEqual({})
+    expect(await rule({ region: 'CH', laws: { revfadp: false } })).toStrictEqual({})
+    expect(await rule({ region: 'FR', laws: { cnil: false } })).toStrictEqual({ laws: ['gdpr'] })
+    expect(await rule({ region: 'FR', laws: { gdpr: false } })).toStrictEqual({ laws: ['cnil'], maxAgeDays: 180 })
+    expect(await rule({ region: 'DE', laws: { gdpr: false } })).toStrictEqual({})
   })
 
   it('take the stricter rule where several laws apply, and the fields a rule sets over its laws', async () => {
     const at = (laws: Law[], extra = {}) => rule({ region: 'XX', regions: { XX: { laws, ...extra } } })
-    expect(await at(['ccpa', 'gdpr'])).toEqual({ laws: ['ccpa', 'gdpr'] })
-    expect(await at(['ccpa', 'revfadp'])).toEqual({ laws: ['ccpa', 'revfadp'], granted: ['preferences', 'analytics'] })
-    expect(await at(['revfadp', 'cnil'])).toEqual({ laws: ['revfadp', 'cnil'], maxAgeDays: 180 })
-    expect(await at(['ccpa'], { banner: true })).toEqual({ laws: ['ccpa'], granted: 'all', banner: true })
+    expect(await at(['ccpa', 'gdpr'])).toStrictEqual({ laws: ['ccpa', 'gdpr'] })
+    expect(await at(['ccpa', 'revfadp'])).toStrictEqual({ laws: ['ccpa', 'revfadp'], granted: ['preferences', 'analytics'] })
+    expect(await at(['revfadp', 'cnil'])).toStrictEqual({ laws: ['revfadp', 'cnil'], maxAgeDays: 180 })
+    expect(await at(['ccpa'], { banner: true })).toStrictEqual({ laws: ['ccpa'], granted: 'all', banner: true })
   })
 
   it('replace the rule of a law with a rule from regions, as in 1.1.0', async () => {
-    expect(await rule({ region: 'FR', regions: { FR: {} } })).toEqual({})
-    expect(await rule({ region: 'US-CA', regions: { ...canadaRegions, US: {} } })).toEqual({})
-    expect(await rule({ region: 'GB', regions: ukStatisticsRegions })).toEqual({ laws: ['uk'], granted: ['analytics'] })
+    expect(await rule({ region: 'FR', regions: { FR: {} } })).toStrictEqual({})
+    expect(await rule({ region: 'US-CA', regions: { ...canadaRegions, US: {} } })).toStrictEqual({})
+    expect(await rule({ region: 'GB', regions: ukStatisticsRegions })).toStrictEqual({ laws: ['uk'], granted: ['analytics'] })
   })
 
   it.each([
@@ -245,6 +254,22 @@ describe('laws', () => {
     })
     expect(controller.getSnapshot().bannerVisible).toBe(true)
     expect(loaded()).toEqual([])
+    done()
+  })
+
+  it.each([
+    ['DE', undefined],
+    ['US-CA', { 'US-CA': { laws: ['ccpa', 'gdpr'] as Law[] } }],
+  ])('grant nothing under Global Privacy Control and an opt-in law in %s, nor marketing after Accept all', async (region, regions) => {
+    signal(true)
+    const { analytics, controller, loaded, done } = await started({ region, regions })
+    expect(controller.getSnapshot()).toMatchObject({ gpc: true, bannerVisible: true })
+    expect(analytics.consent.getConsent()).toBeNull()
+    expect(loaded()).toEqual([])
+    await controller.actions.acceptAll()
+    await settle()
+    expect(analytics.consent.getConsent()).toEqual({ preferences: true, analytics: true, marketing: false })
+    expect(loaded()).toEqual(['stats'])
     done()
   })
 

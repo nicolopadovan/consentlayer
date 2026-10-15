@@ -108,6 +108,12 @@ describe('the CNIL', () => {
     expect(banner().querySelector('.consentlayer-close')).not.toBeNull()
   })
 
+  it('keeps its message only with the ×', async () => {
+    await setup('FR', { closeButton: false })
+    expect(banner().querySelector('.consentlayer-close')).toBeNull()
+    expect(banner().querySelector('p')!.textContent).not.toContain('Closing')
+  })
+
   it('goes away with the cnil law', async () => {
     await setup('FR', {}, { laws: { cnil: false } })
     expect(banner().querySelector('.consentlayer-close')).toBeNull()
@@ -157,17 +163,26 @@ describe('the CCPA', () => {
     expect(dialog().querySelector('input')!.checked).toBe(true)
   })
 
-  it('honors Global Privacy Control silently, and says so on request', async () => {
+  it('states the right to opt out in the dialog', async () => {
+    await setup('US-CA')
+    expect(dialog().querySelector('h2 + p')!.textContent).toContain('right to opt out of the sale or sharing')
+  })
+
+  it('honors Global Privacy Control and says so, unless the note is turned off', async () => {
     signal(true)
     const { loaded } = await setup('US-CA')
     expect(loaded()).toEqual(['stats'])
     badge().click()
     await settle()
     expect(dialog().querySelector('input')!.checked).toBe(true)
+    expect(dialog().querySelector('.consentlayer-gpc')!.textContent).toBe('Opt-Out Preference Signal Honored')
+    cleanup()
+    await setup('US-CA', { text: { gpcHonored: '' } })
     expect(dialog().querySelector('.consentlayer-gpc')).toBeNull()
     cleanup()
-    await setup('US-CA', { text: { gpcHonored: 'Opt-out preference signal honored' } })
-    expect(dialog().querySelector('.consentlayer-gpc')!.textContent).toBe('Opt-out preference signal honored')
+    signal(false)
+    await setup('US-CA')
+    expect(dialog().querySelector('.consentlayer-gpc')).toBeNull()
   })
 
   it('gives way to the opt-in banner when switched off', async () => {
@@ -210,6 +225,30 @@ describe('several laws', () => {
     expect(secondary('Reject non-essential')).toBe(false)
     expect(banner().querySelector('.consentlayer-close')).not.toBeNull()
     expect(banner().querySelector('p')!.textContent).toContain('Closing this banner means you refuse')
+  })
+})
+
+describe('a slow region lookup', () => {
+  it('mounts nothing until the region is known, then follows its law', async () => {
+    let resolve = (_region: string) => {}
+    const region = new Promise<string>((done) => (resolve = done))
+    const analytics = createAnalytics({ consent: { region: () => region } })
+    const controller = createConsentController(analytics)
+    const stop = controller.start()
+    const unmount = mountBanner(controller)
+    cleanup = () => {
+      unmount()
+      stop()
+      analytics.destroy()
+    }
+    await settle()
+    expect(banner()).toBeNull()
+    expect(badge()).toBeNull()
+    resolve('US-CA')
+    await settle()
+    await settle()
+    expect(banner().hidden).toBe(true)
+    expect(badge().textContent).toBe('Your Privacy Choices')
   })
 })
 

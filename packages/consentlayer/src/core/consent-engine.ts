@@ -8,7 +8,7 @@ import type {
   RegionRule,
   StoredConsent,
 } from './types'
-import { lawRegions, resolveRule } from './regions'
+import { knownLaws, lawRegions, resolveRule } from './regions'
 import { BUILT_IN_CATEGORIES, broadcastConsent, createDebugLog, equalConsent, normalizeConsent } from './utils'
 import { assertValidConsent } from './validation'
 
@@ -27,6 +27,13 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
   const { maxAgeDays } = options
   if (maxAgeDays !== undefined && !(maxAgeDays > 0 && Number.isFinite(maxAgeDays))) {
     throw new Error(`[consentlayer] consent.maxAgeDays must be a positive number, received ${maxAgeDays}`)
+  }
+  const law = [
+    ...Object.keys(options.laws ?? {}),
+    ...Object.values(options.regions ?? {}).flatMap((regionRule) => regionRule.laws ?? []),
+  ].find((name) => !knownLaws.includes(name))
+  if (law !== undefined) {
+    throw new Error(`[consentlayer] unknown law "${law}", expected one of ${knownLaws.join(', ')}`)
   }
   const major = (version: string | undefined) => version?.split('.')[0]
   let region: string | undefined

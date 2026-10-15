@@ -22,6 +22,9 @@ const lawRules: Record<Law, [regions: string[], rule: RegionRule]> = {
 /** The laws on by default. */
 const defaultLaws: Partial<Record<Law, boolean>> = { gdpr: true, cnil: true, revfadp: true, ccpa: true }
 
+/** Every law ConsentLayer knows. */
+export const knownLaws = Object.keys(lawRules)
+
 /** The region rules of the laws switched on in `laws`, merged over `defaultLaws`. */
 export function lawRegions(laws: Partial<Record<Law, boolean>> = {}) {
   const regions: Record<string, RegionRule> = {}
@@ -39,11 +42,12 @@ export function resolveRule(rule: RegionRule): RegionRule {
     const granted = (a: RegionRule['granted'], b: RegionRule['granted']) =>
       a === 'all' ? b : b === 'all' ? a : a && b?.filter((category) => a.includes(category))
     const days = Math.min(stricter.maxAgeDays ?? Infinity, next.maxAgeDays ?? Infinity)
-    return {
+    const fields: RegionRule = {
       granted: index ? granted(stricter.granted, next.granted) : next.granted,
       banner: index ? (stricter.banner === false && next.banner === false ? false : undefined) : next.banner,
       maxAgeDays: days === Infinity ? undefined : days,
     }
+    return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined))
   }, {})
   return { ...merged, ...rule }
 }
