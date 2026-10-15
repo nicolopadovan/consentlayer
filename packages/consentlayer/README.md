@@ -10,7 +10,8 @@ format.
 - **Consent:** categories `preferences`, `analytics` and `marketing`, plus
   your own. A provider loads only once its category is granted, or in its
   vendor's consent mode, and stops on withdrawal. Global Privacy Control is
-  honored. Consent adapters read an IAB TCF CMP, sync Shopify's Customer
+  honored. Rules per visitor region apply the US opt-out model and rules for
+  Switzerland and France, from the country header your host adds. Consent adapters read an IAB TCF CMP, sync Shopify's Customer
   Privacy API and send Google Consent Mode signals.
 - **Light:** each provider is its own entry point, and vendor SDKs and heavy
   features (Replay, tracing, session recording) are chunks loaded only when

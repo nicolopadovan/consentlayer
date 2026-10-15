@@ -10,6 +10,7 @@ export { getNames } from './core/names'
 export { definePlugin, getFlag, loadScript, setFlag } from './core/plugin'
 export type { AutoTrackingEventNames, Names, NamesInput } from './core/names'
 export { createEnvConfig } from './core/presets'
+export { canadaRegions, ukStatisticsRegions } from './core/regions'
 export type { EnvConfigInput } from './core/presets'
 export {
   createLocalStorageConsentStorage,
@@ -56,6 +57,7 @@ export type {
   PluginContext,
   Register,
   ProviderConsentRequirement,
+  RegionRule,
   ServerEvent,
   StandardEvents,
   StoredConsent,

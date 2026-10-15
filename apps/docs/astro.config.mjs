@@ -56,6 +56,7 @@ export default defineConfig({
             'guides/auto-tracking',
             'guides/consent-ui',
             'guides/banner',
+            'guides/regions',
             {
               label: 'Providers',
               collapsed: true,

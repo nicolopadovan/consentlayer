@@ -5,8 +5,10 @@ import type {
   ConsentEngineSnapshot,
   ConsentIntegrationAdapter,
   ConsentState,
+  RegionRule,
   StoredConsent,
 } from './types'
+import { defaultRegions } from './regions'
 import { BUILT_IN_CATEGORIES, broadcastConsent, createDebugLog, equalConsent, normalizeConsent } from './utils'
 import { assertValidConsent } from './validation'
 
@@ -27,11 +29,18 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     throw new Error(`[consentlayer] consent.maxAgeDays must be a positive number, received ${maxAgeDays}`)
   }
   const major = (version: string | undefined) => version?.split('.')[0]
-  const isStaleRecord = (record: StoredConsent) =>
-    (policyVersion !== undefined && major(record.policyVersion) !== major(policyVersion)) ||
-    (maxAgeDays !== undefined &&
-      !(typeof record.updatedAt === 'number' && Date.now() - record.updatedAt <= maxAgeDays * 86_400_000))
+  let region: string | undefined
+  let rule: RegionRule = {}
+  const isStaleRecord = (record: StoredConsent) => {
+    const days = Math.min(maxAgeDays ?? Infinity, rule.maxAgeDays ?? Infinity)
+    return (
+      (policyVersion !== undefined && major(record.policyVersion) !== major(policyVersion)) ||
+      (days !== Infinity &&
+        !(typeof record.updatedAt === 'number' && Date.now() - record.updatedAt <= days * 86_400_000))
+    )
+  }
   let stale = false
+  let defaulted = false
   let changes = 0
 
   const notify = () => {
@@ -52,8 +61,9 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       excludeAdapter?: ConsentIntegrationAdapter
     },
   ) => {
-    if (destroyed || !next || (equalConsent(current, next) && !(persist && stale))) return
+    if (destroyed || !next || (equalConsent(current, next) && !(persist && (stale || defaulted)))) return
     current = next
+    defaulted = source === 'region'
     changes++
     if (persist) {
       stale = false
@@ -127,6 +137,15 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
   }
 
   const runBootstrap = async () => {
+    try {
+      const code = typeof options.region === 'function' ? await options.region() : options.region
+      region = code?.trim().toUpperCase() || undefined
+    } catch (cause) {
+      options.onError?.({ scope: 'consent-region', message: 'Failed to read the region', cause })
+    }
+    const regions = { ...defaultRegions, ...options.regions }
+    rule = (region && (regions[region] ?? regions[region.split('-')[0]])) || {}
+    debugLog('consent', undefined, 'region', region, rule)
     const record = storage?.read() ?? null
     const stored = normalize(record?.consent)
     stale = stored !== null && isStaleRecord(record!)
@@ -166,16 +185,25 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       return current
     }
 
+    const granted = rule.granted === 'all' ? categories : (rule.granted ?? [])
+    if (granted.length && current === null) {
+      const defaults = Object.fromEntries(
+        categories.map((category) => [category, granted.includes(category) && !(gpc && category === 'marketing')]),
+      ) as ConsentState
+      await commit(defaults, 'region', { persist: false, applyAdapters: false })
+      return current
+    }
     notify()
     return current
   }
+  const gpc =
+    options.gpc !== false &&
+    typeof navigator !== 'undefined' &&
+    (navigator as { globalPrivacyControl?: boolean }).globalPrivacyControl === true
 
   return {
     categories,
-    gpc:
-      options.gpc !== false &&
-      typeof navigator !== 'undefined' &&
-      (navigator as { globalPrivacyControl?: boolean }).globalPrivacyControl === true,
+    gpc,
     bootstrap() {
       bootstrapping ??= runBootstrap()
       return bootstrapping
@@ -185,6 +213,12 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     },
     isStale() {
       return stale
+    },
+    getRegion() {
+      return { region, rule }
+    },
+    shouldAsk() {
+      return rule.banner !== false && (current === null || stale || defaulted)
     },
     async setConsent(consent, source = 'imperative') {
       assertValidConsent(consent, categories)

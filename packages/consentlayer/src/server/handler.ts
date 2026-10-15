@@ -58,6 +58,23 @@ export function requestInfo(request: Request): ServerRequestInfo {
   }
 }
 
+const GEO_HEADERS = [
+  ['x-vercel-ip-country', 'x-vercel-ip-country-region'],
+  ['cf-ipcountry', 'cf-region-code'],
+  ['cloudfront-viewer-country', 'cloudfront-viewer-country-region'],
+]
+
+/** The visitor's ISO 3166-2 region, such as `'US-CA'` or `'FR'`, from the headers Vercel, Cloudflare or CloudFront add. */
+export function regionFromHeaders(headers: Pick<Headers, 'get'>): string | undefined {
+  for (const [countryHeader, subdivisionHeader] of GEO_HEADERS) {
+    const country = headers.get(countryHeader)?.trim().toUpperCase()
+    if (!country || !/^[A-Z]{2}$/.test(country) || country === 'XX') continue
+    const subdivision = headers.get(subdivisionHeader)?.trim().toUpperCase().replace(`${country}-`, '')
+    return subdivision && /^[A-Z0-9]{1,3}$/.test(subdivision) ? `${country}-${subdivision}` : country
+  }
+  return undefined
+}
+
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 const isOptional = (value: unknown, check: (value: unknown) => boolean) => value === undefined || check(value)

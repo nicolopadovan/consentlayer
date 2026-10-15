@@ -30,7 +30,7 @@ return value and the errors it throws. Options are optional unless marked
 | [`consentlayer/solid/banner`](#consentlayersolidbanner)     | `ConsentBanner` for Solid                                                                                                                                                  |
 | [`consentlayer/angular/banner`](#consentlayerangularbanner) | `provideConsentBanner`                                                                                                                                                     |
 | [`consentlayer/ecommerce`](#consentlayerecommerce)          | `productParams`, `cartParams`, `orderParams`, `toItem`                                                                                                                     |
-| [`consentlayer/server`](#consentlayerserver)                | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores                                                    |
+| [`consentlayer/server`](#consentlayerserver)                | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, `regionFromHeaders`, consent stores                               |
 | [`consentlayer/server/meta`](#consentlayerservermeta)       | `metaCapi`                                                                                                                                                                 |
 | [`consentlayer/server/tiktok`](#consentlayerservertiktok)   | `tiktokEvents`                                                                                                                                                             |
 | [`consentlayer/server/sgtm`](#consentlayerserversgtm)       | `sgtm`                                                                                                                                                                     |
@@ -101,6 +101,8 @@ type AnalyticsOptions = {
     policyVersion?: string
     onStale?: 'discard' | 'keep'
     gpc?: boolean
+    region?: string | (() => string | null | undefined | Promise<string | null | undefined>)
+    regions?: Record<string, RegionRule>
   }
   categories?: (keyof ConsentCategories)[]
   names?: NamesInput
@@ -113,16 +115,18 @@ type AnalyticsOptions = {
 
 `createAnalytics({ consent: { … } })`:
 
-| Option           | Type                          | Default                                                                    | Description                                                                                                                                                                                                                                                                                                             |
-| ---------------- | ----------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `storage`        | `ConsentStorageAdapter`       | `localStorage`, under `names.consentStorageKey`                            | Where the choice is stored. See [Storage adapters](#storage-adapters).                                                                                                                                                                                                                                                  |
-| `adapters`       | `ConsentIntegrationAdapter[]` | `[]`                                                                       | External consent platforms to sync with, such as [`tcf()`](#tcfoptions), [`shopifyCustomerPrivacy()`](#shopifycustomerprivacyoptions) or [`googleConsentMode()`](#googleconsentmodeoptions).                                                                                                                            |
-| `initialConsent` | `ConsentState \| null`        | `null`                                                                     | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one.                                                                                                                                                                                                                             |
-| `broadcast`      | `ConsentBroadcastConfig`      | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set.                                                                                                                                                                                                                    |
-| `maxAgeDays`     | `number`                      | None                                                                       | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`.                                                                                             |
-| `policyVersion`  | `string`                      | None                                                                       | A stored choice made under another major version, the part before the first `.`, or under none, is stale: `'3.1'` to `'3.2'` keeps choices, `'3.2'` to `'4.0'` asks again. Surrounding whitespace is trimmed; `''` counts as unset. Pass the same value as to [`createConsentHandler()`](#createconsenthandleroptions). |
-| `onStale`        | `'discard' \| 'keep'`         | `'discard'`                                                                | What a stale choice means until the visitor chooses again. `'discard'` treats it as no choice: consent is `null` and only `'none'` providers run. `'keep'` keeps it in force. Either way the banner is shown. See [Asking again](/guides/consent-ui/#asking-again).                                                     |
-| `gpc`            | `boolean`                     | `true`                                                                     | Honors the browser's Global Privacy Control signal: while `navigator.globalPrivacyControl` is `true`, `acceptAll()` leaves `marketing` denied. `false` ignores the signal. See [Global Privacy Control](/guides/consent-ui/#global-privacy-control).                                                                    |
+| Option           | Type                                                          | Default                                                                    | Description                                                                                                                                                                                                                                                                                                             |
+| ---------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`        | `ConsentStorageAdapter`                                       | `localStorage`, under `names.consentStorageKey`                            | Where the choice is stored. See [Storage adapters](#storage-adapters).                                                                                                                                                                                                                                                  |
+| `adapters`       | `ConsentIntegrationAdapter[]`                                 | `[]`                                                                       | External consent platforms to sync with, such as [`tcf()`](#tcfoptions), [`shopifyCustomerPrivacy()`](#shopifycustomerprivacyoptions) or [`googleConsentMode()`](#googleconsentmodeoptions).                                                                                                                            |
+| `initialConsent` | `ConsentState \| null`                                        | `null`                                                                     | The consent in effect until `bootstrap()` finds a stored choice or an adapter supplies one.                                                                                                                                                                                                                             |
+| `broadcast`      | `ConsentBroadcastConfig`                                      | `{ eventName: names.consentEventName, globalKey: names.consentGlobalKey }` | The DOM events and window globals that announce each change. Replaces the default entirely when set.                                                                                                                                                                                                                    |
+| `maxAgeDays`     | `number`                                                      | None                                                                       | A stored choice made more than this many days ago is stale, and so is one stored without a date. Must be a positive number; anything else throws `[consentlayer] consent.maxAgeDays must be a positive number, received …`.                                                                                             |
+| `policyVersion`  | `string`                                                      | None                                                                       | A stored choice made under another major version, the part before the first `.`, or under none, is stale: `'3.1'` to `'3.2'` keeps choices, `'3.2'` to `'4.0'` asks again. Surrounding whitespace is trimmed; `''` counts as unset. Pass the same value as to [`createConsentHandler()`](#createconsenthandleroptions). |
+| `onStale`        | `'discard' \| 'keep'`                                         | `'discard'`                                                                | What a stale choice means until the visitor chooses again. `'discard'` treats it as no choice: consent is `null` and only `'none'` providers run. `'keep'` keeps it in force. Either way the banner is shown. See [Asking again](/guides/consent-ui/#asking-again).                                                     |
+| `gpc`            | `boolean`                                                     | `true`                                                                     | Honors the browser's Global Privacy Control signal: while `navigator.globalPrivacyControl` is `true`, `acceptAll()` leaves `marketing` denied. `false` ignores the signal. See [Global Privacy Control](/guides/consent-ui/#global-privacy-control).                                                                    |
+| `region`         | `string \| (() => string \| null \| undefined \| Promise<…>)` | None                                                                       | The visitor's ISO 3166-2 region, such as `'US-CA'` or `'FR'`, or a function that returns it in the browser. Read once by `bootstrap()`; a function that throws or rejects is reported with scope `consent-region`. See [Privacy laws by region](/guides/regions/).                                                      |
+| `regions`        | `Record<string, RegionRule>`                                  | `US`, `CH` and `FR` rules                                                  | Rules per region, merged over the defaults. The rule for `'US-CA'` is looked up, then `'US'`; a region without one, or no region, gets the opt-in rule `{}`. See [Change the rules](/guides/regions/#change-the-rules).                                                                                                 |
 
 Custom categories and the error callback are set with the top-level
 `categories` and `onError`; passing them inside `consent` is a type error.
@@ -275,8 +279,10 @@ provider's `identify` hook.
 | `categories` | `readonly ConsentCategory[]`                                                      | Every category: `preferences`, `analytics`, `marketing`, then the custom ones.                                                                                                                                                                                                                                                     |
 | `bootstrap`  | `() => Promise<ConsentState \| null>`                                             | Asks every `authoritative` adapter, then reads the stored choice, else asks the other adapters' `bootstrap` in order, and stores the first adapter answer unless it is provisional. A choice committed meanwhile wins. Runs once; later calls return the same promise. `<AnalyticsProvider>` calls it for you.                     |
 | `gpc`        | `boolean`                                                                         | `true` when `navigator.globalPrivacyControl` is `true` and the `gpc` option is not `false`. Read once, when the instance is created.                                                                                                                                                                                               |
-| `getConsent` | `() => ConsentState \| null`                                                      | The current choice, or `null` before the visitor has made one.                                                                                                                                                                                                                                                                     |
+| `getConsent` | `() => ConsentState \| null`                                                      | The consent in force: the visitor's choice, the region's `granted` categories before one, or `null`.                                                                                                                                                                                                                               |
 | `isStale`    | `() => boolean`                                                                   | Whether `bootstrap()` found a stored choice that is too old or was made under another major `policyVersion`. `false` again once the visitor chooses.                                                                                                                                                                               |
+| `getRegion`  | `() => { region: string \| undefined; rule: RegionRule }`                         | The region `bootstrap()` read, upper-cased, and the rule in force there. `{ region: undefined, rule: {} }` before bootstrap or without a region.                                                                                                                                                                                   |
+| `shouldAsk`  | `() => boolean`                                                                   | Whether the banner should ask: no choice, a stale one or only the region's defaults are in force, and the rule's `banner` is not `false`. The controller's `bannerVisible` follows it.                                                                                                                                             |
 | `setConsent` | `(consent: ConsentState, source?: ConsentChangeSource) => Promise<void>`          | Replaces the whole choice, stores it, broadcasts it and applies it to every adapter. `source` defaults to `'imperative'`. An identical choice is ignored, unless the stored one is stale: then it is stored again with the current date and `policyVersion`, and applied to every adapter, so `server.consentEndpoint` records it. |
 | `update`     | `(partial: Partial<ConsentState>) => Promise<void>`                               | Awaits `bootstrap()`, then merges `partial` over the current choice. Categories that have never been set are denied.                                                                                                                                                                                                               |
 | `subscribe`  | `(listener: (snapshot: { consent: ConsentState \| null }) => void) => () => void` | Calls `listener` on every change. Returns an unsubscribe function.                                                                                                                                                                                                                                                                 |
@@ -551,7 +557,13 @@ type ConsentState = Record<ConsentCategory, boolean> & {
   sale_of_data?: boolean
 }
 
-type ConsentChangeSource = 'bootstrap' | 'storage' | 'adapter' | 'imperative' | 'unknown'
+type ConsentChangeSource = 'bootstrap' | 'region' | 'storage' | 'adapter' | 'imperative' | 'unknown'
+
+type RegionRule = {
+  granted?: readonly ConsentCategory[] | 'all'
+  banner?: boolean
+  maxAgeDays?: number
+}
 
 type ConsentEngineSnapshot = { consent: ConsentState | null }
 
@@ -561,6 +573,8 @@ type ConsentApi = {
   bootstrap: () => Promise<ConsentState | null>
   getConsent: () => ConsentState | null
   isStale: () => boolean
+  getRegion: () => { region: string | undefined; rule: RegionRule }
+  shouldAsk: () => boolean
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>
   subscribe: (listener: (snapshot: ConsentEngineSnapshot) => void) => () => void
   update(partial: Partial<ConsentState>): Promise<void>
@@ -744,6 +758,7 @@ type AnalyticsErrorHandler = (error: AnalyticsError) => void
 | `provider-script-load`                                                                                                          | A provider's vendor script fails to load.                                                                                                                      |
 | `server-forward`                                                                                                                | Posting to `server.endpoint` fails or returns a non-2xx status, or restoring the consent cookie at `server.consentEndpoint` fails.                             |
 | `consent-adapter`                                                                                                               | An adapter's `bootstrap`, `apply` or `observe` throws, including the `server.consentEndpoint` recorder. After a failed `bootstrap`, the next adapter is asked. |
+| `consent-region`                                                                                                                | The `region` function throws or rejects. The opt-in rule applies.                                                                                              |
 | `auto-tracking`                                                                                                                 | `autoTracking()` throws while it starts or begins a page session.                                                                                              |
 | `queue-full`                                                                                                                    | 100 calls are already waiting for boot or for a deferred `load`.                                                                                               |
 
@@ -1866,6 +1881,21 @@ function requestInfo(request: Request): ServerRequestInfo
 ```ts
 await sendServerEvent(event, { destinations, request: requestInfo(request) })
 ```
+
+### `regionFromHeaders(headers)`
+
+Reads the visitor's region from the headers Vercel, Cloudflare or Amazon
+CloudFront add, for the `region` option.
+
+```ts
+function regionFromHeaders(headers: Pick<Headers, 'get'>): string | undefined
+```
+
+**Returns** the country and subdivision, such as `'US-CA'`, the country alone
+when the subdivision header is missing or not a code, or `undefined` without a
+two-letter country. Cloudflare's `XX` counts as unknown. The first host whose
+country header is present wins. See
+[Read it on the server](/guides/regions/#read-it-on-the-server).
 
 ### `createConsentHandler(options)`
 

@@ -33,15 +33,6 @@ page. To control upgrades, pin an exact version instead, such as
 [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity):
 jsDelivr shows the `integrity` hash of each file on the package's page.
 
-:::note
-`@1` matches stable releases only, so it resolves once ConsentLayer 1.0.0 is
-released. Until then, use `@next`, which serves the latest prerelease, or pin
-an exact prerelease version. ConsentLayer publishes prereleases under the npm
-tag `next`, and both CDNs accept an npm tag in place of a version. jsDelivr
-advises against tags in production, so pin an exact version there once you
-have tested it.
-:::
-
 The two scripts load in either order, and work with `defer` or `async`. The
 banner waits for the main script and for the document to be parsed.
 
@@ -116,28 +107,29 @@ An unknown name logs `[consentlayer] Unknown provider "<name>".` or
 ></script>
 ```
 
-| Attribute                  | Sets                                                  |
-| -------------------------- | ----------------------------------------------------- |
-| `data-ga4`                 | `ga4.measurementId`                                   |
-| `data-gtm`                 | `gtm.containerId`                                     |
-| `data-meta-pixel`          | `meta.pixelId`                                        |
-| `data-tiktok-pixel`        | `tiktok.pixelId`                                      |
-| `data-contentsquare-tag`   | `contentsquare.tagId`                                 |
-| `data-hotjar-site`         | `hotjar.siteId`                                       |
-| `data-hotjar-version`      | `hotjar.version`                                      |
-| `data-posthog-key`         | `posthog.apiKey`                                      |
-| `data-posthog-host`        | `posthog.apiHost`                                     |
-| `data-posthog-recording`   | `posthog.recording`                                   |
-| `data-sentry-dsn`          | `sentry.dsn`                                          |
-| `data-sentry-environment`  | `sentry.environment`                                  |
-| `data-sentry-replay`       | `sentry.replay`                                       |
-| `data-sentry-tracing`      | `sentry.tracing`                                      |
-| `data-google-consent-mode` | The Google Consent Mode adapter, with no options      |
-| `data-shopify`             | The Shopify Customer Privacy adapter, with no options |
-| `data-tcf`                 | The IAB TCF adapter, with no options                  |
-| `data-vercel`              | `vercel()`, with no options                           |
-| `data-auto-tracking`       | `autoTracking`                                        |
-| `data-debug`               | `debug`                                               |
+| Attribute                  | Sets                                                             |
+| -------------------------- | ---------------------------------------------------------------- |
+| `data-ga4`                 | `ga4.measurementId`                                              |
+| `data-gtm`                 | `gtm.containerId`                                                |
+| `data-meta-pixel`          | `meta.pixelId`                                                   |
+| `data-tiktok-pixel`        | `tiktok.pixelId`                                                 |
+| `data-contentsquare-tag`   | `contentsquare.tagId`                                            |
+| `data-hotjar-site`         | `hotjar.siteId`                                                  |
+| `data-hotjar-version`      | `hotjar.version`                                                 |
+| `data-posthog-key`         | `posthog.apiKey`                                                 |
+| `data-posthog-host`        | `posthog.apiHost`                                                |
+| `data-posthog-recording`   | `posthog.recording`                                              |
+| `data-sentry-dsn`          | `sentry.dsn`                                                     |
+| `data-sentry-environment`  | `sentry.environment`                                             |
+| `data-sentry-replay`       | `sentry.replay`                                                  |
+| `data-sentry-tracing`      | `sentry.tracing`                                                 |
+| `data-google-consent-mode` | The Google Consent Mode adapter, with no options                 |
+| `data-shopify`             | The Shopify Customer Privacy adapter, with no options            |
+| `data-tcf`                 | The IAB TCF adapter, with no options                             |
+| `data-vercel`              | `vercel()`, with no options                                      |
+| `data-auto-tracking`       | `autoTracking`                                                   |
+| `data-debug`               | `debug`                                                          |
+| `data-region`              | `consent.region`; see [Privacy laws by region](/guides/regions/) |
 
 An attribute that sets a boolean, or turns on an adapter or `vercel()`, is
 `true` when present, unless its value is `"false"`. You can combine both ways: an attribute wins over the same option in
