@@ -287,7 +287,9 @@ mountBanner(controller, {
 Each string may contain:
 
 - `[label](url)`, a link. Only `http:`, `https:`, `mailto:` and relative URLs
-  become links; any other is shown as its label.
+  become links; any other is shown as its label. The same holds for
+  `privacyPolicyUrl`, `cookiePolicyUrl` and `termsUrl`: any other counts as not
+  set.
 - `**bold**`.
 - `{privacyPolicy}`, `{cookiePolicy}` and `{terms}`, replaced with a link to
   the matching URL option, labeled with the `privacyPolicy`, `cookiePolicy` or

@@ -225,7 +225,8 @@ export function mountBanner(
   }: BannerOptions = {},
 ) {
   const text: typeof defaultText & Record<string, string | undefined> = { ...defaultText, ...overrides }
-  const urls = { privacyPolicy: privacyPolicyUrl, cookiePolicy: cookiePolicyUrl, terms: termsUrl }
+  const safe = (url = '') => (/^(https?:|mailto:)|^[^:]*$/i.test(url) ? url : undefined)
+  const urls = { privacyPolicy: safe(privacyPolicyUrl), cookiePolicy: safe(cookiePolicyUrl), terms: safe(termsUrl) }
   const link = (key: keyof typeof urls) =>
     urls[key] ? [element('a', { href: urls[key] }, ...content(text[key], true))] : content(text[key], true)
   const content = (value = '', nested = false): (Node | string)[] => {
@@ -238,8 +239,7 @@ export function mountBanner(
       nodes.push(value.slice(last, match.index))
       if (key) nodes.push(...(nested ? [whole] : link(key as keyof typeof urls)))
       else if (bold) nodes.push(element('strong', {}, ...content(bold, nested)))
-      else if (!nested && /^(https?:|mailto:)|^[^:]*$/i.test(href))
-        nodes.push(element('a', { href }, ...content(label, true)))
+      else if (!nested && safe(href)) nodes.push(element('a', { href }, ...content(label, true)))
       else nodes.push(...content(label, nested))
       last = match.index + whole.length
     }

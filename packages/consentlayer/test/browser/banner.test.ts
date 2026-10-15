@@ -454,3 +454,20 @@ it('leaves a placeholder inside a link label as text', async () => {
   })
   expect(banner().querySelector('a')?.textContent).toBe('our {privacyPolicy}')
 })
+
+it('links the policy URLs that are http, https, mailto or relative, and shows the rest as text', async () => {
+  await setup({
+    privacyPolicyUrl: 'javascript:alert(1)',
+    cookiePolicyUrl: '/cookies',
+    termsUrl: 'mailto:legal@example.com',
+    text: { message: 'Read {privacyPolicy}.' },
+  })
+  expect([...banner().querySelectorAll('a')].map((link) => link.getAttribute('href'))).toEqual([
+    '/cookies',
+    'mailto:legal@example.com',
+  ])
+  expect(banner().querySelector('p')?.textContent).toContain('Read Privacy policy.')
+  cleanup()
+  await setup({ privacyPolicyUrl: ' JavaScript:alert(1)', termsUrl: 'data:text/html,x' })
+  expect(banner().querySelector('a')).toBeNull()
+})
