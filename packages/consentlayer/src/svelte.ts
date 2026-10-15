@@ -81,6 +81,9 @@ export function consentLayer({ analytics, afterNavigate, page, ...options }: Con
     get prefs() {
       return read().prefs
     },
+    get laws() {
+      return read().laws
+    },
     ...controller.actions,
   }
   setContext(AnalyticsKey, analytics)

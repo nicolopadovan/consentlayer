@@ -8,7 +8,7 @@ import type {
   RegionRule,
   StoredConsent,
 } from './types'
-import { defaultRegions } from './regions'
+import { lawRegions, resolveRule } from './regions'
 import { BUILT_IN_CATEGORIES, broadcastConsent, createDebugLog, equalConsent, normalizeConsent } from './utils'
 import { assertValidConsent } from './validation'
 
@@ -147,8 +147,8 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     } catch (cause) {
       options.onError?.({ scope: 'consent-region', message: 'Failed to read the region', cause })
     }
-    const regions = { ...defaultRegions, ...options.regions }
-    rule = (region && (regions[region] ?? regions[region.split('-')[0]])) || {}
+    const regions = { ...lawRegions(options.laws), ...options.regions }
+    rule = resolveRule((region && (regions[region] ?? regions[region.split('-')[0]])) || {})
     debugLog('consent', undefined, 'region', region, rule)
     const record = storage?.read() ?? null
     const stored = normalize(record?.consent)

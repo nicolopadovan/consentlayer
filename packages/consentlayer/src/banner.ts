@@ -1,4 +1,5 @@
 import type { ConsentController, ConsentControllerActions } from './core/consent-controller'
+import type { Law } from './core/types'
 
 const defaultText = {
   title: 'Cookies',
@@ -24,6 +25,21 @@ const defaultText = {
   close: 'Close',
   save: 'Save choices',
   badge: 'Cookie settings',
+  doNotSell: 'Do not sell or share my personal information',
+  gpcHonored: '',
+}
+
+const lawText = {
+  revfadp: {
+    message:
+      'We use cookies to run this site, to remember your preferences and to understand how it is used, and with your consent for marketing. You can reject all but the necessary ones.',
+  },
+  cnil: {
+    message:
+      'We use cookies to run this site and, with your consent, for preferences, analytics and marketing. Closing this banner means you refuse all but the necessary ones.',
+  },
+  ccpa: { badge: 'Your Privacy Choices' },
+  optOut: { settingsTitle: 'Your Privacy Choices' },
 }
 
 type BannerPart =
@@ -53,19 +69,19 @@ export type BannerOptions = {
   overlay?: boolean
   /** Keeps the page from being used until the visitor chooses. */
   blocking?: boolean
-  /** `equal` gives Reject and Accept the same weight; `accept` fills only Accept. Defaults to `equal`. */
+  /** `equal` gives Reject and Accept the same weight; `accept` fills only Accept. Defaults to `equal`, and to `accept` where only `revfadp` asks. */
   emphasis?: 'equal' | 'accept'
-  /** Adds an × in the corner that rejects non-essential categories, labelled with the `dismiss` text. */
+  /** Adds an × in the corner that rejects non-essential categories, labelled with the `dismiss` text. Defaults to `true` under `cnil` while `text.message` is the default, which says that closing refuses. */
   closeButton?: boolean
-  /** The button that reopens the settings once the banner is gone, or `false` for none. */
+  /** The button that reopens the settings once the banner is gone, or `false` for none. Under `ccpa` it reads "Your Privacy Choices", with the opt-out icon, and shows always. */
   badge?:
     | false
     | {
-        /** Defaults to `after-choice`. */
+        /** Defaults to `after-choice`, and to `always` under `ccpa`. */
         show?: 'after-choice' | 'always'
         /** Defaults to `bottom-left`. */
         position?: `${Edge}-${Side}` | 'left' | 'right'
-        /** Shows the `badge` text next to the icon. */
+        /** Shows the `badge` text next to the icon. Defaults to `true` under `ccpa`. */
         label?: boolean
         /** Sits flush against the nearest edge, the side edge for a corner. */
         attached?: boolean
@@ -161,6 +177,7 @@ color:var(--consentlayer-accent-color,Canvas);font:inherit;cursor:pointer}
 :where(html[data-consentlayer-gutter]:has(.consentlayer-dialog[open],dialog.consentlayer-banner[open])){scrollbar-gutter:stable}
 :where(.consentlayer-badge){z-index:calc(var(--consentlayer-z-index,1000) - 1);display:flex;align-items:center;gap:.4rem;padding:.6rem;border-radius:2rem;box-shadow:0 4px 12px rgb(0 0 0/.2);font:var(--consentlayer-font,inherit)}
 :where(.consentlayer-badge) :where(svg){width:1.25rem;height:1.25rem;flex:none}
+:where(.consentlayer-badge) :where(svg[data-choices]){width:2.15rem;height:1rem}
 :where(.consentlayer-badge[data-position$=-center]){left:50%;transform:translateX(-50%)}
 :where(.consentlayer-badge[data-position=left],.consentlayer-badge[data-position=right]){top:50%;transform:translateY(-50%)}
 :where(.consentlayer-badge[data-position=left],.consentlayer-badge[data-attached][data-position$=-left]){left:0;border-radius:0 .5rem .5rem 0}
@@ -196,25 +213,45 @@ function element(tag: string, attributes: Record<string, string> = {}, ...childr
   return node
 }
 
-function icon() {
+function icon(choices: boolean) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', '0 0 24 24')
+  svg.setAttribute('viewBox', choices ? '0 0 30 14' : '0 0 24 24')
   svg.setAttribute('aria-hidden', 'true')
-  svg.innerHTML =
-    '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3a9 9 0 1 0 9 9 4 4 0 0 1-5-5 4 4 0 0 1-4-4Z"/><g fill="currentColor"><circle cx="8.5" cy="10.5" r="1.3"/><circle cx="14" cy="15" r="1.3"/><circle cx="9" cy="16" r="1"/></g>'
+  if (choices) svg.setAttribute('data-choices', '')
+  svg.innerHTML = choices
+    ? '<path fill="#fff" stroke="#06f" d="M7 .5h16a6.5 6.5 0 0 1 0 13H7a6.5 6.5 0 0 1 0-13Z"/><path fill="#06f" d="M17 .5h6a6.5 6.5 0 0 1 0 13h-9.5Z"/><path fill="none" stroke-width="1.5" stroke-linecap="round" d="m19.5 4.5 5 5m0-5-5 5" stroke="#fff"/><path fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="m5.5 7.2 2.3 2.3 4.4-5" stroke="#06f"/>'
+    : '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3a9 9 0 1 0 9 9 4 4 0 0 1-5-5 4 4 0 0 1-4-4Z"/><g fill="currentColor"><circle cx="8.5" cy="10.5" r="1.3"/><circle cx="14" cy="15" r="1.3"/><circle cx="9" cy="16" r="1"/></g>'
   return svg
 }
 
-/** Renders the banner and the settings dialog from `controller`'s state. Returns a function that removes them. */
-export function mountBanner(
-  controller: Pick<ConsentController, 'actions' | 'getSnapshot' | 'subscribe'>,
+type Controller = Pick<ConsentController, 'actions' | 'getSnapshot' | 'subscribe'>
+
+/**
+ * Renders the banner, the settings dialog and the badge from `controller`'s state, once it is ready, following the
+ * laws of the visitor's region where `options` leave a choice open. Returns a function that removes them.
+ */
+export function mountBanner(controller: Controller, options: BannerOptions = {}) {
+  let unmount: (() => void) | undefined
+  const mount = () => {
+    if (!unmount && controller.getSnapshot().ready) unmount = show(controller, options)
+  }
+  const unsubscribe = controller.subscribe(mount)
+  mount()
+  return () => {
+    unsubscribe()
+    unmount?.()
+  }
+}
+
+function show(
+  controller: Controller,
   {
     position = 'bottom-left',
     overlay,
     blocking,
     closeButton,
-    emphasis = 'equal',
-    badge: badgeOptions = {},
+    emphasis,
+    badge: badgeOption = {},
     privacyPolicyUrl,
     cookiePolicyUrl,
     termsUrl,
@@ -222,9 +259,23 @@ export function mountBanner(
     classNames = {},
     unstyled,
     nonce,
-  }: BannerOptions = {},
+  }: BannerOptions,
 ) {
-  const text: typeof defaultText & Record<string, string | undefined> = { ...defaultText, ...overrides }
+  const { laws, gpc } = controller.getSnapshot()
+  const has = (law: Law) => laws.includes(law)
+  const optIn = laws.some((law) => law !== 'ccpa' && law !== 'revfadp')
+  const optOut = laws.length > 0 && laws.every((law) => law === 'ccpa')
+  closeButton ??= has('cnil') && !overrides?.message
+  emphasis ??= has('revfadp') && !optIn ? 'accept' : 'equal'
+  const badgeOptions = badgeOption && { ...(has('ccpa') && { show: 'always' as const, label: true }), ...badgeOption }
+  const text: typeof defaultText & Record<string, string | undefined> = {
+    ...defaultText,
+    ...(has('revfadp') && !optIn && lawText.revfadp),
+    ...(has('cnil') && lawText.cnil),
+    ...(has('ccpa') && lawText.ccpa),
+    ...(optOut && lawText.optOut),
+    ...overrides,
+  }
   const safe = (url = '') => (/^(https?:|mailto:)|^[^:]*$/i.test(url) ? url : undefined)
   const urls = { privacyPolicy: safe(privacyPolicyUrl), cookiePolicy: safe(cookiePolicyUrl), terms: safe(termsUrl) }
   const link = (key: keyof typeof urls) =>
@@ -313,7 +364,7 @@ export function mountBanner(
       ...content(text.message),
       ...trailing.flatMap((key, index) => [index ? ' · ' : ' ', ...link(key)]),
     ),
-    ...(controller.getSnapshot().gpc ? [element('p', { class: 'consentlayer-gpc' }, ...content(text.gpc))] : []),
+    ...(gpc ? [element('p', { class: 'consentlayer-gpc' }, ...content(text.gpc))] : []),
     ...(closeButton ? [closer('rejectNonEssential', 'dismiss', text.dismiss)] : []),
     actions(...choices(), more(button('openDialog', 'customize', text.customize, true))),
   )
@@ -324,10 +375,13 @@ export function mountBanner(
     { ...className('dialog', 'consentlayer-dialog'), 'aria-labelledby': 'consentlayer-dialog-title' },
     element('h2', { id: 'consentlayer-dialog-title', ...className('settingsTitle') }, ...content(text.settingsTitle)),
     ...(text.settingsMessage ? [element('p', className('settingsMessage'), ...content(text.settingsMessage))] : []),
+    ...(optOut && gpc && text.gpcHonored
+      ? [element('p', { class: 'consentlayer-gpc' }, ...content(text.gpcHonored))]
+      : []),
     closer('closeDialog', 'close', text.close),
-    row(text.necessaryLabel, text.necessaryDescription, necessary),
+    ...(optOut ? [] : [row(text.necessaryLabel, text.necessaryDescription, necessary)]),
     list,
-    actions(...choices(), more(button('savePreferences', 'save', text.save, true))),
+    actions(...(optOut ? [] : choices()), more(button('savePreferences', 'save', text.save, !optOut))),
   ) as HTMLDialogElement
   const badge = badgeOptions
     ? element(
@@ -340,18 +394,19 @@ export function mountBanner(
           hidden: '',
           ...(!badgeOptions.label && { 'aria-label': plain(text.badge), title: plain(text.badge) }),
         },
-        icon(),
+        icon(has('ccpa')),
         ...(badgeOptions.label ? [element('span', {}, ...content(text.badge))] : []),
       )
     : null
   badge?.addEventListener('click', () => controller.actions.openDialog())
 
-  const switches = controller.getSnapshot().categories.map((category) => {
+  const switches = (optOut ? (['marketing'] as const) : controller.getSnapshot().categories).map((category) => {
     const input = element('input', { type: 'checkbox' }) as HTMLInputElement
     input.addEventListener('change', () =>
-      controller.actions.setPrefs({ ...controller.getSnapshot().prefs, [category]: input.checked }),
+      controller.actions.setPrefs({ ...controller.getSnapshot().prefs, [category]: input.checked !== optOut }),
     )
-    list.append(row(text[`${category}Label`] ?? category, text[`${category}Description`], input))
+    const label = optOut ? text.doNotSell : (text[`${category}Label`] ?? category)
+    list.append(row(label, text[`${category}Description`], input))
     return [category, input] as const
   })
   let opener: Element | null = null
@@ -362,7 +417,7 @@ export function mountBanner(
     const focusInBanner = banner.contains(document.activeElement)
     if (!dialog.open && !(banner instanceof HTMLDialogElement && banner.open))
       root.toggleAttribute('data-consentlayer-gutter', innerWidth > root.clientWidth)
-    for (const [category, input] of switches) input.checked = prefs[category]
+    for (const [category, input] of switches) input.checked = prefs[category] !== optOut
     if (dialogVisible && !dialog.open) {
       opener = document.activeElement
       dialog.showModal()

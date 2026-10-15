@@ -70,6 +70,9 @@ export function AnalyticsProvider(props: AnalyticsProviderProps): JSX.Element {
     get prefs() {
       return state().prefs
     },
+    get laws() {
+      return state().laws
+    },
     ...controller.actions,
   }
 

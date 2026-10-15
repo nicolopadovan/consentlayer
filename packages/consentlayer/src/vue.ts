@@ -68,6 +68,7 @@ export const consentLayer: Plugin<[ConsentLayerOptions]> = {
       gpc: field('gpc'),
       chosen: field('chosen'),
       prefs: field('prefs'),
+      laws: field('laws'),
       ...controller.actions,
     })
 

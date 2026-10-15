@@ -30,6 +30,7 @@ export function provideConsentBanner(options: BannerOptions = {}): EnvironmentPr
       gpc: controller.gpc(),
       chosen: controller.chosen(),
       prefs: controller.prefs(),
+      laws: controller.laws(),
     })
     const unmount = mountBanner(
       {

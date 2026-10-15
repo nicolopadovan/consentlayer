@@ -1,5 +1,5 @@
 import { withLegacy } from './names'
-import type { Analytics, ConsentCategory, ConsentState, LazyBootConfig, PageViewPayload } from './types'
+import type { Analytics, ConsentCategory, ConsentState, LazyBootConfig, Law, PageViewPayload } from './types'
 
 type Prefs = Record<ConsentCategory, boolean>
 
@@ -17,6 +17,8 @@ export type ConsentControllerState = {
   chosen: boolean
   /** The dialog's toggles, one per category in `analytics.consent.categories`. */
   prefs: Prefs
+  /** The laws of the visitor's region rule, once `ready`. See `analytics.consent.getRegion()`. */
+  laws: readonly Law[]
 }
 
 /** Actions for your consent UI. */
@@ -83,6 +85,7 @@ export function createConsentController(
     gpc: engine.gpc,
     chosen: engine.hasChoice(),
     prefs: all(false),
+    laws: [],
   }
   const listeners = new Set<() => void>()
   const set = (partial: Partial<ConsentControllerState>) => {
@@ -136,7 +139,7 @@ export function createConsentController(
           if (!stopped) set({ error: String(error), bannerVisible: autoShowBanner })
         })
         .finally(() => {
-          if (!stopped) set({ ready: true })
+          if (!stopped) set({ ready: true, laws: engine.getRegion().rule.laws ?? [] })
         })
       const cancelBoot = scheduleBoot(analytics, boot)
       const syncPrefs = (consent: ConsentState | null) => {

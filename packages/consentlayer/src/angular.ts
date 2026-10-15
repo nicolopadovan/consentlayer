@@ -90,6 +90,7 @@ export function provideConsentLayer(options: ConsentLayerOptions): EnvironmentPr
           gpc: field('gpc'),
           chosen: field('chosen'),
           prefs: field('prefs'),
+          laws: field('laws'),
           ...controller.actions,
         }
       },
