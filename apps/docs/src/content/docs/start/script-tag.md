@@ -107,28 +107,29 @@ An unknown name logs `[consentlayer] Unknown provider "<name>".` or
 ></script>
 ```
 
-| Attribute                  | Sets                                                  |
-| -------------------------- | ----------------------------------------------------- |
-| `data-ga4`                 | `ga4.measurementId`                                   |
-| `data-gtm`                 | `gtm.containerId`                                     |
-| `data-meta-pixel`          | `meta.pixelId`                                        |
-| `data-tiktok-pixel`        | `tiktok.pixelId`                                      |
-| `data-contentsquare-tag`   | `contentsquare.tagId`                                 |
-| `data-hotjar-site`         | `hotjar.siteId`                                       |
-| `data-hotjar-version`      | `hotjar.version`                                      |
-| `data-posthog-key`         | `posthog.apiKey`                                      |
-| `data-posthog-host`        | `posthog.apiHost`                                     |
-| `data-posthog-recording`   | `posthog.recording`                                   |
-| `data-sentry-dsn`          | `sentry.dsn`                                          |
-| `data-sentry-environment`  | `sentry.environment`                                  |
-| `data-sentry-replay`       | `sentry.replay`                                       |
-| `data-sentry-tracing`      | `sentry.tracing`                                      |
-| `data-google-consent-mode` | The Google Consent Mode adapter, with no options      |
-| `data-shopify`             | The Shopify Customer Privacy adapter, with no options |
-| `data-tcf`                 | The IAB TCF adapter, with no options                  |
-| `data-vercel`              | `vercel()`, with no options                           |
-| `data-auto-tracking`       | `autoTracking`                                        |
-| `data-debug`               | `debug`                                               |
+| Attribute                  | Sets                                                             |
+| -------------------------- | ---------------------------------------------------------------- |
+| `data-ga4`                 | `ga4.measurementId`                                              |
+| `data-gtm`                 | `gtm.containerId`                                                |
+| `data-meta-pixel`          | `meta.pixelId`                                                   |
+| `data-tiktok-pixel`        | `tiktok.pixelId`                                                 |
+| `data-contentsquare-tag`   | `contentsquare.tagId`                                            |
+| `data-hotjar-site`         | `hotjar.siteId`                                                  |
+| `data-hotjar-version`      | `hotjar.version`                                                 |
+| `data-posthog-key`         | `posthog.apiKey`                                                 |
+| `data-posthog-host`        | `posthog.apiHost`                                                |
+| `data-posthog-recording`   | `posthog.recording`                                              |
+| `data-sentry-dsn`          | `sentry.dsn`                                                     |
+| `data-sentry-environment`  | `sentry.environment`                                             |
+| `data-sentry-replay`       | `sentry.replay`                                                  |
+| `data-sentry-tracing`      | `sentry.tracing`                                                 |
+| `data-google-consent-mode` | The Google Consent Mode adapter, with no options                 |
+| `data-shopify`             | The Shopify Customer Privacy adapter, with no options            |
+| `data-tcf`                 | The IAB TCF adapter, with no options                             |
+| `data-vercel`              | `vercel()`, with no options                                      |
+| `data-auto-tracking`       | `autoTracking`                                                   |
+| `data-debug`               | `debug`                                                          |
+| `data-region`              | `consent.region`; see [Privacy laws by region](/guides/regions/) |
 
 An attribute that sets a boolean, or turns on an adapter or `vercel()`, is
 `true` when present, unless its value is `"false"`. You can combine both ways: an attribute wins over the same option in

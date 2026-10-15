@@ -30,7 +30,7 @@ export type UserTraits = Record<string, unknown> & {
 }
 
 /** Where a consent change came from. */
-export type ConsentChangeSource = 'bootstrap' | 'storage' | 'adapter' | 'imperative' | 'unknown'
+export type ConsentChangeSource = 'bootstrap' | 'region' | 'storage' | 'adapter' | 'imperative' | 'unknown'
 
 /** DOM event names and window globals that announce consent changes to other scripts. */
 export type ConsentBroadcastConfig = {
@@ -92,8 +92,22 @@ export type ConsentEngineOptions = {
   onStale?: 'discard' | 'keep'
   /** Honor the browser's Global Privacy Control signal: "accept all" leaves marketing off while it is on. Defaults to `true`. */
   gpc?: boolean
+  /** The visitor's ISO 3166-2 region, such as `'US-CA'` or `'FR'`, or a function that returns it in the browser. Unset, unknown. */
+  region?: string | (() => string | null | undefined | Promise<string | null | undefined>)
+  /** Rules per region code, merged over the defaults for `US`, `CH` and `FR`; a region without a rule, or an unknown one, gets the opt-in rule `{}`. */
+  regions?: Record<string, RegionRule>
   debug?: boolean | DebugOptions
   onError?: AnalyticsErrorHandler
+}
+
+/** How consent works in a region until the visitor chooses. */
+export type RegionRule = {
+  /** Categories granted before a choice, applied but not stored; Global Privacy Control turns marketing off. Defaults to none: opt-in. */
+  granted?: readonly ConsentCategory[] | 'all'
+  /** Whether the banner asks a visitor who has not chosen. Defaults to `true`. */
+  banner?: boolean
+  /** A choice older than this many days is stale in this region, when shorter than `maxAgeDays`. */
+  maxAgeDays?: number
 }
 
 /** What consent subscribers receive. */
@@ -110,6 +124,10 @@ export interface ConsentEngine {
   getConsent: () => ConsentState | null
   /** Whether the stored choice is stale and the visitor should be asked again. */
   isStale: () => boolean
+  /** The visitor's region and the rule in force there, once `bootstrap()` resolves. */
+  getRegion: () => { region: string | undefined; rule: RegionRule }
+  /** Whether the banner should ask: no choice, a stale one or only the region's defaults, and the rule shows a banner. */
+  shouldAsk: () => boolean
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>
   subscribe: (listener: (snapshot: ConsentEngineSnapshot) => void) => () => void
   destroy: () => void
@@ -272,6 +290,7 @@ export type AnalyticsErrorScope =
   | 'provider-script-load'
   | 'server-forward'
   | 'consent-adapter'
+  | 'consent-region'
   | 'auto-tracking'
   | 'queue-full'
 
