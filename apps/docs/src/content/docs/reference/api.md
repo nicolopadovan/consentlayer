@@ -1684,8 +1684,8 @@ provider.
 
 A component whose props are the options of `mountBanner()`, in camel case in
 scripts and kebab case in templates. All are optional. It mounts the banner when
-the component mounts, mounts it again when a prop changes, and removes it before
-the component unmounts.
+the component mounts, mounts it again when a prop changes by value, compared as
+JSON, and removes it before the component unmounts.
 
 **Throws** `ConsentBanner needs app.use(consentLayer)` when
 [`consentLayer`](#consentlayer-1) is not installed.

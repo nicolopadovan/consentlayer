@@ -34,7 +34,7 @@ export const ConsentBanner = defineComponent({
       unmount = mountBanner(controller, { ...props })
     }
     onMounted(mount)
-    watch(props, mount, { deep: true })
+    watch(() => JSON.stringify(props), mount)
     onBeforeUnmount(() => unmount())
     return () => null
   },

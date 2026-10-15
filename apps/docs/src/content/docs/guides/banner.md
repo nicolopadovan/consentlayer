@@ -109,7 +109,8 @@ It needs `app.use(consentLayer, { analytics })` from `consentlayer/vue`, and
 throws `ConsentBanner needs app.use(consentLayer)` without it. In Nuxt, the
 module installs the plugin, so import the component in `app/app.vue` the same
 way. It needs no `<ClientOnly>`, since it renders the same empty node on the
-server and in the browser. The banner mounts again when a prop changes.
+server and in the browser. The banner mounts again when a prop changes by value,
+so passing a new `text` object on every render does not rebuild it.
 
 ### Svelte and SvelteKit
 

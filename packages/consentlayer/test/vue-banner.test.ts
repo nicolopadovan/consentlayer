@@ -58,6 +58,28 @@ it('re-mounts when a prop changes', async () => {
   analytics.destroy()
 })
 
+it('re-mounts only when an object prop changes by value', async () => {
+  const title = shallowRef('Cookies')
+  const renders = shallowRef(0)
+  const { analytics, app } = mount(() => {
+    void renders.value
+    return h(ConsentBanner, { text: { title: title.value } })
+  })
+  await settle()
+  const banner = document.querySelector('.consentlayer-banner')
+
+  renders.value++
+  await settle()
+  expect(document.querySelector('.consentlayer-banner')).toBe(banner)
+
+  title.value = 'Privacy'
+  await settle()
+  const banners = [...document.querySelectorAll('.consentlayer-banner')]
+  expect(banners.map((node) => node.querySelector('h2')?.textContent)).toEqual(['Privacy'])
+  app.unmount()
+  analytics.destroy()
+})
+
 it('throws without the plugin', () => {
   const app = createApp({ render: () => h(ConsentBanner) })
   app.config.warnHandler = () => {}
