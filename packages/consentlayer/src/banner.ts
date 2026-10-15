@@ -157,7 +157,8 @@ color:var(--consentlayer-accent-color,Canvas);font:inherit;cursor:pointer}
 :where(.consentlayer-close:hover){opacity:1}
 :where(.consentlayer-actions) :where(button:hover),:where(.consentlayer-badge:hover){opacity:.85}
 :where(.consentlayer-actions) :where(.consentlayer-secondary:hover){opacity:1;background:rgb(128 128 128/.12)}}
-:where(html:has(.consentlayer-dialog[open],dialog.consentlayer-banner[open])){overflow:hidden;scrollbar-gutter:stable}
+:where(html:has(.consentlayer-dialog[open],dialog.consentlayer-banner[open])){overflow:hidden}
+:where(html[data-consentlayer-gutter]:has(.consentlayer-dialog[open],dialog.consentlayer-banner[open])){scrollbar-gutter:stable}
 :where(.consentlayer-badge){z-index:calc(var(--consentlayer-z-index,1000) - 1);display:flex;align-items:center;gap:.4rem;padding:.6rem;border-radius:2rem;box-shadow:0 4px 12px rgb(0 0 0/.2);font:var(--consentlayer-font,inherit)}
 :where(.consentlayer-badge) :where(svg){width:1.25rem;height:1.25rem;flex:none}
 :where(.consentlayer-badge[data-position$=-center]){left:50%;transform:translateX(-50%)}
@@ -358,9 +359,12 @@ export function mountBanner(
     )
   }
   let opener: Element | null = null
+  const root = document.documentElement
   const render = () => {
     const { ready, bannerVisible, dialogVisible } = controller.getSnapshot()
     const showBanner = ready && bannerVisible && !dialogVisible
+    if (!dialog.open && !(banner instanceof HTMLDialogElement && banner.open))
+      root.toggleAttribute('data-consentlayer-gutter', innerWidth > root.clientWidth)
     if (dialogVisible && !dialog.open) {
       renderCategories()
       opener = document.activeElement
@@ -392,5 +396,6 @@ export function mountBanner(
     banner.remove()
     dialog.remove()
     badge?.remove()
+    root.removeAttribute('data-consentlayer-gutter')
   }
 }

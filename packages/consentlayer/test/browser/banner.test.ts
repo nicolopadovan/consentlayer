@@ -313,6 +313,19 @@ it('puts the blocking bar at the bottom, full width', async () => {
   expect([box.left, box.right, box.bottom]).toEqual([0, innerWidth, innerHeight])
 })
 
+it('reserves the scrollbar gutter only when the page has a scrollbar', async () => {
+  const root = document.documentElement
+  await setup({ position: 'bottom', blocking: true })
+  expect(root.hasAttribute('data-consentlayer-gutter')).toBe(false)
+  cleanup()
+  Object.defineProperty(root, 'clientWidth', { configurable: true, get: () => innerWidth - 15 })
+  await setup({ position: 'bottom', blocking: true })
+  delete (root as { clientWidth?: number }).clientWidth
+  expect(getComputedStyle(root).scrollbarGutter).toBe('stable')
+  cleanup()
+  expect(root.hasAttribute('data-consentlayer-gutter')).toBe(false)
+})
+
 it('separates the switch label from its description', async () => {
   await setup()
   await button('Customize').click()
