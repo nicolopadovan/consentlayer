@@ -183,6 +183,17 @@ describe('banner', () => {
     analytics.destroy()
   })
 
+  it('follows the laws from window.ConsentLayer, and a data- text over them', async () => {
+    const global = createGlobal(readConfig({ consent: { laws: { ccpa: true } } }, script({ region: 'US-CA' })))
+    const unmount = mountBanner(global.controller, readBannerConfig(undefined, script({ textBadge: 'Privacy' })))
+    await settle()
+    const badge = document.querySelector<HTMLButtonElement>('.consentlayer-badge')!
+    expect([badge.hidden, badge.textContent]).toEqual([false, 'Privacy'])
+    expect(document.querySelector<HTMLElement>('.consentlayer-banner')!.hidden).toBe(true)
+    unmount()
+    global.destroy()
+  })
+
   it('reads the placement and the badge from data- attributes', () => {
     const tag = script({
       position: 'top',
