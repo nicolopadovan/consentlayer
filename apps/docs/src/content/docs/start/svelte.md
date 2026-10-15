@@ -124,6 +124,9 @@ destructuring it reads the value once.
 
 ## 3. Add the banner
 
+To use the ready-made banner instead, add the [`consentBanner` action](/guides/banner/#svelte-and-sveltekit)
+from `consentlayer/svelte/banner`; the rest of this step builds your own.
+
 Copy the [Svelte consent banner recipe](/guides/consent-ui/#svelte) into
 `src/lib/ConsentBanner.svelte` and render it once, in the root layout as above.
 In other components, `useConsentController()` returns the object

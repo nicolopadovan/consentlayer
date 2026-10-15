@@ -8,31 +8,36 @@ entry gives the signature, the options with their types and defaults, the
 return value and the errors it throws. Options are optional unless marked
 **Required**. The guides explain when to use each part.
 
-| Entry point                                               | Exports                                                                                                                                                                    |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`consentlayer`](#consentlayer)                           | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, `createEnvConfig` (deprecated), storage adapters, core types |
-| [`consentlayer/react`](#consentlayerreact)                | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript`, `GtmNoscript`                        |
-| [`consentlayer/next`](#consentlayernext)                  | `AnalyticsProvider` for Next.js                                                                                                                                            |
-| [`consentlayer/vue`](#consentlayervue)                    | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                                                   |
-| [`consentlayer/nuxt`](#consentlayernuxt)                  | The Nuxt module, which auto-imports `defineConsentLayerConfig`                                                                                                             |
-| [`consentlayer/svelte`](#consentlayersvelte)              | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                                                   |
-| [`consentlayer/sveltekit`](#consentlayersveltekit)        | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte`                                                                                                   |
-| [`consentlayer/solid`](#consentlayersolid)                | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript`                                             |
-| [`consentlayer/solidstart`](#consentlayersolidstart)      | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid`                                                                                                 |
-| [`consentlayer/angular`](#consentlayerangular)            | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript`, `provideGtmNoscript`                                     |
-| [`consentlayer/providers/*`](#consentlayerproviders)      | `ga4`, `gtm`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`                                                                                   |
-| [`consentlayer/adapters/*`](#consentlayeradapters)        | `shopifyCustomerPrivacy`, `tcf`, `googleConsentMode`                                                                                                                       |
-| [`consentlayer/auto-tracking`](#autotracking)             | `autoTracking`                                                                                                                                                             |
-| [`consentlayer/banner`](#consentlayerbanner)              | `mountBanner`, `BannerOptions`                                                                                                                                             |
-| [`consentlayer/ecommerce`](#consentlayerecommerce)        | `productParams`, `cartParams`, `orderParams`, `toItem`                                                                                                                     |
-| [`consentlayer/server`](#consentlayerserver)              | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores                                                    |
-| [`consentlayer/server/meta`](#consentlayerservermeta)     | `metaCapi`                                                                                                                                                                 |
-| [`consentlayer/server/tiktok`](#consentlayerservertiktok) | `tiktokEvents`                                                                                                                                                             |
-| [`consentlayer/server/sgtm`](#consentlayerserversgtm)     | `sgtm`                                                                                                                                                                     |
-| [`consentlayer/server/ga4`](#consentlayerserverga4)       | `ga4Server`                                                                                                                                                                |
-| [`consentlayer/sentry/server`](#consentlayersentryserver) | `sentryInstrumentation`                                                                                                                                                    |
-| [`consentlayer/sentry/next`](#consentlayersentrynext)     | `withSentryConfig`                                                                                                                                                         |
-| [`consentlayer/testing`](#consentlayertesting)            | `checkPlugin`                                                                                                                                                              |
+| Entry point                                                 | Exports                                                                                                                                                                    |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`consentlayer`](#consentlayer)                             | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, `createEnvConfig` (deprecated), storage adapters, core types |
+| [`consentlayer/react`](#consentlayerreact)                  | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript`, `GtmNoscript`                        |
+| [`consentlayer/next`](#consentlayernext)                    | `AnalyticsProvider` for Next.js                                                                                                                                            |
+| [`consentlayer/vue`](#consentlayervue)                      | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                                                   |
+| [`consentlayer/nuxt`](#consentlayernuxt)                    | The Nuxt module, which auto-imports `defineConsentLayerConfig`                                                                                                             |
+| [`consentlayer/svelte`](#consentlayersvelte)                | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                                                   |
+| [`consentlayer/sveltekit`](#consentlayersveltekit)          | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte`                                                                                                   |
+| [`consentlayer/solid`](#consentlayersolid)                  | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript`                                             |
+| [`consentlayer/solidstart`](#consentlayersolidstart)        | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid`                                                                                                 |
+| [`consentlayer/angular`](#consentlayerangular)              | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript`, `provideGtmNoscript`                                     |
+| [`consentlayer/providers/*`](#consentlayerproviders)        | `ga4`, `gtm`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`                                                                                   |
+| [`consentlayer/adapters/*`](#consentlayeradapters)          | `shopifyCustomerPrivacy`, `tcf`, `googleConsentMode`                                                                                                                       |
+| [`consentlayer/auto-tracking`](#autotracking)               | `autoTracking`                                                                                                                                                             |
+| [`consentlayer/banner`](#consentlayerbanner)                | `mountBanner`, `BannerOptions`                                                                                                                                             |
+| [`consentlayer/react/banner`](#consentlayerreactbanner)     | `ConsentBanner` for React                                                                                                                                                  |
+| [`consentlayer/vue/banner`](#consentlayervuebanner)         | `ConsentBanner` for Vue                                                                                                                                                    |
+| [`consentlayer/svelte/banner`](#consentlayersveltebanner)   | `consentBanner`, `useConsentBanner`, `BannerOptions`                                                                                                                       |
+| [`consentlayer/solid/banner`](#consentlayersolidbanner)     | `ConsentBanner` for Solid                                                                                                                                                  |
+| [`consentlayer/angular/banner`](#consentlayerangularbanner) | `provideConsentBanner`                                                                                                                                                     |
+| [`consentlayer/ecommerce`](#consentlayerecommerce)          | `productParams`, `cartParams`, `orderParams`, `toItem`                                                                                                                     |
+| [`consentlayer/server`](#consentlayerserver)                | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, consent stores                                                    |
+| [`consentlayer/server/meta`](#consentlayerservermeta)       | `metaCapi`                                                                                                                                                                 |
+| [`consentlayer/server/tiktok`](#consentlayerservertiktok)   | `tiktokEvents`                                                                                                                                                             |
+| [`consentlayer/server/sgtm`](#consentlayerserversgtm)       | `sgtm`                                                                                                                                                                     |
+| [`consentlayer/server/ga4`](#consentlayerserverga4)         | `ga4Server`                                                                                                                                                                |
+| [`consentlayer/sentry/server`](#consentlayersentryserver)   | `sentryInstrumentation`                                                                                                                                                    |
+| [`consentlayer/sentry/next`](#consentlayersentrynext)       | `withSentryConfig`                                                                                                                                                         |
+| [`consentlayer/testing`](#consentlayertesting)              | `checkPlugin`                                                                                                                                                              |
 
 ## `consentlayer`
 
@@ -1615,7 +1620,7 @@ exported as `GoogleConsentModeOptions`.
 Renders the banner, the settings dialog and the badge from the state of a
 controller made by [`createConsentController()`](#createconsentcontrolleranalytics-options),
 and returns a function that removes them. [Banner](/guides/banner/) describes
-every option.
+every option. The framework entry points below call it for you.
 
 ```ts
 function mountBanner(controller: ConsentController, options?: BannerOptions): () => void
@@ -1631,6 +1636,107 @@ function mountBanner(controller: ConsentController, options?: BannerOptions): ()
 | `text`                                            | `Partial<Record<string, string>>`                                                        |
 | `classNames`                                      | `Partial<Record<part, string>>`, with the [parts](/guides/banner/#classes-and-tailwind)  |
 | `nonce`                                           | `string`                                                                                 |
+
+## `consentlayer/react/banner`
+
+The entry point starts with a `'use client'` directive. Every component and
+function of the banner entry points is client-only: it renders nothing in
+place, and mounts the banner in the browser with
+[`mountBanner()`](#mountbannercontroller-options). The options are
+[`BannerOptions`](#consentlayerbanner); [Banner](/guides/banner/#frameworks)
+shows the setup for each framework.
+
+### `<ConsentBanner>`
+
+```ts
+function ConsentBanner(props: BannerOptions): null
+```
+
+Takes the options of `mountBanner()` as props. It mounts the banner on the
+controller of the closest [`<AnalyticsProvider>`](#analyticsprovider), from
+`consentlayer/react` or `consentlayer/next`, and removes it on unmount. It
+mounts again when the options change by value, compared as JSON.
+
+**Throws** `ConsentBanner must be used within AnalyticsProvider` outside the
+provider.
+
+## `consentlayer/vue/banner`
+
+### `<ConsentBanner>` for Vue
+
+A component whose props are the options of `mountBanner()`, in camel case in
+scripts and kebab case in templates. All are optional. It mounts the banner when
+the component mounts, mounts it again when a prop changes, and removes it before
+the component unmounts.
+
+**Throws** `ConsentBanner needs app.use(consentLayer)` when
+[`consentLayer`](#consentlayer-1) is not installed.
+
+## `consentlayer/svelte/banner`
+
+Both exports use the controller of the closest component that called
+[`consentLayer()`](#consentlayeroptions), from `consentlayer/svelte` or
+`consentlayer/sveltekit`, or of the component itself.
+
+**Throws** `consentBanner needs consentLayer() in a parent component` when
+`consentLayer()` has not been called.
+
+### `consentBanner`
+
+```ts
+const consentBanner: Action<HTMLElement, BannerOptions | undefined>
+```
+
+A Svelte action, as in `<svelte:body use:consentBanner={options} />`. It mounts
+the banner while the element is mounted, mounts it again when the parameter
+changes, and removes it when the element is destroyed.
+
+### `useConsentBanner(options?)`
+
+```ts
+function useConsentBanner(options?: BannerOptions): void
+```
+
+Mounts the banner when the calling component mounts and removes it when the
+component is destroyed. Call it while the component's `<script>` runs. It reads
+`options` once.
+
+The entry point also exports the `BannerOptions` type.
+
+## `consentlayer/solid/banner`
+
+### `<ConsentBanner>` for Solid
+
+```ts
+function ConsentBanner(props: BannerOptions): JSX.Element
+```
+
+Takes the options of `mountBanner()` as props, and renders nothing. It mounts the
+banner on the controller of the closest
+[`<AnalyticsProvider>`](#analyticsprovider-for-solid), from `consentlayer/solid`
+or `consentlayer/solidstart`, mounts it again when a prop changes, and removes
+it when the component is disposed.
+
+**Throws** `ConsentBanner must be used within AnalyticsProvider` outside the
+provider.
+
+## `consentlayer/angular/banner`
+
+### `provideConsentBanner(options?)`
+
+```ts
+function provideConsentBanner(options?: BannerOptions): EnvironmentProviders
+```
+
+Add it to the application config, next to
+[`provideConsentLayer()`](#provideconsentlayeroptions). In the browser, it
+mounts the banner on the controller that `provideConsentLayer()` provides when
+the application starts, and removes it when the application is destroyed. It
+does nothing on the server. It reads `options` once. `nonce` defaults to the
+application's `CSP_NONCE`.
+
+**Throws** `injectConsentController needs provideConsentLayer()` when
+`provideConsentLayer()` is not in the application config.
 
 ## `consentlayer/ecommerce`
 

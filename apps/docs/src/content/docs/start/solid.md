@@ -116,6 +116,9 @@ carries the new URL.
 
 ## 3. Add the banner
 
+To use the ready-made banner instead, render [`<ConsentBanner>`](/guides/banner/#solid-and-solidstart)
+from `consentlayer/solid/banner` inside the provider; the rest of this step builds your own.
+
 Copy the [Solid consent banner recipe](/guides/consent-ui/#solid) into
 `src/lib/ConsentBanner.tsx` and render it once, in the router's root as above.
 A button to reopen the settings reads the same state:

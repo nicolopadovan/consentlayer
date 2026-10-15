@@ -1,13 +1,14 @@
 ---
 title: Banner
-description: Mount ConsentLayer's ready-made consent banner, settings dialog and reopen badge from npm or the script tag, and place, word and style them.
+description: Add ConsentLayer's ready-made consent banner, settings dialog and reopen badge with a framework component, from JavaScript or with the script tag, and place, word and style them.
 ---
 
 `consentlayer/banner` renders a consent banner, a settings dialog and a badge
 that reopens the settings. It is the same banner the
-[script tag](/start/script-tag/#3-the-banner) loads from the CDN, and it needs
-no framework: it mounts on a consent controller from
-[`createConsentController()`](/start/javascript/).
+[script tag](/start/script-tag/#3-the-banner) loads from the CDN. It needs no
+framework: it mounts on a consent controller from
+[`createConsentController()`](/start/javascript/). The framework bindings have
+[a component for it](#frameworks).
 
 The banner's default text and layout have not been legally reviewed. Whether
 they are enough where you and your visitors are is your responsibility; see
@@ -41,10 +42,157 @@ inside while open, closes with Escape and returns focus to the button that
 opened it. Switches the visitor changes and then closes without saving are
 discarded.
 
-The React, Vue, Svelte, Solid and Angular bindings keep their controller
-internal, so `mountBanner` does not work with them yet. Build the banner on
-[`useConsentController()`](/guides/consent-ui/) instead, or follow the
-[planned banner components](/guides/roadmap/#banner-components-for-ui-libraries).
+## Frameworks
+
+Each framework binding has a thin component that mounts this same banner on the
+controller the binding already holds, so you do not call `mountBanner`
+yourself. The options are the `BannerOptions` of [Options](#options), passed as
+props, and the banner follows the same consent state as
+[`useConsentController()`](/guides/consent-ui/): `autoShowBanner: false` and
+`openDialog()` apply to it too. Every component is client-only: it renders
+nothing in place, adds the banner, the dialog and the badge to `<body>` in the
+browser and never on the server, and removes them when it unmounts.
+
+Each component is its own entry point, `consentlayer/<framework>/banner`, so an
+application that builds its own banner does not download this one. Each throws
+an error that names the missing setup when the binding's provider or plugin is
+absent; the message is in its section.
+
+### React and Next.js
+
+Render `<ConsentBanner>` from `consentlayer/react/banner` inside
+`<AnalyticsProvider>`, from either `consentlayer/react` or `consentlayer/next`:
+
+```tsx
+import { AnalyticsProvider } from 'consentlayer/react'
+import { ConsentBanner } from 'consentlayer/react/banner'
+import type { ReactNode } from 'react'
+import { analytics } from '../lib/analytics'
+
+export function AnalyticsShell({ children }: { children: ReactNode }) {
+  return (
+    <AnalyticsProvider analytics={analytics}>
+      {children}
+      <ConsentBanner position="bottom-center" privacyPolicyUrl="/privacy" />
+    </AnalyticsProvider>
+  )
+}
+```
+
+The entry point starts with a `'use client'` directive, like
+`consentlayer/react`. Outside `<AnalyticsProvider>`, it throws
+`ConsentBanner must be used within AnalyticsProvider`. The banner mounts again
+when the options change by value, so passing a new `text` object on every render
+does not rebuild it.
+
+### Vue and Nuxt
+
+Import `ConsentBanner` from `consentlayer/vue/banner` and render it in any
+component. Its props are the options, in kebab case in templates. Bind a
+prop that is not a string with `v-bind`, such as `:badge="false"`:
+
+```vue
+<script setup lang="ts">
+import { ConsentBanner } from 'consentlayer/vue/banner'
+</script>
+
+<template>
+  <RouterView />
+  <ConsentBanner position="bottom-center" privacy-policy-url="/privacy" :badge="false" />
+</template>
+```
+
+It needs `app.use(consentLayer, { analytics })` from `consentlayer/vue`, and
+throws `ConsentBanner needs app.use(consentLayer)` without it. In Nuxt, the
+module installs the plugin, so import the component in `app/app.vue` the same
+way. It needs no `<ClientOnly>`, since it renders the same empty node on the
+server and in the browser. The banner mounts again when a prop changes.
+
+### Svelte and SvelteKit
+
+Use the `consentBanner` action from `consentlayer/svelte/banner` on any element,
+such as `<svelte:body>`, in the component that calls `consentLayer()` or one
+below it:
+
+```svelte
+<script lang="ts">
+  import { consentLayer } from 'consentlayer/sveltekit'
+  import { consentBanner } from 'consentlayer/svelte/banner'
+  import { analytics } from '#lib/analytics.ts'
+
+  let { children } = $props()
+  consentLayer({ analytics })
+</script>
+
+{@render children()}
+<svelte:body use:consentBanner={{ position: 'bottom-center', privacyPolicyUrl: '/privacy' }} />
+```
+
+The banner mounts again when the action's options change. To mount it from a
+component's `<script>` instead, call `useConsentBanner(options)`, which mounts
+it when the component mounts and reads the options once. Both throw
+`consentBanner needs consentLayer() in a parent component` when
+`consentLayer()` has not been called in the component or a parent. Without
+SvelteKit, import `consentLayer` from `consentlayer/svelte`. The entry point also
+exports the `BannerOptions` type.
+
+### Solid and SolidStart
+
+Render `<ConsentBanner>` from `consentlayer/solid/banner` inside
+`<AnalyticsProvider>`, from either `consentlayer/solid` or
+`consentlayer/solidstart`:
+
+```tsx
+import { Router } from '@solidjs/router'
+import { FileRoutes } from '@solidjs/start/router'
+import { AnalyticsProvider } from 'consentlayer/solidstart'
+import { ConsentBanner } from 'consentlayer/solid/banner'
+import { Suspense } from 'solid-js'
+import { analytics } from '~/lib/analytics'
+
+export default function App() {
+  return (
+    <Router
+      root={(props) => (
+        <AnalyticsProvider analytics={analytics}>
+          <Suspense>{props.children}</Suspense>
+          <ConsentBanner position="bottom-center" privacyPolicyUrl="/privacy" />
+        </AnalyticsProvider>
+      )}
+    >
+      <FileRoutes />
+    </Router>
+  )
+}
+```
+
+The banner mounts again when a prop changes. Outside `<AnalyticsProvider>`, it
+throws `ConsentBanner must be used within AnalyticsProvider`.
+
+### Angular
+
+Add `provideConsentBanner(options)` from `consentlayer/angular/banner` to the
+application config, next to `provideConsentLayer()`. There is no component to
+render:
+
+```ts
+import { provideConsentLayer } from 'consentlayer/angular'
+import { provideConsentBanner } from 'consentlayer/angular/banner'
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    provideClientHydration(),
+    provideConsentLayer({ analytics }),
+    provideConsentBanner({ position: 'bottom-center', privacyPolicyUrl: '/privacy' }),
+  ],
+}
+```
+
+It mounts the banner in the browser when the application starts, reads the
+options once, and removes the banner when the application is destroyed. Without
+`provideConsentLayer()`, it throws `injectConsentController needs provideConsentLayer()`.
+When you do not set `nonce`, it uses the application's `CSP_NONCE`, if provided.
 
 ## Options
 
