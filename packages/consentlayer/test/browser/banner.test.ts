@@ -129,7 +129,7 @@ it('shows the badge after a choice, and it opens the settings', async () => {
 const denied = { preferences: false, analytics: false, marketing: false }
 
 const unchosen: [string, AnalyticsOptions['consent'], ConsentControllerOptions][] = [
-  ['a region whose rule has no banner', { region: 'US' }, {}],
+  ['a region whose rule has no banner', { region: 'XX', regions: { XX: { granted: 'all', banner: false } } }, {}],
   ['autoShowBanner off', {}, { autoShowBanner: false }],
   [
     'a consent platform that answers provisionally',
