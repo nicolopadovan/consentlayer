@@ -13,6 +13,7 @@ import type {
   UserIdentity,
   UserTraits,
 } from './types'
+import { getNames } from './names'
 import { setScriptNonce } from './plugin'
 import { createMemoryIdentityStorage } from './storage'
 import {
@@ -182,7 +183,19 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       )
   }
 
-  let serverEvents: string[] | undefined
+  const serverKey = `${getNames().prefix}_server:${serverEndpoint}`
+  const learned = (value?: string | null) => {
+    try {
+      if (value === null) sessionStorage.removeItem(serverKey)
+      else if (value !== undefined) sessionStorage.setItem(serverKey, value)
+      return sessionStorage.getItem(serverKey)
+    } catch {
+      return null
+    }
+  }
+  const saved = serverEndpoint ? learned() : null
+  if (saved === 'off') serverEndpoint = undefined
+  let serverEvents = saved === null || saved === 'off' ? undefined : saved ? saved.split(',') : []
   const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
     if (!serverEndpoint || !(consent?.analytics || consent?.marketing)) return
     if (serverEvents && !event.only && !serverEvents.includes(event.name)) return
@@ -203,9 +216,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        if (response.headers.get('consentlayer-forwarding') === 'off') serverEndpoint = undefined
+        const off = response.headers.get('consentlayer-forwarding') === 'off'
         const names = response.headers.get('consentlayer-events')
-        if (names !== null) serverEvents = names ? names.split(',') : []
+        if (off) serverEndpoint = undefined
+        serverEvents = names === null ? undefined : names ? names.split(',') : []
+        learned(off ? 'off' : names)
         if (response.headers.get('consentlayer-consent') === 'missing') restoreConsentCookie()
       })
       .catch(fail)

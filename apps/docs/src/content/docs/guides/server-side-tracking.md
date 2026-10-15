@@ -46,7 +46,7 @@ export const POST = createAnalyticsHandler({
 skips `undefined` destinations, so the same route works in environments
 without the token. With no destination left, the route answers the first
 event with the header `consentlayer-forwarding: off`, and the browser stops
-posting events until the page is reloaded.
+posting events for the rest of the browser session in that tab.
 
 The route also answers with the event names its destinations take, from their
 `events` options, and the browser then posts only those. With
