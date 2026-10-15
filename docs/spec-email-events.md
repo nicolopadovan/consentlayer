@@ -73,6 +73,13 @@ export const POST = createEmailHandler({
    - A destination receives the event with `consent: { preferences: false, analytics: true, marketing: false }`,
      so only destinations whose `requiredConsent` is `analytics` receive it (a marketing destination such as
      `metaCapi` passed here never does), and GA4's `ad_user_data` and `ad_personalization` are `DENIED`.
+   - **The developer's choice wins.** These are defaults, not enforcement: `consent` receives the event, so it
+     decides per recipient and per type, and `consent: () => true` sends every event of every type to `onEvent` and
+     the destinations. To track only operational events without consent:
+     `consent: (recipient, event) => !['email_opened', 'email_clicked'].includes(event.name) || hasConsent(recipient)`.
+     No extra option is added: the callback already expresses every policy, as options the developer sets win
+     elsewhere in ConsentLayer. Whether a policy is lawful is the developer's responsibility; the docs say so once
+     and link the legal notice.
 5. **The recipient's address never leaves the server.** Destinations get the params `email_service`, `message_id`,
    `bounce_type`, `link_url` and `automated` (each only when present), never the address or the service metadata.
    `identify(event)` may return `{ userId, clientId }`. Without a `clientId`, the handler sets a pseudonym: the
@@ -106,7 +113,7 @@ export const POST = createEmailHandler({
     answers 500 so the service retries; a destination failure goes to `onError` and still answers 200, as
     `createAnalyticsHandler` does. Successful responses are 200 with no body (some services document 200, all
     accept it).
-12. **Unset secrets fail closed.** A service factory takes `secret: string | undefined` for environment variables.
+12. **Unset secrets fail closed.** A service factory takes its credential as `string | undefined`, for environment variables.
     While it is unset, every request answers 500 and is reported to `onError`; nothing is accepted unverified, and
     the service keeps retrying until the variable is set.
 13. **Postmark** takes `{ username, password }`; the webhook URL is `https://<username>:<password>@host/path` and the
@@ -221,8 +228,10 @@ fixture that differs from a real payload.
 
 - A tracking pixel or link rewriting of ConsentLayer's own.
 - Storage of any kind, including a replay-token cache (decision 10).
-- SES through EventBridge (decision 14), Resend unsubscribe events (verification item 2), Postmark IP allowlists,
-  SendGrid OAuth.
+- Deferred to a later release and named on the roadmap: SES through EventBridge (decision 14) and Resend unsubscribe
+  events (verification item 2).
+- Postmark IP allowlists and SendGrid OAuth.
+- A separate per-event-type consent option: `consent` covers it (decision 4).
 - The GA4 EU endpoint (`region1.google-analytics.com`) and the Data Manager API.
 - Extra params or `only` per event for destinations; forwarding browser events to `posthogServer`.
 
@@ -248,7 +257,9 @@ check:package` passes.
 - **AC-5** An event reaches a destination only when `consent` resolved `true` for it, with consent
   `{ preferences: false, analytics: true, marketing: false }`: a test shows an `analytics` destination receiving it
   and `metaCapi` passed in the same list receiving nothing. Without `consent`, no destination is called and the
-  handler warns once at creation.
+  handler warns once at creation. With `consent: () => true`, every event type, opens and clicks included, reaches
+  `onEvent` and the `analytics` destinations; with a callback that returns `true` only for operational types, opens
+  and clicks are dropped while the rest reach the destinations.
 - **AC-6** The `ServerEvent` a destination receives has `name` = the event name, `id` = the event `id`, `time` = the
   event time, params limited to `email_service`, `message_id`, `bounce_type`, `link_url` and `automated`, and no
   recipient address or metadata anywhere in the outgoing request body (asserted on the serialized request).
@@ -285,7 +296,9 @@ check:package` passes.
 - **AC-14** `ServerEvent.time` is sent as `timestamp_micros` by `ga4Server` and `sgtm` when within 72 hours and
   omitted otherwise; `createAnalyticsHandler` ignores a `time` in the browser's body; `server/ga4` has a size budget.
 - **AC-15** The docs have an "Email events" guide page in the Guides sidebar after Server-side tracking, covering
-  the handler, the consent rules per event type, deduplication, the proxy-open flags (stating that Resend and
+  the handler, the consent rules per event type and how to change them with `consent` (including `() => true` to
+  send everything), stated once as the developer's decision and responsibility with a link to the legal notice and
+  without further warnings, deduplication, the proxy-open flags (stating that Resend and
   Postmark provide none), each service's setup and verification, and the GA4 maintenance-mode note; the server-side
   tracking page documents `posthogServer` and `time`; the API reference documents every new export. The pages link
   the legal notice, never say a setup complies with a law, and name the product ConsentLayer in prose.

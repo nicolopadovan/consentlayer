@@ -33,7 +33,8 @@ and turns it into one set of events, such as `email_delivered`,
 your consent check allows, opens likely made by a privacy proxy are flagged,
 and the events can be sent to PostHog and GA4. ConsentLayer adds no tracking
 pixel and rewrites no links: it reads only the events the service already
-sends.
+sends. Amazon SES events through EventBridge and Resend's unsubscribe events
+are planned for a later release.
 
 Run pnpm format, then pnpm --filter docs build. Do not claim legal compliance anywhere.
 """
@@ -124,7 +125,8 @@ Build:
 
 Tests (test/email.test.ts, `// @vitest-environment node`, pattern of test/server.test.ts): a fake EmailService that
 returns given events; a recording ServerDestination with requiredConsent 'analytics' and metaCapi with a mocked
-fetchImpl. Cover every clause of AC-3 to AC-7, including asserting that the serialized destination request contains
+fetchImpl. Cover every clause of AC-3 to AC-7 (including `consent: () => true` sending every type, opens and clicks
+included, and a callback that allows only operational types), including asserting that the serialized destination request contains
 neither the recipient address nor any metadata value.
 
 No adapter in this step. Write no comments that restate the code. No changeset yet (s10 adds it).
@@ -399,6 +401,9 @@ every fact against packages/consentlayer/src/email and src/server/posthog.ts as 
   none; one section per service with its dashboard setup, credential and verification (SES: topic allowlist,
   certificate host rule, no chain validation; Mailgun: the body is not signed; Postmark: credentials in the URL);
   GA4 Measurement Protocol is in maintenance mode and Google recommends the Data Manager API for new integrations.
+  The consent defaults are defaults: show `consent: () => true` to send everything and a callback that allows only
+  operational types, and say once, without preaching, that the choice and its lawfulness are the developer's
+  responsibility.
   Whether open and click tracking needs consent depends on the law that applies; link /guides/legal/ and never say
   a setup complies. Tone of the Next.js docs; ConsentLayer in prose; depth in <details>.
 - server-side-tracking.md: a PostHog section under Destinations, `time` in the ServerEvent types block, and the
