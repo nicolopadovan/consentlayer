@@ -1,4 +1,4 @@
-import { toMetaEvent } from '../core/meta-events'
+import { META_EVENTS, toMetaEvent } from '../core/meta-events'
 import { isValidEmail, isValidPhoneE164 } from '../core/validation'
 import type { ServerDestination } from './handler'
 import { sha256 } from './http'
@@ -16,6 +16,8 @@ export function metaCapi(options: {
   testEventCode?: string
   /** Graph API version. */
   apiVersion?: string
+  /** Event names sent; defaults to the events with a Meta standard event. */
+  events?: readonly string[] | false
   fetchImpl?: typeof fetch
 }): ServerDestination<true> | undefined {
   const pixelId = options.pixelId?.trim()
@@ -27,6 +29,7 @@ export function metaCapi(options: {
   const fetchImpl = options.fetchImpl ?? globalThis.fetch
   return {
     id: 'meta',
+    events: options.events ?? META_EVENTS,
     requiredConsent: 'marketing',
     forwardBrowserEvents: true,
     async send(event, request) {

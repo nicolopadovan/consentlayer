@@ -211,7 +211,9 @@ lifecycle pass.
 2. For each provider, in registration order, skip it unless it is active, its
    `requiredConsent` holds for the current consent, and its ID is in `only`
    (when `only` is set).
-3. Run the provider's hook and await it before moving to the next provider.
+3. For `track`, also skip it unless its `events` option includes the event's
+   name or `only` names it.
+4. Run the provider's hook and await it before moving to the next provider.
 
 Consent is checked at delivery time. A call that waited in the `pending`
 queue is checked when it is drained. A call held in a deferred provider's
@@ -247,7 +249,9 @@ provider (`page.id`, `event.id`) and the server, so a browser pixel and its
 server-side counterpart can be deduplicated.
 
 `only: ['ga4']` restricts delivery to the listed provider IDs, and the server
-handler applies the same list to its destinations. See [Events](/guides/events/).
+handler applies the same list to its destinations. A provider or destination
+named in `only` receives the event even when its `events` option leaves the
+name out. See [Events](/guides/events/).
 
 ### Server forwarding
 

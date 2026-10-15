@@ -44,6 +44,12 @@ destination, so the browser stops posting events that would be dropped.
 Events already in flight still complete. `sendBeacon` cannot read the
 response, so without `fetch` the browser keeps posting.
 
+A response carrying `consentlayer-events` lists, comma-separated, the event
+names the route's destinations take. From then on, the browser posts only
+those events and events whose `only` is set, until the page is reloaded. The
+route omits the header when a destination takes every event; an empty value
+means none.
+
 A response carrying `consentlayer-consent: missing` means the route found no
 valid consent cookie. With `server.consentEndpoint` set, the browser posts
 `{ consent, restored: true }` there, once per page load, and the consent route
@@ -125,16 +131,18 @@ once when created, and every event counts as denied, so nothing is sent:
    without its token, are dropped. Only destinations with
    `forwardBrowserEvents: true` are considered. Of the built-in ones, those
    are `metaCapi`, `tiktokEvents` and `sgtm`.
-7. **Consent and `only` filter.** A destination receives the event only if
-   `consent[destination.requiredConsent] === true` and, when `only` is set,
-   its `id` is in `only`.
+7. **Consent, `only` and `events` filter.** A destination receives the event
+   only if `consent[destination.requiredConsent] === true`; when `only` is
+   set, its `id` is in `only`; and its `events` option, when set, lists the
+   event's name, `page_view` included, unless `only` names the destination.
 8. **Request info.** `requestInfo(request)`: the client IP (the first
    `x-forwarded-for` entry, else `x-real-ip`), `user-agent`, and the parsed
    `cookie` header.
 9. **Send.** All remaining destinations in parallel with
    `Promise.allSettled`, so one failing vendor does not stop the others.
-10. **Response.** `204` once every send has settled. Each failed send is
-    passed to `onError`; the browser is not told.
+10. **Response.** `204` once every send has settled, with the
+    `consentlayer-events` header unless a destination takes every event.
+    Each failed send is passed to `onError`; the browser is not told.
 
 <details>
 <summary>Trust model</summary>
@@ -217,7 +225,7 @@ on the server.
 
 ## What `metaCapi` sends
 
-`metaCapi({ pixelId, accessToken, testEventCode?, apiVersion?, fetchImpl? })`
+`metaCapi({ pixelId, accessToken, testEventCode?, apiVersion?, events?, fetchImpl? })`
 from `consentlayer/server/meta` returns `undefined` while `pixelId` or
 `accessToken` is unset or empty, and calls `console.warn` once when only one
 of them is set. Otherwise the destination has the ID `meta`,
@@ -265,7 +273,7 @@ which is also when the browser includes email and phone. Fields that end up
 
 ## What `tiktokEvents` sends
 
-`tiktokEvents({ pixelId, accessToken, testEventCode?, fetchImpl? })` from
+`tiktokEvents({ pixelId, accessToken, testEventCode?, events?, fetchImpl? })` from
 `consentlayer/server/tiktok` returns `undefined` while `pixelId` or
 `accessToken` is unset or empty, and calls `console.warn` once when only one
 of them is set. Otherwise the destination has the ID `tiktok`, requires
@@ -391,11 +399,11 @@ send the digest as lowercase hex. Empty values are neither hashed nor sent.
 
 ## Status codes
 
-| Status | When                                                                                                                                                                                                                                          |
-| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `204`  | Accepted; sent to every destination consent allows. Failures go to `onError`. With `consentlayer-forwarding: off` when there is no destination, and `consentlayer-consent: missing` when `consentCookie` is set and no valid cookie was sent. |
-| `400`  | No body, invalid JSON, or the event failed validation                                                                                                                                                                                         |
-| `403`  | `Origin` or `Referer` from another origin, neither header present, or a malformed `Referer`                                                                                                                                                   |
-| `413`  | Body larger than 16 KB                                                                                                                                                                                                                        |
-| `415`  | `content-type` does not contain `application/json`                                                                                                                                                                                            |
-| `500`  | Any other error; it is passed to `onError`                                                                                                                                                                                                    |
+| Status | When                                                                                                                                                                                                                                                                                                                                            |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `204`  | Accepted; sent to every destination consent allows. Failures go to `onError`. With `consentlayer-forwarding: off` when there is no destination, `consentlayer-events` listing the event names the destinations take unless one takes every event, and `consentlayer-consent: missing` when `consentCookie` is set and no valid cookie was sent. |
+| `400`  | No body, invalid JSON, or the event failed validation                                                                                                                                                                                                                                                                                           |
+| `403`  | `Origin` or `Referer` from another origin, neither header present, or a malformed `Referer`                                                                                                                                                                                                                                                     |
+| `413`  | Body larger than 16 KB                                                                                                                                                                                                                                                                                                                          |
+| `415`  | `content-type` does not contain `application/json`                                                                                                                                                                                                                                                                                              |
+| `500`  | Any other error; it is passed to `onError`                                                                                                                                                                                                                                                                                                      |

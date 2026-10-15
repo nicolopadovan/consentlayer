@@ -48,6 +48,13 @@ without the token. With no destination left, the route answers the first
 event with the header `consentlayer-forwarding: off`, and the browser stops
 posting events until the page is reloaded.
 
+The route also answers with the event names its destinations take, from their
+`events` options, and the browser then posts only those. With
+`metaCapi({ ..., events: ['lead', 'sign_up'] })`, scroll depths, clicks and
+page views stop reaching your route after the first response. For a server
+destination, `events` covers `page_view` too: `metaCapi()` sends page views by
+default, because Meta's standard events include them.
+
 Point the instance at the route. `server.endpoint` must be an HTTPS URL or a
 path starting with `/`; `undefined` or `''` turns forwarding off, and any
 other value throws when `createAnalytics` is called.
@@ -256,13 +263,14 @@ function requestInfo(request: Request): ServerRequestInfo
 accepts browser events, so it can be passed to both `createAnalyticsHandler`
 and `sendServerEvent`. Its `id` is `meta`.
 
-| Option          | Type                  | Default            | Description                                                                      |
-| --------------- | --------------------- | ------------------ | -------------------------------------------------------------------------------- |
-| `pixelId`       | `string \| undefined` | Required           | The pixel ID.                                                                    |
-| `accessToken`   | `string \| undefined` | Required           | A Conversions API access token. Server only.                                     |
-| `testEventCode` | `string`              | None               | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
-| `apiVersion`    | `string`              | `'v26.0'`          | The Graph API version.                                                           |
-| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` used for the request.                                                |
+| Option          | Type                  | Default                | Description                                                                                       |
+| --------------- | --------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `pixelId`       | `string \| undefined` | Required               | The pixel ID.                                                                                     |
+| `accessToken`   | `string \| undefined` | Required               | A Conversions API access token. Server only.                                                      |
+| `testEventCode` | `string`              | None                   | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab.                  |
+| `apiVersion`    | `string`              | `'v26.0'`              | The Graph API version.                                                                            |
+| `events`        | `string[]`            | Meta's standard events | The event names sent. See [Which events are sent](/guides/providers/meta/#which-events-are-sent). |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch`     | The `fetch` used for the request.                                                                 |
 
 Both values are trimmed. While `pixelId` or `accessToken` is `undefined`, empty
 or only whitespace, `metaCapi()` returns
@@ -310,12 +318,13 @@ tiktokEvents({
 })
 ```
 
-| Option          | Type                  | Default            | Description                                                                      |
-| --------------- | --------------------- | ------------------ | -------------------------------------------------------------------------------- |
-| `pixelId`       | `string \| undefined` | Required           | The pixel ID, sent as `event_source_id`.                                         |
-| `accessToken`   | `string \| undefined` | Required           | An Events API access token. Server only.                                         |
-| `testEventCode` | `string`              | None               | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab. |
-| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch` | The `fetch` used for the request.                                                |
+| Option          | Type                  | Default                  | Description                                                                                         |
+| --------------- | --------------------- | ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `pixelId`       | `string \| undefined` | Required                 | The pixel ID, sent as `event_source_id`.                                                            |
+| `accessToken`   | `string \| undefined` | Required                 | An Events API access token. Server only.                                                            |
+| `testEventCode` | `string`              | None                     | Sent as `test_event_code`, so events appear in Events Manager's Test Events tab.                    |
+| `events`        | `string[]`            | TikTok's standard events | The event names sent. See [Which events are sent](/guides/providers/tiktok/#which-events-are-sent). |
+| `fetchImpl`     | `typeof fetch`        | `globalThis.fetch`       | The `fetch` used for the request.                                                                   |
 
 Both values are trimmed. While `pixelId` or `accessToken` is `undefined`, empty
 or only whitespace, `tiktokEvents()` returns `undefined` and the destination

@@ -14,12 +14,13 @@ ga4({ measurementId: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID })
 
 ## Options
 
-| Option               | Type                    | Default   | Description                                                                                                                                               |
-| -------------------- | ----------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `measurementId`      | `string \| undefined`   | Required  | The `G-` measurement ID.                                                                                                                                  |
-| `loadBeforeConsent`  | `boolean`               | `false`   | Loads gtag.js at boot with Consent Mode denied. See [Loading before consent](/guides/providers/#loading-before-consent).                                  |
-| `consentMode`        | `'basic' \| 'advanced'` | `'basic'` | `'advanced'` loads gtag.js and configures the tag at boot. See [Advanced mode](#advanced-mode).                                                           |
-| `serverContainerUrl` | `string`                | None      | Your [server-side GTM](/guides/providers/gtm/#server-side-tagging) tagging server, set as `server_container_url`, so GA4 hits go to it instead of Google. |
+| Option               | Type                    | Default    | Description                                                                                                                                               |
+| -------------------- | ----------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `measurementId`      | `string \| undefined`   | Required   | The `G-` measurement ID.                                                                                                                                  |
+| `loadBeforeConsent`  | `boolean`               | `false`    | Loads gtag.js at boot with Consent Mode denied. See [Loading before consent](/guides/providers/#loading-before-consent).                                  |
+| `consentMode`        | `'basic' \| 'advanced'` | `'basic'`  | `'advanced'` loads gtag.js and configures the tag at boot. See [Advanced mode](#advanced-mode).                                                           |
+| `serverContainerUrl` | `string`                | None       | Your [server-side GTM](/guides/providers/gtm/#server-side-tagging) tagging server, set as `server_container_url`, so GA4 hits go to it instead of Google. |
+| `events`             | `string[] \| false`     | All events | The event names `track()` sends to it; `false` sends none. See [Routing events](/guides/events/#routing-events).                                          |
 
 ## How it works
 

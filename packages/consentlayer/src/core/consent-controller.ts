@@ -168,7 +168,10 @@ export function createConsentController(
       showBanner: () => set({ bannerVisible: true }),
       hideBanner: () => set({ bannerVisible: false }),
       openDialog: () => set({ dialogVisible: true }),
-      closeDialog: () => set({ dialogVisible: false }),
+      closeDialog: () => {
+        const consent = engine.getConsent()
+        set({ dialogVisible: false, prefs: all((category) => consent?.[category] ?? false) })
+      },
       acceptAll: () => applyAndClose(all((category) => !(engine.gpc && category === 'marketing'))),
       rejectNonEssential: () => applyAndClose(all(false)),
       savePreferences: () => applyAndClose(all((category) => state.prefs[category])),

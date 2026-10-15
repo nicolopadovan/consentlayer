@@ -33,15 +33,6 @@ page. To control upgrades, pin an exact version instead, such as
 [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity):
 jsDelivr shows the `integrity` hash of each file on the package's page.
 
-:::note
-`@1` matches stable releases only, so it resolves once ConsentLayer 1.0.0 is
-released. Until then, use `@next`, which serves the latest prerelease, or pin
-an exact prerelease version. ConsentLayer publishes prereleases under the npm
-tag `next`, and both CDNs accept an npm tag in place of a version. jsDelivr
-advises against tags in production, so pin an exact version there once you
-have tested it.
-:::
-
 The two scripts load in either order, and work with `defer` or `async`. The
 banner waits for the main script and for the document to be parsed.
 

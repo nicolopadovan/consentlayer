@@ -1,4 +1,5 @@
 import type { ConsentState, ServerEvent } from '../core/types'
+import { receivesEvent } from '../core/utils'
 import { assertSecret, readConsentCookie, type ConsentCookieOptions } from './consent'
 import { ANALYTICS_MAX_BODY, assertSameOrigin, parseCookieHeader, parseJsonWithLimit } from './http'
 
@@ -17,6 +18,8 @@ export interface ServerDestination<Forward extends boolean = boolean> {
   requiredConsent: keyof ConsentState
   /** Whether `createAnalyticsHandler` may send browser events to it. */
   forwardBrowserEvents: Forward
+  /** Event names sent to it, `page_view` included: all when unset, none with `false`. An event whose `only` names it is always sent. */
+  events?: readonly string[] | false
   send(event: ServerEvent, request?: ServerRequestInfo): Promise<void>
 }
 
@@ -33,6 +36,7 @@ export async function sendServerEvent(
       destination !== undefined &&
       event.consent[destination.requiredConsent] === true &&
       (!event.only || event.only.includes(destination.id)) &&
+      receivesEvent(destination, event.name, event.only) &&
       (!event.categories || event.categories.includes(destination.requiredConsent)),
   )
   const results = await Promise.allSettled(targets.map((destination) => destination.send(event, options.request)))
@@ -114,7 +118,12 @@ export function createAnalyticsHandler(options: {
   if (options.consentCookie && !options.consentCookie.secret) {
     console.warn('[consentlayer] consentCookie.secret is not set: every event is treated as denied.')
   }
-  const destinations = options.destinations.filter((destination) => destination?.forwardBrowserEvents)
+  const destinations = options.destinations.filter(
+    (destination): destination is ServerDestination<true> => destination?.forwardBrowserEvents === true,
+  )
+  const names = destinations.every((destination) => destination.events !== undefined)
+    ? [...new Set(destinations.flatMap((destination) => destination.events || []))].join(',')
+    : undefined
   return async (request) => {
     try {
       if (options.consentCookie?.secret) assertSecret(options.consentCookie.secret)
@@ -137,10 +146,10 @@ export function createAnalyticsHandler(options: {
         request: requestInfo(request),
       })
       for (const result of results) if (!result.ok) options.onError?.(result.error)
-      return new Response(null, {
-        status: 204,
-        headers: options.consentCookie && !proof ? { 'consentlayer-consent': 'missing' } : {},
-      })
+      const headers = new Headers()
+      if (names !== undefined) headers.set('consentlayer-events', names)
+      if (options.consentCookie && !proof) headers.set('consentlayer-consent', 'missing')
+      return new Response(null, { status: 204, headers })
     } catch (error) {
       const status = (error as { status?: unknown }).status
       if (typeof status === 'number') return new Response(null, { status })

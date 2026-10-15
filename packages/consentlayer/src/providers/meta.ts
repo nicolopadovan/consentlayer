@@ -1,4 +1,5 @@
-import { metaUserData, toMetaEvent } from '../core/meta-events'
+import type { EventName } from '../core/types'
+import { META_EVENTS, metaUserData, toMetaEvent } from '../core/meta-events'
 import { definePlugin, getFlag, loadScript, runInlineScript, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 import { assertValidMetaPixelId } from '../core/validation'
@@ -27,6 +28,8 @@ export type MetaOptions = {
    * `false` (default): nothing loads until marketing consent is granted.
    */
   loadBeforeConsent?: boolean
+  /** Event names sent to the pixel; defaults to the events with a Meta standard event. */
+  events?: readonly EventName[] | false
 }
 
 /** Meta Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Conversions API. */
@@ -46,6 +49,7 @@ export function meta(options: MetaOptions) {
 
   return definePlugin({
     id: 'meta',
+    events: options.events ?? META_EVENTS,
     requiredConsent: 'marketing',
     loadBeforeConsent: options.loadBeforeConsent ?? false,
     load(loadContext) {

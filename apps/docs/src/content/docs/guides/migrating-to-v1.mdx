@@ -120,7 +120,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 `<AnalyticsProvider>` from `consentlayer/next` takes the route from the App
 Router, so it replaces the `routeKey={usePathname()}` you passed before and
-also counts query-string changes. Remove any `<Suspense>` boundary you added
+also counts query-string changes: a search or filter page that writes its
+state to the URL sends a page view for each change. To keep one page view per
+path, use `<AnalyticsProvider>` from `consentlayer/react` with
+`routeKey={usePathname()}` instead. Remove any `<Suspense>` boundary you added
 around the provider for `useSearchParams()`: it made every page inside it
 render only on the client. The [Next.js guide](/start/nextjs/) explains why. In
 other React apps, keep `<AnalyticsProvider>` from `consentlayer/react` and
@@ -240,25 +243,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 ### Removed APIs and their replacements
 
-| Removed                                                                                                                        | Replacement                                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `createConsentEngine(options)`                                                                                                 | `createAnalytics({ consent: { storage, adapters, initialConsent, broadcast } })`                                              |
-| `createAnalyticsManager(options)`                                                                                              | `createAnalytics({ providers, identityStorage, enabled, debug, onError })`                                                    |
-| `setDefaultConsentEngine`, `getDefaultConsentEngine`, `setDefaultRuntimeAnalyticsManager`, `getDefaultRuntimeAnalyticsManager` | Import the instance                                                                                                           |
-| `setDefaultIdentityStorage`, `getDefaultIdentityStorage`, `useDefaultIdentityStorage`                                          | `createAnalytics({ identityStorage })`; the default is local storage                                                          |
-| `registerProvider(adapter)`                                                                                                    | `providers: [...]`, or `analytics.registerProvider(plugin)`                                                                   |
-| `updateConsent(consent)`                                                                                                       | `analytics.consent.setConsent(consent)`, or `analytics.consent.update(partial)` to change some categories                     |
-| `trackEvent(name, params, options)`                                                                                            | `analytics.track(name, params, options)`                                                                                      |
-| `trackPage(payload)`                                                                                                           | `analytics.page(payload)`                                                                                                     |
-| `enableAutoTracking(config)`                                                                                                   | `createAnalytics({ autoTracking: autoTracking(config) })`, from `consentlayer/auto-tracking`                                  |
-| `newPageSession()`                                                                                                             | `analytics.newPageSession()`; `<AnalyticsProvider>` calls it when `routeKey` changes                                          |
-| `saveIdentity({ email, phone, external_id })`                                                                                  | `analytics.identify(external_id, { email, phone })`                                                                           |
-| `getIdentity()`                                                                                                                | No replacement; the identity is passed to plugins as `ctx.identity`                                                           |
-| `defaultEventDestinations`                                                                                                     | Events go to every provider; limit one event with `{ only: [...] }` and automatic events with `autoTracking({ only: [...] })` |
-| `defaultRuntimePreset`                                                                                                         | `getNames()`, which returns the configured names                                                                              |
-| `<ConsentProvider>`, `<ConsentControllerProvider>`, `<AnalyticsManager>`, `<AutoTracking>`                                     | `<AnalyticsProvider analytics={analytics}>`                                                                                   |
-| `<AnalyticsManager lazy={...}>`                                                                                                | `<AnalyticsProvider boot={...}>`, with the same `mode` and `timeoutMs`                                                        |
-| `useTracker()`                                                                                                                 | `useAnalytics()`, which returns `track`, `page` and `newPageSession`                                                          |
+| Removed                                                                                                                        | Replacement                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `createConsentEngine(options)`                                                                                                 | `createAnalytics({ consent: { storage, adapters, initialConsent, broadcast } })`                                     |
+| `createAnalyticsManager(options)`                                                                                              | `createAnalytics({ providers, identityStorage, enabled, debug, onError })`                                           |
+| `setDefaultConsentEngine`, `getDefaultConsentEngine`, `setDefaultRuntimeAnalyticsManager`, `getDefaultRuntimeAnalyticsManager` | Import the instance                                                                                                  |
+| `setDefaultIdentityStorage`, `getDefaultIdentityStorage`, `useDefaultIdentityStorage`                                          | `createAnalytics({ identityStorage })`; the default is local storage                                                 |
+| `registerProvider(adapter)`                                                                                                    | `providers: [...]`, or `analytics.registerProvider(plugin)`                                                          |
+| `updateConsent(consent)`                                                                                                       | `analytics.consent.setConsent(consent)`, or `analytics.consent.update(partial)` to change some categories            |
+| `trackEvent(name, params, options)`                                                                                            | `analytics.track(name, params, options)`                                                                             |
+| `trackPage(payload)`                                                                                                           | `analytics.page(payload)`                                                                                            |
+| `enableAutoTracking(config)`                                                                                                   | `createAnalytics({ autoTracking: autoTracking(config) })`, from `consentlayer/auto-tracking`                         |
+| `newPageSession()`                                                                                                             | `analytics.newPageSession()`; `<AnalyticsProvider>` calls it when `routeKey` changes                                 |
+| `saveIdentity({ email, phone, external_id })`                                                                                  | `analytics.identify(external_id, { email, phone })`                                                                  |
+| `getIdentity()`                                                                                                                | No replacement; the identity is passed to plugins as `ctx.identity`                                                  |
+| `defaultEventDestinations`                                                                                                     | Events go to every provider; limit one event with `{ only: [...] }` and a provider's events with its `events` option |
+| `defaultRuntimePreset`                                                                                                         | `getNames()`, which returns the configured names                                                                     |
+| `<ConsentProvider>`, `<ConsentControllerProvider>`, `<AnalyticsManager>`, `<AutoTracking>`                                     | `<AnalyticsProvider analytics={analytics}>`                                                                          |
+| `<AnalyticsManager lazy={...}>`                                                                                                | `<AnalyticsProvider boot={...}>`, with the same `mode` and `timeoutMs`                                               |
+| `useTracker()`                                                                                                                 | `useAnalytics()`, which returns `track`, `page` and `newPageSession`                                                 |
 
 The `routeKey` and `page` props move to `<AnalyticsProvider>` from
 `consentlayer/react` unchanged; the one from `consentlayer/next` sets
@@ -347,8 +350,8 @@ consent is granted.
 
 A config that turns on a kind, with `true` or its options, now turns on only
 the kinds it names; before, every other kind stayed on unless set to `false`.
-A config that turns nothing on, such as `{ scroll: false }` or
-`{ only: ['ga4'] }`, still keeps every other kind on.
+A config that turns nothing on, such as `{ scroll: false }`, still keeps every
+other kind on.
 
 A click's `ui_target` is now the value of the `data-track` attribute or
 `aria-label`, and `'unknown'` without either. It no longer falls back to the
