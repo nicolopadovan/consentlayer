@@ -20,7 +20,7 @@ const lawRules: Record<Law, [regions: string[], rule: RegionRule]> = {
 }
 
 /** The laws on by default. */
-export const defaultLaws: Partial<Record<Law, boolean>> = { gdpr: true, cnil: true, revfadp: true, ccpa: true }
+const defaultLaws: Partial<Record<Law, boolean>> = { gdpr: true, cnil: true, revfadp: true, ccpa: true }
 
 /** The region rules of the laws switched on in `laws`, merged over `defaultLaws`. */
 export function lawRegions(laws: Partial<Record<Law, boolean>> = {}) {
