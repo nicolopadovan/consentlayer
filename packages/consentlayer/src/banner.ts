@@ -169,6 +169,7 @@ color:var(--consentlayer-accent-color,Canvas);font:inherit;cursor:pointer}
 :where(.consentlayer-badge[data-attached][data-position=bottom-center]){bottom:0;border-radius:.5rem .5rem 0 0}
 :where(.consentlayer-badge[data-position=left],.consentlayer-badge[data-position=right]) :where(span){writing-mode:vertical-rl}
 :where(.consentlayer-badge[data-position=left],.consentlayer-badge[data-position=right]):has(span){flex-direction:column}
+:where(.consentlayer-banner):focus{outline:none}
 :where(.consentlayer-banner,.consentlayer-dialog,.consentlayer-badge) :where(:focus-visible),:where(.consentlayer-badge:focus-visible){outline:2px solid var(--consentlayer-accent,CanvasText);outline-offset:2px}
 @media (min-width:64rem){
 :where(.consentlayer-banner[data-layout=bar]){grid-template-columns:1fr auto;align-items:center;padding-inline:max(1.25rem,calc(50vw - 36rem))}
@@ -303,7 +304,7 @@ export function mountBanner(
       ...(overlay && { 'data-overlay': '' }),
       ...(closeButton && { 'data-close': '' }),
       'aria-labelledby': 'consentlayer-banner-title',
-      ...(!blocking && { role: 'dialog', hidden: '' }),
+      ...(blocking ? { tabindex: '-1' } : { role: 'dialog', hidden: '' }),
     },
     element('h2', { id: 'consentlayer-banner-title', ...className('title') }, ...content(text.title)),
     element(
@@ -367,7 +368,10 @@ export function mountBanner(
       dialog.showModal()
     }
     if (banner instanceof HTMLDialogElement) {
-      if (showBanner && !banner.open) banner.showModal()
+      if (showBanner && !banner.open) {
+        banner.showModal()
+        banner.focus()
+      }
       if (!showBanner && banner.open) banner.close()
     } else banner.hidden = !showBanner
     if (badge) badge.hidden = !ready || (badgeOptions && badgeOptions.show !== 'always' && (bannerVisible || !chosen))

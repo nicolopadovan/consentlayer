@@ -177,6 +177,15 @@ it('reaches the banner buttons with Tab in the order they appear', async () => {
   expect(labels).toEqual(['×', 'Accept all', 'Reject non-essential', 'Customize'])
 })
 
+it('focuses the blocking banner itself, named by its title, before Accept all', async () => {
+  await setup({ blocking: true })
+  expect(document.activeElement).toBe(banner())
+  expect(getComputedStyle(banner()).outlineStyle).toBe('none')
+  await expect.element(page.getByRole('dialog', { name: 'Cookies' })).toBeVisible()
+  await userEvent.tab()
+  expect(document.activeElement?.textContent).toBe('Accept all')
+})
+
 it('centres the settings dialog even under a margin reset', async () => {
   const reset = document.createElement('style')
   reset.textContent = '@layer base{*{margin:0;padding:0}}'
@@ -225,14 +234,16 @@ it('fills Reject like Accept unless emphasis is accept', async () => {
   expect(fill('Reject non-essential')).not.toBe(fill('Accept all'))
 })
 
-it('hides the banner while the settings are open, and focus returns to Customize', async () => {
-  await setup()
-  await button('Customize').click()
-  await expect.poll(() => visible(banner())).toBe(false)
-  await page.getByRole('button', { name: 'Close' }).click()
-  await expect.poll(() => visible(banner())).toBe(true)
-  expect(document.activeElement?.textContent).toBe('Customize')
-})
+for (const blocking of [false, true]) {
+  it(`hides the banner while the settings are open, and focus returns to Customize, with blocking ${blocking}`, async () => {
+    await setup({ blocking })
+    await button('Customize').click()
+    await expect.poll(() => visible(banner())).toBe(false)
+    await page.getByRole('button', { name: 'Close' }).click()
+    await expect.poll(() => visible(banner())).toBe(true)
+    expect(document.activeElement?.textContent).toBe('Customize')
+  })
+}
 
 const breakpoints = [
   [320, 568],
