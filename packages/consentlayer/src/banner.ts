@@ -356,7 +356,7 @@ export function mountBanner(
   let opener: Element | null = null
   const root = document.documentElement
   const render = () => {
-    const { ready, bannerVisible, dialogVisible, prefs } = controller.getSnapshot()
+    const { ready, bannerVisible, dialogVisible, chosen, prefs } = controller.getSnapshot()
     const showBanner = ready && bannerVisible && !dialogVisible
     if (!dialog.open && !(banner instanceof HTMLDialogElement && banner.open))
       root.toggleAttribute('data-consentlayer-gutter', innerWidth > root.clientWidth)
@@ -369,7 +369,7 @@ export function mountBanner(
       if (showBanner && !banner.open) banner.showModal()
       if (!showBanner && banner.open) banner.close()
     } else banner.hidden = !showBanner
-    if (badge) badge.hidden = !ready || (badgeOptions && badgeOptions.show !== 'always' && bannerVisible)
+    if (badge) badge.hidden = !ready || (badgeOptions && badgeOptions.show !== 'always' && (bannerVisible || !chosen))
     if (!dialogVisible && dialog.open) dialog.close()
   }
 

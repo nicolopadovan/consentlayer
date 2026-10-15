@@ -34,8 +34,11 @@ const unmount = mountBanner(controller, {
 `<body>` and a `<style>` element to `<head>`, and updates them from the
 controller's state. It returns a function that removes them.
 
-The banner shows while the controller's `bannerVisible` is `true`: with no
-stored choice, or a [stale](/guides/consent-ui/#asking-again) one. It offers
+The banner shows while the controller's `bannerVisible` is `true`: when there
+is no stored choice, the stored choice is [stale](/guides/consent-ui/#asking-again),
+or only the [region's](/guides/regions/) defaults are in force, as in
+Switzerland. It stays hidden where the region's rule sets `banner: false`, as
+the US rule does by default, and when `autoShowBanner` is `false`. It offers
 Accept all, Reject non-essential and Customize. Customize opens the settings
 dialog, a modal `<dialog>` with a switch for each category, which keeps focus
 inside while open, closes with Escape and returns focus to the button that
@@ -242,17 +245,29 @@ you and your visitors are. Check it before you turn this on; see the
 
 ## Badge
 
-After the visitor chooses, a round button with a cookie icon stays on the page
-and reopens the settings. `badge: false` removes it; link to
-`CONSENTLAYER_openConsent()` from your footer instead, as
+After the visitor has chosen, a round button with a cookie icon stays on the
+page and reopens the settings. It appears only once a choice is stored: a first
+visit where the banner stays hidden, such as in the US or with
+`autoShowBanner: false`, has no badge, and neither does a visit where the only
+consent in force is the [region's](/guides/regions/) defaults or a consent
+platform's provisional answer. `show: 'always'` shows it before a choice too.
+`badge: false` removes it; link to `CONSENTLAYER_openConsent()` from your
+footer instead, as
 [Reopening the settings](/guides/consent-ui/#reopening-the-settings) shows.
 
-| Option     | Type                                                     | Default          | Description                                                                         |
-| ---------- | -------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------- |
-| `show`     | `'after-choice' \| 'always'`                             | `'after-choice'` | `always` also shows it while the banner is open, beneath the banner.                |
-| `position` | A corner, `top-center`, `bottom-center`, `left`, `right` | `'bottom-left'`  | Where the badge sits.                                                               |
-| `label`    | `boolean`                                                | `false`          | Shows the `badge` text next to the icon. Without it, the text is the button's name. |
-| `attached` | `boolean`                                                | `false`          | Sits flush against the nearest edge, the side edge for a corner.                    |
+| Option     | Type                                                     | Default          | Description                                                                                                                                                        |
+| ---------- | -------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `show`     | `'after-choice' \| 'always'`                             | `'after-choice'` | `after-choice` shows it once the visitor has chosen and the banner is closed. `always` shows it from the start, also while the banner is open, beneath the banner. |
+| `position` | A corner, `top-center`, `bottom-center`, `left`, `right` | `'bottom-left'`  | Where the badge sits.                                                                                                                                              |
+| `label`    | `boolean`                                                | `false`          | Shows the `badge` text next to the icon. Without it, the text is the button's name.                                                                                |
+| `attached` | `boolean`                                                | `false`          | Sits flush against the nearest edge, the side edge for a corner.                                                                                                   |
+
+With the [IAB TCF adapter](/guides/adapters/tcf/), the choice is the CMP's. The
+consent the CMP reports before the visitor has chosen is provisional and does
+not show the badge, but once the CMP reports a choice, ConsentLayer stores it
+and the badge appears. The badge opens ConsentLayer's dialog, whose choices are
+not written back to the CMP, so set `badge: false` (`data-badge="false"` on the
+script tag) and link to the CMP's own settings instead.
 
 ## Text
 

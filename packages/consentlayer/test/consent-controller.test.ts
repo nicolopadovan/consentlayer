@@ -28,6 +28,22 @@ describe('createConsentController', () => {
     analytics.destroy()
   })
 
+  it('sets chosen only for a choice, not for region defaults, and follows another tab', async () => {
+    const analytics = createAnalytics({ providers: [], consent: { region: 'US' } })
+    const controller = createConsentController(analytics)
+    const stop = controller.start()
+    await settle()
+    expect(controller.getSnapshot()).toMatchObject({ chosen: false, bannerVisible: false, prefs: { analytics: true } })
+
+    const record = { consent: { preferences: false, analytics: false, marketing: false }, updatedAt: Date.now() }
+    localStorage.setItem('consentlayer_consent', JSON.stringify(record))
+    window.dispatchEvent(new StorageEvent('storage', { key: 'consentlayer_consent' }))
+    await settle()
+    expect(controller.getSnapshot()).toMatchObject({ chosen: true, prefs: { analytics: false } })
+    stop()
+    analytics.destroy()
+  })
+
   it('discards the toggles the visitor closes the dialog without saving', async () => {
     const analytics = createAnalytics({ providers: [] })
     const controller = createConsentController(analytics)

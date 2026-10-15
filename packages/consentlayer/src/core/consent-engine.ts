@@ -41,6 +41,7 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
   }
   let stale = false
   let defaulted = false
+  let provisional = false
   let changes = 0
 
   const notify = () => {
@@ -55,15 +56,18 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       persist,
       applyAdapters,
       excludeAdapter,
+      answeredProvisionally = false,
     }: {
       persist: boolean
       applyAdapters: boolean
       excludeAdapter?: ConsentIntegrationAdapter
+      answeredProvisionally?: boolean
     },
   ) => {
-    if (destroyed || !next || (equalConsent(current, next) && !(persist && (stale || defaulted)))) return
+    if (destroyed || !next || (equalConsent(current, next) && !(persist && (stale || defaulted || provisional)))) return
     current = next
     defaulted = source === 'region'
+    provisional = answeredProvisionally
     changes++
     if (persist) {
       stale = false
@@ -151,12 +155,14 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     stale = stored !== null && isStaleRecord(record!)
     if (stale) debugLog('consent', undefined, 'stored consent is stale', record)
     const seen = changes
-    let provisional = false
+    let answeredProvisionally = false
     const ask = async (adapter: ConsentIntegrationAdapter) => {
       try {
         const answer = await adapter.bootstrap?.()
-        provisional = answer != null && 'consent' in answer && typeof answer.consent === 'object'
-        return normalize(provisional ? (answer as { consent: ConsentState }).consent : (answer as ConsentState | null))
+        answeredProvisionally = answer != null && 'consent' in answer && typeof answer.consent === 'object'
+        return normalize(
+          answeredProvisionally ? (answer as { consent: ConsentState }).consent : (answer as ConsentState | null),
+        )
       } catch (cause) {
         options.onError?.({
           scope: 'consent-adapter',
@@ -178,9 +184,10 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       if (changes !== seen) return current
       if (!next) continue
       await commit(next, 'bootstrap', {
-        persist: adapter !== undefined && !provisional,
+        persist: adapter !== undefined && !answeredProvisionally,
         applyAdapters: false,
         excludeAdapter: adapter,
+        answeredProvisionally,
       })
       return current
     }
@@ -216,6 +223,9 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     },
     getRegion() {
       return { region, rule }
+    },
+    hasChoice() {
+      return current !== null && !defaulted && !provisional
     },
     shouldAsk() {
       return rule.banner !== false && (current === null || stale || defaulted)

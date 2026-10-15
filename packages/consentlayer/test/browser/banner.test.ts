@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, expect, it } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { mountBanner, type BannerOptions } from '../../src/banner'
-import { createAnalytics, createConsentController } from '../../src/index'
+import {
+  createAnalytics,
+  createConsentController,
+  type AnalyticsOptions,
+  type ConsentControllerOptions,
+} from '../../src/index'
 
 let cleanup = () => {}
 
@@ -12,9 +17,13 @@ beforeEach(async () => {
 })
 afterEach(() => cleanup())
 
-async function setup(options: BannerOptions = {}) {
-  const analytics = createAnalytics({ providers: [] })
-  const controller = createConsentController(analytics)
+function mount(
+  options: BannerOptions = {},
+  consent: AnalyticsOptions['consent'] = {},
+  controllerOptions: ConsentControllerOptions = {},
+) {
+  const analytics = createAnalytics({ providers: [], consent })
+  const controller = createConsentController(analytics, controllerOptions)
   const stop = controller.start()
   const unmount = mountBanner(controller, options)
   cleanup = () => {
@@ -22,6 +31,11 @@ async function setup(options: BannerOptions = {}) {
     stop()
     analytics.destroy()
   }
+  return { analytics, controller }
+}
+
+async function setup(options: BannerOptions = {}) {
+  const { analytics } = mount(options)
   await expect.poll(() => visible(banner())).toBe(true)
   await animations()
   return analytics
@@ -110,6 +124,37 @@ it('shows the badge after a choice, and it opens the settings', async () => {
   const dialog = document.querySelector('.consentlayer-dialog')!
   await expect.poll(() => visible(dialog)).toBe(true)
   expect(dialog.contains(document.activeElement)).toBe(true)
+})
+
+const denied = { preferences: false, analytics: false, marketing: false }
+
+const unchosen: [string, AnalyticsOptions['consent'], ConsentControllerOptions][] = [
+  ['a region whose rule has no banner', { region: 'US' }, {}],
+  ['autoShowBanner off', {}, { autoShowBanner: false }],
+  [
+    'a consent platform that answers provisionally',
+    { adapters: [{ id: 'cmp', bootstrap: () => ({ consent: denied, provisional: true as const }) }] },
+    {},
+  ],
+]
+
+for (const [label, consent, controllerOptions] of unchosen) {
+  it(`keeps the badge hidden until a choice is stored, with ${label}`, async () => {
+    const { analytics, controller } = mount({}, consent, controllerOptions)
+    await expect.poll(() => controller.getSnapshot().ready).toBe(true)
+    await animations()
+    expect([visible(banner()), visible(badge())]).toEqual([false, false])
+    await analytics.consent.setConsent(denied)
+    await expect.poll(() => visible(badge())).toBe(true)
+  })
+}
+
+it('shows the badge on a visit that finds a stored choice', async () => {
+  localStorage.setItem('consentlayer_consent', JSON.stringify({ consent: denied, updatedAt: Date.now() }))
+  const { controller } = mount()
+  await expect.poll(() => controller.getSnapshot().ready).toBe(true)
+  await expect.poll(() => visible(badge())).toBe(true)
+  expect(visible(banner())).toBe(false)
 })
 
 it('attaches the badge to the edge', async () => {

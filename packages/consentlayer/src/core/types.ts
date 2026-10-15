@@ -126,6 +126,8 @@ export interface ConsentEngine {
   isStale: () => boolean
   /** The visitor's region and the rule in force there, once `bootstrap()` resolves. */
   getRegion: () => { region: string | undefined; rule: RegionRule }
+  /** Whether the visitor, or a consent platform for them, has chosen: not just the region's defaults, a platform's provisional answer or nothing. A stale choice held by `onStale: 'keep'` counts. */
+  hasChoice: () => boolean
   /** Whether the banner should ask: no choice, a stale one or only the region's defaults, and the rule shows a banner. */
   shouldAsk: () => boolean
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>

@@ -64,6 +64,9 @@ export function AnalyticsProvider(props: AnalyticsProviderProps): JSX.Element {
     get gpc() {
       return state().gpc
     },
+    get chosen() {
+      return state().chosen
+    },
     get prefs() {
       return state().prefs
     },

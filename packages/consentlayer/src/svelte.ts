@@ -75,6 +75,9 @@ export function consentLayer({ analytics, afterNavigate, page, ...options }: Con
     get gpc() {
       return read().gpc
     },
+    get chosen() {
+      return read().chosen
+    },
     get prefs() {
       return read().prefs
     },

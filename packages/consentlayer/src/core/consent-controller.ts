@@ -13,6 +13,8 @@ export type ConsentControllerState = {
   categories: readonly ConsentCategory[]
   /** Whether the browser's Global Privacy Control signal is honored: `acceptAll` then leaves marketing off. */
   gpc: boolean
+  /** Whether the visitor has chosen, as opposed to only the region's defaults, a consent platform's provisional answer or nothing. See `analytics.consent.hasChoice()`. */
+  chosen: boolean
   /** The dialog's toggles, one per category in `analytics.consent.categories`. */
   prefs: Prefs
 }
@@ -79,6 +81,7 @@ export function createConsentController(
     dialogVisible: false,
     categories: engine.categories,
     gpc: engine.gpc,
+    chosen: engine.hasChoice(),
     prefs: all(false),
   }
   const listeners = new Set<() => void>()
@@ -125,6 +128,7 @@ export function createConsentController(
           if (stopped) return
           set({
             ...(consent && { prefs: all((category) => consent[category]) }),
+            chosen: engine.hasChoice(),
             bannerVisible: autoShowBanner && engine.shouldAsk(),
           })
         })
@@ -136,7 +140,7 @@ export function createConsentController(
         })
       const cancelBoot = scheduleBoot(analytics, boot)
       const syncPrefs = (consent: ConsentState | null) => {
-        if (consent) set({ prefs: all((category) => consent[category]) })
+        if (consent) set({ prefs: all((category) => consent[category]), chosen: engine.hasChoice() })
       }
       syncPrefs(engine.getConsent())
       const unsubscribeConsent = engine.subscribe(({ consent }) => syncPrefs(consent))

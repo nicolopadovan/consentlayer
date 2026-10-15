@@ -28,6 +28,7 @@ export function provideConsentBanner(options: BannerOptions = {}): EnvironmentPr
       dialogVisible: controller.dialogVisible(),
       categories: controller.categories(),
       gpc: controller.gpc(),
+      chosen: controller.chosen(),
       prefs: controller.prefs(),
     })
     const unmount = mountBanner(

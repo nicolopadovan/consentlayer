@@ -282,6 +282,7 @@ provider's `identify` hook.
 | `getConsent` | `() => ConsentState \| null`                                                      | The consent in force: the visitor's choice, the region's `granted` categories before one, or `null`.                                                                                                                                                                                                                               |
 | `isStale`    | `() => boolean`                                                                   | Whether `bootstrap()` found a stored choice that is too old or was made under another major `policyVersion`. `false` again once the visitor chooses.                                                                                                                                                                               |
 | `getRegion`  | `() => { region: string \| undefined; rule: RegionRule }`                         | The region `bootstrap()` read, upper-cased, and the rule in force there. `{ region: undefined, rule: {} }` before bootstrap or without a region.                                                                                                                                                                                   |
+| `hasChoice`  | `() => boolean`                                                                   | Whether the visitor, or a consent platform for them, has chosen: a stored choice, or an adapter's answer that is not provisional. `false` with no choice, with only the region's defaults and with a provisional answer. A stale choice that `onStale: 'keep'` holds counts.                                                       |
 | `shouldAsk`  | `() => boolean`                                                                   | Whether the banner should ask: no choice, a stale one or only the region's defaults are in force, and the rule's `banner` is not `false`. The controller's `bannerVisible` follows it.                                                                                                                                             |
 | `setConsent` | `(consent: ConsentState, source?: ConsentChangeSource) => Promise<void>`          | Replaces the whole choice, stores it, broadcasts it and applies it to every adapter. `source` defaults to `'imperative'`. An identical choice is ignored, unless the stored one is stale: then it is stored again with the current date and `policyVersion`, and applied to every adapter, so `server.consentEndpoint` records it. |
 | `update`     | `(partial: Partial<ConsentState>) => Promise<void>`                               | Awaits `bootstrap()`, then merges `partial` over the current choice. Categories that have never been set are denied.                                                                                                                                                                                                               |
@@ -309,7 +310,7 @@ It returns a `ConsentController`:
 | ------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `start`       | `() => () => void`                                           | Bootstraps consent, schedules boot and starts sending page views. Returns a function that stops it.                                                                                                                                                                                                                                                               |
 | `setRoute`    | `(routeKey: string \| null, page?: PageViewPayload) => void` | Sends a page view to each active provider when `routeKey` changes, and to providers that become active later. The server receives one page view per key, for every destination, once analytics or marketing consent is granted. A change after the first key starts a new page session. `null` holds page views; `page` overrides their `url`, `path` or `title`. |
-| `getSnapshot` | `() => ConsentControllerState`                               | `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and `prefs`, as in [`useConsentController()`](#useconsentcontroller).                                                                                                                                                                                                                     |
+| `getSnapshot` | `() => ConsentControllerState`                               | `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen` and `prefs`, as in [`useConsentController()`](#useconsentcontroller).                                                                                                                                                                                                           |
 | `subscribe`   | `(listener: () => void) => () => void`                       | Calls `listener` after each state change. Returns an unsubscribe function.                                                                                                                                                                                                                                                                                        |
 | `actions`     | `ConsentControllerActions`                                   | `setPrefs`, `showBanner`, `hideBanner`, `openDialog`, `closeDialog`, `acceptAll`, `rejectNonEssential` and `savePreferences`, as in `useConsentController()`.                                                                                                                                                                                                     |
 
@@ -574,6 +575,7 @@ type ConsentApi = {
   getConsent: () => ConsentState | null
   isStale: () => boolean
   getRegion: () => { region: string | undefined; rule: RegionRule }
+  hasChoice: () => boolean
   shouldAsk: () => boolean
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>
   subscribe: (listener: (snapshot: ConsentEngineSnapshot) => void) => () => void
@@ -840,21 +842,22 @@ function useConsent(): {
 State and actions for building a consent banner and settings dialog. See
 [Consent UI](/guides/consent-ui/).
 
-| Field                       | Type                                               | Description                                                                         |
-| --------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `ready`                     | `boolean`                                          | `true` once `bootstrap()` has settled.                                              |
-| `error`                     | `string \| null`                                   | The bootstrap error, converted with `String()`, or `null`.                          |
-| `bannerVisible`             | `boolean`                                          | Whether the banner should render.                                                   |
-| `showBanner`, `hideBanner`  | `() => void`                                       | Set `bannerVisible`.                                                                |
-| `dialogVisible`             | `boolean`                                          | Whether the settings dialog should render.                                          |
-| `openDialog`, `closeDialog` | `() => void`                                       | Set `dialogVisible`. `closeDialog` also resets `prefs` to the stored choice.        |
-| `categories`                | `readonly ConsentCategory[]`                       | The categories the dialog shows, from `analytics.consent.categories`.               |
-| `prefs`                     | `Record<ConsentCategory, boolean>`                 | The dialog's toggles, one per category; kept in sync with the current consent.      |
-| `setPrefs`                  | `(next: Record<ConsentCategory, boolean>) => void` | Changes the toggles without saving them.                                            |
-| `gpc`                       | `boolean`                                          | Whether the Global Privacy Control signal is honored, from `analytics.consent.gpc`. |
-| `acceptAll`                 | `() => Promise<void>`                              | Grants every category, except `marketing` while `gpc` is `true`.                    |
-| `rejectNonEssential`        | `() => Promise<void>`                              | Denies every category.                                                              |
-| `savePreferences`           | `() => Promise<void>`                              | Saves `prefs`.                                                                      |
+| Field                       | Type                                               | Description                                                                                                                                            |
+| --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ready`                     | `boolean`                                          | `true` once `bootstrap()` has settled.                                                                                                                 |
+| `error`                     | `string \| null`                                   | The bootstrap error, converted with `String()`, or `null`.                                                                                             |
+| `bannerVisible`             | `boolean`                                          | Whether the banner should render.                                                                                                                      |
+| `showBanner`, `hideBanner`  | `() => void`                                       | Set `bannerVisible`.                                                                                                                                   |
+| `chosen`                    | `boolean`                                          | Whether the visitor has chosen, from `analytics.consent.hasChoice()`: `false` with none, with only the region's defaults or with a provisional answer. |
+| `dialogVisible`             | `boolean`                                          | Whether the settings dialog should render.                                                                                                             |
+| `openDialog`, `closeDialog` | `() => void`                                       | Set `dialogVisible`. `closeDialog` also resets `prefs` to the stored choice.                                                                           |
+| `categories`                | `readonly ConsentCategory[]`                       | The categories the dialog shows, from `analytics.consent.categories`.                                                                                  |
+| `prefs`                     | `Record<ConsentCategory, boolean>`                 | The dialog's toggles, one per category; kept in sync with the current consent.                                                                         |
+| `setPrefs`                  | `(next: Record<ConsentCategory, boolean>) => void` | Changes the toggles without saving them.                                                                                                               |
+| `gpc`                       | `boolean`                                          | Whether the Global Privacy Control signal is honored, from `analytics.consent.gpc`.                                                                    |
+| `acceptAll`                 | `() => Promise<void>`                              | Grants every category, except `marketing` while `gpc` is `true`.                                                                                       |
+| `rejectNonEssential`        | `() => Promise<void>`                              | Denies every category.                                                                                                                                 |
+| `savePreferences`           | `() => Promise<void>`                              | Saves `prefs`.                                                                                                                                         |
 
 `acceptAll`, `rejectNonEssential` and `savePreferences` call `setConsent` and
 then hide the banner and the dialog.
@@ -1013,7 +1016,7 @@ the scope is disposed.
 ### `useConsentController()` for Vue
 
 The fields of the React [`useConsentController()`](#useconsentcontroller),
-with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen` and
 `prefs` as read-only refs. The return type is exported as `ConsentController`.
 
 **Throws** an `Error` when `consentLayer` is not installed.
@@ -1127,7 +1130,7 @@ property. It listens for changes only while a template, `$derived` or
 ### `useConsentController()` for Svelte
 
 The fields of the React [`useConsentController()`](#useconsentcontroller),
-with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen` and
 `prefs` as reactive read-only properties. The return type is exported as
 `ConsentController`.
 
@@ -1218,7 +1221,7 @@ listens for changes until the calling component is disposed.
 ### `useConsentController()` for Solid
 
 The fields of the React [`useConsentController()`](#useconsentcontroller),
-with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen` and
 `prefs` as reactive read-only properties. The return type is exported as
 `ConsentController`.
 
@@ -1325,7 +1328,7 @@ is destroyed.
 ### `injectConsentController()`
 
 The fields of the React [`useConsentController()`](#useconsentcontroller),
-with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen` and
 `prefs` as signals. The return type is exported as `ConsentController`.
 
 **Throws** an `Error` when `provideConsentLayer()` is not provided.

@@ -131,7 +131,7 @@ export class App {
 ```
 
 `injectConsentController()` returns the state as signals, `ready()`,
-`error()`, `bannerVisible()`, `dialogVisible()`, `categories()`, `gpc()` and
+`error()`, `bannerVisible()`, `dialogVisible()`, `categories()`, `gpc()`, `chosen()` and
 `prefs()`, and the actions as functions. Call it in an injection context, such as a field
 initializer. It throws when `provideConsentLayer()` is not in the application
 config.

@@ -214,6 +214,12 @@ CMP or the CMP reports `gdprApplies: false`. Link your footer to the CMP's
 settings rather than to `CONSENTLAYER_openConsent()`, since a choice made in
 ConsentLayer's dialog is not written back to the CMP.
 
+The badge follows a stored choice, not the banner. The consent the CMP reports
+before the visitor has chosen is provisional and does not show it, but once the
+CMP reports a choice, ConsentLayer stores it and the badge appears, on every
+later visit too. Its dialog does not write back to the CMP either, so add
+`data-badge="false"` to the banner's script tag.
+
 ## PostHog and Sentry
 
 From npm, `posthog()` and `sentry()` import the vendor's SDK, which you
