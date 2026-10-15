@@ -201,21 +201,64 @@ When you do not set `nonce`, it uses the application's `CSP_NONCE`, if provided.
 
 ## Options
 
-| Option             | Type                                               | Default         | Description                                                                                          |
-| ------------------ | -------------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------- |
-| `position`         | See [Placement](#placement)                        | `'bottom-left'` | Where the banner sits.                                                                               |
-| `overlay`          | `boolean`                                          | `false`         | Dims the page behind the banner. Visual only: the page stays usable.                                 |
-| `blocking`         | `boolean`                                          | `false`         | Keeps the page from being used until the visitor chooses. See [Blocking](#blocking).                 |
-| `emphasis`         | `'equal' \| 'accept'`                              | `'equal'`       | `equal` gives Accept all and Reject non-essential the same look; `accept` fills only Accept all.     |
-| `closeButton`      | `boolean`                                          | `false`         | Adds an × in the corner that rejects non-essential categories, labeled with the `dismiss` text.      |
-| `badge`            | `false \| { show?, position?, label?, attached? }` | `{}`            | The button that reopens the settings. See [Badge](#badge).                                           |
-| `privacyPolicyUrl` | `string`                                           |                 | Links the privacy policy. See [Text](#text).                                                         |
-| `cookiePolicyUrl`  | `string`                                           |                 | Links the cookie policy.                                                                             |
-| `termsUrl`         | `string`                                           |                 | Links the terms of service.                                                                          |
-| `text`             | `object`                                           |                 | Overrides any string. See [Text](#text).                                                             |
-| `classNames`       | `Partial<Record<part, string>>`                    |                 | Classes added to each part. See [Styling](#styling).                                                 |
-| `unstyled`         | `boolean`                                          | `false`         | Leaves out the built-in stylesheet.                                                                  |
-| `nonce`            | `string`                                           |                 | Set on the built-in `<style>` element, for a Content Security Policy with a nonce-based `style-src`. |
+| Option             | Type                                               | Default           | Description                                                                                          |
+| ------------------ | -------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
+| `position`         | See [Placement](#placement)                        | `'bottom-left'`   | Where the banner sits.                                                                               |
+| `overlay`          | `boolean`                                          | `false`           | Dims the page behind the banner. Visual only: the page stays usable.                                 |
+| `blocking`         | `boolean`                                          | `false`           | Keeps the page from being used until the visitor chooses. See [Blocking](#blocking).                 |
+| `emphasis`         | `'equal' \| 'accept'`                              | See [Laws](#laws) | `equal` gives Accept all and Reject non-essential the same look; `accept` fills only Accept all.     |
+| `closeButton`      | `boolean`                                          | See [Laws](#laws) | Adds an × in the corner that rejects non-essential categories, labeled with the `dismiss` text.      |
+| `badge`            | `false \| { show?, position?, label?, attached? }` | `{}`              | The button that reopens the settings. See [Badge](#badge).                                           |
+| `privacyPolicyUrl` | `string`                                           |                   | Links the privacy policy. See [Text](#text).                                                         |
+| `cookiePolicyUrl`  | `string`                                           |                   | Links the cookie policy.                                                                             |
+| `termsUrl`         | `string`                                           |                   | Links the terms of service.                                                                          |
+| `text`             | `object`                                           |                   | Overrides any string. See [Text](#text).                                                             |
+| `classNames`       | `Partial<Record<part, string>>`                    |                   | Classes added to each part. See [Styling](#styling).                                                 |
+| `unstyled`         | `boolean`                                          | `false`           | Leaves out the built-in stylesheet.                                                                  |
+| `nonce`            | `string`                                           |                   | Set on the built-in `<style>` element, for a Content Security Policy with a nonce-based `style-src`. |
+
+## Laws
+
+Once the visitor's [region](/guides/regions/) is known, the banner follows the
+laws that apply there, where your options leave a choice open. Without a
+region, or in a region without a law, the banner uses the defaults: Accept all
+and Reject non-essential alike, no ×, and the badge after a choice.
+
+| Law                            | Banner                                                                                                                                  | Badge                                                                    |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `gdpr`, `uk`, `lgpd`, `quebec` | Asks before anything that needs consent runs, with Accept all and Reject non-essential alike, and Customize.                            | After a choice.                                                          |
+| `cnil`                         | As above, with an × that refuses and a `message` that says closing the banner refuses. A choice is asked again after six months.        | After a choice.                                                          |
+| `revfadp`                      | A notice: tracking other than marketing runs from the start, the message says the visitor can reject it, and only Accept all is filled. | After a choice.                                                          |
+| `ccpa`                         | None.                                                                                                                                   | Always, labeled "Your Privacy Choices" with the California opt-out icon. |
+
+Under `ccpa` alone, the badge opens a dialog titled "Your Privacy Choices"
+with one switch, "Do not sell or share my personal information". Switching it
+on turns `marketing` off. A browser that sends
+[Global Privacy Control](/guides/consent-ui/#global-privacy-control) has the
+switch on from the start, without a message; set the `gpcHonored` text to show
+one in the dialog, such as "Opt-out preference signal honored".
+
+Where several laws apply, the stricter one wins for each part of the banner:
+it asks if any law asks, the buttons are alike unless `revfadp` is the only
+law that asks, the × appears under `cnil`, the badge is "Your Privacy Choices"
+and always shown under `ccpa`, and the opt-out dialog becomes the full
+settings dialog when any other law applies.
+
+Your options always win. A law only fills in what you leave unset:
+
+```ts
+mountBanner(controller, {
+  closeButton: false, // no × in France
+  emphasis: 'equal', // Accept all and Reject non-essential alike in Switzerland
+  badge: { show: 'after-choice' }, // the US badge only after a choice, still labeled
+  text: { badge: 'Privacy choices' },
+})
+```
+
+The CNIL accepts closing the banner as a refusal only when the banner says so,
+so the × is on by default under `cnil` only while `message` is the default,
+which says it. Once you set your own `message`, add `closeButton: true` if it
+says so too. Turn a law off with the [`laws` option](/guides/regions/#laws).
 
 ## Placement
 
@@ -251,10 +294,11 @@ you and your visitors are. Check it before you turn this on; see the
 
 After the visitor has chosen, a round button with a cookie icon stays on the
 page and reopens the settings. It appears only once a choice is stored: a first
-visit where the banner stays hidden, such as in the US or with
-`autoShowBanner: false`, has no badge, and neither does a visit where the only
+visit where the banner stays hidden, such as with `autoShowBanner: false`, has
+no badge, and neither does a visit where the only
 consent in force is the [region's](/guides/regions/) defaults or a consent
-platform's provisional answer. `show: 'always'` shows it before a choice too.
+platform's provisional answer. `show: 'always'` shows it before a choice too,
+as the [`ccpa` law](#laws) does.
 When the visitor chooses, focus moves to the badge, since the button they
 pressed is gone. `badge: false` removes it, and focus is then left alone; link
 to `CONSENTLAYER_openConsent()` from your footer instead, as
@@ -302,31 +346,39 @@ Each string may contain:
 A policy whose URL is set but whose placeholder is not in `message` is linked
 after the message. Strings are inserted as text, never as HTML.
 
-| `text` key               | Default                                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------- |
-| `title`                  | Cookies                                                                                           |
-| `message`                | We use cookies to run this site and, with your consent, for preferences, analytics and marketing. |
-| `privacyPolicy`          | Privacy policy                                                                                    |
-| `cookiePolicy`           | Cookie policy                                                                                     |
-| `terms`                  | Terms of service                                                                                  |
-| `gpc`                    | Your browser's Global Privacy Control signal is on, so marketing is off unless you switch it on.  |
-| `acceptAll`              | Accept all                                                                                        |
-| `rejectNonEssential`     | Reject non-essential                                                                              |
-| `customize`              | Customize                                                                                         |
-| `dismiss`                | Continue without accepting                                                                        |
-| `settingsTitle`          | Cookie settings                                                                                   |
-| `settingsMessage`        | Empty: no text above the switches                                                                 |
-| `necessaryLabel`         | Necessary                                                                                         |
-| `necessaryDescription`   | Needed for the site to work, such as remembering this choice. Always on.                          |
-| `preferencesLabel`       | Preferences                                                                                       |
-| `preferencesDescription` | Remember settings such as language or region.                                                     |
-| `analyticsLabel`         | Analytics                                                                                         |
-| `analyticsDescription`   | Help us understand how the site is used.                                                          |
-| `marketingLabel`         | Marketing                                                                                         |
-| `marketingDescription`   | Measure our ads and show relevant ones on other sites.                                            |
-| `close`                  | Close                                                                                             |
-| `save`                   | Save choices                                                                                      |
-| `badge`                  | Cookie settings                                                                                   |
+| `text` key               | Default                                                                                                                                  |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`                  | Cookies                                                                                                                                  |
+| `message`                | We use cookies to run this site and, with your consent, for preferences, analytics and marketing. Under `cnil` and `revfadp`, see below. |
+| `privacyPolicy`          | Privacy policy                                                                                                                           |
+| `cookiePolicy`           | Cookie policy                                                                                                                            |
+| `terms`                  | Terms of service                                                                                                                         |
+| `gpc`                    | Your browser's Global Privacy Control signal is on, so marketing is off unless you switch it on.                                         |
+| `acceptAll`              | Accept all                                                                                                                               |
+| `rejectNonEssential`     | Reject non-essential                                                                                                                     |
+| `customize`              | Customize                                                                                                                                |
+| `dismiss`                | Continue without accepting                                                                                                               |
+| `settingsTitle`          | Cookie settings; Your Privacy Choices under `ccpa` alone                                                                                 |
+| `settingsMessage`        | Empty: no text above the switches                                                                                                        |
+| `necessaryLabel`         | Necessary                                                                                                                                |
+| `necessaryDescription`   | Needed for the site to work, such as remembering this choice. Always on.                                                                 |
+| `preferencesLabel`       | Preferences                                                                                                                              |
+| `preferencesDescription` | Remember settings such as language or region.                                                                                            |
+| `analyticsLabel`         | Analytics                                                                                                                                |
+| `analyticsDescription`   | Help us understand how the site is used.                                                                                                 |
+| `marketingLabel`         | Marketing                                                                                                                                |
+| `marketingDescription`   | Measure our ads and show relevant ones on other sites.                                                                                   |
+| `close`                  | Close                                                                                                                                    |
+| `save`                   | Save choices                                                                                                                             |
+| `badge`                  | Cookie settings; Your Privacy Choices under `ccpa`                                                                                       |
+| `doNotSell`              | Do not sell or share my personal information                                                                                             |
+| `gpcHonored`             | Empty: no text in the `ccpa` dialog                                                                                                      |
+
+Under `cnil`, `message` adds "Closing this banner means you refuse all but the
+necessary ones." Under `revfadp`, without an opt-in law, it reads "We use
+cookies to run this site, to remember your preferences and to understand how
+it is used, and with your consent for marketing. You can reject all but the
+necessary ones."
 
 The `gpc` line shows under the message only while the visitor's browser sends
 the [Global Privacy Control](/guides/consent-ui/#global-privacy-control)
