@@ -230,7 +230,7 @@ describe('several laws', () => {
 
 describe('a slow region lookup', () => {
   it('mounts nothing until the region is known, then follows its law', async () => {
-    let resolve = (_region: string) => {}
+    let resolve: (region: string) => void = () => {}
     const region = new Promise<string>((done) => (resolve = done))
     const analytics = createAnalytics({ consent: { region: () => region } })
     const controller = createConsentController(analytics)
