@@ -94,14 +94,24 @@ export type ConsentEngineOptions = {
   gpc?: boolean
   /** The visitor's ISO 3166-2 region, such as `'US-CA'` or `'FR'`, or a function that returns it in the browser. Unset, unknown. */
   region?: string | (() => string | null | undefined | Promise<string | null | undefined>)
-  /** Rules per region code, merged over the defaults for `US`, `CH` and `FR`; a region without a rule, or an unknown one, gets the opt-in rule `{}`. */
+  /** Rules per region code, merged over the rules of the laws in `laws`; a region without a rule, or an unknown one, gets the opt-in rule `{}`. */
   regions?: Record<string, RegionRule>
+  /** The laws whose regions get their rule, merged over the defaults: `gdpr`, `cnil`, `revfadp` and `ccpa` on, `uk`, `lgpd` and `quebec` off. */
+  laws?: Partial<Record<Law, boolean>>
   debug?: boolean | DebugOptions
   onError?: AnalyticsErrorHandler
 }
 
+/**
+ * A privacy law ConsentLayer has a rule and banner defaults for: the EU and EEA's GDPR, the UK GDPR, Brazil's LGPD,
+ * Quebec's Law 25, the French CNIL's recommendation, Switzerland's revFADP and the US state laws, CCPA/CPRA first.
+ */
+export type Law = 'gdpr' | 'uk' | 'lgpd' | 'quebec' | 'cnil' | 'revfadp' | 'ccpa'
+
 /** How consent works in a region until the visitor chooses. */
 export type RegionRule = {
+  /** The laws that apply. Their rules fill the fields left unset, the stricter one winning, and the banner follows them. */
+  laws?: readonly Law[]
   /** Categories granted before a choice, applied but not stored; Global Privacy Control turns marketing off. Defaults to none: opt-in. */
   granted?: readonly ConsentCategory[] | 'all'
   /** Whether the banner asks a visitor who has not chosen. Defaults to `true`. */
@@ -126,6 +136,8 @@ export interface ConsentEngine {
   isStale: () => boolean
   /** The visitor's region and the rule in force there, once `bootstrap()` resolves. */
   getRegion: () => { region: string | undefined; rule: RegionRule }
+  /** Whether the visitor, or a consent platform for them, has chosen: not just the region's defaults, a platform's provisional answer or nothing. A stale choice held by `onStale: 'keep'` counts. */
+  hasChoice: () => boolean
   /** Whether the banner should ask: no choice, a stale one or only the region's defaults, and the rule shows a banner. */
   shouldAsk: () => boolean
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>

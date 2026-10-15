@@ -39,16 +39,23 @@ network error, a non-2xx response or a refused beacon is reported to
 `Sending <name> to <endpoint> failed`.
 
 A response carrying the header `consentlayer-forwarding: off` stops
-forwarding until the page is reloaded. The route sends it when it has no
+forwarding. The route sends it when it has no
 destination, so the browser stops posting events that would be dropped.
 Events already in flight still complete. `sendBeacon` cannot read the
 response, so without `fetch` the browser keeps posting.
 
 A response carrying `consentlayer-events` lists, comma-separated, the event
 names the route's destinations take. From then on, the browser posts only
-those events and events whose `only` is set, until the page is reloaded. The
-route omits the header when a destination takes every event; an empty value
-means none.
+those events and events whose `only` is set. The route omits the header when a
+destination takes every event; an empty value means none, and a response
+without it lifts an earlier list.
+
+The browser keeps what it learned in `sessionStorage`, under
+`consentlayer_server:<endpoint>`, so later page loads in the same tab start
+from it instead of posting events the route would drop. It writes the key only
+after a response, and it forwards events only while analytics or marketing
+consent is granted. A changed route takes effect in a new tab, or after a
+response that carries different headers.
 
 A response carrying `consentlayer-consent: missing` means the route found no
 valid consent cookie. With `server.consentEndpoint` set, the browser posts

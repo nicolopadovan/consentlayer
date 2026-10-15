@@ -46,6 +46,21 @@ is enough.
 
 ## 2. Render the banner
 
+`mountBanner()` from `consentlayer/banner` renders ConsentLayer's ready-made
+banner, settings dialog and badge from the controller:
+
+```ts
+// src/consent-banner.ts
+import { mountBanner } from 'consentlayer/banner'
+import { controller } from './analytics'
+
+mountBanner(controller, { privacyPolicyUrl: '/privacy' })
+```
+
+It returns a function that removes them. The [Banner](/guides/banner/) guide
+lists its options, text and styling. To use your own markup instead, build it
+on the controller's state.
+
 The controller holds the state of a banner and a settings dialog.
 `getSnapshot()` returns it, `subscribe(listener)` calls `listener` after each
 change, and `actions` holds the functions that change it. The

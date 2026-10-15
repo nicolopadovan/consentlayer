@@ -8,30 +8,36 @@ entry gives the signature, the options with their types and defaults, the
 return value and the errors it throws. Options are optional unless marked
 **Required**. The guides explain when to use each part.
 
-| Entry point                                               | Exports                                                                                                                                                                    |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`consentlayer`](#consentlayer)                           | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, `createEnvConfig` (deprecated), storage adapters, core types |
-| [`consentlayer/react`](#consentlayerreact)                | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript`, `GtmNoscript`                        |
-| [`consentlayer/next`](#consentlayernext)                  | `AnalyticsProvider` for Next.js                                                                                                                                            |
-| [`consentlayer/vue`](#consentlayervue)                    | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                                                   |
-| [`consentlayer/nuxt`](#consentlayernuxt)                  | The Nuxt module, which auto-imports `defineConsentLayerConfig`                                                                                                             |
-| [`consentlayer/svelte`](#consentlayersvelte)              | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                                                   |
-| [`consentlayer/sveltekit`](#consentlayersveltekit)        | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte`                                                                                                   |
-| [`consentlayer/solid`](#consentlayersolid)                | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript`                                             |
-| [`consentlayer/solidstart`](#consentlayersolidstart)      | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid`                                                                                                 |
-| [`consentlayer/angular`](#consentlayerangular)            | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript`, `provideGtmNoscript`                                     |
-| [`consentlayer/providers/*`](#consentlayerproviders)      | `ga4`, `gtm`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`                                                                                   |
-| [`consentlayer/adapters/*`](#consentlayeradapters)        | `shopifyCustomerPrivacy`, `tcf`, `googleConsentMode`                                                                                                                       |
-| [`consentlayer/auto-tracking`](#autotracking)             | `autoTracking`                                                                                                                                                             |
-| [`consentlayer/ecommerce`](#consentlayerecommerce)        | `productParams`, `cartParams`, `orderParams`, `toItem`                                                                                                                     |
-| [`consentlayer/server`](#consentlayerserver)              | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, `regionFromHeaders`, consent stores                               |
-| [`consentlayer/server/meta`](#consentlayerservermeta)     | `metaCapi`                                                                                                                                                                 |
-| [`consentlayer/server/tiktok`](#consentlayerservertiktok) | `tiktokEvents`                                                                                                                                                             |
-| [`consentlayer/server/sgtm`](#consentlayerserversgtm)     | `sgtm`                                                                                                                                                                     |
-| [`consentlayer/server/ga4`](#consentlayerserverga4)       | `ga4Server`                                                                                                                                                                |
-| [`consentlayer/sentry/server`](#consentlayersentryserver) | `sentryInstrumentation`                                                                                                                                                    |
-| [`consentlayer/sentry/next`](#consentlayersentrynext)     | `withSentryConfig`                                                                                                                                                         |
-| [`consentlayer/testing`](#consentlayertesting)            | `checkPlugin`                                                                                                                                                              |
+| Entry point                                                 | Exports                                                                                                                                                                    |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`consentlayer`](#consentlayer)                             | `createAnalytics`, `createConsentController`, `definePlugin`, `loadScript`, `getFlag`, `setFlag`, `getNames`, `createEnvConfig` (deprecated), storage adapters, core types |
+| [`consentlayer/react`](#consentlayerreact)                  | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `createGlobalError`, `MetaPixelNoscript`, `GtmNoscript`                        |
+| [`consentlayer/next`](#consentlayernext)                    | `AnalyticsProvider` for Next.js                                                                                                                                            |
+| [`consentlayer/vue`](#consentlayervue)                      | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                                                   |
+| [`consentlayer/nuxt`](#consentlayernuxt)                    | The Nuxt module, which auto-imports `defineConsentLayerConfig`                                                                                                             |
+| [`consentlayer/svelte`](#consentlayersvelte)                | `consentLayer`, `useAnalytics`, `useConsent`, `useConsentController`, `MetaPixelNoscript`, `GtmNoscript`                                                                   |
+| [`consentlayer/sveltekit`](#consentlayersveltekit)          | `consentLayer`, `handleErrorWith`, and the rest of `consentlayer/svelte`                                                                                                   |
+| [`consentlayer/solid`](#consentlayersolid)                  | `AnalyticsProvider`, `useAnalytics`, `useConsent`, `useConsentController`, `ErrorBoundary`, `MetaPixelNoscript`, `GtmNoscript`                                             |
+| [`consentlayer/solidstart`](#consentlayersolidstart)        | `AnalyticsProvider` for Solid Router, and the rest of `consentlayer/solid`                                                                                                 |
+| [`consentlayer/angular`](#consentlayerangular)              | `provideConsentLayer`, `injectAnalytics`, `injectConsent`, `injectConsentController`, `provideMetaPixelNoscript`, `provideGtmNoscript`                                     |
+| [`consentlayer/providers/*`](#consentlayerproviders)        | `ga4`, `gtm`, `meta`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel`, `tiktok`                                                                                   |
+| [`consentlayer/adapters/*`](#consentlayeradapters)          | `shopifyCustomerPrivacy`, `tcf`, `googleConsentMode`                                                                                                                       |
+| [`consentlayer/auto-tracking`](#autotracking)               | `autoTracking`                                                                                                                                                             |
+| [`consentlayer/banner`](#consentlayerbanner)                | `mountBanner`, `BannerOptions`                                                                                                                                             |
+| [`consentlayer/react/banner`](#consentlayerreactbanner)     | `ConsentBanner` for React                                                                                                                                                  |
+| [`consentlayer/vue/banner`](#consentlayervuebanner)         | `ConsentBanner` for Vue                                                                                                                                                    |
+| [`consentlayer/svelte/banner`](#consentlayersveltebanner)   | `consentBanner`, `useConsentBanner`, `BannerOptions`                                                                                                                       |
+| [`consentlayer/solid/banner`](#consentlayersolidbanner)     | `ConsentBanner` for Solid                                                                                                                                                  |
+| [`consentlayer/angular/banner`](#consentlayerangularbanner) | `provideConsentBanner`                                                                                                                                                     |
+| [`consentlayer/ecommerce`](#consentlayerecommerce)          | `productParams`, `cartParams`, `orderParams`, `toItem`                                                                                                                     |
+| [`consentlayer/server`](#consentlayerserver)                | `createAnalyticsHandler`, `sendServerEvent`, `createConsentHandler`, `readConsentCookie`, `requestInfo`, `regionFromHeaders`, consent stores                               |
+| [`consentlayer/server/meta`](#consentlayerservermeta)       | `metaCapi`                                                                                                                                                                 |
+| [`consentlayer/server/tiktok`](#consentlayerservertiktok)   | `tiktokEvents`                                                                                                                                                             |
+| [`consentlayer/server/sgtm`](#consentlayerserversgtm)       | `sgtm`                                                                                                                                                                     |
+| [`consentlayer/server/ga4`](#consentlayerserverga4)         | `ga4Server`                                                                                                                                                                |
+| [`consentlayer/sentry/server`](#consentlayersentryserver)   | `sentryInstrumentation`                                                                                                                                                    |
+| [`consentlayer/sentry/next`](#consentlayersentrynext)       | `withSentryConfig`                                                                                                                                                         |
+| [`consentlayer/testing`](#consentlayertesting)              | `checkPlugin`                                                                                                                                                              |
 
 ## `consentlayer`
 
@@ -97,6 +103,7 @@ type AnalyticsOptions = {
     gpc?: boolean
     region?: string | (() => string | null | undefined | Promise<string | null | undefined>)
     regions?: Record<string, RegionRule>
+    laws?: Partial<Record<Law, boolean>>
   }
   categories?: (keyof ConsentCategories)[]
   names?: NamesInput
@@ -120,7 +127,8 @@ type AnalyticsOptions = {
 | `onStale`        | `'discard' \| 'keep'`                                         | `'discard'`                                                                | What a stale choice means until the visitor chooses again. `'discard'` treats it as no choice: consent is `null` and only `'none'` providers run. `'keep'` keeps it in force. Either way the banner is shown. See [Asking again](/guides/consent-ui/#asking-again).                                                     |
 | `gpc`            | `boolean`                                                     | `true`                                                                     | Honors the browser's Global Privacy Control signal: while `navigator.globalPrivacyControl` is `true`, `acceptAll()` leaves `marketing` denied. `false` ignores the signal. See [Global Privacy Control](/guides/consent-ui/#global-privacy-control).                                                                    |
 | `region`         | `string \| (() => string \| null \| undefined \| Promise<…>)` | None                                                                       | The visitor's ISO 3166-2 region, such as `'US-CA'` or `'FR'`, or a function that returns it in the browser. Read once by `bootstrap()`; a function that throws or rejects is reported with scope `consent-region`. See [Privacy laws by region](/guides/regions/).                                                      |
-| `regions`        | `Record<string, RegionRule>`                                  | `US`, `CH` and `FR` rules                                                  | Rules per region, merged over the defaults. The rule for `'US-CA'` is looked up, then `'US'`; a region without one, or no region, gets the opt-in rule `{}`. See [Change the rules](/guides/regions/#change-the-rules).                                                                                                 |
+| `regions`        | `Record<string, RegionRule>`                                  | The rules of the laws in `laws`                                            | Rules per region, merged over the rules of the laws that are on; a key replaces a law's rule. The rule for `'US-CA'` is looked up, then `'US'`; a region without one, or no region, gets the opt-in rule `{}`. See [Change the rules](/guides/regions/#change-the-rules).                                               |
+| `laws`           | `Partial<Record<Law, boolean>>`                               | `gdpr`, `cnil`, `revfadp` and `ccpa` on; `uk`, `lgpd` and `quebec` off     | Turns each law on or off, merged over the defaults. A law that is on gives its regions its rule and its [banner](/guides/banner/#laws). See [Laws](/guides/regions/#laws).                                                                                                                                              |
 
 Custom categories and the error callback are set with the top-level
 `categories` and `onError`; passing them inside `consent` is a type error.
@@ -275,7 +283,8 @@ provider's `identify` hook.
 | `gpc`        | `boolean`                                                                         | `true` when `navigator.globalPrivacyControl` is `true` and the `gpc` option is not `false`. Read once, when the instance is created.                                                                                                                                                                                               |
 | `getConsent` | `() => ConsentState \| null`                                                      | The consent in force: the visitor's choice, the region's `granted` categories before one, or `null`.                                                                                                                                                                                                                               |
 | `isStale`    | `() => boolean`                                                                   | Whether `bootstrap()` found a stored choice that is too old or was made under another major `policyVersion`. `false` again once the visitor chooses.                                                                                                                                                                               |
-| `getRegion`  | `() => { region: string \| undefined; rule: RegionRule }`                         | The region `bootstrap()` read, upper-cased, and the rule in force there. `{ region: undefined, rule: {} }` before bootstrap or without a region.                                                                                                                                                                                   |
+| `getRegion`  | `() => { region: string \| undefined; rule: RegionRule }`                         | The region `bootstrap()` read, upper-cased, and the rule in force there, with the fields its laws fill in. `{ region: undefined, rule: {} }` before bootstrap or without a region.                                                                                                                                                 |
+| `hasChoice`  | `() => boolean`                                                                   | Whether the visitor, or a consent platform for them, has chosen: a stored choice, or an adapter's answer that is not provisional. `false` with no choice, with only the region's defaults and with a provisional answer. A stale choice that `onStale: 'keep'` holds counts.                                                       |
 | `shouldAsk`  | `() => boolean`                                                                   | Whether the banner should ask: no choice, a stale one or only the region's defaults are in force, and the rule's `banner` is not `false`. The controller's `bannerVisible` follows it.                                                                                                                                             |
 | `setConsent` | `(consent: ConsentState, source?: ConsentChangeSource) => Promise<void>`          | Replaces the whole choice, stores it, broadcasts it and applies it to every adapter. `source` defaults to `'imperative'`. An identical choice is ignored, unless the stored one is stale: then it is stored again with the current date and `policyVersion`, and applied to every adapter, so `server.consentEndpoint` records it. |
 | `update`     | `(partial: Partial<ConsentState>) => Promise<void>`                               | Awaits `bootstrap()`, then merges `partial` over the current choice. Categories that have never been set are denied.                                                                                                                                                                                                               |
@@ -303,7 +312,7 @@ It returns a `ConsentController`:
 | ------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `start`       | `() => () => void`                                           | Bootstraps consent, schedules boot and starts sending page views. Returns a function that stops it.                                                                                                                                                                                                                                                               |
 | `setRoute`    | `(routeKey: string \| null, page?: PageViewPayload) => void` | Sends a page view to each active provider when `routeKey` changes, and to providers that become active later. The server receives one page view per key, for every destination, once analytics or marketing consent is granted. A change after the first key starts a new page session. `null` holds page views; `page` overrides their `url`, `path` or `title`. |
-| `getSnapshot` | `() => ConsentControllerState`                               | `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and `prefs`, as in [`useConsentController()`](#useconsentcontroller).                                                                                                                                                                                                                     |
+| `getSnapshot` | `() => ConsentControllerState`                               | `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen`, `laws` and `prefs`, as in [`useConsentController()`](#useconsentcontroller).                                                                                                                                                                                                   |
 | `subscribe`   | `(listener: () => void) => () => void`                       | Calls `listener` after each state change. Returns an unsubscribe function.                                                                                                                                                                                                                                                                                        |
 | `actions`     | `ConsentControllerActions`                                   | `setPrefs`, `showBanner`, `hideBanner`, `openDialog`, `closeDialog`, `acceptAll`, `rejectNonEssential` and `savePreferences`, as in `useConsentController()`.                                                                                                                                                                                                     |
 
@@ -553,10 +562,14 @@ type ConsentState = Record<ConsentCategory, boolean> & {
 
 type ConsentChangeSource = 'bootstrap' | 'region' | 'storage' | 'adapter' | 'imperative' | 'unknown'
 
+type Law = 'gdpr' | 'uk' | 'lgpd' | 'quebec' | 'cnil' | 'revfadp' | 'ccpa'
+
 type RegionRule = {
   granted?: readonly ConsentCategory[] | 'all'
   banner?: boolean
   maxAgeDays?: number
+  /** The laws that apply: their rules fill the fields left unset, the stricter winning. */
+  laws?: readonly Law[]
 }
 
 type ConsentEngineSnapshot = { consent: ConsentState | null }
@@ -568,6 +581,7 @@ type ConsentApi = {
   getConsent: () => ConsentState | null
   isStale: () => boolean
   getRegion: () => { region: string | undefined; rule: RegionRule }
+  hasChoice: () => boolean
   shouldAsk: () => boolean
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>
   subscribe: (listener: (snapshot: ConsentEngineSnapshot) => void) => () => void
@@ -834,21 +848,23 @@ function useConsent(): {
 State and actions for building a consent banner and settings dialog. See
 [Consent UI](/guides/consent-ui/).
 
-| Field                       | Type                                               | Description                                                                         |
-| --------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `ready`                     | `boolean`                                          | `true` once `bootstrap()` has settled.                                              |
-| `error`                     | `string \| null`                                   | The bootstrap error, converted with `String()`, or `null`.                          |
-| `bannerVisible`             | `boolean`                                          | Whether the banner should render.                                                   |
-| `showBanner`, `hideBanner`  | `() => void`                                       | Set `bannerVisible`.                                                                |
-| `dialogVisible`             | `boolean`                                          | Whether the settings dialog should render.                                          |
-| `openDialog`, `closeDialog` | `() => void`                                       | Set `dialogVisible`. `closeDialog` also resets `prefs` to the stored choice.        |
-| `categories`                | `readonly ConsentCategory[]`                       | The categories the dialog shows, from `analytics.consent.categories`.               |
-| `prefs`                     | `Record<ConsentCategory, boolean>`                 | The dialog's toggles, one per category; kept in sync with the current consent.      |
-| `setPrefs`                  | `(next: Record<ConsentCategory, boolean>) => void` | Changes the toggles without saving them.                                            |
-| `gpc`                       | `boolean`                                          | Whether the Global Privacy Control signal is honored, from `analytics.consent.gpc`. |
-| `acceptAll`                 | `() => Promise<void>`                              | Grants every category, except `marketing` while `gpc` is `true`.                    |
-| `rejectNonEssential`        | `() => Promise<void>`                              | Denies every category.                                                              |
-| `savePreferences`           | `() => Promise<void>`                              | Saves `prefs`.                                                                      |
+| Field                       | Type                                               | Description                                                                                                                                            |
+| --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ready`                     | `boolean`                                          | `true` once `bootstrap()` has settled.                                                                                                                 |
+| `error`                     | `string \| null`                                   | The bootstrap error, converted with `String()`, or `null`.                                                                                             |
+| `bannerVisible`             | `boolean`                                          | Whether the banner should render.                                                                                                                      |
+| `showBanner`, `hideBanner`  | `() => void`                                       | Set `bannerVisible`.                                                                                                                                   |
+| `chosen`                    | `boolean`                                          | Whether the visitor has chosen, from `analytics.consent.hasChoice()`: `false` with none, with only the region's defaults or with a provisional answer. |
+| `dialogVisible`             | `boolean`                                          | Whether the settings dialog should render.                                                                                                             |
+| `laws`                      | `readonly Law[]`                                   | The laws of the visitor's region rule once `ready`, `[]` before. See [Laws](/guides/regions/#laws).                                                    |
+| `openDialog`, `closeDialog` | `() => void`                                       | Set `dialogVisible`. `closeDialog` also resets `prefs` to the stored choice.                                                                           |
+| `categories`                | `readonly ConsentCategory[]`                       | The categories the dialog shows, from `analytics.consent.categories`.                                                                                  |
+| `prefs`                     | `Record<ConsentCategory, boolean>`                 | The dialog's toggles, one per category; kept in sync with the current consent.                                                                         |
+| `setPrefs`                  | `(next: Record<ConsentCategory, boolean>) => void` | Changes the toggles without saving them.                                                                                                               |
+| `gpc`                       | `boolean`                                          | Whether the Global Privacy Control signal is honored, from `analytics.consent.gpc`.                                                                    |
+| `acceptAll`                 | `() => Promise<void>`                              | Grants every category, except `marketing` while `gpc` is `true`.                                                                                       |
+| `rejectNonEssential`        | `() => Promise<void>`                              | Denies every category.                                                                                                                                 |
+| `savePreferences`           | `() => Promise<void>`                              | Saves `prefs`.                                                                                                                                         |
 
 `acceptAll`, `rejectNonEssential` and `savePreferences` call `setConsent` and
 then hide the banner and the dialog.
@@ -1007,7 +1023,7 @@ the scope is disposed.
 ### `useConsentController()` for Vue
 
 The fields of the React [`useConsentController()`](#useconsentcontroller),
-with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen`, `laws` and
 `prefs` as read-only refs. The return type is exported as `ConsentController`.
 
 **Throws** an `Error` when `consentLayer` is not installed.
@@ -1121,7 +1137,7 @@ property. It listens for changes only while a template, `$derived` or
 ### `useConsentController()` for Svelte
 
 The fields of the React [`useConsentController()`](#useconsentcontroller),
-with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen`, `laws` and
 `prefs` as reactive read-only properties. The return type is exported as
 `ConsentController`.
 
@@ -1212,7 +1228,7 @@ listens for changes until the calling component is disposed.
 ### `useConsentController()` for Solid
 
 The fields of the React [`useConsentController()`](#useconsentcontroller),
-with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen`, `laws` and
 `prefs` as reactive read-only properties. The return type is exported as
 `ConsentController`.
 
@@ -1319,7 +1335,7 @@ is destroyed.
 ### `injectConsentController()`
 
 The fields of the React [`useConsentController()`](#useconsentcontroller),
-with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc` and
+with `ready`, `error`, `bannerVisible`, `dialogVisible`, `categories`, `gpc`, `chosen`, `laws` and
 `prefs` as signals. The return type is exported as `ConsentController`.
 
 **Throws** an `Error` when `provideConsentLayer()` is not provided.
@@ -1622,6 +1638,133 @@ type GoogleConsentModeRegion = {
 `waitForUpdate` is not a whole number of `0` or more. The options type is
 exported as `GoogleConsentModeOptions`.
 
+## `consentlayer/banner`
+
+### `mountBanner(controller, options?)`
+
+Renders the banner, the settings dialog and the badge from the state of a
+controller made by [`createConsentController()`](#createconsentcontrolleranalytics-options),
+once it is `ready` and the visitor's laws are known, and returns a function
+that removes them. [Banner](/guides/banner/) describes
+every option. The framework entry points below call it for you.
+
+```ts
+function mountBanner(controller: ConsentController, options?: BannerOptions): () => void
+```
+
+| Option                                            | Type                                                                                     |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `position`                                        | `'top' \| 'bottom' \| 'center'`, or `top-` or `bottom-` with `left`, `center` or `right` |
+| `overlay`, `blocking`, `closeButton`, `unstyled`  | `boolean`                                                                                |
+| `emphasis`                                        | `'equal' \| 'accept'`                                                                    |
+| `closeButton`, `emphasis` and `badge` defaults    | Follow the visitor's laws; see [Laws](/guides/banner/#laws)                              |
+| `badge`                                           | `false \| { show?, position?, label?, attached? }`                                       |
+| `privacyPolicyUrl`, `cookiePolicyUrl`, `termsUrl` | `string`                                                                                 |
+| `text`                                            | `Partial<Record<string, string>>`                                                        |
+| `classNames`                                      | `Partial<Record<part, string>>`, with the [parts](/guides/banner/#classes-and-tailwind)  |
+| `nonce`                                           | `string`                                                                                 |
+
+## `consentlayer/react/banner`
+
+The entry point starts with a `'use client'` directive. Every component and
+function of the banner entry points is client-only: it renders nothing in
+place, and mounts the banner in the browser with
+[`mountBanner()`](#mountbannercontroller-options). The options are
+[`BannerOptions`](#consentlayerbanner); [Banner](/guides/banner/#frameworks)
+shows the setup for each framework.
+
+### `<ConsentBanner>`
+
+```ts
+function ConsentBanner(props: BannerOptions): null
+```
+
+Takes the options of `mountBanner()` as props. It mounts the banner on the
+controller of the closest [`<AnalyticsProvider>`](#analyticsprovider), from
+`consentlayer/react` or `consentlayer/next`, and removes it on unmount. It
+mounts again when the options change by value, compared as JSON.
+
+**Throws** `ConsentBanner must be used within AnalyticsProvider` outside the
+provider.
+
+## `consentlayer/vue/banner`
+
+### `<ConsentBanner>` for Vue
+
+A component whose props are the options of `mountBanner()`, in camel case in
+scripts and kebab case in templates. All are optional. It mounts the banner when
+the component mounts, mounts it again when a prop changes by value, compared as
+JSON, and removes it before the component unmounts.
+
+**Throws** `ConsentBanner needs app.use(consentLayer)` when
+[`consentLayer`](#consentlayer-1) is not installed.
+
+## `consentlayer/svelte/banner`
+
+Both exports use the controller of the closest component that called
+[`consentLayer()`](#consentlayeroptions), from `consentlayer/svelte` or
+`consentlayer/sveltekit`, or of the component itself.
+
+**Throws** `consentBanner needs consentLayer() in a parent component` when
+`consentLayer()` has not been called.
+
+### `consentBanner`
+
+```ts
+const consentBanner: Action<HTMLElement, BannerOptions | undefined>
+```
+
+A Svelte action, as in `<svelte:body use:consentBanner={options} />`. It mounts
+the banner while the element is mounted, mounts it again when the parameter
+changes, and removes it when the element is destroyed.
+
+### `useConsentBanner(options?)`
+
+```ts
+function useConsentBanner(options?: BannerOptions): void
+```
+
+Mounts the banner when the calling component mounts and removes it when the
+component is destroyed. Call it while the component's `<script>` runs. It reads
+`options` once.
+
+The entry point also exports the `BannerOptions` type.
+
+## `consentlayer/solid/banner`
+
+### `<ConsentBanner>` for Solid
+
+```ts
+function ConsentBanner(props: BannerOptions): JSX.Element
+```
+
+Takes the options of `mountBanner()` as props, and renders nothing. It mounts the
+banner on the controller of the closest
+[`<AnalyticsProvider>`](#analyticsprovider-for-solid), from `consentlayer/solid`
+or `consentlayer/solidstart`, mounts it again when a prop changes, and removes
+it when the component is disposed.
+
+**Throws** `ConsentBanner must be used within AnalyticsProvider` outside the
+provider.
+
+## `consentlayer/angular/banner`
+
+### `provideConsentBanner(options?)`
+
+```ts
+function provideConsentBanner(options?: BannerOptions): EnvironmentProviders
+```
+
+Add it to the application config, next to
+[`provideConsentLayer()`](#provideconsentlayeroptions). In the browser, it
+mounts the banner on the controller that `provideConsentLayer()` provides when
+the application starts, and removes it when the application is destroyed. It
+does nothing on the server. It reads `options` once. `nonce` defaults to the
+application's `CSP_NONCE`.
+
+**Throws** `injectConsentController needs provideConsentLayer()` when
+`provideConsentLayer()` is not in the application config.
+
 ## `consentlayer/ecommerce`
 
 Builds the params of the standard ecommerce events from the product, cart and
@@ -1703,14 +1846,14 @@ function createAnalyticsHandler(options: {
 | `consentCookie` | `ConsentCookieOptions`                     |         | Grants only the categories that both the body and the cookie signed by `createConsentHandler` grant; without a valid cookie, every category is denied. With `secret` unset, every event is denied and a `console.warn` is logged once when the handler is created; a `secret` shorter than 32 characters makes every request answer `500` before the body is read. |
 | `onError`       | `(error: unknown) => void`                 |         | Receives each destination failure and any unexpected error.                                                                                                                                                                                                                                                                                                        |
 
-| Status | When                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `204`  | The event was processed, including when a destination failed. When `destinations` holds none that accepts browser events, the body is not read and the response carries `consentlayer-forwarding: off`, which stops the browser from forwarding until the page is reloaded. Unless a destination takes every event, the response carries `consentlayer-events` with the event names the destinations take, and the browser posts only those, plus events with `only`. With `consentCookie` and no valid cookie, the response carries `consentlayer-consent: missing`, and the browser [restores the cookie](/guides/consent-records/#the-consent-cookie). |
-| `400`  | Empty body, invalid JSON, or an invalid event. `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `403`  | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `413`  | The body exceeds 16 KiB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `415`  | The `Content-Type` is not `application/json`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `500`  | Any other error; `onError` is called.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Status | When                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `204`  | The event was processed, including when a destination failed. When `destinations` holds none that accepts browser events, the body is not read and the response carries `consentlayer-forwarding: off`, which stops the browser from forwarding for the rest of the session in that tab. Unless a destination takes every event, the response carries `consentlayer-events` with the event names the destinations take, and the browser posts only those, plus events with `only`. The browser keeps both in `sessionStorage` under `consentlayer_server:<endpoint>`. With `consentCookie` and no valid cookie, the response carries `consentlayer-consent: missing`, and the browser [restores the cookie](/guides/consent-records/#the-consent-cookie). |
+| `400`  | Empty body, invalid JSON, or an invalid event. `name` must match `/^[\w.:-]{1,100}$/` and `consent` must have boolean `preferences`, `analytics` and `marketing`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `403`  | Neither `Origin` nor `Referer` is present, the `Referer` is malformed, or the origin differs from the request URL's.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `413`  | The body exceeds 16 KiB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `415`  | The `Content-Type` is not `application/json`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `500`  | Any other error; `onError` is called.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ### `sendServerEvent(event, options)`
 
