@@ -123,6 +123,9 @@ known, as the [React](/start/react/) guide shows.
 
 ## 3. Add the banner
 
+To use the ready-made banner instead, render [`<ConsentBanner>`](/guides/banner/#react-and-nextjs)
+from `consentlayer/react/banner` inside the provider; the rest of this step builds your own.
+
 Copy the [consent banner recipe](/guides/consent-ui/) into
 `components/consent-banner.tsx`. Then render the banner in the shell, and give
 visitors a way to reopen their settings:

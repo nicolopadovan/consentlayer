@@ -136,6 +136,9 @@ On mount, `<AnalyticsProvider>` performs these steps:
 
 ## 3. Add the banner
 
+To use the ready-made banner instead, render [`<ConsentBanner>`](/guides/banner/#react-and-nextjs)
+from `consentlayer/react/banner` inside the provider; the rest of this step builds your own.
+
 Copy the [consent banner recipe](/guides/consent-ui/) into
 `src/consent-banner.tsx`. Then render the banner inside the provider, and give
 visitors a way to reopen their settings:
