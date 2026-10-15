@@ -157,6 +157,20 @@ it('saves the switches from the settings dialog', async () => {
   })
 })
 
+it('keeps the switches in step with a choice made in another tab', async () => {
+  const analytics = await setup()
+  await button('Customize').click()
+  const record = { consent: { preferences: true, analytics: true, marketing: false }, updatedAt: Date.now() }
+  localStorage.setItem('consentlayer_consent', JSON.stringify(record))
+  window.dispatchEvent(new StorageEvent('storage', { key: 'consentlayer_consent' }))
+  await expect.element(page.getByRole('switch', { name: /Analytics/ })).toBeChecked()
+  await expect.element(page.getByRole('switch', { name: /Preferences/ })).toBeChecked()
+  await expect.element(page.getByRole('switch', { name: /Marketing/ })).not.toBeChecked()
+  await page.getByRole('switch', { name: /Marketing/ }).click()
+  await button('Save choices').click()
+  expect(analytics.consent.getConsent()).toEqual({ preferences: true, analytics: true, marketing: true })
+})
+
 it('fills Reject like Accept unless emphasis is accept', async () => {
   const fill = (label: string) => getComputedStyle(button(label).element()).backgroundColor
   await setup()

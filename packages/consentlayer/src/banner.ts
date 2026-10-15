@@ -345,28 +345,23 @@ export function mountBanner(
     : null
   badge?.addEventListener('click', () => controller.actions.openDialog())
 
-  const renderCategories = () => {
-    const { categories, prefs } = controller.getSnapshot()
-    list.replaceChildren(
-      ...categories.map((category) => {
-        const input = element('input', { type: 'checkbox' }) as HTMLInputElement
-        input.checked = prefs[category]
-        input.addEventListener('change', () =>
-          controller.actions.setPrefs({ ...controller.getSnapshot().prefs, [category]: input.checked }),
-        )
-        return row(text[`${category}Label`] ?? category, text[`${category}Description`], input)
-      }),
+  const switches = controller.getSnapshot().categories.map((category) => {
+    const input = element('input', { type: 'checkbox' }) as HTMLInputElement
+    input.addEventListener('change', () =>
+      controller.actions.setPrefs({ ...controller.getSnapshot().prefs, [category]: input.checked }),
     )
-  }
+    list.append(row(text[`${category}Label`] ?? category, text[`${category}Description`], input))
+    return [category, input] as const
+  })
   let opener: Element | null = null
   const root = document.documentElement
   const render = () => {
-    const { ready, bannerVisible, dialogVisible } = controller.getSnapshot()
+    const { ready, bannerVisible, dialogVisible, prefs } = controller.getSnapshot()
     const showBanner = ready && bannerVisible && !dialogVisible
     if (!dialog.open && !(banner instanceof HTMLDialogElement && banner.open))
       root.toggleAttribute('data-consentlayer-gutter', innerWidth > root.clientWidth)
+    for (const [category, input] of switches) input.checked = prefs[category]
     if (dialogVisible && !dialog.open) {
-      renderCategories()
       opener = document.activeElement
       dialog.showModal()
     }
