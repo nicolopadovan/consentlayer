@@ -16,8 +16,10 @@ format.
   features (Replay, tracing, session recording) are chunks loaded only when
   used.
 - **Frameworks:** bindings for React, Next.js, Vue, Nuxt, Svelte, SvelteKit,
-  Solid, SolidStart and Angular, plus a script-tag build with an optional
-  banner. On npm you build your own banner on `useConsentController()`.
+  Solid, SolidStart and Angular, plus a script-tag build. A ready-made banner
+  ships in the separate `consentlayer/banner` entry point and in a
+  `consentlayer/<framework>/banner` entry point for each binding; you can also
+  build your own on `useConsentController()`.
 - **Server:** forward browser events to the Meta Conversions API, the TikTok
   Events API or a server-side GTM container, with shared event IDs for
   deduplication, and keep signed consent records.
@@ -54,7 +56,7 @@ and pass a `routeKey` that changes on navigation.
 ```tsx
 'use client'
 import { AnalyticsProvider } from 'consentlayer/next'
-import { ConsentBanner } from './consent-banner' // the Consent UI recipe in the docs
+import { ConsentBanner } from 'consentlayer/react/banner'
 import { analytics } from '../lib/analytics'
 
 export function Shell({ children }: { children: React.ReactNode }) {
