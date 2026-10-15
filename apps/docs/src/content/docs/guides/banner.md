@@ -224,19 +224,21 @@ laws that apply there, where your options leave a choice open. Without a
 region, or in a region without a law, the banner uses the defaults: Accept all
 and Reject non-essential alike, no ×, and the badge after a choice.
 
-| Law                            | Banner                                                                                                                                  | Badge                                                                    |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `gdpr`, `uk`, `lgpd`, `quebec` | Asks before anything that needs consent runs, with Accept all and Reject non-essential alike, and Customize.                            | After a choice.                                                          |
-| `cnil`                         | As above, with an × that refuses and a `message` that says closing the banner refuses. A choice is asked again after six months.        | After a choice.                                                          |
-| `revfadp`                      | A notice: tracking other than marketing runs from the start, the message says the visitor can reject it, and only Accept all is filled. | After a choice.                                                          |
-| `ccpa`                         | None.                                                                                                                                   | Always, labeled "Your Privacy Choices" with the California opt-out icon. |
+| Law                            | Banner                                                                                                                                     | Badge                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `gdpr`, `uk`, `lgpd`, `quebec` | Asks before anything that needs consent runs, with Accept all and Reject non-essential alike, and Customize.                               | After a choice.                                                          |
+| `cnil`                         | As above, with an × that refuses and, with it, a `message` that says closing the banner refuses. A choice is asked again after six months. | After a choice.                                                          |
+| `revfadp`                      | A notice: tracking other than marketing runs from the start, the message says the visitor can reject it, and only Accept all is filled.    | After a choice.                                                          |
+| `ccpa`                         | None.                                                                                                                                      | Always, labeled "Your Privacy Choices" with the California opt-out icon. |
 
 Under `ccpa` alone, the badge opens a dialog titled "Your Privacy Choices"
-with one switch, "Do not sell or share my personal information". Switching it
-on turns `marketing` off. A browser that sends
+that states the visitor's right to opt out of the sale or sharing of personal
+information, with one switch, "Do not sell or share my personal information".
+Switching it on turns `marketing` off. A browser that sends
 [Global Privacy Control](/guides/consent-ui/#global-privacy-control) has the
-switch on from the start, without a message; set the `gpcHonored` text to show
-one in the dialog, such as "Opt-out preference signal honored".
+switch on from the start, and under `ccpa` the dialog says "Opt-Out Preference
+Signal Honored", as the California regulations require since January 1, 2026.
+Set the `gpcHonored` text to change it, or to `''` to leave it out.
 
 Where several laws apply, the stricter one wins for each part of the banner:
 it asks if any law asks, the buttons are alike unless `revfadp` is the only
@@ -257,8 +259,9 @@ mountBanner(controller, {
 
 The CNIL accepts closing the banner as a refusal only when the banner says so,
 so the × is on by default under `cnil` only while `message` is the default,
-which says it. Once you set your own `message`, add `closeButton: true` if it
-says so too. Turn a law off with the [`laws` option](/guides/regions/#laws).
+and the default `message` says it only while the × is there: with
+`closeButton: false`, the message is the one without a ×. Once you set your own
+`message`, add `closeButton: true` if it says so too. Turn a law off with the [`laws` option](/guides/regions/#laws).
 
 ## Placement
 
@@ -359,7 +362,7 @@ after the message. Strings are inserted as text, never as HTML.
 | `customize`              | Customize                                                                                                                                |
 | `dismiss`                | Continue without accepting                                                                                                               |
 | `settingsTitle`          | Cookie settings; Your Privacy Choices under `ccpa` alone                                                                                 |
-| `settingsMessage`        | Empty: no text above the switches                                                                                                        |
+| `settingsMessage`        | Empty: no text above the switches; under `ccpa` alone, the right to opt out                                                              |
 | `necessaryLabel`         | Necessary                                                                                                                                |
 | `necessaryDescription`   | Needed for the site to work, such as remembering this choice. Always on.                                                                 |
 | `preferencesLabel`       | Preferences                                                                                                                              |
@@ -372,13 +375,17 @@ after the message. Strings are inserted as text, never as HTML.
 | `save`                   | Save choices                                                                                                                             |
 | `badge`                  | Cookie settings; Your Privacy Choices under `ccpa`                                                                                       |
 | `doNotSell`              | Do not sell or share my personal information                                                                                             |
-| `gpcHonored`             | Empty: no text in the `ccpa` dialog                                                                                                      |
+| `gpcHonored`             | Opt-Out Preference Signal Honored, in the dialog under `ccpa` while Global Privacy Control is on                                         |
 
-Under `cnil`, `message` adds "Closing this banner means you refuse all but the
-necessary ones." Under `revfadp`, without an opt-in law, it reads "We use
-cookies to run this site, to remember your preferences and to understand how
-it is used, and with your consent for marketing. You can reject all but the
-necessary ones."
+Under `cnil`, while the × shows, `message` adds "Closing this banner means you
+refuse all but the necessary ones." Under `revfadp`, without an opt-in law, it
+reads "We use cookies to run this site, to remember your preferences and to
+understand how it is used, and with your consent for marketing. You can reject
+all but the necessary ones." This text follows the law, not the rule, so a
+`regions` rule for `CH` that grants nothing still shows it unless you set
+`message`. Under `ccpa` alone, `settingsMessage` reads "You have the right to
+opt out of the sale or sharing of your personal information. Turn on the switch
+below and save to opt out."
 
 The `gpc` line shows under the message only while the visitor's browser sends
 the [Global Privacy Control](/guides/consent-ui/#global-privacy-control)

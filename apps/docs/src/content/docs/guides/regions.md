@@ -29,7 +29,7 @@ others are supported and off until you turn them on with the `laws` option.
 | Law       | Regions                                                      | Before the visitor chooses                                                                          | Banner     | On by default |
 | --------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ---------- | ------------- |
 | `gdpr`    | The EU, Iceland, Liechtenstein, Norway and the Åland Islands | Every category denied.                                                                              | Asks.      | Yes           |
-| `cnil`    | France and its overseas departments                          | Every category denied. A choice is asked again after 180 days.                                      | Asks.      | Yes           |
+| `cnil`    | France, its overseas departments and Saint-Martin            | Every category denied. A choice is asked again after 180 days.                                      | Asks.      | Yes           |
 | `revfadp` | Switzerland (`CH`)                                           | `preferences` and `analytics` granted, `marketing` and custom categories denied.                    | Asks.      | Yes           |
 | `ccpa`    | United States (`US`)                                         | Every category granted. With [Global Privacy Control](#global-privacy-control), `marketing` denied. | Not shown. | Yes           |
 | `uk`      | United Kingdom (`GB`)                                        | Every category denied.                                                                              | Asks.      | No            |
@@ -38,9 +38,11 @@ others are supported and off until you turn them on with the `laws` option.
 
 Any region without a law, or an unknown region, gets the opt-in rule: every
 category denied, and the banner asks. That is also what a law that is off
-leaves behind, so the opt-in laws differ from no law only in the
-[banner](/guides/banner/#laws), which shows the badge and the buttons the law
-calls for.
+leaves behind. The opt-in laws `gdpr`, `uk`, `lgpd` and `quebec` add nothing to
+it: under them the rule and the [banner](/guides/banner/#laws) are those of no
+law, and the law shows only in the rule's `laws` and the controller's `laws`.
+A law name ConsentLayer does not know, in `laws` or in a rule, throws when the
+analytics instance is created.
 
 ```ts title="lib/analytics.ts"
 export const analytics = createAnalytics({
@@ -266,5 +268,7 @@ settings dialog from it:
 Under a rule that grants `marketing`, the
 [Global Privacy Control](/guides/consent-ui/#global-privacy-control) signal
 keeps it denied before the visitor chooses. `gpc` is then `true`, so your
-interface can show that the signal was honored; the California regulations
-give "Opt-Out Request Honored" as an example.
+interface can show that the signal was honored. Since January 1, 2026, the
+California regulations (§7025) require a business to display whether it has
+processed the signal, and give "Opt-Out Preference Signal Honored" as an
+example; the built-in banner shows that text under `ccpa`.

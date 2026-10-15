@@ -11,12 +11,12 @@ Add `consentlayer/banner`: `mountBanner(controller, options)` renders a consent 
 - `cookiePolicyUrl`, `termsUrl`, and text with `[label](url)` links, `**bold**` and the `{privacyPolicy}`, `{cookiePolicy}` and `{terms}` placeholders, plus the `dismiss`, `settingsMessage` and `badge` texts.
 - `classNames` per part, for Tailwind or your own classes, and `unstyled`.
 
-The banner follows the visitor's law. Region rules now come from laws, which the `consent.laws` option turns on or off: `gdpr` (the EU and EEA), `cnil` (France), `revfadp` (Switzerland) and `ccpa` (the United States) are on by default, and `uk`, `lgpd` (Brazil) and `quebec` are supported and off. The rules in force are those of 1.1.0, with France's six months now also covering its overseas departments. Where several laws apply, the stricter wins for each part. `RegionRule` gains `laws`, and the consent controller gains `laws`. Under each law, the banner:
+The banner follows the visitor's law. Region rules now come from laws, which the `consent.laws` option turns on or off: `gdpr` (the EU and EEA), `cnil` (France), `revfadp` (Switzerland) and `ccpa` (the United States) are on by default, and `uk`, `lgpd` (Brazil) and `quebec` are supported and off. The rules in force are those of 1.1.0, with France's six months now also covering its overseas departments and Saint-Martin. An unknown law name throws when the analytics instance is created. Where several laws apply, the stricter wins for each part. `RegionRule` gains `laws`, and the consent controller gains `laws`. Under each law, the banner:
 
 - `gdpr`, `uk`, `lgpd`, `quebec`: asks before anything that needs consent runs, with Accept all and Reject non-essential alike.
-- `cnil`: adds an × that refuses, with a message that says closing the banner refuses, and asks again after six months.
+- `cnil`: adds an × that refuses, with a message that says closing the banner refuses while the × shows, and asks again after six months.
 - `revfadp`: shows a notice that offers Reject non-essential, with only Accept all filled.
-- `ccpa`: shows no banner but a "Your Privacy Choices" badge with the California opt-out icon, always. It opens a dialog with one switch, "Do not sell or share my personal information", that turns `marketing` off. Global Privacy Control turns it on silently; the new `gpcHonored` text adds a note, and `doNotSell` relabels the switch.
+- `ccpa`: shows no banner but a "Your Privacy Choices" badge with the California opt-out icon, always. It opens a dialog that states the right to opt out, with one switch, "Do not sell or share my personal information", that turns `marketing` off. Global Privacy Control turns it on, and the dialog then shows the new `gpcHonored` text, "Opt-Out Preference Signal Honored", which `''` hides; `doNotSell` relabels the switch.
 
 The laws only fill in the banner options you leave unset: `emphasis`, `closeButton`, `badge` and `text` always win. The banner now renders once the controller is ready.
 
