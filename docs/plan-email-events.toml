@@ -1,0 +1,417 @@
+spec = "docs/spec-email-events.md"
+
+[[step]]
+id = "s1"
+title = "Roadmap entry for email events"
+satisfies = ["AC-1"]
+files = ["apps/docs/src/content/docs/guides/roadmap.md"]
+after = []
+rung = "junior-engineer"
+done_check = "pnpm format:check and pnpm --filter docs build pass; the Planned table shows the row and its anchor resolves"
+gates = ["format", "build"]
+verification = "gate"
+hold = false
+pause_after = false
+brief = """
+Serves AC-1 of docs/spec-email-events.md. Edit apps/docs/src/content/docs/guides/roadmap.md only.
+
+1. In the Planned table, add this row after the "Viewing and exporting consent records" row (March 2027) and before
+   "The other planned providers" (Q2 2027):
+   | [Email events from sending services](#email-events-from-sending-services) | Medium | April 2027 |
+2. Add this section after the "### Viewing and exporting consent records" section and before
+   "### A hosted consent service":
+
+### Email events from sending services
+
+ConsentLayer tracks what visitors do on your site. What happens to the email
+your application sends, whether it was delivered, bounced, opened or clicked,
+is reported only by the sending service, each in its own webhook format. The
+planned `consentlayer/email` handler receives those webhooks from Resend,
+Postmark, SendGrid, Mailgun and Amazon SES, verifies each one with Web Crypto,
+and turns it into one set of events, such as `email_delivered`,
+`email_bounced` and `email_opened`. Opens and clicks pass only for recipients
+your consent check allows, opens likely made by a privacy proxy are flagged,
+and the events can be sent to PostHog and GA4. ConsentLayer adds no tracking
+pixel and rewrites no links: it reads only the events the service already
+sends. Amazon SES events through EventBridge and Resend's unsubscribe events
+are planned for a later release.
+
+Run pnpm format, then pnpm --filter docs build. Do not claim legal compliance anywhere.
+"""
+
+[[step]]
+id = "s2"
+title = "ServerEvent.time, sent as GA4 timestamp_micros"
+satisfies = ["AC-14", "AC-17"]
+files = [
+  "packages/consentlayer/src/core/types.ts",
+  "packages/consentlayer/src/server/handler.ts",
+  "packages/consentlayer/src/server/measurement-protocol.ts",
+  "packages/consentlayer/test/server.test.ts",
+  "packages/consentlayer/.size-limit.js",
+]
+after = []
+rung = "engineer"
+done_check = "pnpm turbo run typecheck lint test build and pnpm --filter consentlayer check:package pass; new tests in test/server.test.ts cover the 72-hour boundary and the dropped browser time"
+gates = ["typecheck", "lint", "unit", "build", "package"]
+verification = "verify"
+hold = false
+pause_after = false
+brief = """
+Serves AC-14 of docs/spec-email-events.md (read decision 8 there).
+
+- Add `time?: number` (Unix milliseconds, when the event happened) to `ServerEvent` in src/core/types.ts, with a
+  one-line doc comment.
+- In src/server/measurement-protocol.ts (shared by ga4Server and sgtm), send `timestamp_micros: time * 1000` on the
+  request body when `time` is set and no older than 72 hours; omit it otherwise.
+- In src/server/handler.ts, createAnalyticsHandler must not pass a `time` from the browser body to destinations
+  (delete it after parseServerEvent); sendServerEvent keeps it.
+- Add a size budget for `server/ga4` (dist/server/ga4.js) to .size-limit.js at its built size rounded up to the next
+  0.1 kB; it has none today. Raise the `server/sgtm` budget if the change needs it; never trim code to fit.
+- Tests in test/server.test.ts: timestamp_micros present for a recent time, absent for a time older than 72 hours and
+  for no time; a browser-posted `time` never reaches a destination.
+Verification item 9 of the spec (what GA4 does with older timestamps) is checked against Google's Measurement
+Protocol docs; put the source in the PR description.
+"""
+
+[[step]]
+id = "s3"
+title = "consentlayer/email: event model, createEmailHandler, consent gate and destination mapping"
+satisfies = ["AC-2", "AC-3", "AC-4", "AC-5", "AC-6", "AC-7"]
+files = [
+  "packages/consentlayer/src/email/index.ts",
+  "packages/consentlayer/src/email/verify.ts",
+  "packages/consentlayer/src/server/http.ts",
+  "packages/consentlayer/test/email.test.ts",
+  "packages/consentlayer/tsup.config.ts",
+  "packages/consentlayer/package.json",
+  "packages/consentlayer/.size-limit.js",
+  "eslint.config.mjs",
+]
+after = ["s2"]
+rung = "senior-engineer"
+done_check = "pnpm turbo run typecheck lint test build, pnpm knip and pnpm --filter consentlayer check:package pass; test/email.test.ts covers AC-3 to AC-7 with a fake EmailService"
+gates = ["typecheck", "lint", "unit", "build", "knip", "package"]
+verification = "review"
+hold = true
+pause_after = false
+brief = """
+Serves AC-2 to AC-7 of docs/spec-email-events.md. Read the whole spec first, especially decisions 4, 5, 6, 9, 11,
+12 and 16 and the Event model section; follow them exactly. This step fixes the API every service adapter builds
+on, and it carries the consent gate and the constant-time helpers, so it gets an independent review and lands only
+after the human's look.
+
+Build:
+- src/server/http.ts: extract a `readBodyWithLimit(request, maxBytes): Promise<string>` from parseJsonWithLimit
+  (no content-type check, 413 over the limit, 400 when empty) and have parseJsonWithLimit use it.
+- src/email/verify.ts (internal, not an entry): the helpers the adapters share, using Web Crypto only:
+  constant-time string/byte comparison, HMAC-SHA-256 sign returning bytes, base64 and hex encode/decode, and a
+  timestamp-window check that throws `{ status: 401 }`. Reuse toBase64Url/fromBase64Url-style code from
+  src/server/consent.ts rather than writing a third copy if it fits.
+- src/email/index.ts: export `createEmailHandler`, and the types `EmailEvent`, `EmailEventName`, `EmailService`.
+  Options: `service: EmailService`, `consent?`, `onEvent?` (may return false), `identify?` (returns
+  `{ userId?, clientId? } | undefined`), `secret?: string | undefined`, `destinations?: (ServerDestination |
+  undefined)[]`, `onError?`. Flow per decision 11: body limit 1 MiB via readBodyWithLimit, service.receive (a
+  returned Response is answered as is), then per event in parallel: consent (opens/clicks need true; every event
+  needs true to reach destinations), awaited onEvent, identify, then sendServerEvent from ../server/handler with
+  consent { preferences: false, analytics: true, marketing: false }, `time` from the event timestamp, params only
+  email_service / message_id / bounce_type / link_url / automated, `providers.ga4.link_url` truncated to 100
+  characters, `identity.userId` from identify, `clientId` from identify else the HMAC pseudonym of decision 5.
+  Statuses per AC-3; errors with a numeric `status` are answered with it, not reported (as createAnalyticsHandler
+  does). Warn once at creation when destinations are set without `consent`.
+- Entry `email/index` in tsup.config.ts, `./email` in package.json exports, a budget in .size-limit.js at the built
+  size rounded up to the next 0.1 kB, `dist/email` added to the es-check `--not` list in package.json, and
+  `packages/consentlayer/src/email/**` added to the compat `ignores` in eslint.config.mjs.
+
+Tests (test/email.test.ts, `// @vitest-environment node`, pattern of test/server.test.ts): a fake EmailService that
+returns given events; a recording ServerDestination with requiredConsent 'analytics' and metaCapi with a mocked
+fetchImpl. Cover every clause of AC-3 to AC-7 (including `consent: () => true` sending every type, opens and clicks
+included, and a callback that allows only operational types), including asserting that the serialized destination request contains
+neither the recipient address nor any metadata value.
+
+No adapter in this step. Write no comments that restate the code. No changeset yet (s10 adds it).
+"""
+
+[[step]]
+id = "s4"
+title = "consentlayer/email/resend: Svix signature and Resend normalization"
+satisfies = ["AC-2", "AC-8", "AC-17"]
+files = [
+  "packages/consentlayer/src/email/resend.ts",
+  "packages/consentlayer/test/email-resend.test.ts",
+  "packages/consentlayer/test/fixtures/email/resend/",
+  "packages/consentlayer/tsup.config.ts",
+  "packages/consentlayer/package.json",
+  "packages/consentlayer/.size-limit.js",
+]
+after = ["s3"]
+rung = "senior-engineer"
+done_check = "pnpm turbo run typecheck lint test build, pnpm knip and pnpm --filter consentlayer check:package pass; test/email-resend.test.ts covers valid, invalid, wrong-secret, stale and multi-signature headers and every mapped event type"
+gates = ["typecheck", "lint", "unit", "build", "knip", "package"]
+verification = "review"
+hold = true
+pause_after = false
+brief = """
+Serves AC-8 (and the Resend part of AC-2 and AC-17) of docs/spec-email-events.md. Read the spec's Mapping,
+Signature verification and To verify sections and decisions 9, 10, 12, 15 and 17.
+
+`resendWebhook({ secret, toleranceSeconds? })` returns an EmailService (from ./index) with id 'resend'. Verify the
+Svix signature with the helpers in src/email/verify.ts: key = base64-decode of the part after `whsec_`, HMAC-SHA-256
+over `${svix-id}.${svix-timestamp}.${body}`, `svix-signature` holds space-separated `v1,<base64>` entries and any
+match passes, constant-time comparison, timestamp within toleranceSeconds (default 300) in both directions; 401
+otherwise; 500 via the handler while the secret is unset (throw an error without status). Normalize per the Mapping
+table: one event per `data.to` address, opens/clicks dropped when `data.to` has more than one address, `id` =
+svix-id (or `<svix-id>:<recipient>` when expanded), `metadata` from `data.tags`, `automated` absent, unknown types
+return no events. Resend sends no unsubscribe event; do not map contact or suppression events.
+
+Fixtures in test/fixtures/email/resend/ shaped after Resend's documented examples
+(resend.com/docs/webhooks/event-types and the per-event pages). Tests sign requests with node:crypto.
+
+Check verification items 1 and 2 against the current Resend and Svix docs or a real payload; put the sources in the
+PR description and fix any fixture that differs. Add the `email/resend` tsup entry, `./email/resend` export and a
+budget at the built size rounded up to the next 0.1 kB. This is signature-verification code: it gets an independent
+security review and lands only after the human's look.
+"""
+
+[[step]]
+id = "s5"
+title = "consentlayer/email/postmark: basic auth and Postmark normalization"
+satisfies = ["AC-2", "AC-9", "AC-17"]
+files = [
+  "packages/consentlayer/src/email/postmark.ts",
+  "packages/consentlayer/test/email-postmark.test.ts",
+  "packages/consentlayer/test/fixtures/email/postmark/",
+  "packages/consentlayer/tsup.config.ts",
+  "packages/consentlayer/package.json",
+  "packages/consentlayer/.size-limit.js",
+]
+after = ["s3"]
+rung = "engineer"
+done_check = "pnpm turbo run typecheck lint test build, pnpm knip and pnpm --filter consentlayer check:package pass; test/email-postmark.test.ts covers correct, missing and wrong credentials, the trace-id fallback and every mapped RecordType and bounce type"
+gates = ["typecheck", "lint", "unit", "build", "knip", "package"]
+verification = "review"
+hold = true
+pause_after = false
+brief = """
+Serves AC-9 (and the Postmark part of AC-2 and AC-17) of docs/spec-email-events.md. Read decision 13, the Mapping
+table, and verification item 3.
+
+`postmarkWebhook({ username, password })` returns an EmailService with id 'postmark'. Postmark signs nothing; the
+webhook URL carries basic-auth credentials. Compare the `Authorization: Basic` header with the expected value in
+constant time (helpers in src/email/verify.ts); 401 when missing or wrong; a handler 500 while either value is unset
+or the password is shorter than 32 characters. Normalize one event per POST by `RecordType` per the Mapping table
+(no email_sent, email_delayed or email_failed exist for Postmark); recipient from `Recipient`, or `Email` on bounces;
+`id` from `X-PM-Webhook-Trace-Id`, else `${RecordType}:${MessageID}:${event time}`; `metadata` from `Metadata`;
+`automated` absent; SubscriptionChange with `SuppressSending: false` and unknown record types return no events.
+
+Fixtures in test/fixtures/email/postmark/ shaped after postmarkapp.com/developer/webhooks. Check verification item
+3 (Authorization header from URL credentials, trace-id stability, the bounce Type table) and record the sources in
+the PR description. Add the `email/postmark` tsup entry, export and budget. Credential checking is auth code: it
+gets an independent review and lands only after the human's look.
+"""
+
+[[step]]
+id = "s6"
+title = "consentlayer/email/sendgrid: ECDSA signature and SendGrid batch normalization"
+satisfies = ["AC-2", "AC-10", "AC-17"]
+files = [
+  "packages/consentlayer/src/email/sendgrid.ts",
+  "packages/consentlayer/test/email-sendgrid.test.ts",
+  "packages/consentlayer/test/fixtures/email/sendgrid/",
+  "packages/consentlayer/tsup.config.ts",
+  "packages/consentlayer/package.json",
+  "packages/consentlayer/.size-limit.js",
+]
+after = ["s3"]
+rung = "senior-engineer"
+done_check = "pnpm turbo run typecheck lint test build, pnpm knip and pnpm --filter consentlayer check:package pass; test/email-sendgrid.test.ts covers a valid DER-signed batch, tampered body, wrong key, stale timestamp, high-bit r/s values, and every mapped event"
+gates = ["typecheck", "lint", "unit", "build", "knip", "package"]
+verification = "review"
+hold = true
+pause_after = false
+brief = """
+Serves AC-10 (and the SendGrid part of AC-2 and AC-17) of docs/spec-email-events.md. Read the Mapping and
+Signature verification tables and verification item 4.
+
+`sendgridWebhook({ publicKey, toleranceSeconds? })` returns an EmailService with id 'sendgrid'. Import the
+verification key as base64 SPKI DER, ECDSA P-256; verify SHA-256 over `${X-Twilio-Email-Event-Webhook-Timestamp}${body}`
+against `X-Twilio-Email-Event-Webhook-Signature`, which is base64 DER: convert the DER `SEQUENCE { INTEGER r,
+INTEGER s }` to the raw 64-byte `r||s` Web Crypto expects (strip a leading 0x00, left-pad each to 32 bytes; reject
+malformed DER as 401). Timestamp within toleranceSeconds (default 300). The body is a JSON array: one EmailEvent per
+element. Map per the table; `id` = `sg_event_id`; `automated` from `sg_machine_open` on opens; `metadata` from the
+top-level fields that are not SendGrid's own (verification item 4 names the list); bounces split by `type`
+(`bounce` hard, `blocked` soft).
+
+Tests generate a P-256 key pair with node:crypto and sign with `dsaEncoding: 'der'`; include signatures whose r or s
+has the high bit set (DER adds 0x00) and ones shorter than 32 bytes. Fixtures shaped after SendGrid's Event Webhook
+reference. Confirm the batch size limit fits the handler's 1 MiB; if not, stop and report. Record sources in the PR
+description. Add the `email/sendgrid` tsup entry, export and budget. Signature code: independent security review,
+lands only after the human's look.
+"""
+
+[[step]]
+id = "s7"
+title = "consentlayer/email/mailgun: HMAC signature and Mailgun normalization"
+satisfies = ["AC-2", "AC-11", "AC-17"]
+files = [
+  "packages/consentlayer/src/email/mailgun.ts",
+  "packages/consentlayer/test/email-mailgun.test.ts",
+  "packages/consentlayer/test/fixtures/email/mailgun/",
+  "packages/consentlayer/tsup.config.ts",
+  "packages/consentlayer/package.json",
+  "packages/consentlayer/.size-limit.js",
+]
+after = ["s3"]
+rung = "engineer"
+done_check = "pnpm turbo run typecheck lint test build, pnpm knip and pnpm --filter consentlayer check:package pass; test/email-mailgun.test.ts covers valid, wrong signature, wrong key, stale timestamp and the failed split"
+gates = ["typecheck", "lint", "unit", "build", "knip", "package"]
+verification = "review"
+hold = true
+pause_after = false
+brief = """
+Serves AC-11 (and the Mailgun part of AC-2 and AC-17) of docs/spec-email-events.md. Read the Mapping table,
+decision 10 and verification item 5.
+
+`mailgunWebhook({ signingKey, toleranceSeconds? })` returns an EmailService with id 'mailgun'. The body is
+`{ signature: { timestamp, token, signature }, "event-data": {...} }`; verify the hex HMAC-SHA-256 of
+`${timestamp}${token}` keyed by the signing key, constant time, timestamp within toleranceSeconds (default 300).
+No token cache (decision 10). Map per the table: `failed` with severity temporary → email_delayed; permanent with a
+`suppress-*` reason → email_failed; other permanent → email_bounced hard. `id` = `event-data.id`, recipient from
+`recipient`, messageId from `message.headers.message-id`, `metadata` from `user-variables`, `automated` from
+`client-info.bot` (non-empty string true, empty false, absent undefined).
+
+Fixtures shaped after Mailgun's webhook payload docs. Check verification item 5 and record the sources in the PR
+description. Add the `email/mailgun` tsup entry, export and budget. Signature code: independent security review,
+lands only after the human's look.
+"""
+
+[[step]]
+id = "s8"
+title = "consentlayer/email/ses: SNS signature, certificate DER walk and SES normalization"
+satisfies = ["AC-2", "AC-12", "AC-17"]
+files = [
+  "packages/consentlayer/src/email/ses.ts",
+  "packages/consentlayer/test/email-ses.test.ts",
+  "packages/consentlayer/test/fixtures/email/ses/",
+  "packages/consentlayer/tsup.config.ts",
+  "packages/consentlayer/package.json",
+  "packages/consentlayer/.size-limit.js",
+]
+after = ["s3"]
+rung = "senior-engineer"
+done_check = "pnpm turbo run typecheck lint test build, pnpm knip and pnpm --filter consentlayer check:package pass; test/email-ses.test.ts covers every clause of AC-12"
+gates = ["typecheck", "lint", "unit", "build", "knip", "package"]
+verification = "review"
+hold = true
+pause_after = false
+brief = """
+Serves AC-12 (and the SES part of AC-2 and AC-17) of docs/spec-email-events.md. Read decisions 10, 14 and 15, the
+Mapping table and verification items 6 and 7.
+
+`sesWebhook({ topicArns, toleranceSeconds?, fetchImpl? })` returns an EmailService with id 'ses'. The SNS body is
+JSON sent as text/plain. Before any fetch: `TopicArn` must be in `topicArns`, `SigningCertURL` must be HTTPS on an
+`sns.<region>.amazonaws.com` host (pattern per verification item 6) — 401 otherwise. Fetch the PEM certificate with
+fetchImpl, cache it in memory per URL, extract the SubjectPublicKeyInfo with a minimal DER walk (Certificate →
+tbsCertificate → skip optional [0] version, serial, signature algorithm, issuer, validity, subject → SPKI), import as
+RSASSA-PKCS1-v1_5 with SHA-1 (SignatureVersion 1) or SHA-256 (2), and verify `Signature` over the documented string
+to sign (`Key\\nValue\\n` for the type's fields in order: Notification — Message, MessageId, Subject if present,
+Timestamp, TopicArn, Type; SubscriptionConfirmation/UnsubscribeConfirmation — Message, MessageId, SubscribeURL,
+Timestamp, Token, TopicArn, Type). `Timestamp` within toleranceSeconds (default 3600). A verified
+SubscriptionConfirmation fetches `SubscribeURL` (same host rule) and returns a 200 Response; UnsubscribeConfirmation
+returns 200 with no events.
+
+Parse `Message` as JSON and read `eventType ?? notificationType`. Map per the table: bounce, complaint and delivery
+expand per listed recipient with id `<MessageId>:<recipient>`; Send/Reject/Rendering Failure/DeliveryDelay use
+`mail.destination`; Open/Click with more than one `mail.destination` are dropped; `automated` from
+`isBotEvent` (`Likely` true, `Unlikely` false); `metadata` from `mail.tags`, first value per key.
+
+Tests: commit a test-only RSA key and self-signed certificate (generate once with openssl; say so in the fixture
+README line or test name), served through a mocked fetchImpl; sign SNS messages with node:crypto for versions 1 and
+2. Cover every clause of AC-12. If you can capture a real SES notification with AWS's real certificate, add it as a
+regression fixture. Check verification items 6 and 7 and record the sources. Add the `email/ses` tsup entry, export
+and budget. This is the riskiest signature code in the release: independent security review, lands only after the
+human's look.
+"""
+
+[[step]]
+id = "s9"
+title = "consentlayer/server/posthog: posthogServer destination"
+satisfies = ["AC-2", "AC-13", "AC-17"]
+files = [
+  "packages/consentlayer/src/server/posthog.ts",
+  "packages/consentlayer/test/server.test.ts",
+  "packages/consentlayer/test/email.test.ts",
+  "packages/consentlayer/tsup.config.ts",
+  "packages/consentlayer/package.json",
+  "packages/consentlayer/.size-limit.js",
+]
+after = ["s2", "s3"]
+rung = "engineer"
+done_check = "pnpm turbo run typecheck lint test build, pnpm knip and pnpm --filter consentlayer check:package pass; tests cover every clause of AC-13 and one createEmailHandler → posthogServer round trip"
+gates = ["typecheck", "lint", "unit", "build", "knip", "package"]
+verification = "verify"
+hold = false
+pause_after = false
+brief = """
+Serves AC-13 (and the PostHog part of AC-2 and AC-17) of docs/spec-email-events.md. Follow the pattern of
+src/server/ga4.ts and src/server/meta.ts.
+
+`posthogServer({ apiKey, apiHost?, fetchImpl? })` returns `ServerDestination<false> | undefined`: id 'posthog',
+requiredConsent 'analytics', forwardBrowserEvents false; `undefined` while apiKey is unset or blank (trimmed);
+`apiHost` defaults to `https://us.i.posthog.com` (as the browser `posthog()` does) and must be an absolute HTTPS URL,
+else throw at creation like sgtm. send: POST `<apiHost>/i/v0/e/` with JSON `{ api_key, event: event.name, properties:
+{ distinct_id, ...event.params, ...event.providers?.posthog, $process_person_profile: false when no userId },
+timestamp: ISO of event.time when set }`; distinct_id = identity.userId ?? clientId, else throw
+`posthogServer needs identity.userId or clientId`; non-2xx throws `PostHog <status>: <body>`. Send no email address
+or phone from identity.
+
+Tests in test/server.test.ts, plus one test in test/email.test.ts through createEmailHandler with a fake service
+proving the recipient address never appears in the PostHog request. Check verification item 8 against PostHog's
+capture API docs and record the source. Add the `server/posthog` tsup entry, export and budget.
+"""
+
+[[step]]
+id = "s10"
+title = "Docs, API reference and changeset for email events"
+satisfies = ["AC-15", "AC-16", "AC-18"]
+files = [
+  "apps/docs/src/content/docs/guides/email-events.md",
+  "apps/docs/astro.config.mjs",
+  "apps/docs/src/content/docs/guides/server-side-tracking.md",
+  "apps/docs/src/content/docs/reference/api.md",
+  "apps/docs/src/content/docs/guides/roadmap.md",
+  ".changeset/",
+]
+after = ["s1", "s4", "s5", "s6", "s7", "s8", "s9"]
+rung = "engineer"
+done_check = "pnpm format:check, pnpm knip, pnpm turbo run typecheck lint test build and pnpm --filter consentlayer check:package all pass; pnpm --filter docs build passes with the new sidebar entry"
+gates = ["format", "knip", "typecheck", "lint", "unit", "build", "package"]
+verification = "verify"
+hold = false
+pause_after = false
+brief = """
+Serves AC-15, AC-16 and AC-18 of docs/spec-email-events.md. Read AGENTS.md (Docs section) and the whole spec. Verify
+every fact against packages/consentlayer/src/email and src/server/posthog.ts as built, not against the spec.
+
+- New page apps/docs/src/content/docs/guides/email-events.md ("Email events"), added to the Guides sidebar in
+  apps/docs/astro.config.mjs right after 'guides/server-side-tracking'. One page for all five services (their setups
+  differ by a few lines each). Cover: the route and options; the events and the mapping table; consent per event
+  type and why destinations need consent for every type; the recipient pseudonym and `secret`; deduplication with
+  `id` and `onEvent` returning false; the `automated` flag per service, stating that Resend and Postmark provide
+  none; one section per service with its dashboard setup, credential and verification (SES: topic allowlist,
+  certificate host rule, no chain validation; Mailgun: the body is not signed; Postmark: credentials in the URL);
+  GA4 Measurement Protocol is in maintenance mode and Google recommends the Data Manager API for new integrations.
+  The consent defaults are defaults: show `consent: () => true` to send everything and a callback that allows only
+  operational types, and say once, without preaching, that the choice and its lawfulness are the developer's
+  responsibility.
+  Whether open and click tracking needs consent depends on the law that applies; link /guides/legal/ and never say
+  a setup complies. Tone of the Next.js docs; ConsentLayer in prose; depth in <details>.
+- server-side-tracking.md: a PostHog section under Destinations, `time` in the ServerEvent types block, and the
+  page description and intro updated to name PostHog.
+- reference/api.md: sections for `consentlayer/email` (createEmailHandler, EmailEvent, EmailEventName,
+  EmailService), each `consentlayer/email/<service>` factory, `consentlayer/server/posthog`, and `time` on ServerEvent.
+- roadmap.md: leave the planned entry as is (it is removed when 1.9.0 ships).
+- A changeset (`pnpm changeset`, minor for consentlayer) describing the email handler, the five services,
+  posthogServer and ServerEvent.time, and listing the size budgets added.
+Run pnpm format, then every CI check.
+"""
