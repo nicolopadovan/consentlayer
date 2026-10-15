@@ -316,6 +316,40 @@ it('returns focus to the badge when the settings close', async () => {
   await expect.poll(() => document.activeElement).toBe(badge())
 })
 
+const choices: [string, BannerOptions, string[]][] = [
+  ['Accept all', {}, ['Accept all']],
+  ['the × button', { closeButton: true }, ['Continue without accepting']],
+  ['Save in the settings', {}, ['Customize', 'Save choices']],
+  ['Accept all in the blocking banner', { blocking: true }, ['Accept all']],
+  ['Save in the settings of the blocking banner', { blocking: true }, ['Customize', 'Save choices']],
+]
+
+for (const [label, options, clicks] of choices) {
+  it(`moves focus to the badge, which replaces the button pressed, after ${label}`, async () => {
+    await setup(options)
+    for (const name of clicks) await button(name).click()
+    await expect.poll(() => visible(badge())).toBe(true)
+    await expect.poll(() => document.activeElement).toBe(badge())
+  })
+}
+
+it('keeps focus in the settings dialog of the blocking banner', async () => {
+  await setup({ blocking: true })
+  await button('Customize').click()
+  await expect.poll(() => visible(document.querySelector('.consentlayer-dialog'))).toBe(true)
+  expect(document.querySelector('.consentlayer-dialog')!.contains(document.activeElement)).toBe(true)
+})
+
+it('does not move focus to the badge when the visitor was elsewhere', async () => {
+  const { controller } = mount()
+  await expect.poll(() => visible(banner())).toBe(true)
+  const pageButton = document.querySelector<HTMLElement>('main button')!
+  pageButton.focus()
+  await controller.actions.rejectNonEssential()
+  await expect.poll(() => visible(badge())).toBe(true)
+  expect(document.activeElement).toBe(pageButton)
+})
+
 it('reaches the settings controls with Tab in the order they appear', async () => {
   await setup()
   await button('Customize').click()

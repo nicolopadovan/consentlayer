@@ -358,6 +358,7 @@ export function mountBanner(
   const render = () => {
     const { ready, bannerVisible, dialogVisible, chosen, prefs } = controller.getSnapshot()
     const showBanner = ready && bannerVisible && !dialogVisible
+    const focusInBanner = banner.contains(document.activeElement)
     if (!dialog.open && !(banner instanceof HTMLDialogElement && banner.open))
       root.toggleAttribute('data-consentlayer-gutter', innerWidth > root.clientWidth)
     for (const [category, input] of switches) input.checked = prefs[category]
@@ -370,6 +371,7 @@ export function mountBanner(
       if (!showBanner && banner.open) banner.close()
     } else banner.hidden = !showBanner
     if (badge) badge.hidden = !ready || (badgeOptions && badgeOptions.show !== 'always' && (bannerVisible || !chosen))
+    if (focusInBanner && !showBanner && !dialogVisible) badge?.focus()
     if (!dialogVisible && dialog.open) dialog.close()
   }
 
@@ -378,7 +380,10 @@ export function mountBanner(
   dialog.addEventListener('close', () => {
     controller.actions.closeDialog()
     const focused = document.activeElement
-    if ((focused === document.body || dialog.contains(focused)) && opener instanceof HTMLElement) opener.focus()
+    if (focused === document.body || dialog.contains(focused)) {
+      if (opener instanceof HTMLElement) opener.focus()
+      if (document.activeElement !== opener) badge?.focus()
+    }
   })
   if (!unstyled) document.head.append(style)
   document.body.prepend(banner, dialog)
