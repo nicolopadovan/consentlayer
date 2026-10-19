@@ -1,6 +1,6 @@
 {
   "name": "consentlayer",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Consent-first analytics for the browser and server: one API in front of GA4, Meta, PostHog, Sentry and more, gated by the visitor's consent.",
   "keywords": [
     "consent",
