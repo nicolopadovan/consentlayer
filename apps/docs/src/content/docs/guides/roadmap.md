@@ -18,22 +18,21 @@ The sections below are ordered from the smallest change to the largest. The
 [comparison with c15t](/guides/c15t/) explains where several of these come
 from. Each ships in its own minor release, in order of priority:
 
-| Item                                                                              | Priority | Target        |
-| --------------------------------------------------------------------------------- | -------- | ------------- |
-| [Banner translations](#banner-translations)                                       | High     | January 2027  |
-| [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027  |
-| [Google Ads, Microsoft Clarity and LinkedIn Insight](#more-providers)             | Medium   | February 2027 |
-| [Embeds behind consent](#embeds-behind-consent)                                   | Medium   | March 2027    |
-| [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027    |
-| [The other planned providers](#more-providers)                                    | Medium   | Q2 2027       |
-| [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027       |
-| [Detailed settings dialog](#detailed-settings-dialog)                             | Medium   | Q2 2027       |
-| [Rich banner text](#rich-banner-text)                                             | Low      | Q2 2027       |
-| [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027       |
-| [Native banner components per framework](#banner-components-for-ui-libraries)     | Low      | Q3 2027       |
-| [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027       |
-| [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027       |
-| [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028          |
+| Item                                                                              | Priority | Target       |
+| --------------------------------------------------------------------------------- | -------- | ------------ |
+| [Banner translations](#banner-translations)                                       | High     | January 2027 |
+| [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027 |
+| [Embeds behind consent](#embeds-behind-consent)                                   | Medium   | March 2027   |
+| [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027   |
+| [The other planned providers](#more-providers)                                    | Medium   | Q2 2027      |
+| [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027      |
+| [Detailed settings dialog](#detailed-settings-dialog)                             | Medium   | Q2 2027      |
+| [Rich banner text](#rich-banner-text)                                             | Low      | Q2 2027      |
+| [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027      |
+| [Native banner components per framework](#banner-components-for-ui-libraries)     | Low      | Q3 2027      |
+| [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027      |
+| [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027      |
+| [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028         |
 
 ### Banner translations
 
@@ -63,18 +62,18 @@ interface:
 
 ### More providers
 
-ConsentLayer has [9 providers](/guides/providers/). The planned ones cover
+ConsentLayer has [12 providers](/guides/providers/). The planned ones cover
 the tools that other consent tools already load:
 
-| Kind         | Planned providers                                                                 |
-| ------------ | --------------------------------------------------------------------------------- |
-| Advertising  | Google Ads, LinkedIn Insight, Microsoft Advertising (UET), Reddit, Snapchat and X |
-| Analytics    | Microsoft Clarity, Mixpanel, Amplitude, Plausible, Matomo and Segment             |
-| Support chat | Intercom and Crisp                                                                |
+| Kind         | Planned providers                                   |
+| ------------ | --------------------------------------------------- |
+| Advertising  | Microsoft Advertising (UET), Reddit, Snapchat and X |
+| Analytics    | Mixpanel, Amplitude, Plausible, Matomo and Segment  |
+| Support chat | Intercom and Crisp                                  |
 
 Until a provider exists, write it with [`definePlugin()`](/internals/plugins/).
-The advertising providers that have a server API, such as Google Ads
-conversions, also get a server destination.
+The advertising providers that have a server API, such as Google Ads and
+LinkedIn conversions, are planned to get a server destination as well.
 
 ### Embeds behind consent
 

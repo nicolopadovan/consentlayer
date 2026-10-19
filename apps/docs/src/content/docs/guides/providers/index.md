@@ -28,10 +28,13 @@ Each provider is a named export of its own entry point,
 | [Contentsquare](/guides/providers/contentsquare/) | `contentsquare()` from `consentlayer/providers/contentsquare` | `analytics`                                    | `tagId`             |
 | [Vercel Analytics](/guides/providers/vercel/)     | `vercel()` from `consentlayer/providers/vercel`               | `'none'`                                       | `trackEvent`        |
 | [TikTok Pixel](/guides/providers/tiktok/)         | `tiktok()` from `consentlayer/providers/tiktok`               | `marketing`                                    | `pixelId`           |
+| [Google Ads](/guides/providers/google-ads/)       | `googleAds()` from `consentlayer/providers/google-ads`        | `marketing`                                    | `conversionId`      |
+| [LinkedIn Insight](/guides/providers/linkedin/)   | `linkedin()` from `consentlayer/providers/linkedin`           | `marketing`                                    | `partnerId`         |
+| [Microsoft Clarity](/guides/providers/clarity/)   | `clarity()` from `consentlayer/providers/clarity`             | `analytics`                                    | `projectId`         |
 | [Hotjar (deprecated)](/guides/providers/hotjar/)  | `hotjar()` from `consentlayer/providers/hotjar`               | `analytics`                                    | `siteId`, `version` |
 
-The ID options of GA4, Meta, GTM, TikTok, PostHog, Sentry, Contentsquare and
-Hotjar may be `undefined` or empty: the provider is then turned off, and with
+The ID options of GA4, Meta, GTM, TikTok, Google Ads, LinkedIn, Clarity,
+PostHog, Sentry, Contentsquare and Hotjar may be `undefined` or empty: the provider is then turned off, and with
 `debug: true` it logs `[consentlayer] <id> is off: <option> is not set.` when
 `createAnalytics()` creates the instance in the browser. Pass `process.env`
 values directly instead of guarding each provider. String IDs are trimmed
@@ -45,15 +48,19 @@ calls only while it stays granted, and is torn down when it is withdrawn.
 The exact order of these hooks is described in
 [Lifecycle](/internals/lifecycle/).
 
-`ga4()`, `meta()`, `gtm()` and `hotjar()` validate their IDs when called and
-throw on a value that is set but malformed:
+`ga4()`, `meta()`, `gtm()`, `googleAds()`, `linkedin()`, `clarity()` and
+`hotjar()` validate their IDs when called and throw on a value that is set but
+malformed:
 
-| Provider   | Option              | Accepted                                                |
-| ---------- | ------------------- | ------------------------------------------------------- |
-| `ga4()`    | `measurementId`     | `G-` followed by 4 to 16 uppercase letters or digits.   |
-| `meta()`   | `pixelId`           | A string of 8 to 20 digits.                             |
-| `gtm()`    | `containerId`       | `GTM-` followed by 4 to 12 uppercase letters or digits. |
-| `hotjar()` | `siteId`, `version` | A positive integer, as a number or a string of digits.  |
+| Provider      | Option              | Accepted                                                |
+| ------------- | ------------------- | ------------------------------------------------------- |
+| `ga4()`       | `measurementId`     | `G-` followed by 4 to 16 uppercase letters or digits.   |
+| `meta()`      | `pixelId`           | A string of 8 to 20 digits.                             |
+| `gtm()`       | `containerId`       | `GTM-` followed by 4 to 12 uppercase letters or digits. |
+| `googleAds()` | `conversionId`      | `AW-` followed by digits.                               |
+| `linkedin()`  | `partnerId`         | Digits, as a number or a string.                        |
+| `clarity()`   | `projectId`         | Letters and digits.                                     |
+| `hotjar()`    | `siteId`, `version` | A positive integer, as a number or a string of digits.  |
 
 `ga4()` and `gtm()` also throw when `serverContainerUrl` is neither an HTTPS
 URL nor a relative path starting with a single `/`. The other providers do not
@@ -66,8 +73,9 @@ Event names follow GA4 and each provider translates them to its own; see
 
 ## Loading SDKs later
 
-`posthog()` and `sentry()` accept `defer`, which postpones loading the SDK
-until after its consent requirement is met. A [custom plugin](/internals/plugins/)
+`posthog()`, `sentry()`, `googleAds()`, `linkedin()` and `clarity()` accept
+`defer`, which postpones loading the SDK or script until after its consent
+requirement is met. A [custom plugin](/internals/plugins/)
 can set the same `defer` field.
 
 | Value             | Loads                                                                                                    |

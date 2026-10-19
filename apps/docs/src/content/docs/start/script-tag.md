@@ -72,6 +72,9 @@ keys are the options of
 | `meta`              | `meta()`          |                                                                                |
 | `gtm`               | `gtm()`           | Loads the container at boot; see [Google Tag Manager](/guides/providers/gtm/). |
 | `tiktok`            | `tiktok()`        |                                                                                |
+| `googleAds`         | `googleAds()`     |                                                                                |
+| `linkedin`          | `linkedin()`      |                                                                                |
+| `clarity`           | `clarity()`       |                                                                                |
 | `contentsquare`     | `contentsquare()` |                                                                                |
 | `hotjar`            | `hotjar()`        | Deprecated, like the npm provider.                                             |
 | `posthog`           | `posthog()`       | Loads PostHog from its CDN; see [PostHog and Sentry](#posthog-and-sentry).     |
@@ -113,6 +116,9 @@ An unknown name logs `[consentlayer] Unknown provider "<name>".` or
 | `data-gtm`                 | `gtm.containerId`                                                |
 | `data-meta-pixel`          | `meta.pixelId`                                                   |
 | `data-tiktok-pixel`        | `tiktok.pixelId`                                                 |
+| `data-google-ads`          | `googleAds.conversionId`                                         |
+| `data-linkedin-partner`    | `linkedin.partnerId`                                             |
+| `data-clarity-project`     | `clarity.projectId`                                              |
 | `data-contentsquare-tag`   | `contentsquare.tagId`                                            |
 | `data-hotjar-site`         | `hotjar.siteId`                                                  |
 | `data-hotjar-version`      | `hotjar.version`                                                 |

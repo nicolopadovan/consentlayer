@@ -176,6 +176,18 @@
       "types": "./dist/providers/tiktok.d.ts",
       "import": "./dist/providers/tiktok.js"
     },
+    "./providers/google-ads": {
+      "types": "./dist/providers/google-ads.d.ts",
+      "import": "./dist/providers/google-ads.js"
+    },
+    "./providers/clarity": {
+      "types": "./dist/providers/clarity.d.ts",
+      "import": "./dist/providers/clarity.js"
+    },
+    "./providers/linkedin": {
+      "types": "./dist/providers/linkedin.d.ts",
+      "import": "./dist/providers/linkedin.js"
+    },
     "./adapters/google-consent-mode": {
       "types": "./dist/adapters/google-consent-mode.d.ts",
       "import": "./dist/adapters/google-consent-mode.js"

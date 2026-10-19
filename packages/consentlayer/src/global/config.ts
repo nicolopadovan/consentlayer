@@ -5,10 +5,13 @@ import { autoTracking } from '../auto-tracking'
 import { createAnalytics, type AnalyticsOptions } from '../core/create-analytics'
 import { createConsentController, type ConsentControllerOptions } from '../core/consent-controller'
 import type { AnalyticsPlugin, AutoTrackingConfig, ConsentIntegrationAdapter } from '../core/types'
+import { clarity } from '../providers/clarity'
 import { contentsquare } from '../providers/contentsquare'
 import { ga4 } from '../providers/ga4'
+import { googleAds } from '../providers/google-ads'
 import { gtm } from '../providers/gtm'
 import { hotjar } from '../providers/hotjar'
+import { linkedin } from '../providers/linkedin'
 import { meta } from '../providers/meta'
 import { posthog } from '../providers/posthog'
 import { sentry } from '../providers/sentry'
@@ -38,6 +41,9 @@ const factories: Record<string, (options: never) => AnalyticsPlugin> = {
   gtm,
   meta,
   tiktok,
+  googleAds,
+  linkedin,
+  clarity,
   contentsquare,
   hotjar,
   posthog,
@@ -56,6 +62,9 @@ const attributes: Record<string, [provider: string, option?: string, flag?: bool
   gtm: ['gtm', 'containerId'],
   metaPixel: ['meta', 'pixelId'],
   tiktokPixel: ['tiktok', 'pixelId'],
+  googleAds: ['googleAds', 'conversionId'],
+  linkedinPartner: ['linkedin', 'partnerId'],
+  clarityProject: ['clarity', 'projectId'],
   contentsquareTag: ['contentsquare', 'tagId'],
   hotjarSite: ['hotjar', 'siteId'],
   hotjarVersion: ['hotjar', 'version'],

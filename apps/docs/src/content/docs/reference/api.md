@@ -1426,6 +1426,9 @@ Each provider is its own entry point, and each factory returns an
 | `hotjar`        | `consentlayer/providers/hotjar`        | `hotjar`        | `analytics`                                             |
 | `vercel`        | `consentlayer/providers/vercel`        | `vercel`        | `'none'`                                                |
 | `tiktok`        | `consentlayer/providers/tiktok`        | `tiktok`        | `marketing`                                             |
+| `googleAds`     | `consentlayer/providers/google-ads`    | `google-ads`    | `marketing`                                             |
+| `linkedin`      | `consentlayer/providers/linkedin`      | `linkedin`      | `marketing`                                             |
+| `clarity`       | `consentlayer/providers/clarity`       | `clarity`       | `analytics`                                             |
 
 ### `ga4(options)`
 
@@ -1596,6 +1599,53 @@ The entry point also exports the options type `TikTokOptions` and two helpers:
 | ---------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `toTikTokEvent`  | `(event: AnalyticsEventPayload) => { name: string; params: Record<string, unknown> }` | Maps a standard event to a TikTok standard event, such as `purchase` to `Purchase`, or keeps its name. Converts `items` to `content_ids`, `contents`, `content_type` and `num_items`, `search_term` to `search_string` and `transaction_id` to `order_id`. |
 | `tiktokUserData` | `(identity: UserIdentity) => Record<string, string>`                                  | Advanced matching parameters for `ttq.identify`: `email` (trimmed, lowercased), `phone_number` (digits prefixed with `+`) and `external_id`.                                                                                                               |
+
+### `googleAds(options)`
+
+Google Ads conversions and remarketing through gtag.js, with Consent Mode v2.
+It shares gtag.js, `dataLayer` and the Consent Mode signals with `ga4()` and
+`gtm()`. See [Google Ads](/guides/providers/google-ads/).
+
+| Option         | Type                     | Default | Description                                                                                    |
+| -------------- | ------------------------ | ------- | ---------------------------------------------------------------------------------------------- |
+| `conversionId` | `string \| undefined`    |         | **Required.** Must match `AW-` followed by digits; `undefined` or `''` turns the provider off. |
+| `events`       | `Record<string, string>` | `{}`    | Conversion labels keyed by event name. Only these events are sent, as `conversion` events.     |
+| `pageViews`    | `boolean`                | `true`  | Sends a `page_view` to the tag on every page.                                                  |
+| `defer`        | `LoadTiming`             | `false` | When to load gtag.js. See [`AnalyticsPlugin`](#analyticsplugin).                               |
+
+**Throws** an `Error` when `conversionId` is invalid.
+
+The options type is exported as `GoogleAdsOptions`.
+
+### `linkedin(options)`
+
+LinkedIn Insight Tag. See [LinkedIn Insight](/guides/providers/linkedin/).
+
+| Option      | Type                            | Default | Description                                                                                |
+| ----------- | ------------------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| `partnerId` | `number \| string \| undefined` |         | **Required.** Digits, as a number or a string; `undefined` or `''` turns the provider off. |
+| `events`    | `Record<string, number>`        | `{}`    | Conversion IDs keyed by event name. Only these events are sent, with `lintrk('track')`.    |
+| `defer`     | `LoadTiming`                    | `false` | When to load the tag. See [`AnalyticsPlugin`](#analyticsplugin).                           |
+
+**Throws** an `Error` when `partnerId` is invalid.
+
+The options type is exported as `LinkedInOptions`.
+
+### `clarity(options)`
+
+Microsoft Clarity, with its consent API following `analytics` and `marketing`.
+See [Microsoft Clarity](/guides/providers/clarity/).
+
+| Option      | Type                  | Default    | Description                                                                                                                 |
+| ----------- | --------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `projectId` | `string \| undefined` |            | **Required.** Letters and digits; `undefined` or `''` turns the provider off.                                               |
+| `events`    | `string[] \| false`   | all events | The event names sent as Clarity custom events; `false` sends none. An event whose `only` names the provider is always sent. |
+| `identify`  | `boolean`             | `true`     | Sends the user ID from `identify()` as Clarity's custom ID.                                                                 |
+| `defer`     | `LoadTiming`          | `false`    | When to load the script. See [`AnalyticsPlugin`](#analyticsplugin).                                                         |
+
+**Throws** an `Error` when `projectId` is invalid.
+
+The options type is exported as `ClarityOptions`.
 
 ## `consentlayer/adapters/*`
 
