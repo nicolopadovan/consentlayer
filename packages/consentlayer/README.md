@@ -16,8 +16,8 @@ format.
 - **Light:** each provider is its own entry point, and vendor SDKs and heavy
   features (Replay, tracing, session recording) are chunks loaded only when
   used.
-- **Frameworks:** bindings for React, Next.js, Vue, Nuxt, Svelte, SvelteKit,
-  Solid, SolidStart and Angular, plus a script-tag build. A ready-made banner
+- **Frameworks:** bindings for React, Next.js, TanStack Start, Vue, Nuxt,
+  Svelte, SvelteKit, Solid, SolidStart, Angular and Astro, plus a script-tag build. A ready-made banner
   ships in the separate `consentlayer/banner` entry point and in a
   `consentlayer/<framework>/banner` entry point for each binding; you can also
   build your own on `useConsentController()`.

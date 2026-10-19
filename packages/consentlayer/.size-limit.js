@@ -24,6 +24,8 @@ export default [
   ['solid', 'dist/solid.js', '2.5 kB'],
   ['solidstart', 'dist/solidstart.js', '2.6 kB'],
   ['solid/banner', 'dist/solid/banner.js', '5 kB'],
+  ['tanstack-start', 'dist/tanstack-start.js', '2.5 kB'],
+  ['astro', 'dist/astro.js', '1.5 kB'],
   ['angular', 'dist/angular.js', '2.7 kB'],
   ['angular/banner', 'dist/angular/banner.js', '5.2 kB'],
   ['providers/ga4', 'dist/providers/ga4.js', '2.5 kB'],

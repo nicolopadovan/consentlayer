@@ -1,7 +1,7 @@
 # consentlayer
 
-Consent-first analytics for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Solid,
-SolidStart, Angular, plain JavaScript and the server: one instance tracks to
+Consent-first analytics for React, Next.js, TanStack Start, Vue, Nuxt, Svelte,
+SvelteKit, Solid, SolidStart, Angular, Astro, plain JavaScript and the server: one instance tracks to
 GA4, Google Tag Manager, Meta Pixel, TikTok Pixel, PostHog, Sentry and more,
 and loads each provider only once the visitor has agreed to its category.
 
@@ -16,7 +16,7 @@ pnpm add consentlayer
 - [`packages/consentlayer`](./packages/consentlayer): the package
 - [`apps/docs`](./apps/docs): the docs site (Astro Starlight)
 - `apps/example-*`: example applications for Next.js, Nuxt, SvelteKit,
-  SolidStart and Angular, and one for the script tag
+  SolidStart, TanStack Start, Astro and Angular, and one for the script tag
 - [`docs`](./docs): maintainer notes: [publishing and releases](./docs/publishing-and-releases.md) and the [v1 spec](./docs/spec-v1.md)
 
 ConsentLayer has not been legally reviewed and is not legal advice. Whether

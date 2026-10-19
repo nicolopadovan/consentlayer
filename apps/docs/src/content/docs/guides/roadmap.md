@@ -22,7 +22,6 @@ from. Each ships in its own minor release, in order of priority:
 | --------------------------------------------------------------------------------- | -------- | ------------- |
 | [Banner translations](#banner-translations)                                       | High     | January 2027  |
 | [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027  |
-| [Astro and TanStack Start](#astro-and-tanstack-start)                             | Medium   | January 2027  |
 | [Google Ads, Microsoft Clarity and LinkedIn Insight](#more-providers)             | Medium   | February 2027 |
 | [Embeds behind consent](#embeds-behind-consent)                                   | Medium   | March 2027    |
 | [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027    |
@@ -61,13 +60,6 @@ interface:
 | shadcn-vue, shadcn-svelte and solid-ui | The same component for Vue, Svelte and Solid.                                                                                 |
 | MUI, Mantine and Chakra UI             | Components for React applications built on them.                                                                              |
 | Vuetify, Angular Material and others   | Components for the main UI library of each framework, added as there is demand.                                               |
-
-### Astro and TanStack Start
-
-Astro and TanStack Start applications can use `consentlayer` and the
-[JavaScript setup](/start/javascript/) today, without a dedicated
-integration. The planned bindings send page views on their client-side
-navigation, as the other framework integrations do.
 
 ### More providers
 
