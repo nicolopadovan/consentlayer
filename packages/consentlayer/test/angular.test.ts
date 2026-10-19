@@ -12,6 +12,7 @@ import {
   provideGtmNoscript,
   provideMetaPixelNoscript,
 } from '../src/angular'
+import { provideConsentBanner } from '../src/angular/banner'
 import { createAnalytics } from '../src/core/create-analytics'
 import type { AnalyticsPlugin } from '../src/core/types'
 
@@ -151,5 +152,32 @@ describe('consentlayer/angular', () => {
     expect(render({ containerId: 'GTM-ABC123', enabled: true })).toContain(
       'src="https://www.googletagmanager.com/ns.html?id=GTM-ABC123"',
     )
+  })
+
+  it('mounts the banner, records the choice and removes everything when destroyed', async () => {
+    const analytics = createAnalytics({ providers: [] })
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideConsentLayer({ analytics }),
+        provideConsentBanner({ position: 'bottom' }),
+      ],
+    })
+    TestBed.inject(ApplicationRef)
+    await settle()
+    const banner = document.querySelector<HTMLElement>('.consentlayer-banner')!
+    expect(banner.dataset.position).toBe('bottom')
+    expect(banner.hidden).toBe(false)
+
+    ;[...banner.querySelectorAll('button')].find((button) => button.textContent === 'Accept all')!.click()
+    await settle()
+    expect(analytics.consent.getConsent()).toMatchObject({ analytics: true, marketing: true })
+    expect(banner.hidden).toBe(true)
+    expect(document.querySelector<HTMLElement>('.consentlayer-badge')!.hidden).toBe(false)
+
+    TestBed.resetTestingModule()
+    for (const selector of ['.consentlayer-banner', '.consentlayer-dialog', '.consentlayer-badge', 'style'])
+      expect(document.querySelector(selector)).toBeNull()
+    analytics.destroy()
   })
 })

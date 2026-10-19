@@ -8,7 +8,7 @@ import type {
   RegionRule,
   StoredConsent,
 } from './types'
-import { defaultRegions } from './regions'
+import { knownLaws, lawRegions, resolveRule } from './regions'
 import { BUILT_IN_CATEGORIES, broadcastConsent, createDebugLog, equalConsent, normalizeConsent } from './utils'
 import { assertValidConsent } from './validation'
 
@@ -28,6 +28,13 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
   if (maxAgeDays !== undefined && !(maxAgeDays > 0 && Number.isFinite(maxAgeDays))) {
     throw new Error(`[consentlayer] consent.maxAgeDays must be a positive number, received ${maxAgeDays}`)
   }
+  const law = [
+    ...Object.keys(options.laws ?? {}),
+    ...Object.values(options.regions ?? {}).flatMap((regionRule) => regionRule.laws ?? []),
+  ].find((name) => !knownLaws.includes(name))
+  if (law !== undefined) {
+    throw new Error(`[consentlayer] unknown law "${law}", expected one of ${knownLaws.join(', ')}`)
+  }
   const major = (version: string | undefined) => version?.split('.')[0]
   let region: string | undefined
   let rule: RegionRule = {}
@@ -41,6 +48,7 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
   }
   let stale = false
   let defaulted = false
+  let provisional = false
   let changes = 0
 
   const notify = () => {
@@ -55,15 +63,18 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       persist,
       applyAdapters,
       excludeAdapter,
+      answeredProvisionally = false,
     }: {
       persist: boolean
       applyAdapters: boolean
       excludeAdapter?: ConsentIntegrationAdapter
+      answeredProvisionally?: boolean
     },
   ) => {
-    if (destroyed || !next || (equalConsent(current, next) && !(persist && (stale || defaulted)))) return
+    if (destroyed || !next || (equalConsent(current, next) && !(persist && (stale || defaulted || provisional)))) return
     current = next
     defaulted = source === 'region'
+    provisional = answeredProvisionally
     changes++
     if (persist) {
       stale = false
@@ -143,20 +154,22 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     } catch (cause) {
       options.onError?.({ scope: 'consent-region', message: 'Failed to read the region', cause })
     }
-    const regions = { ...defaultRegions, ...options.regions }
-    rule = (region && (regions[region] ?? regions[region.split('-')[0]])) || {}
+    const regions = { ...lawRegions(options.laws), ...options.regions }
+    rule = resolveRule((region && (regions[region] ?? regions[region.split('-')[0]])) || {})
     debugLog('consent', undefined, 'region', region, rule)
     const record = storage?.read() ?? null
     const stored = normalize(record?.consent)
     stale = stored !== null && isStaleRecord(record!)
     if (stale) debugLog('consent', undefined, 'stored consent is stale', record)
     const seen = changes
-    let provisional = false
+    let answeredProvisionally = false
     const ask = async (adapter: ConsentIntegrationAdapter) => {
       try {
         const answer = await adapter.bootstrap?.()
-        provisional = answer != null && 'consent' in answer && typeof answer.consent === 'object'
-        return normalize(provisional ? (answer as { consent: ConsentState }).consent : (answer as ConsentState | null))
+        answeredProvisionally = answer != null && 'consent' in answer && typeof answer.consent === 'object'
+        return normalize(
+          answeredProvisionally ? (answer as { consent: ConsentState }).consent : (answer as ConsentState | null),
+        )
       } catch (cause) {
         options.onError?.({
           scope: 'consent-adapter',
@@ -178,9 +191,10 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       if (changes !== seen) return current
       if (!next) continue
       await commit(next, 'bootstrap', {
-        persist: adapter !== undefined && !provisional,
+        persist: adapter !== undefined && !answeredProvisionally,
         applyAdapters: false,
         excludeAdapter: adapter,
+        answeredProvisionally,
       })
       return current
     }
@@ -216,6 +230,9 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     },
     getRegion() {
       return { region, rule }
+    },
+    hasChoice() {
+      return current !== null && !defaulted && !provisional
     },
     shouldAsk() {
       return rule.banner !== false && (current === null || stale || defaulted)

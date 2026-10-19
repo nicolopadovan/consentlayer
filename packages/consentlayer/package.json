@@ -63,6 +63,10 @@
       "types": "./dist/auto-tracking.d.ts",
       "import": "./dist/auto-tracking.js"
     },
+    "./banner": {
+      "types": "./dist/banner.d.ts",
+      "import": "./dist/banner.js"
+    },
     "./ecommerce": {
       "types": "./dist/ecommerce.d.ts",
       "import": "./dist/ecommerce.js"
@@ -70,6 +74,10 @@
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
+    },
+    "./react/banner": {
+      "types": "./dist/react/banner.d.ts",
+      "import": "./dist/react/banner.js"
     },
     "./next": {
       "types": "./dist/next.d.ts",
@@ -79,10 +87,19 @@
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.js"
     },
+    "./vue/banner": {
+      "types": "./dist/vue/banner.d.ts",
+      "import": "./dist/vue/banner.js"
+    },
     "./svelte": {
       "types": "./dist/svelte.d.ts",
       "svelte": "./dist/svelte.js",
       "import": "./dist/svelte.js"
+    },
+    "./svelte/banner": {
+      "types": "./dist/svelte/banner.d.ts",
+      "svelte": "./dist/svelte/banner.js",
+      "import": "./dist/svelte/banner.js"
     },
     "./sveltekit": {
       "types": "./dist/sveltekit.d.ts",
@@ -93,6 +110,10 @@
       "types": "./dist/solid.d.ts",
       "import": "./dist/solid.js"
     },
+    "./solid/banner": {
+      "types": "./dist/solid/banner.d.ts",
+      "import": "./dist/solid/banner.js"
+    },
     "./solidstart": {
       "types": "./dist/solidstart.d.ts",
       "import": "./dist/solidstart.js"
@@ -100,6 +121,10 @@
     "./angular": {
       "types": "./dist/angular.d.ts",
       "import": "./dist/angular.js"
+    },
+    "./angular/banner": {
+      "types": "./dist/angular/banner.d.ts",
+      "import": "./dist/angular/banner.js"
     },
     "./nuxt": {
       "types": "./dist/nuxt/index.d.ts",
@@ -191,6 +216,7 @@
     "build": "tsup --config tsup.config.ts && mkdir -p dist/svelte && cp src/svelte/MetaPixelNoscript.svelte src/svelte/GtmNoscript.svelte dist/svelte/",
     "lint": "eslint src test --max-warnings 0",
     "test": "vitest run --config vitest.config.ts",
+    "test:browser": "vitest run --config vitest.browser.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/types/tsconfig.json --noEmit",
     "check:package": "publint && attw --pack . --profile esm-only && size-limit && es-check checkBrowser --module --checkBrowser 'dist/**/*.js' --not dist/server,dist/nuxt,dist/sentry/server.js,dist/sentry/next.js"
   },
@@ -265,9 +291,11 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitest/browser-playwright": "5.0.4",
     "es-check": "^9.8.1",
     "next": "16.4.0",
     "nuxt": "^4.6.1",
+    "playwright": "^1.64.1",
     "posthog-js": "^1.438.9",
     "publint": "^0.3.25",
     "react": "^19.3.0",

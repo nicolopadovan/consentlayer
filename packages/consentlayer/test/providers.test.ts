@@ -13,6 +13,8 @@ import { sentry } from '../src/providers/sentry'
 import { tiktok } from '../src/providers/tiktok'
 
 describe('providers', () => {
+  beforeEach(() => sessionStorage.clear())
+
   it('turns a provider off when its id is unset, but still rejects a malformed one', async () => {
     const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined)
     const skipped = [
@@ -120,9 +122,16 @@ describe('providers', () => {
     await Promise.resolve()
     await manager.track('sign_up')
     await manager.page()
+    manager.destroy()
+    const reloaded = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await reloaded.boot()
+    await reloaded.page()
     vi.unstubAllGlobals()
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    manager.destroy()
+    reloaded.destroy()
   })
 
   it('forwards only the events the route reports, and events with `only`', async () => {
@@ -144,9 +153,36 @@ describe('providers', () => {
     await manager.track('scroll_depth')
     await manager.track('lead')
     await manager.track('share', {}, { only: ['meta'] })
+    manager.destroy()
+    const reloaded = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await reloaded.boot()
+    await reloaded.page()
+    await reloaded.track('lead')
     vi.unstubAllGlobals()
     const names = fetchMock.mock.calls.map(([, init]) => (JSON.parse(init!.body as string) as { name: string }).name)
-    expect(names).toEqual(['page_view', 'lead', 'share'])
+    expect(names).toEqual(['page_view', 'lead', 'share', 'lead'])
+    reloaded.destroy()
+  })
+
+  it('forwards every event again once the route stops listing them', async () => {
+    sessionStorage.setItem('consentlayer_server:/api/analytics', 'lead')
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const manager = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await manager.boot()
+    await manager.page()
+    await manager.track('lead')
+    await vi.waitFor(() => expect(sessionStorage.length).toBe(0))
+    await manager.page()
+    vi.unstubAllGlobals()
+    const names = fetchMock.mock.calls.map(([, init]) => (JSON.parse(init!.body as string) as { name: string }).name)
+    expect(names).toEqual(['lead', 'page_view'])
     manager.destroy()
   })
 
