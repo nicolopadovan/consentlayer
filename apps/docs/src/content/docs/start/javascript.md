@@ -46,6 +46,21 @@ is enough.
 
 ## 2. Render the banner
 
+`mountBanner()` from `consentlayer/banner` renders ConsentLayer's ready-made
+banner, settings dialog and badge from the controller:
+
+```ts
+// src/consent-banner.ts
+import { mountBanner } from 'consentlayer/banner'
+import { controller } from './analytics'
+
+mountBanner(controller, { privacyPolicyUrl: '/privacy' })
+```
+
+It returns a function that removes them. The [Banner](/guides/banner/) guide
+lists its options, text and styling. To use your own markup instead, build it
+on the controller's state.
+
 The controller holds the state of a banner and a settings dialog.
 `getSnapshot()` returns it, `subscribe(listener)` calls `listener` after each
 change, and `actions` holds the functions that change it. The
@@ -159,15 +174,34 @@ both. [Providers](/guides/providers/#errors) covers the details.
 
 ## Astro
 
-In an Astro site, put the banner markup and the scripts in a component that
-your layout renders on every page. Astro bundles each `<script>` as a module
-and runs it once, so the instance and the controller are created once. Astro
-exposes environment variables to the browser only with the `PUBLIC_` prefix,
-so read `import.meta.env.PUBLIC_GA4_MEASUREMENT_ID` in `src/analytics.ts`.
+In an Astro site, create the controller with `consentLayer()` from
+`consentlayer/astro` instead of step 1's three calls. It creates the
+controller, calls `start()`, sends the page view for the current path and
+query string, and sends one again on every `astro:page-load` event, which
+`<ClientRouter />` from `astro:transitions` fires after each navigation. Its
+second argument takes the options in the table in step 1. Astro exposes
+environment variables to the browser only with the `PUBLIC_` prefix:
 
-With `<ClientRouter />` from `astro:transitions`, navigations no longer load a
-new page. Report each one to the controller from the `astro:page-load` event,
-and keep the banner across navigations with `transition:persist`:
+```ts
+// src/analytics.ts
+import { createAnalytics } from 'consentlayer'
+import { consentLayer } from 'consentlayer/astro'
+import { ga4 } from 'consentlayer/providers/ga4'
+import { autoTracking } from 'consentlayer/auto-tracking'
+
+export const analytics = createAnalytics({
+  providers: [ga4({ measurementId: import.meta.env.PUBLIC_GA4_MEASUREMENT_ID })],
+  autoTracking: autoTracking(),
+})
+
+export const controller = consentLayer(analytics)
+```
+
+Put the banner markup and the script from step 2 in a component that your
+layout renders on every page. Astro bundles each `<script>` as a module and
+runs it once, so the instance and the controller are created once. With
+`<ClientRouter />`, keep the banner across navigations with
+`transition:persist`:
 
 ```astro
 ---
@@ -178,16 +212,14 @@ and keep the banner across navigations with `transition:persist`:
 </div>
 
 <script>
-  import { controller } from '../analytics'
   import '../consent-banner'
-
-  document.addEventListener('astro:page-load', () => {
-    controller.setRoute(location.pathname + location.search)
-  })
 </script>
 ```
 
 `astro:page-load` also fires for the first page; `setRoute()` ignores a call
 with the key it already has, so that page view is not sent twice. Without
-`<ClientRouter />`, the event never fires and the `setRoute()` call in
-`src/analytics.ts` covers each page load.
+`<ClientRouter />`, every navigation loads a new page, which runs the script
+and calls `consentLayer()` once, so each page load sends one page view.
+
+The [Astro example](https://github.com/nicolopadovan/consentlayer/tree/main/apps/example-astro)
+in the repository runs this setup.

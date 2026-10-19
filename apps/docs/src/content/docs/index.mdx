@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: ConsentLayer is a consent-first analytics library for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Solid, SolidStart, Angular and the server.
+description: ConsentLayer is a consent-first analytics library for React, Next.js, TanStack Start, Vue, Nuxt, Svelte, SvelteKit, Solid, SolidStart, Angular, Astro and the server.
 ---
 
 This page describes what ConsentLayer does, how the documentation is organized,
@@ -51,12 +51,14 @@ runs, which `<AnalyticsProvider>` calls for you. Calls made before then are held
 up to 100, and delivered when boot completes to the providers whose requirement
 is met at that moment.
 
-The npm package ships no consent banner. `useConsentController()` exposes the
-banner's state and actions, and the [Consent UI](/guides/consent-ui/) guide
-provides a recipe to copy and restyle, so the markup, wording and translations
-stay in your codebase. On a site without a build step, the
-[script tag](/start/script-tag/) loads ConsentLayer and a ready-made banner
-from a CDN.
+The npm package ships a ready-made [banner](/guides/banner/) in separate entry
+points: `consentlayer/banner` for any controller and
+`consentlayer/<framework>/banner` for each framework binding. To own the
+markup, wording and translations, build your own on `useConsentController()`,
+which exposes the banner's state and actions; the
+[Consent UI](/guides/consent-ui/) guide provides a recipe to copy and restyle.
+On a site without a build step, the [script tag](/start/script-tag/) loads
+ConsentLayer and the same banner from a CDN.
 
 <details>
 <summary>Where consent is stored and how it is announced</summary>
@@ -86,7 +88,7 @@ longer ago than `maxAgeDays`. The full sequence is described in
 The docs are organized into the following sections:
 
 - **Getting started**: Installation, a step-by-step setup for React, Next.js,
-  Vue, Nuxt, Svelte, SvelteKit, Solid, SolidStart, Angular and plain JavaScript, and an interactive [Playground](/playground/) that logs every
+  TanStack Start, Vue, Nuxt, Svelte, SvelteKit, Solid, SolidStart, Angular, Astro and plain JavaScript, and an interactive [Playground](/playground/) that logs every
   provider hook as you change consent.
 - **Guides**: Task-oriented pages for tracking [events and identity](/guides/events/),
   building the [consent UI](/guides/consent-ui/), configuring
@@ -157,6 +159,8 @@ from the vendor's CDN, are not included.
 | `consentlayer/sveltekit`                           | 2.0 kB  |
 | `consentlayer/solid`                               | 2.1 kB  |
 | `consentlayer/solidstart`                          | 2.2 kB  |
+| `consentlayer/tanstack-start`                      | 1.6 kB  |
+| `consentlayer/astro`                               | 1.2 kB  |
 | `consentlayer/angular`                             | 2.2 kB  |
 | `consentlayer/providers/ga4`                       | 1.9 kB  |
 | `consentlayer/providers/gtm`                       | 1.8 kB  |

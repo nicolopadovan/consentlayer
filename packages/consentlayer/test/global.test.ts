@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createConsentController } from '../src/core/consent-controller'
 import { createAnalytics } from '../src/core/create-analytics'
-import { mountBanner, readBannerConfig } from '../src/global/banner'
+import { mountBanner, type BannerOptions } from '../src/banner'
+import { readBannerConfig } from '../src/global/banner'
 import { setPostHogHost } from '../src/global/cdn/posthog-host'
 import { createGlobal, readConfig } from '../src/global/config'
 
@@ -145,7 +146,7 @@ describe('CDN shims', () => {
 })
 
 describe('banner', () => {
-  const setup = async (config = {}) => {
+  const setup = async (config: BannerOptions = {}) => {
     const analytics = createAnalytics({ providers: [] })
     const controller = createConsentController(analytics)
     controller.start()
@@ -162,11 +163,121 @@ describe('banner', () => {
   }
 
   it('reads the privacy policy URL and text overrides from data- attributes', () => {
-    const tag = script({ privacyPolicyUrl: '/privacy', textAcceptAll: 'Allow all' })
+    const tag = script({
+      privacyPolicyUrl: '/privacy',
+      cookiePolicyUrl: '/cookies',
+      termsUrl: '/terms',
+      textAcceptAll: 'Allow all',
+    })
     expect(readBannerConfig({ text: { title: 'Cookies!', acceptAll: 'Yes' } }, tag)).toEqual({
       privacyPolicyUrl: '/privacy',
+      cookiePolicyUrl: '/cookies',
+      termsUrl: '/terms',
       text: { title: 'Cookies!', acceptAll: 'Allow all' },
     })
+  })
+
+  it('builds links and bold text from the text, never markup or script URLs', async () => {
+    const message = () => document.querySelector('.consentlayer-banner p')!.innerHTML
+    const first = await setup({
+      privacyPolicyUrl: '/privacy',
+      cookiePolicyUrl: '/cookies',
+      termsUrl: '/terms',
+      text: {
+        message:
+          'Read our {cookiePolicy} and [notice](https://example.com/n), **not** <b>[this](javascript:alert)</b>.',
+      },
+    })
+    expect(message()).toBe(
+      'Read our <a href="/cookies">Cookie policy</a> and <a href="https://example.com/n">notice</a>, ' +
+        '<strong>not</strong> &lt;b&gt;this&lt;/b&gt;. <a href="/privacy">Privacy policy</a> · <a href="/terms">Terms of service</a>',
+    )
+    first.unmount()
+    first.analytics.destroy()
+    const { analytics, unmount } = await setup({ text: { message: 'See {privacyPolicy}.' } })
+    expect(message()).toBe('See Privacy policy.')
+    unmount()
+    analytics.destroy()
+  })
+
+  it('follows the laws from window.ConsentLayer, and a data- text over them', async () => {
+    const global = createGlobal(readConfig({ consent: { laws: { ccpa: true } } }, script({ region: 'US-CA' })))
+    const unmount = mountBanner(global.controller, readBannerConfig(undefined, script({ textBadge: 'Privacy' })))
+    await settle()
+    const badge = document.querySelector<HTMLButtonElement>('.consentlayer-badge')!
+    expect([badge.hidden, badge.textContent]).toEqual([false, 'Privacy'])
+    expect(document.querySelector<HTMLElement>('.consentlayer-banner')!.hidden).toBe(true)
+    unmount()
+    global.destroy()
+  })
+
+  it('reads the placement and the badge from data- attributes', () => {
+    const tag = script({
+      position: 'top',
+      overlay: '',
+      blocking: '',
+      emphasis: 'accept',
+      badge: 'always',
+      badgePosition: 'right',
+      badgeLabel: '',
+      badgeAttached: '',
+    })
+    expect(readBannerConfig(undefined, tag)).toEqual({
+      position: 'top',
+      overlay: true,
+      blocking: true,
+      emphasis: 'accept',
+      badge: { show: 'always', position: 'right', label: true, attached: true },
+      text: {},
+    })
+    expect(readBannerConfig({ badge: { position: 'left' } }, script({ badge: 'false' })).badge).toBe(false)
+    expect(readBannerConfig({ badge: false }, script({ badgePosition: 'right', badge: 'always' })).badge).toEqual({
+      show: 'always',
+      position: 'right',
+    })
+  })
+
+  it('lays out the top and bottom positions as a bar and the others as a card, dimmed or blocking on request', async () => {
+    const layout = async (config: BannerOptions) => {
+      const { analytics, unmount } = await setup(config)
+      const banner = document.querySelector<HTMLElement>('.consentlayer-banner')!
+      const result = [banner.tagName, banner.dataset.layout, banner.dataset.position, 'overlay' in banner.dataset]
+      unmount()
+      analytics.destroy()
+      return result
+    }
+    expect(await layout({})).toEqual(['SECTION', 'card', 'bottom-left', false])
+    expect(await layout({ position: 'top', overlay: true })).toEqual(['SECTION', 'bar', 'top', true])
+    expect(await layout({ position: 'center', blocking: true })).toEqual(['DIALOG', 'card', 'center', false])
+  })
+
+  it('shows the badge once the visitor has chosen, and it reopens the settings', async () => {
+    const { analytics, unmount } = await setup()
+    const badge = document.querySelector<HTMLButtonElement>('.consentlayer-badge')!
+    expect(badge.hidden).toBe(true)
+    await click('.consentlayer-banner', 'Reject non-essential')
+    expect(badge.hidden).toBe(false)
+    expect(badge.getAttribute('aria-label')).toBe('Cookie settings')
+    badge.click()
+    await settle()
+    expect(document.querySelector('dialog')!.open).toBe(true)
+    unmount()
+    expect(document.querySelector('.consentlayer-badge')).toBeNull()
+    analytics.destroy()
+  })
+
+  it('shows the badge always, with its label, or not at all', async () => {
+    const first = await setup({ badge: { show: 'always', label: true } })
+    const badge = document.querySelector<HTMLButtonElement>('.consentlayer-badge')!
+    expect(badge.hidden).toBe(false)
+    expect(badge.textContent).toBe('Cookie settings')
+    expect(badge.hasAttribute('aria-label')).toBe(false)
+    first.unmount()
+    first.analytics.destroy()
+    const { analytics, unmount } = await setup({ badge: false })
+    expect(document.querySelector('.consentlayer-badge')).toBeNull()
+    unmount()
+    analytics.destroy()
   })
 
   it('shows until the visitor accepts all', async () => {
@@ -197,24 +308,82 @@ describe('banner', () => {
 
   it('rejects non-essential categories', async () => {
     const { analytics, unmount } = await setup()
+    expect(document.querySelector('.consentlayer-banner .consentlayer-close')).toBeNull()
     await click('.consentlayer-banner', 'Reject non-essential')
     expect(analytics.consent.getConsent()).toMatchObject({ preferences: false, analytics: false, marketing: false })
     unmount()
     analytics.destroy()
   })
 
-  it('saves the toggles from the settings dialog', async () => {
+  it('gives Reject and Accept the same weight unless told to stress Accept', async () => {
+    const weights = () =>
+      ['Reject non-essential', 'Accept all'].map((label) =>
+        [...document.querySelectorAll<HTMLButtonElement>('.consentlayer-banner button')]
+          .find((node) => node.textContent === label)!
+          .classList.contains('consentlayer-secondary'),
+      )
+    const first = await setup()
+    expect(weights()).toEqual([false, false])
+    first.unmount()
+    first.analytics.destroy()
+    const { analytics, unmount } = await setup({ emphasis: 'accept' })
+    expect(weights()).toEqual([true, false])
+    unmount()
+    analytics.destroy()
+  })
+
+  it('accepts all from the settings dialog, and its × closes it without a choice', async () => {
     const { analytics, unmount } = await setup()
     await click('.consentlayer-banner', 'Customize')
     const dialog = document.querySelector('dialog')!
+    expect(dialog.querySelector('[role=switch]')).not.toBeNull()
+    dialog.querySelector<HTMLButtonElement>('.consentlayer-close')!.click()
+    await settle()
+    expect(dialog.open).toBe(false)
+    expect(analytics.consent.getConsent()).toBeNull()
+    await click('.consentlayer-banner', 'Customize')
+    await click('dialog', 'Accept all')
+    expect(analytics.consent.getConsent()).toMatchObject({ preferences: true, analytics: true, marketing: true })
+    expect(dialog.open).toBe(false)
+    unmount()
+    analytics.destroy()
+  })
+
+  it('rejects non-essential categories from the × button', async () => {
+    const { analytics, unmount } = await setup({ closeButton: true })
+    const close = document.querySelector<HTMLButtonElement>('.consentlayer-close')!
+    expect(close.getAttribute('aria-label')).toBe('Continue without accepting')
+    close.click()
+    await settle()
+    expect(analytics.consent.getConsent()).toMatchObject({ preferences: false, analytics: false, marketing: false })
+    expect(document.querySelector<HTMLElement>('.consentlayer-banner')!.hidden).toBe(true)
+    unmount()
+    analytics.destroy()
+  })
+
+  it('closes the blocking banner once the visitor chooses', async () => {
+    const { analytics, unmount } = await setup({ blocking: true })
+    const banner = document.querySelector<HTMLDialogElement>('.consentlayer-banner')!
+    expect(banner.open).toBe(true)
+    await click('.consentlayer-banner', 'Accept all')
+    expect(banner.open).toBe(false)
+    unmount()
+    analytics.destroy()
+  })
+
+  it('saves the toggles from the settings dialog', async () => {
+    const { analytics, unmount } = await setup({ text: { settingsMessage: 'Choose **what** we use.' } })
+    await click('.consentlayer-banner', 'Customize')
+    const dialog = document.querySelector('dialog')!
     expect(dialog.open).toBe(true)
+    expect(dialog.querySelector('p')!.innerHTML).toBe('Choose <strong>what</strong> we use.')
     expect(dialog.getAttribute('aria-labelledby')).toBe('consentlayer-dialog-title')
-    expect(document.querySelector<HTMLElement>('.consentlayer-banner')!.hidden).toBe(false)
+    expect(document.querySelector<HTMLElement>('.consentlayer-banner')!.hidden).toBe(true)
     const analyticsToggle = [...dialog.querySelectorAll('label')].find((label) =>
       label.textContent?.startsWith('Analytics'),
     )!
     analyticsToggle.querySelector('input')!.click()
-    await click('dialog', 'Save')
+    await click('dialog', 'Save choices')
     expect(analytics.consent.getConsent()).toMatchObject({ preferences: false, analytics: true, marketing: false })
     expect(dialog.open).toBe(false)
     unmount()

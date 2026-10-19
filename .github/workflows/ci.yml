@@ -22,6 +22,8 @@ jobs:
       - run: pnpm format:check
       - run: pnpm knip
       - run: pnpm turbo run typecheck lint test build
+      - run: pnpm --filter consentlayer exec playwright install --with-deps chromium-headless-shell
+      - run: pnpm --filter consentlayer test:browser
       - run: pnpm --filter consentlayer check:package
 
   min-versions:
@@ -43,6 +45,7 @@ jobs:
           pnpm.overrides.@angular/core=20.0.0 pnpm.overrides.@angular/platform-browser=20.0.0
           pnpm.overrides.@angular/router=20.0.0 pnpm.overrides.posthog-js=1.438.0
           pnpm.overrides.@sentry/browser=11.0.0 pnpm.overrides.@sentry/nextjs=11.0.0
+          pnpm.overrides.@tanstack/react-router=1.29.0
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm --filter consentlayer typecheck
       - run: pnpm --filter consentlayer test

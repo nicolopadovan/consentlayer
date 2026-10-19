@@ -18,7 +18,7 @@ export interface ServerDestination<Forward extends boolean = boolean> {
   requiredConsent: keyof ConsentState
   /** Whether `createAnalyticsHandler` may send browser events to it. */
   forwardBrowserEvents: Forward
-  /** Event names sent to it besides page views: all when unset, none with `false`. An event whose `only` names it is always sent. */
+  /** Event names sent to it, `page_view` included: all when unset, none with `false`. An event whose `only` names it is always sent. */
   events?: readonly string[] | false
   send(event: ServerEvent, request?: ServerRequestInfo): Promise<void>
 }
@@ -36,7 +36,7 @@ export async function sendServerEvent(
       destination !== undefined &&
       event.consent[destination.requiredConsent] === true &&
       (!event.only || event.only.includes(destination.id)) &&
-      (event.name === 'page_view' || receivesEvent(destination, event.name, event.only)) &&
+      receivesEvent(destination, event.name, event.only) &&
       (!event.categories || event.categories.includes(destination.requiredConsent)),
   )
   const results = await Promise.allSettled(targets.map((destination) => destination.send(event, options.request)))
@@ -56,6 +56,23 @@ export function requestInfo(request: Request): ServerRequestInfo {
     userAgent: headers.get('user-agent') ?? undefined,
     cookies: parseCookieHeader(headers.get('cookie') ?? ''),
   }
+}
+
+const GEO_HEADERS = [
+  ['x-vercel-ip-country', 'x-vercel-ip-country-region'],
+  ['cf-ipcountry', 'cf-region-code'],
+  ['cloudfront-viewer-country', 'cloudfront-viewer-country-region'],
+]
+
+/** The visitor's ISO 3166-2 region, such as `'US-CA'` or `'FR'`, from the headers Vercel, Cloudflare or CloudFront add. */
+export function regionFromHeaders(headers: Pick<Headers, 'get'>): string | undefined {
+  for (const [countryHeader, subdivisionHeader] of GEO_HEADERS) {
+    const country = headers.get(countryHeader)?.trim().toUpperCase()
+    if (!country || !/^[A-Z]{2}$/.test(country) || country === 'XX') continue
+    const subdivision = headers.get(subdivisionHeader)?.trim().toUpperCase().replace(`${country}-`, '')
+    return subdivision && /^[A-Z0-9]{1,3}$/.test(subdivision) ? `${country}-${subdivision}` : country
+  }
+  return undefined
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -101,7 +118,12 @@ export function createAnalyticsHandler(options: {
   if (options.consentCookie && !options.consentCookie.secret) {
     console.warn('[consentlayer] consentCookie.secret is not set: every event is treated as denied.')
   }
-  const destinations = options.destinations.filter((destination) => destination?.forwardBrowserEvents)
+  const destinations = options.destinations.filter(
+    (destination): destination is ServerDestination<true> => destination?.forwardBrowserEvents === true,
+  )
+  const names = destinations.every((destination) => destination.events !== undefined)
+    ? [...new Set(destinations.flatMap((destination) => destination.events || []))].join(',')
+    : undefined
   return async (request) => {
     try {
       if (options.consentCookie?.secret) assertSecret(options.consentCookie.secret)
@@ -124,10 +146,10 @@ export function createAnalyticsHandler(options: {
         request: requestInfo(request),
       })
       for (const result of results) if (!result.ok) options.onError?.(result.error)
-      return new Response(null, {
-        status: 204,
-        headers: options.consentCookie && !proof ? { 'consentlayer-consent': 'missing' } : {},
-      })
+      const headers = new Headers()
+      if (names !== undefined) headers.set('consentlayer-events', names)
+      if (options.consentCookie && !proof) headers.set('consentlayer-consent', 'missing')
+      return new Response(null, { status: 204, headers })
     } catch (error) {
       const status = (error as { status?: unknown }).status
       if (typeof status === 'number') return new Response(null, { status })

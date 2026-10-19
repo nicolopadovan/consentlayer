@@ -87,6 +87,9 @@ only provides the instance and the initial state.
 
 ## 3. Add the banner
 
+To use the ready-made banner instead, render [`<ConsentBanner>`](/guides/banner/#vue-and-nuxt)
+from `consentlayer/vue/banner`; the rest of this step builds your own.
+
 Copy the [Vue consent banner recipe](/guides/consent-ui/#vue) into
 `src/components/ConsentBanner.vue`, render it once, and give visitors a way to
 reopen their settings:

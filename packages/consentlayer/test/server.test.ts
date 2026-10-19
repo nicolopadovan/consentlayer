@@ -206,7 +206,7 @@ describe('server destinations', () => {
     expect(() => sgtm({ url: 'http://sgtm.example.com/mp/collect', measurementId: 'G-ABC123' })).toThrow('HTTPS')
   })
 
-  it('sends a destination page views and the events in its `events` option, unless `only` names it', async () => {
+  it('sends a destination only the events in its `events` option, page views included, unless `only` names it', async () => {
     const send = vi.fn<ServerDestination['send']>(() => Promise.resolve())
     const destination: ServerDestination = {
       id: 'd',
@@ -217,7 +217,31 @@ describe('server destinations', () => {
     }
     for (const event of [{ name: 'page_view' }, { name: 'purchase' }, { name: 'share', only: ['d'] }])
       await sendServerEvent({ ...event, consent: granted }, { destinations: [destination] })
-    expect(send.mock.calls.map(([event]) => event.name)).toEqual(['page_view', 'share'])
+    expect(send.mock.calls.map(([event]) => event.name)).toEqual(['share'])
+    send.mockClear()
+    destination.events = ['page_view']
+    for (const event of [{ name: 'page_view' }, { name: 'purchase' }])
+      await sendServerEvent({ ...event, consent: granted }, { destinations: [destination] })
+    expect(send.mock.calls.map(([event]) => event.name)).toEqual(['page_view'])
+  })
+
+  it('tells the browser which events its destinations take', async () => {
+    const destination = (events?: readonly string[] | false): ServerDestination<true> => ({
+      id: 'd',
+      requiredConsent: 'analytics',
+      forwardBrowserEvents: true,
+      events,
+      send: () => Promise.resolve(),
+    })
+    const header = async (...destinations: ServerDestination<true>[]) =>
+      (await createAnalyticsHandler({ destinations })(post({ name: 'lead', consent: granted }))).headers.get(
+        'consentlayer-events',
+      )
+    expect(await header(destination(['lead', 'sign_up']), destination(['lead']), destination(false))).toBe(
+      'lead,sign_up',
+    )
+    expect(await header(destination(false))).toBe('')
+    expect(await header(destination(['lead']), destination())).toBeNull()
   })
 
   it('sends server-only events to GA4 with the cookie client id and consent', async () => {

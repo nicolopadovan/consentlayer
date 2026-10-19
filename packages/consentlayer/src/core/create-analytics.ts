@@ -84,6 +84,9 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
       bootstrap: engine.bootstrap,
       getConsent: engine.getConsent,
       isStale: engine.isStale,
+      getRegion: engine.getRegion,
+      hasChoice: engine.hasChoice,
+      shouldAsk: engine.shouldAsk,
       setConsent: engine.setConsent,
       subscribe: engine.subscribe,
       async update(partial) {

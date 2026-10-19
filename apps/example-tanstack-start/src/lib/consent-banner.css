@@ -1,0 +1,68 @@
+.consent-banner,
+.consent-dialog {
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #111827;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.12);
+  font:
+    0.95rem/1.45 system-ui,
+    sans-serif;
+}
+.consent-banner {
+  inset: auto 1rem 1rem;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+.consent-dialog {
+  top: 50%;
+  left: 50%;
+  width: min(30rem, calc(100vw - 2rem));
+  transform: translate(-50%, -50%);
+}
+.consent-banner h2,
+.consent-dialog h2 {
+  margin: 0;
+  color: inherit;
+  font-size: 1.1rem;
+}
+.consent-banner p {
+  margin: 0;
+}
+.consent-banner a {
+  color: inherit;
+}
+.consent-dialog label {
+  display: flex;
+  gap: 0.6rem;
+  align-items: start;
+}
+.consent-dialog input {
+  margin-top: 0.3rem;
+  accent-color: #111827;
+}
+.consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.consent-actions button {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.consent-actions .primary {
+  border-color: #111827;
+  background: #111827;
+  color: #fff;
+}

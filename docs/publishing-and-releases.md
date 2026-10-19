@@ -10,13 +10,16 @@ Versions and the changelog are managed with [Changesets](https://changesets.dev)
    in the package's `package.json`, and make it public. npm adds provenance
    only for public repositories.
 2. In the repository settings → Environments, create `npm` with yourself as a
-   required reviewer. The publish job waits there for your approval.
+   required reviewer, and limit its deployment branches to `main`. The publish
+   job waits there for your approval.
 3. In the repository settings → Actions → General, allow GitHub Actions to
    create and approve pull requests, so the release pull request can be opened.
 4. On npmjs.com, open the package settings → Trusted publishing → GitHub
    Actions, and enter owner `nicolopadovan`, repository
    `consentlayer`, workflow `publish-package.yml` and
-   environment `npm`.
+   environment `npm`. Under Allowed actions, also allow `npm publish`:
+   configurations created after 3 September 2026 allow only staged publishing
+   by default, and the workflow publishes directly.
 5. In the repository settings → Pages, set the source to GitHub Actions and
    the custom domain to `consentlayer.nicolopadovan.com`. At your DNS
    provider, add a `CNAME` record from `consentlayer` to
@@ -52,12 +55,12 @@ reaches `main`.
 
 ## Prereleases
 
-The repository is in Changesets prerelease mode (`.changeset/pre.json`, tag
-`rc`), so releases are numbered `1.0.0-rc.N`. The workflow publishes any
-version with a prerelease suffix under the `next` dist-tag, so
-`npm install consentlayer` keeps getting the latest stable version. To
-release 1.0.0, run `pnpm changeset pre exit` and merge; the next release
-pull request bumps to `1.0.0`, which is published under `latest`.
+Releases are stable versions under the `latest` dist-tag. To publish
+prereleases, run `pnpm changeset pre enter <tag>` (for example `rc`) and
+merge; versions then carry a suffix such as `2.0.0-rc.0`, and the workflow
+publishes any version with a suffix under the `next` dist-tag, so
+`npm install consentlayer` keeps getting the latest stable version. Run
+`pnpm changeset pre exit` and merge to return to stable releases.
 
 ## When The Workflow Fails
 

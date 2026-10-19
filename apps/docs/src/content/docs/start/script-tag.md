@@ -8,10 +8,10 @@ static site, a server-rendered page, or a CMS that lets you add code to the
 page head. Two files ship in the `consentlayer` package for this, each a
 single minified script:
 
-| File                                 | What it does                                                                                                                                           |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `dist/consentlayer.global.js`        | Creates the instance and its consent controller from your configuration, with every browser provider included, and sends page views.                   |
-| `dist/consentlayer-banner.global.js` | Renders a consent banner and a settings dialog on that controller. Optional: leave it out to [build your own](/start/javascript/#2-render-the-banner). |
+| File                                 | What it does                                                                                                                                                          |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dist/consentlayer.global.js`        | Creates the instance and its consent controller from your configuration, with every browser provider included, and sends page views.                                  |
+| `dist/consentlayer-banner.global.js` | Renders the [banner](/guides/banner/) and its settings dialog on that controller. Optional: leave it out to [build your own](/start/javascript/#2-render-the-banner). |
 
 ## 1. Add the scripts
 
@@ -32,15 +32,6 @@ page. To control upgrades, pin an exact version instead, such as
 `consentlayer@1.0.0`. With an exact version you can also add
 [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity):
 jsDelivr shows the `integrity` hash of each file on the package's page.
-
-:::note
-`@1` matches stable releases only, so it resolves once ConsentLayer 1.0.0 is
-released. Until then, use `@next`, which serves the latest prerelease, or pin
-an exact prerelease version. ConsentLayer publishes prereleases under the npm
-tag `next`, and both CDNs accept an npm tag in place of a version. jsDelivr
-advises against tags in production, so pin an exact version there once you
-have tested it.
-:::
 
 The two scripts load in either order, and work with `defer` or `async`. The
 banner waits for the main script and for the document to be parsed.
@@ -119,31 +110,32 @@ An unknown name logs `[consentlayer] Unknown provider "<name>".` or
 ></script>
 ```
 
-| Attribute                  | Sets                                                  |
-| -------------------------- | ----------------------------------------------------- |
-| `data-ga4`                 | `ga4.measurementId`                                   |
-| `data-gtm`                 | `gtm.containerId`                                     |
-| `data-meta-pixel`          | `meta.pixelId`                                        |
-| `data-tiktok-pixel`        | `tiktok.pixelId`                                      |
-| `data-google-ads`          | `googleAds.conversionId`                              |
-| `data-linkedin-partner`    | `linkedin.partnerId`                                  |
-| `data-clarity-project`     | `clarity.projectId`                                   |
-| `data-contentsquare-tag`   | `contentsquare.tagId`                                 |
-| `data-hotjar-site`         | `hotjar.siteId`                                       |
-| `data-hotjar-version`      | `hotjar.version`                                      |
-| `data-posthog-key`         | `posthog.apiKey`                                      |
-| `data-posthog-host`        | `posthog.apiHost`                                     |
-| `data-posthog-recording`   | `posthog.recording`                                   |
-| `data-sentry-dsn`          | `sentry.dsn`                                          |
-| `data-sentry-environment`  | `sentry.environment`                                  |
-| `data-sentry-replay`       | `sentry.replay`                                       |
-| `data-sentry-tracing`      | `sentry.tracing`                                      |
-| `data-google-consent-mode` | The Google Consent Mode adapter, with no options      |
-| `data-shopify`             | The Shopify Customer Privacy adapter, with no options |
-| `data-tcf`                 | The IAB TCF adapter, with no options                  |
-| `data-vercel`              | `vercel()`, with no options                           |
-| `data-auto-tracking`       | `autoTracking`                                        |
-| `data-debug`               | `debug`                                               |
+| Attribute                  | Sets                                                             |
+| -------------------------- | ---------------------------------------------------------------- |
+| `data-ga4`                 | `ga4.measurementId`                                              |
+| `data-gtm`                 | `gtm.containerId`                                                |
+| `data-meta-pixel`          | `meta.pixelId`                                                   |
+| `data-tiktok-pixel`        | `tiktok.pixelId`                                                 |
+| `data-google-ads`          | `googleAds.conversionId`                                         |
+| `data-linkedin-partner`    | `linkedin.partnerId`                                             |
+| `data-clarity-project`     | `clarity.projectId`                                              |
+| `data-contentsquare-tag`   | `contentsquare.tagId`                                            |
+| `data-hotjar-site`         | `hotjar.siteId`                                                  |
+| `data-hotjar-version`      | `hotjar.version`                                                 |
+| `data-posthog-key`         | `posthog.apiKey`                                                 |
+| `data-posthog-host`        | `posthog.apiHost`                                                |
+| `data-posthog-recording`   | `posthog.recording`                                              |
+| `data-sentry-dsn`          | `sentry.dsn`                                                     |
+| `data-sentry-environment`  | `sentry.environment`                                             |
+| `data-sentry-replay`       | `sentry.replay`                                                  |
+| `data-sentry-tracing`      | `sentry.tracing`                                                 |
+| `data-google-consent-mode` | The Google Consent Mode adapter, with no options                 |
+| `data-shopify`             | The Shopify Customer Privacy adapter, with no options            |
+| `data-tcf`                 | The IAB TCF adapter, with no options                             |
+| `data-vercel`              | `vercel()`, with no options                                      |
+| `data-auto-tracking`       | `autoTracking`                                                   |
+| `data-debug`               | `debug`                                                          |
+| `data-region`              | `consent.region`; see [Privacy laws by region](/guides/regions/) |
 
 An attribute that sets a boolean, or turns on an adapter or `vercel()`, is
 `true` when present, unless its value is `"false"`. You can combine both ways: an attribute wins over the same option in
@@ -179,19 +171,40 @@ runs before ConsentLayer, such as one marked `async`, can wait for the
 
 ## 3. The banner
 
-`consentlayer-banner.global.js` shows a banner at the bottom of the page until
-the visitor makes a choice, with three buttons: Reject non-essential,
-Customize and Accept all. Customize opens a settings dialog with a toggle for
-each category. The banner is labeled with its heading; the dialog is a modal
-`<dialog>`, so it keeps focus inside while open, closes with Escape and
-returns focus to the button that opened it.
+`consentlayer-banner.global.js` shows a [banner](/guides/banner/) in the
+bottom-left corner until the visitor makes a choice, with Accept all, Reject
+non-essential and Customize. Customize opens a settings dialog with a switch
+for each category. After the choice, a badge in the corner reopens the
+settings.
 
 The banner's default text and layout have not been legally reviewed. Whether
 they are enough where you and your visitors are is your responsibility; see
 the [legal notice](/guides/legal/).
 
-To let visitors change their choice later, call `CONSENTLAYER_openConsent()`
-from a link in your footer. The `openConsentGlobalKey` option renames it.
+Configure it with `window.ConsentLayer.banner` or with `data-` attributes on
+the banner's script tag. An attribute wins. [Banner](/guides/banner/) lists
+every option, text and CSS custom property.
+
+```html
+<script>
+  window.ConsentLayer = {
+    providers: { ga4: { measurementId: 'G-XXXXXXXXXX' } },
+    banner: { position: 'bottom', privacyPolicyUrl: '/privacy', text: { title: 'Your privacy' } },
+  }
+</script>
+```
+
+```html
+<script
+  src="https://cdn.jsdelivr.net/npm/consentlayer@1/dist/consentlayer-banner.global.js"
+  data-position="bottom"
+  data-privacy-policy-url="/privacy"
+  data-text-title="Your privacy"
+></script>
+```
+
+To let visitors change their choice from your footer as well, call
+`CONSENTLAYER_openConsent()`. The `openConsentGlobalKey` option renames it.
 
 ```html
 <button type="button" onclick="CONSENTLAYER_openConsent()">Cookie settings</button>
@@ -207,86 +220,11 @@ CMP or the CMP reports `gdprApplies: false`. Link your footer to the CMP's
 settings rather than to `CONSENTLAYER_openConsent()`, since a choice made in
 ConsentLayer's dialog is not written back to the CMP.
 
-### Text and privacy policy
-
-The text is in English. Override any string, and add a link to your privacy
-policy, with `window.ConsentLayer.banner` or with `data-` attributes on the
-banner's script tag. An attribute wins.
-
-```html
-<script>
-  window.ConsentLayer = {
-    providers: { ga4: { measurementId: 'G-XXXXXXXXXX' } },
-    banner: { privacyPolicyUrl: '/privacy', text: { title: 'Your privacy' } },
-  }
-</script>
-```
-
-```html
-<script
-  src="https://cdn.jsdelivr.net/npm/consentlayer@1/dist/consentlayer-banner.global.js"
-  data-privacy-policy-url="/privacy"
-  data-text-title="Your privacy"
-></script>
-```
-
-| `text` key               | `data-` attribute                   | Default                                                                                           |
-| ------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `title`                  | `data-text-title`                   | Cookies                                                                                           |
-| `message`                | `data-text-message`                 | We use cookies to run this site and, with your consent, for preferences, analytics and marketing. |
-| `privacyPolicy`          | `data-text-privacy-policy`          | Privacy policy                                                                                    |
-| `gpc`                    | `data-text-gpc`                     | Your browser's Global Privacy Control signal is on, so marketing is off unless you switch it on.  |
-| `rejectNonEssential`     | `data-text-reject-non-essential`    | Reject non-essential                                                                              |
-| `customize`              | `data-text-customize`               | Customize                                                                                         |
-| `acceptAll`              | `data-text-accept-all`              | Accept all                                                                                        |
-| `settingsTitle`          | `data-text-settings-title`          | Cookie settings                                                                                   |
-| `necessaryLabel`         | `data-text-necessary-label`         | Necessary                                                                                         |
-| `necessaryDescription`   | `data-text-necessary-description`   | Needed for the site to work, such as remembering this choice. Always on.                          |
-| `preferencesLabel`       | `data-text-preferences-label`       | Preferences                                                                                       |
-| `preferencesDescription` | `data-text-preferences-description` | Remember settings such as language or region.                                                     |
-| `analyticsLabel`         | `data-text-analytics-label`         | Analytics                                                                                         |
-| `analyticsDescription`   | `data-text-analytics-description`   | Help us understand how the site is used.                                                          |
-| `marketingLabel`         | `data-text-marketing-label`         | Marketing                                                                                         |
-| `marketingDescription`   | `data-text-marketing-description`   | Measure our ads and show relevant ones on other sites.                                            |
-| `close`                  | `data-text-close`                   | Close                                                                                             |
-| `save`                   | `data-text-save`                    | Save                                                                                              |
-
-The privacy policy link is shown only when `privacyPolicyUrl` is set. The
-`gpc` line is shown under the message only while the visitor's browser sends
-the [Global Privacy Control](/guides/consent-ui/#global-privacy-control)
-signal; Accept all then leaves marketing off. Set
-`window.ConsentLayer.consent.gpc` to `false` to ignore the signal.
-A [custom category](/guides/consent-ui/#custom-categories) named in
-`consent.categories` gets a toggle labeled with `<category>Label` and
-`<category>Description`.
-
-### Styling
-
-The banner reads these CSS custom properties. Set them on `:root` or any
-ancestor of `<body>`:
-
-```css
-:root {
-  --consentlayer-accent: #4f46e5;
-  --consentlayer-radius: 0;
-}
-```
-
-| Property                       | Default                                                       |
-| ------------------------------ | ------------------------------------------------------------- |
-| `--consentlayer-background`    | `#fff`                                                        |
-| `--consentlayer-color`         | `#111827`                                                     |
-| `--consentlayer-border`        | `#e5e7eb`                                                     |
-| `--consentlayer-radius`        | `.75rem`                                                      |
-| `--consentlayer-button-radius` | `.5rem`                                                       |
-| `--consentlayer-accent`        | `#111827`, for the primary buttons, checkboxes and focus ring |
-| `--consentlayer-accent-color`  | `#fff`, the text on primary buttons                           |
-| `--consentlayer-font`          | `.95rem/1.45 system-ui, sans-serif`                           |
-| `--consentlayer-backdrop`      | `rgb(0 0 0 / .3)`, behind the dialog                          |
-| `--consentlayer-z-index`       | `1000`                                                        |
-
-For more, target the `.consentlayer-banner` and `.consentlayer-dialog`
-classes.
+The badge follows a stored choice, not the banner. The consent the CMP reports
+before the visitor has chosen is provisional and does not show it, but once the
+CMP reports a choice, ConsentLayer stores it and the badge appears, on every
+later visit too. Its dialog does not write back to the CMP either, so add
+`data-badge="false"` to the banner's script tag.
 
 ## PostHog and Sentry
 

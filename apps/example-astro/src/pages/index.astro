@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout title="Home | ConsentLayer with Astro">
+  <h1>ConsentLayer with Astro</h1>
+  <button type="button" id="sign-up">Track sign_up</button>
+</Layout>
+
+<script>
+  import { analytics } from '../analytics'
+
+  document.addEventListener('astro:page-load', () => {
+    document.getElementById('sign-up')?.addEventListener('click', () => {
+      void analytics.track('sign_up', { method: 'email' })
+    })
+  })
+</script>

@@ -92,6 +92,9 @@ export default defineNuxtConfig({
 
 ## 3. Add the banner
 
+To use the ready-made banner instead, render [`<ConsentBanner>`](/guides/banner/#vue-and-nuxt)
+from `consentlayer/vue/banner`; the rest of this step builds your own.
+
 Copy the [Vue consent banner recipe](/guides/consent-ui/#vue) into
 `app/components/ConsentBanner.vue`. The consent choice is only known in the
 browser, so render the banner, the settings button and anything that reads

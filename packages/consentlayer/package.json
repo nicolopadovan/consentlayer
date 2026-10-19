@@ -1,6 +1,6 @@
 {
   "name": "consentlayer",
-  "version": "1.0.0-rc.0",
+  "version": "1.3.0",
   "description": "Consent-first analytics for the browser and server: one API in front of GA4, Meta, PostHog, Sentry and more, gated by the visitor's consent.",
   "keywords": [
     "consent",
@@ -20,7 +20,9 @@
     "sveltekit",
     "solid",
     "solidstart",
-    "angular"
+    "angular",
+    "tanstack-start",
+    "astro"
   ],
   "type": "module",
   "license": "MIT",
@@ -63,6 +65,10 @@
       "types": "./dist/auto-tracking.d.ts",
       "import": "./dist/auto-tracking.js"
     },
+    "./banner": {
+      "types": "./dist/banner.d.ts",
+      "import": "./dist/banner.js"
+    },
     "./ecommerce": {
       "types": "./dist/ecommerce.d.ts",
       "import": "./dist/ecommerce.js"
@@ -70,6 +76,10 @@
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
+    },
+    "./react/banner": {
+      "types": "./dist/react/banner.d.ts",
+      "import": "./dist/react/banner.js"
     },
     "./next": {
       "types": "./dist/next.d.ts",
@@ -79,10 +89,19 @@
       "types": "./dist/vue.d.ts",
       "import": "./dist/vue.js"
     },
+    "./vue/banner": {
+      "types": "./dist/vue/banner.d.ts",
+      "import": "./dist/vue/banner.js"
+    },
     "./svelte": {
       "types": "./dist/svelte.d.ts",
       "svelte": "./dist/svelte.js",
       "import": "./dist/svelte.js"
+    },
+    "./svelte/banner": {
+      "types": "./dist/svelte/banner.d.ts",
+      "svelte": "./dist/svelte/banner.js",
+      "import": "./dist/svelte/banner.js"
     },
     "./sveltekit": {
       "types": "./dist/sveltekit.d.ts",
@@ -93,13 +112,29 @@
       "types": "./dist/solid.d.ts",
       "import": "./dist/solid.js"
     },
+    "./solid/banner": {
+      "types": "./dist/solid/banner.d.ts",
+      "import": "./dist/solid/banner.js"
+    },
     "./solidstart": {
       "types": "./dist/solidstart.d.ts",
       "import": "./dist/solidstart.js"
     },
+    "./tanstack-start": {
+      "types": "./dist/tanstack-start.d.ts",
+      "import": "./dist/tanstack-start.js"
+    },
+    "./astro": {
+      "types": "./dist/astro.d.ts",
+      "import": "./dist/astro.js"
+    },
     "./angular": {
       "types": "./dist/angular.d.ts",
       "import": "./dist/angular.js"
+    },
+    "./angular/banner": {
+      "types": "./dist/angular/banner.d.ts",
+      "import": "./dist/angular/banner.js"
     },
     "./nuxt": {
       "types": "./dist/nuxt/index.d.ts",
@@ -203,6 +238,7 @@
     "build": "tsup --config tsup.config.ts && mkdir -p dist/svelte && cp src/svelte/MetaPixelNoscript.svelte src/svelte/GtmNoscript.svelte dist/svelte/",
     "lint": "eslint src test --max-warnings 0",
     "test": "vitest run --config vitest.config.ts",
+    "test:browser": "vitest run --config vitest.browser.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/types/tsconfig.json --noEmit",
     "check:package": "publint && attw --pack . --profile esm-only && size-limit && es-check checkBrowser --module --checkBrowser 'dist/**/*.js' --not dist/server,dist/nuxt,dist/sentry/server.js,dist/sentry/next.js"
   },
@@ -212,6 +248,7 @@
     "@sentry/browser": "^11.0.0",
     "@sentry/nextjs": "^11.0.0",
     "@solidjs/router": ">=0.16.0 <2.0.0",
+    "@tanstack/react-router": "^1.29.0",
     "next": "^15.0.0 || ^16.0.0",
     "nuxt": "^4.0.0",
     "posthog-js": "^1.438.0",
@@ -235,6 +272,9 @@
       "optional": true
     },
     "@solidjs/router": {
+      "optional": true
+    },
+    "@tanstack/react-router": {
       "optional": true
     },
     "next": {
@@ -275,11 +315,14 @@
     "@size-limit/file": "^14.2.0",
     "@solidjs/router": "^1.0.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tanstack/react-router": "^1.170.44",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vitest/browser-playwright": "5.0.4",
     "es-check": "^9.8.1",
     "next": "16.4.0",
     "nuxt": "^4.6.1",
+    "playwright": "^1.64.1",
     "posthog-js": "^1.438.9",
     "publint": "^0.3.25",
     "react": "^19.3.0",

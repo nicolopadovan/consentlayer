@@ -474,3 +474,58 @@ describe('stale choices', () => {
     localStorage.clear()
   })
 })
+
+describe('hasChoice', () => {
+  const choice = { preferences: false, analytics: true, marketing: false }
+
+  it('is false with no choice and true once the visitor chooses', async () => {
+    const engine = createConsentEngine({ storage: createMemoryConsentStorage() })
+    await engine.bootstrap()
+    expect(engine.hasChoice()).toBe(false)
+    await engine.setConsent(choice)
+    expect(engine.hasChoice()).toBe(true)
+  })
+
+  it('is true for a stored choice, even a stale one that onStale: keep holds', async () => {
+    const stored = () => createMemoryConsentStorage(choice)
+    const fresh = createConsentEngine({ storage: stored() })
+    await fresh.bootstrap()
+    expect(fresh.hasChoice()).toBe(true)
+    const stale = createConsentEngine({ storage: stored(), policyVersion: '2', onStale: 'keep' })
+    await stale.bootstrap()
+    expect([stale.isStale(), stale.hasChoice()]).toEqual([true, true])
+    const discarded = createConsentEngine({ storage: stored(), policyVersion: '2' })
+    await discarded.bootstrap()
+    expect([discarded.isStale(), discarded.hasChoice()]).toEqual([true, false])
+  })
+
+  it('is false for the region defaults, even when a later choice equals them', async () => {
+    const engine = createConsentEngine({ region: 'US', storage: createMemoryConsentStorage() })
+    await engine.bootstrap()
+    expect(engine.getConsent()).toEqual({ preferences: true, analytics: true, marketing: true })
+    expect(engine.hasChoice()).toBe(false)
+    await engine.setConsent({ preferences: true, analytics: true, marketing: true })
+    expect(engine.hasChoice()).toBe(true)
+  })
+
+  it('is false for a provisional answer until the adapter reports a choice, even an equal one', async () => {
+    const denied = { preferences: false, analytics: false, marketing: false }
+    let report: (consent: typeof denied) => void = () => {}
+    const storage = createMemoryConsentStorage()
+    const engine = createConsentEngine({
+      storage,
+      adapters: [
+        {
+          id: 'cmp',
+          bootstrap: () => ({ consent: denied, provisional: true }),
+          subscribe: (onConsent) => void (report = onConsent),
+        },
+      ],
+    })
+    await engine.bootstrap()
+    expect(engine.getConsent()).toEqual(denied)
+    expect([engine.hasChoice(), storage.read()]).toEqual([false, null])
+    report(denied)
+    expect([engine.hasChoice(), storage.read()?.consent]).toEqual([true, denied])
+  })
+})
