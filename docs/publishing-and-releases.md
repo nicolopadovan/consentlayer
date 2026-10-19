@@ -10,13 +10,16 @@ Versions and the changelog are managed with [Changesets](https://changesets.dev)
    in the package's `package.json`, and make it public. npm adds provenance
    only for public repositories.
 2. In the repository settings → Environments, create `npm` with yourself as a
-   required reviewer. The publish job waits there for your approval.
+   required reviewer, and limit its deployment branches to `main`. The publish
+   job waits there for your approval.
 3. In the repository settings → Actions → General, allow GitHub Actions to
    create and approve pull requests, so the release pull request can be opened.
 4. On npmjs.com, open the package settings → Trusted publishing → GitHub
    Actions, and enter owner `nicolopadovan`, repository
    `consentlayer`, workflow `publish-package.yml` and
-   environment `npm`.
+   environment `npm`. Under Allowed actions, also allow `npm publish`:
+   configurations created after 3 September 2026 allow only staged publishing
+   by default, and the workflow publishes directly.
 5. In the repository settings → Pages, set the source to GitHub Actions and
    the custom domain to `consentlayer.nicolopadovan.com`. At your DNS
    provider, add a `CNAME` record from `consentlayer` to
