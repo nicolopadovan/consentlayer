@@ -23,6 +23,7 @@ import {
 import { latestAnalytics } from './core/create-analytics'
 import { gtmNoscriptIframe, metaNoscriptImg } from './core/noscript'
 import type { Analytics, ConsentApi, ConsentState, ErrorContext, PageViewPayload } from './core/types'
+import { CoreControllerContext } from './solid/context'
 
 /** Props for `<AnalyticsProvider>`. */
 export type AnalyticsProviderProps = ConsentControllerOptions & {
@@ -63,8 +64,14 @@ export function AnalyticsProvider(props: AnalyticsProviderProps): JSX.Element {
     get gpc() {
       return state().gpc
     },
+    get chosen() {
+      return state().chosen
+    },
     get prefs() {
       return state().prefs
+    },
+    get laws() {
+      return state().laws
     },
     ...controller.actions,
   }
@@ -85,7 +92,12 @@ export function AnalyticsProvider(props: AnalyticsProviderProps): JSX.Element {
       return createComponent(ControllerContext.Provider, {
         value: ui,
         get children() {
-          return props.children
+          return createComponent(CoreControllerContext.Provider, {
+            value: controller,
+            get children() {
+              return props.children
+            },
+          })
         },
       })
     },

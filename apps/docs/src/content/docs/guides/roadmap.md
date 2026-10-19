@@ -20,8 +20,6 @@ from. Each ships in its own minor release, in order of priority:
 
 | Item                                                                              | Priority | Target        |
 | --------------------------------------------------------------------------------- | -------- | ------------- |
-| [Privacy laws per visitor region](#privacy-laws-beyond-the-gdpr)                  | High     | December 2026 |
-| [Banner on npm](#banner-on-npm-consentlayerbanner)                                | High     | January 2027  |
 | [Banner translations](#banner-translations)                                       | High     | January 2027  |
 | [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027  |
 | [Google Ads, Microsoft Clarity and LinkedIn Insight](#more-providers)             | Medium   | February 2027 |
@@ -29,21 +27,17 @@ from. Each ships in its own minor release, in order of priority:
 | [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027    |
 | [The other planned providers](#more-providers)                                    | Medium   | Q2 2027       |
 | [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027       |
+| [Detailed settings dialog](#detailed-settings-dialog)                             | Medium   | Q2 2027       |
+| [Rich banner text](#rich-banner-text)                                             | Low      | Q2 2027       |
 | [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027       |
+| [Native banner components per framework](#banner-components-for-ui-libraries)     | Low      | Q3 2027       |
 | [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027       |
 | [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027       |
 | [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028          |
 
-### Banner on npm: `consentlayer/banner`
-
-The banner of the [script tag](/start/script-tag/#3-the-banner) is available
-only from the CDN. The planned `consentlayer/banner` entry exports it for
-applications that install ConsentLayer from npm, as a function that mounts it
-on a consent controller.
-
 ### Banner translations
 
-The [script tag](/start/script-tag/)'s banner is in English; each string can
+The [banner](/guides/banner/) is in English; each string can
 be overridden, but no other language ships. The planned translations cover the
 banner's text in the main European languages and beyond, chosen from the
 page's `lang` attribute or set explicitly, and are used by the banner
@@ -51,9 +45,12 @@ components below.
 
 ### Banner components for UI libraries
 
-The npm package ships no banner; you build one on
-[`useConsentController()`](/guides/consent-ui/), starting from the recipe. The
-planned components are first-party banners and settings dialogs built on the
+The [banner](/guides/banner/) ships for every framework binding as a thin
+component that mounts the same banner, built from plain DOM elements rather
+than your framework's templates. The planned native components render the
+banner and settings dialog in each framework's own templates, so you can
+compose and restyle them like the rest of your components. The planned
+library components are first-party banners and settings dialogs built on the
 UI libraries applications already use, so they match the rest of the
 interface:
 
@@ -117,36 +114,12 @@ and reading them is left to you. The planned helpers look up a visitor's
 records by `consentId` or `userId`, export them for a data subject request,
 and delete records older than a retention period you set.
 
-### Privacy laws beyond the GDPR
-
-ConsentLayer's defaults follow the opt-in model of the EU's GDPR and ePrivacy
-Directive: nothing that needs consent runs before the visitor gives it. They
-have not been legally reviewed; see the [legal notice](/guides/legal/).
-Other laws work differently, and the planned jurisdiction presets set the
-consent model, the defaults and the signals to honor per visitor region:
-
-| Law                                                | Planned                                                                                                                                                                                                                                        |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US state laws, such as California's CCPA and CPRA  | An opt-out model: tracking until the visitor opts out of the sale or sharing of their data, through a "Do Not Sell or Share" choice or [Global Privacy Control](/guides/consent-ui/#global-privacy-control), which ConsentLayer already reads. |
-| UK GDPR and PECR                                   | A preset for the UK's opt-in rules.                                                                                                                                                                                                            |
-| Switzerland's Federal Act on Data Protection       | A preset for Swiss requirements.                                                                                                                                                                                                               |
-| France, CNIL guidance                              | A preset for the CNIL's recommendations on cookies, such as how long a choice is kept.                                                                                                                                                         |
-| Brazil's LGPD, Canada's PIPEDA and Quebec's Law 25 | Presets for each.                                                                                                                                                                                                                              |
-
-Applying a preset per region needs the visitor's region. The planned region
-lookup reads it on the server, from the country and region headers your host
-or CDN adds, and passes it to the browser with the page. It comes with a
-one-line setup for the most used hosts: Vercel, Cloudflare, Netlify and AWS
-CloudFront. No IP address is stored. A visitor whose region is unknown gets
-the strictest rules, the EU's opt-in model, so a site that doesn't set up the
-lookup keeps today's behavior. The presets and the region lookup ship
-together, in one release.
-
 ### A hosted consent service
 
 Consent records are stored in your own database through a
-[store](/guides/consent-records/#stores), and the region lookup needs a server
-that renders the page. The planned hosted service removes both requirements:
+[store](/guides/consent-records/#stores), and
+[rules per region](/guides/regions/) need a server that reads the visitor's
+region. The planned hosted service removes both requirements:
 it stores consent records, reads the visitor's region from the request and
 returns the rules that apply, so a static site or a single-page application
 can use per-region rules without a server of its own. A dashboard shows the
@@ -163,6 +136,33 @@ answer the IAB's Global Privacy Platform (GPP) API for US and other
 regional frameworks. Each site that uses it must be covered by a CMP
 registered with IAB Europe, which charges a fee and reviews the banner, so
 this comes last.
+
+### Detailed settings dialog
+
+The settings dialog has one switch per category. The planned dialog adds, under
+each category, an expandable list of the providers it covers, with each
+provider's name, purpose and link to its privacy policy, taken from the
+providers you configured. It then adds a switch per provider, so a visitor
+can allow Google Analytics but not Hotjar, for example. Choices per provider
+need a change to the consent state, which today stores one flag per category,
+and to how providers check their consent requirement.
+
+### Rich banner text
+
+Banner text supports `[label](url)` links, `**bold**` and the
+`{privacyPolicy}`, `{cookiePolicy}` and `{terms}` placeholders. Two further
+forms are planned for content those do not cover:
+
+- **DOM nodes.** Each text option also accepts a `Node`, such as a
+  `DocumentFragment` you build, which the banner inserts as it is. This is
+  available from JavaScript only, since a script tag's `data-` attributes hold
+  strings.
+- **Trusted HTML.** Each text option also accepts `{ html: '…' }`, and the
+  script tag a `data-text-*-html` attribute. The banner inserts the HTML
+  without sanitizing it, so it must come from your own code and never from
+  visitors, a CMS that others edit, or another untrusted source. The explicit
+  `html` wrapper keeps that choice visible where the text is written. Where
+  the page enforces Trusted Types, the value must be a `TrustedHTML` object.
 
 ## Under consideration
 

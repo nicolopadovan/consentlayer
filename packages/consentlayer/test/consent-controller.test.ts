@@ -28,6 +28,40 @@ describe('createConsentController', () => {
     analytics.destroy()
   })
 
+  it('sets chosen only for a choice, not for region defaults, and follows another tab', async () => {
+    const analytics = createAnalytics({ providers: [], consent: { region: 'US' } })
+    const controller = createConsentController(analytics)
+    const stop = controller.start()
+    await settle()
+    expect(controller.getSnapshot()).toMatchObject({ chosen: false, bannerVisible: false, prefs: { analytics: true } })
+
+    const record = { consent: { preferences: false, analytics: false, marketing: false }, updatedAt: Date.now() }
+    localStorage.setItem('consentlayer_consent', JSON.stringify(record))
+    window.dispatchEvent(new StorageEvent('storage', { key: 'consentlayer_consent' }))
+    await settle()
+    expect(controller.getSnapshot()).toMatchObject({ chosen: true, prefs: { analytics: false } })
+    stop()
+    analytics.destroy()
+  })
+
+  it('discards the toggles the visitor closes the dialog without saving', async () => {
+    const analytics = createAnalytics({ providers: [] })
+    const controller = createConsentController(analytics)
+    const stop = controller.start()
+    await settle()
+
+    controller.actions.openDialog()
+    controller.actions.setPrefs({ ...controller.getSnapshot().prefs, marketing: true })
+    controller.actions.closeDialog()
+    expect(controller.getSnapshot().prefs.marketing).toBe(false)
+    controller.actions.openDialog()
+    controller.actions.setPrefs({ ...controller.getSnapshot().prefs, analytics: true })
+    await controller.actions.savePreferences()
+    expect(analytics.consent.getConsent()).toMatchObject({ analytics: true, marketing: false })
+    stop()
+    analytics.destroy()
+  })
+
   it('saves the toggles and notifies subscribers', async () => {
     const analytics = createAnalytics({ providers: [] })
     const controller = createConsentController(analytics)

@@ -13,6 +13,8 @@ import { sentry } from '../src/providers/sentry'
 import { tiktok } from '../src/providers/tiktok'
 
 describe('providers', () => {
+  beforeEach(() => sessionStorage.clear())
+
   it('turns a provider off when its id is unset, but still rejects a malformed one', async () => {
     const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined)
     const skipped = [
@@ -84,6 +86,27 @@ describe('providers', () => {
     manager.destroy()
   })
 
+  it('sends Meta only its standard events, the names in events, or an event whose only names it', async () => {
+    const fbq = vi.fn()
+    ;(window as unknown as { fbq?: typeof fbq }).fbq = fbq
+    ;(window as unknown as { __consentlayerMetaPixelInitialized?: boolean }).__consentlayerMetaPixelInitialized = true
+    const sent = async (events?: string[]) => {
+      fbq.mockClear()
+      const manager = createAnalyticsManager({
+        providers: [{ ...meta({ pixelId: '123456789012345', events }), load: undefined }],
+        consent: { preferences: true, analytics: true, marketing: true },
+      })
+      await manager.boot()
+      for (const name of ['purchase', 'Schedule', 'scroll_depth', 'filter_changed']) await manager.track(name)
+      await manager.track('share', {}, { only: ['meta'] })
+      manager.destroy()
+      return fbq.mock.calls.filter(([method]) => method !== 'consent').map((call) => call[1] as string)
+    }
+    expect(await sent()).toEqual(['Purchase', 'Schedule', 'share'])
+    expect(await sent(['purchase', 'filter_changed'])).toEqual(['Purchase', 'filter_changed', 'share'])
+    expect(await sent([])).toEqual(['share'])
+  })
+
   it('stops forwarding once the route reports no destination', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -99,8 +122,67 @@ describe('providers', () => {
     await Promise.resolve()
     await manager.track('sign_up')
     await manager.page()
+    manager.destroy()
+    const reloaded = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await reloaded.boot()
+    await reloaded.page()
     vi.unstubAllGlobals()
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    reloaded.destroy()
+  })
+
+  it('forwards only the events the route reports, and events with `only`', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 204, headers: { 'consentlayer-events': 'lead' } })),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const manager = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await manager.boot()
+    await manager.page()
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    await Promise.resolve()
+    await manager.page()
+    await manager.track('scroll_depth')
+    await manager.track('lead')
+    await manager.track('share', {}, { only: ['meta'] })
+    manager.destroy()
+    const reloaded = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await reloaded.boot()
+    await reloaded.page()
+    await reloaded.track('lead')
+    vi.unstubAllGlobals()
+    const names = fetchMock.mock.calls.map(([, init]) => (JSON.parse(init!.body as string) as { name: string }).name)
+    expect(names).toEqual(['page_view', 'lead', 'share', 'lead'])
+    reloaded.destroy()
+  })
+
+  it('forwards every event again once the route stops listing them', async () => {
+    sessionStorage.setItem('consentlayer_server:/api/analytics', 'lead')
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const manager = createAnalyticsManager({
+      consent: { preferences: true, analytics: true, marketing: true },
+      server: { endpoint: '/api/analytics' },
+    })
+    await manager.boot()
+    await manager.page()
+    await manager.track('lead')
+    await vi.waitFor(() => expect(sessionStorage.length).toBe(0))
+    await manager.page()
+    vi.unstubAllGlobals()
+    const names = fetchMock.mock.calls.map(([, init]) => (JSON.parse(init!.body as string) as { name: string }).name)
+    expect(names).toEqual(['lead', 'page_view'])
     manager.destroy()
   })
 
@@ -451,6 +533,7 @@ describe('tiktok', () => {
       { eventId: 'evt-1', providers: { tiktok: { description: 'mugs' } } },
     )
     await manager.track('share', {}, { eventId: 'evt-2' })
+    await manager.track('share', {}, { eventId: 'evt-3', only: ['tiktok'] })
     await manager.updateConsent(denied)
     await manager.updateConsent({ ...denied, marketing: true })
     await manager.page()
@@ -475,7 +558,7 @@ describe('tiktok', () => {
         },
         { event_id: 'evt-1' },
       ],
-      ['track', 'share', {}, { event_id: 'evt-2' }],
+      ['track', 'share', {}, { event_id: 'evt-3' }],
       ['revokeConsent'],
       ['revokeConsent'],
     ])

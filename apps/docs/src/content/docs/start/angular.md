@@ -100,6 +100,9 @@ new title.
 
 ## 3. Add the banner
 
+To use the ready-made banner instead, add [`provideConsentBanner()`](/guides/banner/#angular)
+from `consentlayer/angular/banner` to the application config; the rest of this step builds your own.
+
 Copy the [Angular consent banner recipe](/guides/consent-ui/#angular) into
 `src/app/consent-banner.ts`, and render `<app-consent-banner />` once, in your
 root component. A button to reopen the settings reads the same state:
@@ -128,7 +131,7 @@ export class App {
 ```
 
 `injectConsentController()` returns the state as signals, `ready()`,
-`error()`, `bannerVisible()`, `dialogVisible()`, `categories()`, `gpc()` and
+`error()`, `bannerVisible()`, `dialogVisible()`, `categories()`, `gpc()`, `chosen()` and
 `prefs()`, and the actions as functions. Call it in an injection context, such as a field
 initializer. It throws when `provideConsentLayer()` is not in the application
 config.

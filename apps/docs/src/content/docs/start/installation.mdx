@@ -48,16 +48,16 @@ ConsentLayer has no runtime dependencies.
 | Node.js         | 22 or later. The server entry points use the global `fetch` and Web Crypto (`crypto.subtle`, `crypto.randomUUID`) APIs.                                                                                                     |
 | Edge runtimes   | Any runtime with `fetch` and Web Crypto, such as the Next.js Edge runtime.                                                                                                                                                  |
 | Browsers        | Chrome and Edge 94, Firefox 93, Safari and iOS Safari 15.4, or later. The package is compiled to ES2022, and CI checks its code and syntax against these versions. Your bundler transpiles it if you target older browsers. |
-| React           | 18.3 or 19, only for `consentlayer/react`, `consentlayer/next` and `consentlayer/tanstack-start`.                                                                                                                           |
+| React           | 18.3 or 19, only for `consentlayer/react`, `consentlayer/next`, `consentlayer/tanstack-start` and `consentlayer/react/banner`.                                                                                              |
 | Next.js         | 15 or 16, only for `consentlayer/next`, in the App Router or the Pages Router.                                                                                                                                              |
 | TanStack Router | 1.29 or later, only for `consentlayer/tanstack-start`, with or without TanStack Start.                                                                                                                                      |
-| Vue             | 3.5.17 or later, only for `consentlayer/vue` and `consentlayer/nuxt`.                                                                                                                                                       |
+| Vue             | 3.5.17 or later, only for `consentlayer/vue`, `consentlayer/nuxt` and `consentlayer/vue/banner`.                                                                                                                            |
 | Nuxt            | 4, only for `consentlayer/nuxt`.                                                                                                                                                                                            |
-| Svelte          | 5.14.3 or later, only for `consentlayer/svelte` and `consentlayer/sveltekit`.                                                                                                                                               |
+| Svelte          | 5.14.3 or later, only for `consentlayer/svelte`, `consentlayer/sveltekit` and `consentlayer/svelte/banner`.                                                                                                                 |
 | SvelteKit       | Only for `consentlayer/sveltekit`, which imports `$app/navigation`. Tested with SvelteKit 3.                                                                                                                                |
-| Solid           | 1.9 or later, only for `consentlayer/solid` and `consentlayer/solidstart`.                                                                                                                                                  |
+| Solid           | 1.9 or later, only for `consentlayer/solid`, `consentlayer/solidstart` and `consentlayer/solid/banner`.                                                                                                                     |
 | Solid Router    | 0.16 or 1.x, only for `consentlayer/solidstart`, with or without SolidStart. Tested with SolidStart 2.                                                                                                                      |
-| Angular         | 20 or later, only for `consentlayer/angular`. The Angular Router is optional.                                                                                                                                               |
+| Angular         | 20 or later, only for `consentlayer/angular` and `consentlayer/angular/banner`. The Angular Router is optional.                                                                                                             |
 | PostHog         | `posthog-js` 1.438 or later, only for `consentlayer/providers/posthog`.                                                                                                                                                     |
 | Sentry          | `@sentry/browser` 11 or later, only for `consentlayer/providers/sentry`; `@sentry/nextjs` 11 for `consentlayer/sentry/server` and `consentlayer/sentry/next`.                                                               |
 | TypeScript      | 5.0 or later, with `moduleResolution` set to `bundler`, `node16` or `nodenext`.                                                                                                                                             |
@@ -73,20 +73,20 @@ loads the vendor's script from the vendor's CDN at runtime, after consent is
 granted. The Vercel provider takes `track` from `@vercel/analytics`, which you
 install and import yourself.
 
-| Import                                                   | Peer dependency                                |
-| -------------------------------------------------------- | ---------------------------------------------- |
-| `consentlayer/react`                                     | `react`, `react-dom`                           |
-| `consentlayer/next`                                      | `react`, `react-dom`, `next`                   |
-| `consentlayer/tanstack-start`                            | `react`, `react-dom`, `@tanstack/react-router` |
-| `consentlayer/vue`                                       | `vue`                                          |
-| `consentlayer/nuxt`                                      | `vue`, `nuxt`                                  |
-| `consentlayer/svelte`, `consentlayer/sveltekit`          | `svelte`                                       |
-| `consentlayer/solid`                                     | `solid-js`                                     |
-| `consentlayer/solidstart`                                | `solid-js`, `@solidjs/router`                  |
-| `consentlayer/angular`                                   | `@angular/core`, `@angular/router`             |
-| `consentlayer/providers/posthog`                         | `posthog-js`                                   |
-| `consentlayer/providers/sentry`                          | `@sentry/browser`                              |
-| `consentlayer/sentry/server`, `consentlayer/sentry/next` | `@sentry/nextjs`                               |
+| Import                                                                        | Peer dependency                                |
+| ----------------------------------------------------------------------------- | ---------------------------------------------- |
+| `consentlayer/react`, `consentlayer/react/banner`                             | `react`, `react-dom`                           |
+| `consentlayer/next`                                                           | `react`, `react-dom`, `next`                   |
+| `consentlayer/tanstack-start`                                                 | `react`, `react-dom`, `@tanstack/react-router` |
+| `consentlayer/vue`, `consentlayer/vue/banner`                                 | `vue`                                          |
+| `consentlayer/nuxt`                                                           | `vue`, `nuxt`                                  |
+| `consentlayer/svelte`, `consentlayer/sveltekit`, `consentlayer/svelte/banner` | `svelte`                                       |
+| `consentlayer/solid`, `consentlayer/solid/banner`                             | `solid-js`                                     |
+| `consentlayer/solidstart`                                                     | `solid-js`, `@solidjs/router`                  |
+| `consentlayer/angular`, `consentlayer/angular/banner`                         | `@angular/core`, `@angular/router`             |
+| `consentlayer/providers/posthog`                                              | `posthog-js`                                   |
+| `consentlayer/providers/sentry`                                               | `@sentry/browser`                              |
+| `consentlayer/sentry/server`, `consentlayer/sentry/next`                      | `@sentry/nextjs`                               |
 
 ## Module format
 
@@ -112,6 +112,12 @@ loaded with dynamic `import()` when they are first needed. See
 | `consentlayer/solidstart`                                | The same, with page views on Solid Router navigation                                                           |
 | `consentlayer/angular`                                   | `provideConsentLayer`, the `inject*` functions, `provideMetaPixelNoscript` and `provideGtmNoscript`            |
 | `consentlayer/astro`                                     | `consentLayer`, which creates a consent controller and sends page views on Astro navigation                    |
+| `consentlayer/banner`                                    | `mountBanner` and the `BannerOptions` type: the ready-made banner for any controller                           |
+| `consentlayer/react/banner`                              | The `ConsentBanner` component for React and Next.js                                                            |
+| `consentlayer/vue/banner`                                | The `ConsentBanner` component for Vue and Nuxt                                                                 |
+| `consentlayer/svelte/banner`                             | The `consentBanner` action and `useConsentBanner`, for Svelte and SvelteKit                                    |
+| `consentlayer/solid/banner`                              | The `ConsentBanner` component for Solid and SolidStart                                                         |
+| `consentlayer/angular/banner`                            | `provideConsentBanner`                                                                                         |
 | `consentlayer/providers/<name>`                          | One provider factory: `ga4`, `gtm`, `meta`, `tiktok`, `posthog`, `sentry`, `contentsquare`, `hotjar`, `vercel` |
 | `consentlayer/adapters/<name>`                           | One consent adapter: `tcf`, `shopify`, `google-consent-mode`                                                   |
 | `consentlayer/ecommerce`                                 | `productParams`, `cartParams`, `orderParams`                                                                   |
@@ -120,9 +126,10 @@ loaded with dynamic `import()` when they are first needed. See
 | `consentlayer/sentry/server`, `consentlayer/sentry/next` | Sentry configuration for Next.js                                                                               |
 | `consentlayer/testing`                                   | `checkPlugin`                                                                                                  |
 
-`consentlayer/react` and `consentlayer/next` start with a `'use client'`
-directive, so you can import them from a React Server Component without adding
-your own client boundary.
+`consentlayer/react`, `consentlayer/react/banner` and `consentlayer/next` start
+with a `'use client'` directive, so you can import them from a React Server
+Component without adding your own client boundary. The [Banner](/guides/banner/)
+guide covers the banner entry points.
 
 The full list of exports is in the [API reference](/reference/api/).
 
@@ -204,7 +211,8 @@ through your domain still goes to the vendor.
 ## Next steps
 
 - [React & TanStack Start](/start/react/): create the instance, add a consent
-  banner and track page views in a React or TanStack Start application.
+  banner, ready-made or your own, and track page views in a React or TanStack
+  Start application.
 - [Next.js](/start/nextjs/): the same in the Next.js App Router, plus
   server errors and a server-side tracking route.
 - [Vue](/start/vue/): the same with the `consentLayer` Vue plugin and Vue
@@ -218,7 +226,8 @@ through your domain still goes to the vendor.
 - [Angular](/start/angular/): the same with `provideConsentLayer()` in the
   application config.
 - [JavaScript and Astro](/start/javascript/): the same without a framework
-  binding, with `createConsentController()`, or with `consentLayer()` in Astro.
+  binding, with `createConsentController()` and `mountBanner()`, or with
+  `consentLayer()` in Astro.
 - [Script tag](/start/script-tag/): ConsentLayer and a ready-made banner from
   a CDN, for sites without a build step.
 - [Providers](/guides/providers/): the options and consent category of each

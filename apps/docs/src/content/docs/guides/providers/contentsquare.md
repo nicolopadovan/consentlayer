@@ -14,9 +14,10 @@ contentsquare({ tagId: process.env.NEXT_PUBLIC_CONTENTSQUARE_TAG_ID })
 
 ## Options
 
-| Option  | Type                  | Default  | Description                                                          |
-| ------- | --------------------- | -------- | -------------------------------------------------------------------- |
-| `tagId` | `string \| undefined` | Required | The ID in the tag URL, `https://t.contentsquare.net/uxa/<tagId>.js`. |
+| Option   | Type                  | Default    | Description                                                                                                      |
+| -------- | --------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| `tagId`  | `string \| undefined` | Required   | The ID in the tag URL, `https://t.contentsquare.net/uxa/<tagId>.js`.                                             |
+| `events` | `string[] \| false`   | All events | The event names `track()` sends to it; `false` sends none. See [Routing events](/guides/events/#routing-events). |
 
 ## How it works
 

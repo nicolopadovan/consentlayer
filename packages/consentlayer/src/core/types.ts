@@ -30,7 +30,7 @@ export type UserTraits = Record<string, unknown> & {
 }
 
 /** Where a consent change came from. */
-export type ConsentChangeSource = 'bootstrap' | 'storage' | 'adapter' | 'imperative' | 'unknown'
+export type ConsentChangeSource = 'bootstrap' | 'region' | 'storage' | 'adapter' | 'imperative' | 'unknown'
 
 /** DOM event names and window globals that announce consent changes to other scripts. */
 export type ConsentBroadcastConfig = {
@@ -92,8 +92,32 @@ export type ConsentEngineOptions = {
   onStale?: 'discard' | 'keep'
   /** Honor the browser's Global Privacy Control signal: "accept all" leaves marketing off while it is on. Defaults to `true`. */
   gpc?: boolean
+  /** The visitor's ISO 3166-2 region, such as `'US-CA'` or `'FR'`, or a function that returns it in the browser. Unset, unknown. */
+  region?: string | (() => string | null | undefined | Promise<string | null | undefined>)
+  /** Rules per region code, merged over the rules of the laws in `laws`; a region without a rule, or an unknown one, gets the opt-in rule `{}`. */
+  regions?: Record<string, RegionRule>
+  /** The laws whose regions get their rule, merged over the defaults: `gdpr`, `cnil`, `revfadp` and `ccpa` on, `uk`, `lgpd` and `quebec` off. */
+  laws?: Partial<Record<Law, boolean>>
   debug?: boolean | DebugOptions
   onError?: AnalyticsErrorHandler
+}
+
+/**
+ * A privacy law ConsentLayer has a rule and banner defaults for: the EU and EEA's GDPR, the UK GDPR, Brazil's LGPD,
+ * Quebec's Law 25, the French CNIL's recommendation, Switzerland's revFADP and the US state laws, CCPA/CPRA first.
+ */
+export type Law = 'gdpr' | 'uk' | 'lgpd' | 'quebec' | 'cnil' | 'revfadp' | 'ccpa'
+
+/** How consent works in a region until the visitor chooses. */
+export type RegionRule = {
+  /** The laws that apply. Their rules fill the fields left unset, the stricter one winning, and the banner follows them. */
+  laws?: readonly Law[]
+  /** Categories granted before a choice, applied but not stored; Global Privacy Control turns marketing off. Defaults to none: opt-in. */
+  granted?: readonly ConsentCategory[] | 'all'
+  /** Whether the banner asks a visitor who has not chosen. Defaults to `true`. */
+  banner?: boolean
+  /** A choice older than this many days is stale in this region, when shorter than `maxAgeDays`. */
+  maxAgeDays?: number
 }
 
 /** What consent subscribers receive. */
@@ -110,6 +134,12 @@ export interface ConsentEngine {
   getConsent: () => ConsentState | null
   /** Whether the stored choice is stale and the visitor should be asked again. */
   isStale: () => boolean
+  /** The visitor's region and the rule in force there, once `bootstrap()` resolves. */
+  getRegion: () => { region: string | undefined; rule: RegionRule }
+  /** Whether the visitor, or a consent platform for them, has chosen: not just the region's defaults, a platform's provisional answer or nothing. A stale choice held by `onStale: 'keep'` counts. */
+  hasChoice: () => boolean
+  /** Whether the banner should ask: no choice, a stale one or only the region's defaults, and the rule shows a banner. */
+  shouldAsk: () => boolean
   setConsent: (consent: ConsentState, source?: ConsentChangeSource) => Promise<void>
   subscribe: (listener: (snapshot: ConsentEngineSnapshot) => void) => () => void
   destroy: () => void
@@ -150,8 +180,6 @@ export type AutoTrackingConfig = {
   scroll?: boolean | AutoTrackingScrollConfig
   timeOnPage?: boolean | AutoTrackingTimeConfig
   pageViews?: boolean
-  /** Send auto-tracked events only to these provider ids. Defaults to all. */
-  only?: string[]
 }
 
 /** What `autoTracking()` returns: started once with `track` and a signal aborted on `destroy()`, it returns the function that starts a page session. */
@@ -231,10 +259,28 @@ export interface StandardEvents {
   subscription_cancelled: { plan?: string; reason?: string }
 }
 
-/** Params for an event: typed for the standard events, free-form for the rest. */
+/**
+ * Declares your own events, which types their params and makes `track` reject undeclared names:
+ * `declare module 'consentlayer' { interface Register { events: { quote_requested: { value: number } } } }`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface Register {}
+
+type RegisteredEvents = Register extends { events: infer Events } ? Events : Record<never, never>
+
+/** Any name until events are declared in `Register`; then the standard, declared and auto-tracking events. */
+export type EventName = Register extends { events: infer Events }
+  ? | keyof StandardEvents
+    | (keyof Events & string)
+    | `${string}.${'page_session_start' | 'scroll_depth' | 'time_on_page' | 'ui_click'}`
+  : keyof StandardEvents | (string & {})
+
+/** Params for an event: typed for the standard and declared events, free-form for the rest. */
 export type EventParams<Name extends string> = Name extends keyof StandardEvents
   ? StandardEvents[Name] & Record<string, unknown>
-  : Record<string, unknown>
+  : Name extends keyof RegisteredEvents
+    ? RegisteredEvents[Name]
+    : Record<string, unknown>
 
 /** What `analytics.subscribe` listeners receive. */
 export type AnalyticsManagerStateSnapshot = {
@@ -256,6 +302,7 @@ export type AnalyticsErrorScope =
   | 'provider-script-load'
   | 'server-forward'
   | 'consent-adapter'
+  | 'consent-region'
   | 'auto-tracking'
   | 'queue-full'
 
@@ -378,6 +425,8 @@ export interface AnalyticsPlugin {
   /** Load before consent and rely on the provider's own consent mode. */
   loadBeforeConsent?: boolean
   defer?: LoadTiming
+  /** Event names `track` sends to it: all when unset, none with `false`. An event whose `only` names it is always sent. */
+  events?: readonly string[] | false
   /** No network, no cookies. */
   setup?: Hook
   /** Inject scripts. Runs once. */
@@ -408,7 +457,7 @@ export interface AnalyticsManager {
     payload?: PageViewPayload,
     options?: { only?: string[]; server?: boolean | (keyof ConsentState)[] },
   ) => Promise<void>
-  track: <Name extends string>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>
+  track: <Name extends EventName>(name: Name, params?: EventParams<Name>, options?: TrackEventOptions) => Promise<void>
   identify: (userId?: string, traits?: UserTraits) => Promise<void>
   reset: () => Promise<void>
   group: (groupId: string, traits?: Record<string, unknown>) => Promise<void>

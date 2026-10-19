@@ -1,3 +1,4 @@
+import type { EventName } from '../core/types'
 import { definePlugin, getFlag, loadScript, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 
@@ -19,6 +20,8 @@ export type HotjarOptions = {
    * and storage are always deleted; `true` also reloads the page so recording stops.
    */
   reloadOnRevoke?: boolean
+  /** Event names `track` sends to it: all by default, none with `false`. */
+  events?: readonly EventName[] | false
 }
 
 function clearHotjarStorage(): void {
@@ -67,6 +70,7 @@ export function hotjar(options: HotjarOptions) {
   }
   return definePlugin({
     id: 'hotjar',
+    events: options.events,
     requiredConsent: 'analytics',
     load() {
       ensureHotjar({ siteId, version })

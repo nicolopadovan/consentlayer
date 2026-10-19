@@ -11,9 +11,11 @@ import svelteBanner from '../../../../../example-sveltekit/src/lib/ConsentBanner
 import solidBanner from '../../../../../example-solidstart/src/lib/ConsentBanner.tsx?raw'
 import angularBanner from '../../../../../example-angular/src/app/consent-banner.ts?raw'
 
-The npm package does not ship a consent banner, so its design, wording and
-languages remain yours; only the [script tag](/start/script-tag/#3-the-banner)
-comes with one. This page documents `useConsentController()`, the hook
+This page is for a consent banner you build yourself, so its design, wording
+and languages remain yours. For a ready-made one, use the
+[banner component for your framework](/guides/banner/#frameworks), or
+[`consentlayer/banner`](/guides/banner/) without one; the
+[script tag](/start/script-tag/#3-the-banner) loads the same banner. This page documents `useConsentController()`, the hook
 that provides a banner's state and actions, gives a complete banner and
 settings dialog to copy into your app, and explains how to add consent
 categories of your own. The recipe is the banner the
@@ -35,21 +37,22 @@ provider; elsewhere it throws
 `useAnalytics()` and `useConsent()`, it has no fallback to the most recent
 instance.
 
-| Field                           | Type                               | Behavior                                                                                                                                                            |
-| ------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ready`                         | `boolean`                          | `false` until `analytics.consent.bootstrap()` has settled. Render nothing while it is `false`, so that returning visitors don't see the banner flash.               |
-| `error`                         | `string \| null`                   | The rejection reason, converted to a string, if `bootstrap()` rejected. The banner is then shown as if no consent were stored.                                      |
-| `bannerVisible`                 | `boolean`                          | After bootstrap, `true` when no consent is stored or the stored choice is [stale](#asking-again), and the provider's `autoShowBanner` prop is `true` (the default). |
-| `dialogVisible`                 | `boolean`                          | Whether the settings dialog is open. Initially `false`.                                                                                                             |
-| `categories`                    | `readonly ConsentCategory[]`       | The categories the dialog shows, from `analytics.consent.categories`: the built-in ones, then your custom ones.                                                     |
-| `prefs`                         | `Record<ConsentCategory, boolean>` | The dialog's draft, one entry per category in `analytics.consent.categories`. Initialized from the stored consent, all `false` when there is none.                  |
-| `setPrefs(next)`                | `(next) => void`                   | Replaces the draft without saving it.                                                                                                                               |
-| `gpc`                           | `boolean`                          | Whether the visitor's [Global Privacy Control](#global-privacy-control) signal is honored. Use it to tell the visitor so.                                           |
-| `acceptAll()`                   | `() => Promise<void>`              | Grants every category, then hides the banner and the dialog. While `gpc` is `true`, `marketing` stays denied.                                                       |
-| `rejectNonEssential()`          | `() => Promise<void>`              | Denies every category, then hides both.                                                                                                                             |
-| `savePreferences()`             | `() => Promise<void>`              | Saves `prefs`, then hides both.                                                                                                                                     |
-| `openDialog()`, `closeDialog()` | `() => void`                       | Show or hide the dialog.                                                                                                                                            |
-| `showBanner()`, `hideBanner()`  | `() => void`                       | Show or hide the banner.                                                                                                                                            |
+| Field                           | Type                               | Behavior                                                                                                                                                                                                                                                                    |
+| ------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ready`                         | `boolean`                          | `false` until `analytics.consent.bootstrap()` has settled. Render nothing while it is `false`, so that returning visitors don't see the banner flash.                                                                                                                       |
+| `error`                         | `string \| null`                   | The rejection reason, converted to a string, if `bootstrap()` rejected. The banner is then shown as if no consent were stored.                                                                                                                                              |
+| `bannerVisible`                 | `boolean`                          | After bootstrap, `true` when no consent is stored, the stored choice is [stale](#asking-again) or only the [region's](/guides/regions/) defaults are in force, unless the region's rule hides the banner; and the provider's `autoShowBanner` prop is `true` (the default). |
+| `chosen`                        | `boolean`                          | Whether the visitor has chosen: `true` for a stored choice, `false` with none, with only the [region's](/guides/regions/) defaults or with a consent platform's provisional answer. The built-in banner's badge follows it.                                                 |
+| `dialogVisible`                 | `boolean`                          | Whether the settings dialog is open. Initially `false`.                                                                                                                                                                                                                     |
+| `categories`                    | `readonly ConsentCategory[]`       | The categories the dialog shows, from `analytics.consent.categories`: the built-in ones, then your custom ones.                                                                                                                                                             |
+| `prefs`                         | `Record<ConsentCategory, boolean>` | The dialog's draft, one entry per category in `analytics.consent.categories`. Initialized from the consent in force, all `false` when there is none.                                                                                                                        |
+| `setPrefs(next)`                | `(next) => void`                   | Replaces the draft without saving it.                                                                                                                                                                                                                                       |
+| `gpc`                           | `boolean`                          | Whether the visitor's [Global Privacy Control](#global-privacy-control) signal is honored. Use it to tell the visitor so.                                                                                                                                                   |
+| `acceptAll()`                   | `() => Promise<void>`              | Grants every category, then hides the banner and the dialog. While `gpc` is `true`, `marketing` stays denied.                                                                                                                                                               |
+| `rejectNonEssential()`          | `() => Promise<void>`              | Denies every category, then hides both.                                                                                                                                                                                                                                     |
+| `savePreferences()`             | `() => Promise<void>`              | Saves `prefs`, then hides both.                                                                                                                                                                                                                                             |
+| `openDialog()`, `closeDialog()` | `() => void`                       | Show or hide the dialog. Closing it discards toggles that were not saved.                                                                                                                                                                                                   |
+| `showBanner()`, `hideBanner()`  | `() => void`                       | Show or hide the banner.                                                                                                                                                                                                                                                    |
 
 The three saving actions call `analytics.consent.setConsent()` and hide the
 banner and dialog only once it resolves, which is after the consent adapters
@@ -166,8 +169,9 @@ the `marketing` category off unless the visitor switches it on:
 - An explicit `marketing: true`, from the settings dialog's toggle and
   `savePreferences()`, or from `analytics.consent.update()` or `setConsent()`,
   counts as consent and is stored like any other choice.
-- Before the visitor chooses, nothing changes: consent is `null`, so
-  `marketing` is already denied.
+- Before the visitor chooses, consent is `null`, so `marketing` is already
+  denied. In a [region](/guides/regions/) whose rule grants it before a
+  choice, such as the US, the signal keeps it denied.
 
 `gpc` on `useConsentController()`, and `analytics.consent.gpc`, are `true`
 while the signal is honored, so your banner can say so:

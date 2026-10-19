@@ -2,6 +2,7 @@ import type {
   AnalyticsError,
   AnalyticsEventPayload,
   AnalyticsManager,
+  AutoTracking,
   AnalyticsManagerOptions,
   AnalyticsManagerStateSnapshot,
   AnalyticsPlugin,
@@ -12,6 +13,7 @@ import type {
   UserIdentity,
   UserTraits,
 } from './types'
+import { getNames } from './names'
 import { setScriptNonce } from './plugin'
 import { createMemoryIdentityStorage } from './storage'
 import {
@@ -21,6 +23,7 @@ import {
   hasRequiredConsent,
   isBrowser,
   normalizeIdentity,
+  receivesEvent,
 } from './utils'
 import { assertHttpsOrRelativeUrl } from './validation'
 
@@ -33,7 +36,7 @@ type ProviderState = {
   backlog?: Array<() => Promise<unknown>>
 }
 
-type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer'>
+type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer' | 'events'>
 
 const LIFECYCLE_HOOKS = new Set<HookName>(['setup', 'consent', 'load', 'teardown'])
 const HOOK_TOPICS: Record<HookName, DebugTopic> = {
@@ -180,8 +183,22 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       )
   }
 
+  const serverKey = `${getNames().prefix}_server:${serverEndpoint}`
+  const learned = (value?: string | null) => {
+    try {
+      if (value === null) sessionStorage.removeItem(serverKey)
+      else if (value !== undefined) sessionStorage.setItem(serverKey, value)
+      return sessionStorage.getItem(serverKey)
+    } catch {
+      return null
+    }
+  }
+  const saved = serverEndpoint ? learned() : null
+  if (saved === 'off') serverEndpoint = undefined
+  let serverEvents = saved === null || saved === 'off' ? undefined : saved ? saved.split(',') : []
   const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
     if (!serverEndpoint || !(consent?.analytics || consent?.marketing)) return
+    if (serverEvents && !event.only && !serverEvents.includes(event.name)) return
     const body = JSON.stringify({ ...event, consent, identity: sharedIdentity() })
     const fail = (cause: unknown) =>
       emitError({ scope: 'server-forward', message: `Sending ${event.name} to ${serverEndpoint} failed`, cause })
@@ -199,7 +216,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        if (response.headers.get('consentlayer-forwarding') === 'off') serverEndpoint = undefined
+        const off = response.headers.get('consentlayer-forwarding') === 'off'
+        const names = response.headers.get('consentlayer-events')
+        if (off) serverEndpoint = undefined
+        serverEvents = names === null ? undefined : names ? names.split(',') : []
+        learned(off ? 'off' : names)
         if (response.headers.get('consentlayer-consent') === 'missing') restoreConsentCookie()
       })
       .catch(fail)
@@ -320,7 +341,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     if (options.autoTracking && !pageSession && booted && evaluated?.analytics && isBrowser()) {
       pageSession = () => {}
       try {
-        pageSession = options.autoTracking({ track: api.track, signal: lifetime.signal })
+        pageSession = options.autoTracking({
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed once Register declares events
+          track: api.track as Parameters<AutoTracking>[0]['track'],
+          signal: lifetime.signal,
+        })
         pageSession()
       } catch (cause) {
         emitError({ scope: 'auto-tracking', message: 'Auto-tracking failed to start', cause })
@@ -480,6 +505,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         optionsInput.only,
         async (state) =>
           allowed() &&
+          receivesEvent(state.plugin, name, optionsInput.only) &&
           (await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)),
         () =>
           allowed()

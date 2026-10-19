@@ -138,6 +138,9 @@ On mount, `<AnalyticsProvider>` performs these steps:
 
 ## 3. Add the banner
 
+To use the ready-made banner instead, render [`<ConsentBanner>`](/guides/banner/#react-and-nextjs)
+from `consentlayer/react/banner` inside the provider; the rest of this step builds your own.
+
 Copy the [consent banner recipe](/guides/consent-ui/) into
 `src/consent-banner.tsx`. Then render the banner inside the provider, and give
 visitors a way to reopen their settings:
@@ -211,7 +214,11 @@ export function SignUpButton() {
 `track(name, params?, options?)` returns a promise that never rejects because
 of a provider: provider failures are passed to the `onError` option of
 `createAnalytics()`. Parameters are typed for the standard events, such as
-`sign_up` and `purchase`; any other name is sent as a custom event.
+`sign_up` and `purchase`; any other name is sent as a custom event. To
+type your own events and reject misspelled names, declare them in
+`src/analytics.ts`, as [Typed custom events](/guides/events/#typed-custom-events)
+shows. The Meta and TikTok pixels receive only standard events unless you
+[list others](/guides/events/#routing-events).
 
 `useConsent()` returns `{ consent, engine, setConsent, update }`. `consent` is
 the current consent, `null` before a choice, and the component re-renders when

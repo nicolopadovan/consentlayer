@@ -20,7 +20,7 @@ const DEFAULT_TIME_INTERVALS = [5, 15, 30, 60, 120]
  * An object turns on only the kinds it names, unless it names none.
  */
 export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
-  const { clicks, scroll, timeOnPage, pageViews, only } = config
+  const { clicks, scroll, timeOnPage, pageViews } = config
   const named = [clicks, scroll, timeOnPage, pageViews].some((kind) => kind != null && kind !== false)
   const on = (kind: unknown) => (kind == null ? !named : kind !== false)
   const settings = <T extends object>(kind: boolean | T | undefined): Partial<T> =>
@@ -28,7 +28,7 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
 
   return ({ track, signal }) => {
     const send = (name: string, params: Record<string, unknown>) =>
-      void track(name, params, { only, requireAnalyticsConsent: true })
+      void track(name, params, { requireAnalyticsConsent: true })
     let session = 0
     let page = new AbortController()
     signal.addEventListener('abort', () => page.abort())

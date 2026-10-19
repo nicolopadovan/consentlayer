@@ -5,8 +5,10 @@ import type {
   ConsentEngineSnapshot,
   ConsentIntegrationAdapter,
   ConsentState,
+  RegionRule,
   StoredConsent,
 } from './types'
+import { knownLaws, lawRegions, resolveRule } from './regions'
 import { BUILT_IN_CATEGORIES, broadcastConsent, createDebugLog, equalConsent, normalizeConsent } from './utils'
 import { assertValidConsent } from './validation'
 
@@ -26,12 +28,27 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
   if (maxAgeDays !== undefined && !(maxAgeDays > 0 && Number.isFinite(maxAgeDays))) {
     throw new Error(`[consentlayer] consent.maxAgeDays must be a positive number, received ${maxAgeDays}`)
   }
+  const law = [
+    ...Object.keys(options.laws ?? {}),
+    ...Object.values(options.regions ?? {}).flatMap((regionRule) => regionRule.laws ?? []),
+  ].find((name) => !knownLaws.includes(name))
+  if (law !== undefined) {
+    throw new Error(`[consentlayer] unknown law "${law}", expected one of ${knownLaws.join(', ')}`)
+  }
   const major = (version: string | undefined) => version?.split('.')[0]
-  const isStaleRecord = (record: StoredConsent) =>
-    (policyVersion !== undefined && major(record.policyVersion) !== major(policyVersion)) ||
-    (maxAgeDays !== undefined &&
-      !(typeof record.updatedAt === 'number' && Date.now() - record.updatedAt <= maxAgeDays * 86_400_000))
+  let region: string | undefined
+  let rule: RegionRule = {}
+  const isStaleRecord = (record: StoredConsent) => {
+    const days = Math.min(maxAgeDays ?? Infinity, rule.maxAgeDays ?? Infinity)
+    return (
+      (policyVersion !== undefined && major(record.policyVersion) !== major(policyVersion)) ||
+      (days !== Infinity &&
+        !(typeof record.updatedAt === 'number' && Date.now() - record.updatedAt <= days * 86_400_000))
+    )
+  }
   let stale = false
+  let defaulted = false
+  let provisional = false
   let changes = 0
 
   const notify = () => {
@@ -46,14 +63,18 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       persist,
       applyAdapters,
       excludeAdapter,
+      answeredProvisionally = false,
     }: {
       persist: boolean
       applyAdapters: boolean
       excludeAdapter?: ConsentIntegrationAdapter
+      answeredProvisionally?: boolean
     },
   ) => {
-    if (destroyed || !next || (equalConsent(current, next) && !(persist && stale))) return
+    if (destroyed || !next || (equalConsent(current, next) && !(persist && (stale || defaulted || provisional)))) return
     current = next
+    defaulted = source === 'region'
+    provisional = answeredProvisionally
     changes++
     if (persist) {
       stale = false
@@ -127,17 +148,28 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
   }
 
   const runBootstrap = async () => {
+    try {
+      const code = typeof options.region === 'function' ? await options.region() : options.region
+      region = code?.trim().toUpperCase() || undefined
+    } catch (cause) {
+      options.onError?.({ scope: 'consent-region', message: 'Failed to read the region', cause })
+    }
+    const regions = { ...lawRegions(options.laws), ...options.regions }
+    rule = resolveRule((region && (regions[region] ?? regions[region.split('-')[0]])) || {})
+    debugLog('consent', undefined, 'region', region, rule)
     const record = storage?.read() ?? null
     const stored = normalize(record?.consent)
     stale = stored !== null && isStaleRecord(record!)
     if (stale) debugLog('consent', undefined, 'stored consent is stale', record)
     const seen = changes
-    let provisional = false
+    let answeredProvisionally = false
     const ask = async (adapter: ConsentIntegrationAdapter) => {
       try {
         const answer = await adapter.bootstrap?.()
-        provisional = answer != null && 'consent' in answer && typeof answer.consent === 'object'
-        return normalize(provisional ? (answer as { consent: ConsentState }).consent : (answer as ConsentState | null))
+        answeredProvisionally = answer != null && 'consent' in answer && typeof answer.consent === 'object'
+        return normalize(
+          answeredProvisionally ? (answer as { consent: ConsentState }).consent : (answer as ConsentState | null),
+        )
       } catch (cause) {
         options.onError?.({
           scope: 'consent-adapter',
@@ -159,23 +191,33 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
       if (changes !== seen) return current
       if (!next) continue
       await commit(next, 'bootstrap', {
-        persist: adapter !== undefined && !provisional,
+        persist: adapter !== undefined && !answeredProvisionally,
         applyAdapters: false,
         excludeAdapter: adapter,
+        answeredProvisionally,
       })
       return current
     }
 
+    const granted = rule.granted === 'all' ? categories : (rule.granted ?? [])
+    if (granted.length && current === null) {
+      const defaults = Object.fromEntries(
+        categories.map((category) => [category, granted.includes(category) && !(gpc && category === 'marketing')]),
+      ) as ConsentState
+      await commit(defaults, 'region', { persist: false, applyAdapters: false })
+      return current
+    }
     notify()
     return current
   }
+  const gpc =
+    options.gpc !== false &&
+    typeof navigator !== 'undefined' &&
+    (navigator as { globalPrivacyControl?: boolean }).globalPrivacyControl === true
 
   return {
     categories,
-    gpc:
-      options.gpc !== false &&
-      typeof navigator !== 'undefined' &&
-      (navigator as { globalPrivacyControl?: boolean }).globalPrivacyControl === true,
+    gpc,
     bootstrap() {
       bootstrapping ??= runBootstrap()
       return bootstrapping
@@ -185,6 +227,15 @@ export function createConsentEngine(options: ConsentEngineOptions = {}): Consent
     },
     isStale() {
       return stale
+    },
+    getRegion() {
+      return { region, rule }
+    },
+    hasChoice() {
+      return current !== null && !defaulted && !provisional
+    },
+    shouldAsk() {
+      return rule.banner !== false && (current === null || stale || defaulted)
     },
     async setConsent(consent, source = 'imperative') {
       assertValidConsent(consent, categories)

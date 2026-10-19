@@ -124,7 +124,7 @@ the data layer.
 
 ## Meta Pixel
 
-`meta({ pixelId, locale?, loadBeforeConsent? })` from
+`meta({ pixelId, locale?, loadBeforeConsent?, events? })` from
 `consentlayer/providers/meta`. The value is trimmed; an `undefined`, empty or
 whitespace-only `pixelId` turns the provider off, and the factory throws if
 it is not an 8 to 20 digit string.
@@ -135,7 +135,7 @@ it is not an 8 to 20 digit string.
 | `load`                       | Skipped if a pixel was already initialized on the page. Otherwise runs an inline bootstrap that defines the `fbq` queue, calls `fbq('consent', 'grant' \| 'revoke')` from the current consent, then `fbq('init', pixelId, advancedMatching)`; then injects `fbevents.js`. A failed load is reported with scope `provider-script-load`. |
 | `consent`                    | `fbq('consent', 'grant')` with marketing consent, otherwise `fbq('consent', 'revoke')`.                                                                                                                                                                                                                                                |
 | `page`                       | `fbq('track', 'PageView', {}, { eventID })`                                                                                                                                                                                                                                                                                            |
-| `track`                      | `fbq('track' \| 'trackCustom', name, params, { eventID })`                                                                                                                                                                                                                                                                             |
+| `track`                      | `fbq('track' \| 'trackCustom', name, params, { eventID })`, for the events [Meta receives](/guides/providers/meta/#which-events-are-sent)                                                                                                                                                                                              |
 | `teardown`                   | Only if marketing consent is no longer granted: expires the `_fbp` and `_fbc` cookies on the current host and every parent domain.                                                                                                                                                                                                     |
 | `identify`, `reset`, `group` | Not implemented.                                                                                                                                                                                                                                                                                                                       |
 
@@ -145,7 +145,7 @@ granted. `page` and `track` also check marketing consent themselves.
 
 **Names.** Standard events map to Meta's (`purchase` → `Purchase`,
 `add_to_cart` → `AddToCart`; the full list is in [Events](/guides/events/)).
-Other names are sent with `trackCustom` under their own name. `items` becomes
+Other names listed in `events` are sent with `trackCustom` under their own name. `items` becomes
 `content_ids`, `contents`, `content_type: 'product'` and `num_items`;
 `search_term` becomes `search_string`; `providers.meta` is merged last.
 
@@ -330,7 +330,7 @@ also a user ID and marketing consent is granted.
 
 ## TikTok Pixel
 
-`tiktok({ pixelId, loadBeforeConsent? })` from `consentlayer/providers/tiktok`.
+`tiktok({ pixelId, loadBeforeConsent?, events? })` from `consentlayer/providers/tiktok`.
 The value is trimmed; an `undefined`, empty or whitespace-only `pixelId` turns
 the provider off.
 
@@ -341,7 +341,7 @@ the provider off.
 | `consent`        | `ttq.grantConsent()` with marketing consent, otherwise `ttq.revokeConsent()`.                                                                                                                                                                                                                                                                                                                                                    |
 | `identify`       | `ttq.identify({ email, phone_number, external_id })`, when the identity has any of them.                                                                                                                                                                                                                                                                                                                                         |
 | `page`           | `ttq.page()`                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `track`          | `ttq.track(name, params, { event_id })`                                                                                                                                                                                                                                                                                                                                                                                          |
+| `track`          | `ttq.track(name, params, { event_id })`, for the events [TikTok receives](/guides/providers/tiktok/#which-events-are-sent)                                                                                                                                                                                                                                                                                                       |
 | `teardown`       | Only if marketing consent is no longer granted: expires the `_ttp`, `ttclid` and `ttcsid*` cookies on the current host and every parent domain.                                                                                                                                                                                                                                                                                  |
 | `reset`, `group` | Not implemented.                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
