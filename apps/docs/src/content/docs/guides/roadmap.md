@@ -18,21 +18,44 @@ The sections below are ordered from the smallest change to the largest. The
 [comparison with c15t](/guides/c15t/) explains where several of these come
 from. Each ships in its own minor release, in order of priority:
 
-| Item                                                                              | Priority | Target       |
-| --------------------------------------------------------------------------------- | -------- | ------------ |
-| [Banner translations](#banner-translations)                                       | High     | January 2027 |
-| [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027 |
-| [Embeds behind consent](#embeds-behind-consent)                                   | Medium   | March 2027   |
-| [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027   |
-| [The other planned providers](#more-providers)                                    | Medium   | Q2 2027      |
-| [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027      |
-| [Detailed settings dialog](#detailed-settings-dialog)                             | Medium   | Q2 2027      |
-| [Rich banner text](#rich-banner-text)                                             | Low      | Q2 2027      |
-| [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027      |
-| [Native banner components per framework](#banner-components-for-ui-libraries)     | Low      | Q3 2027      |
-| [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027      |
-| [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027      |
-| [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028         |
+| Item                                                                              | Priority | Target        |
+| --------------------------------------------------------------------------------- | -------- | ------------- |
+| [Dev tools panel](#dev-tools-panel)                                               | High     | November 2026 |
+| [Banner translations](#banner-translations)                                       | High     | January 2027  |
+| [shadcn/ui banner component](#banner-components-for-ui-libraries)                 | High     | January 2027  |
+| [Embeds behind consent](#embeds-behind-consent)                                   | Medium   | March 2027    |
+| [Viewing and exporting consent records](#viewing-and-exporting-consent-records)   | Medium   | March 2027    |
+| [The other planned providers](#more-providers)                                    | Medium   | Q2 2027       |
+| [Adapters for consent platforms](#adapters-for-consent-platforms)                 | Medium   | Q2 2027       |
+| [Detailed settings dialog](#detailed-settings-dialog)                             | Medium   | Q2 2027       |
+| [Rich banner text](#rich-banner-text)                                             | Low      | Q2 2027       |
+| [Banner components for other UI libraries](#banner-components-for-ui-libraries)   | Low      | Q3 2027       |
+| [Native banner components per framework](#banner-components-for-ui-libraries)     | Low      | Q3 2027       |
+| [Website builders and CMS](#website-builders-and-cms)                             | Low      | Q3 2027       |
+| [Browser extension for the dev tools](#dev-tools-panel)                           | Low      | Q3 2027       |
+| [A hosted consent service](#a-hosted-consent-service)                             | Medium   | Q4 2027       |
+| [A full IAB TCF and GPP consent manager](#a-full-iab-tcf-and-gpp-consent-manager) | Low      | 2028          |
+
+### Dev tools panel
+
+The [`debug` option](/guides/troubleshooting/) logs consent changes, events
+and provider activity to the console, which you read line by line. The
+planned `consentlayer/devtools` entry point mounts a panel on the page that
+shows the same information at a glance:
+
+- The consent for each category and where it came from: a stored choice,
+  Global Privacy Control, the region's default or an IAB TCF CMP.
+- The visitor's region and the privacy law the banner follows.
+- Each provider and its state: waiting for consent, deferred, loaded or
+  turned off.
+- A live list of page views, `track`, `identify` and `group` calls, with the
+  providers that received each one and why the others did not.
+- The cookies ConsentLayer has set, and a button that clears the stored
+  choice so the banner shows again.
+
+The panel is meant for development; in production it mounts only when
+`debug` is on. A browser extension that shows the same panel on any page
+running ConsentLayer, without changing its code, may follow.
 
 ### Banner translations
 
