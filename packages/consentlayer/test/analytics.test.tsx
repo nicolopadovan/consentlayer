@@ -5,7 +5,7 @@ import { createAnalytics } from '../src/core/create-analytics'
 import { getNames } from '../src/core/names'
 import type { AnalyticsEventPayload, AnalyticsPlugin } from '../src/core/types'
 import { cartParams, orderParams, productParams } from '../src/ecommerce'
-import { ga4EventName, ga4UserData } from '../src/providers/ga4'
+import { ga4Event, ga4EventName, ga4UserData } from '../src/providers/ga4'
 import { hotjar } from '../src/providers/hotjar'
 import { meta, metaUserData, toMetaEvent } from '../src/providers/meta'
 import {
@@ -310,6 +310,21 @@ describe('event translation', () => {
     expect(ga4EventName('lead')).toBe('generate_lead')
     expect(ga4EventName('consentlayer.ui_click')).toBe('consentlayer_ui_click')
     expect(ga4EventName('purchase')).toBe('purchase')
+  })
+
+  it('maps auto-tracking events to GA4 enhanced measurement events', () => {
+    expect(ga4Event('consentlayer.outbound_click', { link_url: 'https://x.example' })).toEqual({
+      name: 'click',
+      params: { link_url: 'https://x.example', outbound: true },
+    })
+    expect(ga4Event('consentlayer.scroll_depth', { depth: 50 })).toEqual({
+      name: 'scroll',
+      params: { depth: 50, percent_scrolled: 50 },
+    })
+    expect(ga4EventName('consentlayer.site_search')).toBe('view_search_results')
+    expect(ga4EventName('consentlayer.video_progress')).toBe('video_progress')
+    expect(ga4EventName('consentlayer.form_submit')).toBe('form_submit')
+    expect(ga4Event('lead', { value: 1 })).toEqual({ name: 'generate_lead', params: { value: 1 } })
   })
 
   it('builds checkout and purchase params from storefront shapes', () => {

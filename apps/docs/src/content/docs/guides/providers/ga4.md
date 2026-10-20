@@ -75,3 +75,18 @@ nothing else. For region defaults, `wait_for_update`, URL passthrough or ads
 data redaction, add the
 [Google Consent Mode adapter](/guides/adapters/google-consent-mode/). `ga4()`
 then leaves the defaults and updates to it.
+
+## Enhanced measurement
+
+GA4's enhanced measurement runs in gtag.js and does not wait for
+ConsentLayer's consent. [Auto-tracking](/guides/auto-tracking/) sends the
+same interactions to every provider, only after analytics consent, and
+`ga4()` sends them under
+[GA4's event names](/guides/auto-tracking/#google-analytics), so the built-in
+reports still work.
+
+With auto-tracking on, open **Admin › Data streams › your stream › Enhanced
+measurement** and turn off every option except **Page views**. Under the
+**Page views** settings, untick **Page changes based on browser history
+events**: ConsentLayer sends a page view for each route itself. Otherwise
+GA4 counts each interaction twice.

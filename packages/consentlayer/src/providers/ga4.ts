@@ -1,5 +1,6 @@
 import { builtInConsentMode, ensureGtag, loadGtag } from '../core/consent-mode'
 import type { EventName, UserIdentity } from '../core/types'
+import { getNames } from '../core/names'
 import { definePlugin, getFlag, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 import { assertHttpsOrRelativeUrl, assertValidGa4MeasurementId } from '../core/validation'
@@ -38,9 +39,36 @@ const GA4_EVENT_NAMES: Record<string, string> = {
   lead: 'generate_lead',
 }
 
+const autoTrackingEventNames = (): Record<string, string> => {
+  const names = getNames().autoTrackingEvents
+  return {
+    [names.scrollDepth]: 'scroll',
+    [names.outboundClick]: 'click',
+    [names.fileDownload]: 'file_download',
+    [names.siteSearch]: 'view_search_results',
+    [names.videoStart]: 'video_start',
+    [names.videoProgress]: 'video_progress',
+    [names.videoComplete]: 'video_complete',
+    [names.formStart]: 'form_start',
+    [names.formSubmit]: 'form_submit',
+  }
+}
+
 /** GA4 event names allow only letters, digits and underscores. */
 export function ga4EventName(name: string): string {
-  return GA4_EVENT_NAMES[name] ?? name.replace(/[^A-Za-z0-9_]/g, '_')
+  return GA4_EVENT_NAMES[name] ?? autoTrackingEventNames()[name] ?? name.replace(/[^A-Za-z0-9_]/g, '_')
+}
+
+/** The GA4 name of an event, and its params with those GA4's enhanced measurement reports read. */
+export function ga4Event(name: string, params: Record<string, unknown>) {
+  const names = getNames().autoTrackingEvents
+  const extra =
+    name === names.outboundClick
+      ? { outbound: true }
+      : name === names.scrollDepth
+        ? { percent_scrolled: params.depth }
+        : undefined
+  return { name: ga4EventName(name), params: { ...params, ...extra } }
 }
 
 /** User-provided data; empty when there is no email or phone to share. */
@@ -115,8 +143,9 @@ export function ga4(options: Ga4Options) {
     },
     track(event) {
       if (typeof window === 'undefined') return
-      gtag('event', ga4EventName(event.name), {
-        ...event.params,
+      const { name, params } = ga4Event(event.name, event.params)
+      gtag('event', name, {
+        ...params,
         ...event.options.providers?.ga4,
         send_to: measurementId,
       })

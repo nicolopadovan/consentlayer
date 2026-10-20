@@ -4,6 +4,14 @@ export type AutoTrackingEventNames = {
   scrollDepth: string
   timeOnPage: string
   uiClick: string
+  outboundClick: string
+  fileDownload: string
+  siteSearch: string
+  videoStart: string
+  videoProgress: string
+  videoComplete: string
+  formStart: string
+  formSubmit: string
 }
 
 /** Storage keys, globals and DOM events in use. */
@@ -40,6 +48,14 @@ function derive(prefix: string, legacy: boolean): Names {
       scrollDepth: `${prefix}.scroll_depth`,
       timeOnPage: `${prefix}.time_on_page`,
       uiClick: `${prefix}.ui_click`,
+      outboundClick: `${prefix}.outbound_click`,
+      fileDownload: `${prefix}.file_download`,
+      siteSearch: `${prefix}.site_search`,
+      videoStart: `${prefix}.video_start`,
+      videoProgress: `${prefix}.video_progress`,
+      videoComplete: `${prefix}.video_complete`,
+      formStart: `${prefix}.form_start`,
+      formSubmit: `${prefix}.form_submit`,
     },
   }
 }

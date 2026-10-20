@@ -174,12 +174,27 @@ export type AutoTrackingTimeConfig = {
   intervals?: number[]
 }
 
+/** File extensions whose links send a download event. */
+export type AutoTrackingDownloadConfig = {
+  extensions?: string[]
+}
+
+/** URL query parameters that hold a site search term. */
+export type AutoTrackingSiteSearchConfig = {
+  params?: string[]
+}
+
 /** Events tracked without code. `true` uses the defaults for that kind. */
 export type AutoTrackingConfig = {
   clicks?: boolean | AutoTrackingClickConfig
   scroll?: boolean | AutoTrackingScrollConfig
   timeOnPage?: boolean | AutoTrackingTimeConfig
   pageViews?: boolean
+  outboundClicks?: boolean
+  downloads?: boolean | AutoTrackingDownloadConfig
+  siteSearch?: boolean | AutoTrackingSiteSearchConfig
+  video?: boolean
+  forms?: boolean
 }
 
 /** What `autoTracking()` returns: started once with `track` and a signal aborted on `destroy()`, it returns the function that starts a page session. */
@@ -272,7 +287,19 @@ type RegisteredEvents = Register extends { events: infer Events } ? Events : Rec
 export type EventName = Register extends { events: infer Events }
   ? | keyof StandardEvents
     | (keyof Events & string)
-    | `${string}.${'page_session_start' | 'scroll_depth' | 'time_on_page' | 'ui_click'}`
+    | `${string}.${
+        | 'page_session_start'
+        | 'scroll_depth'
+        | 'time_on_page'
+        | 'ui_click'
+        | 'outbound_click'
+        | 'file_download'
+        | 'site_search'
+        | 'video_start'
+        | 'video_progress'
+        | 'video_complete'
+        | 'form_start'
+        | 'form_submit'}`
   : keyof StandardEvents | (string & {})
 
 /** Params for an event: typed for the standard and declared events, free-form for the rest. */
