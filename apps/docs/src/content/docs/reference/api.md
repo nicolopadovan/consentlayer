@@ -54,20 +54,20 @@ import { createAnalytics } from 'consentlayer'
 function createAnalytics(options?: AnalyticsOptions): Analytics
 ```
 
-| Option            | Type                                              | Default                                          | Description                                                                                                                                                                            |
-| ----------------- | ------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `providers`       | `AnalyticsPlugin[]`                               | `[]`                                             | The providers to run. See [Providers](/guides/providers/).                                                                                                                             |
-| `categories`      | `(keyof ConsentCategories)[]`                     | `[]`                                             | Custom consent categories, added after `preferences`, `analytics` and `marketing`. See [Custom categories](#custom-categories).                                                        |
-| `consent`         | [`ConsentOptions`](#consent-options)              |                                                  | Consent storage, adapters and broadcast.                                                                                                                                               |
-| `names`           | [`NamesInput`](#names)                            |                                                  | Storage keys, globals and DOM event names. See [Names](/guides/names/).                                                                                                                |
-| `autoTracking`    | `AutoTracking`                                    |                                                  | `autoTracking()` from `consentlayer/auto-tracking`: automatic page session, click, scroll and time-on-page events. See [`autoTracking`](#autotracking).                                |
-| `server`          | `{ endpoint?: string; consentEndpoint?: string }` |                                                  | Server routes. See [`server`](#server).                                                                                                                                                |
-| `errors`          | `boolean \| { globalHandlers?: boolean }`         | `true`                                           | `false` disables `captureError` and the global handlers. `{ globalHandlers: false }` keeps `captureError` but does not listen to the window's `error` and `unhandledrejection` events. |
-| `nonce`           | `string`                                          | none                                             | Set on every `<script>` ConsentLayer injects, inline or external, for a Content Security Policy that allows scripts by nonce.                                                          |
-| `enabled`         | `boolean \| (() => boolean)`                      | `true`                                           | When `false`, or when the function returns `false`, no provider runs and calls are dropped. The function is evaluated on every call.                                                   |
-| `debug`           | `boolean \| DebugOptions`                         | `false`                                          | Logs what ConsentLayer does. See [`debug`](#debug).                                                                                                                                    |
-| `onError`         | `(error: AnalyticsError) => void`                 |                                                  | Receives every [`AnalyticsError`](#analyticserror), including consent adapter errors. Exceptions it throws are swallowed.                                                              |
-| `identityStorage` | `IdentityStorageAdapter`                          | `localStorage`, under `names.identityStorageKey` | Where the user identity is kept.                                                                                                                                                       |
+| Option            | Type                                              | Default                                          | Description                                                                                                                                                                                                |
+| ----------------- | ------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `providers`       | `AnalyticsPlugin[]`                               | `[]`                                             | The providers to run. See [Providers](/guides/providers/).                                                                                                                                                 |
+| `categories`      | `(keyof ConsentCategories)[]`                     | `[]`                                             | Custom consent categories, added after `preferences`, `analytics` and `marketing`. See [Custom categories](#custom-categories).                                                                            |
+| `consent`         | [`ConsentOptions`](#consent-options)              |                                                  | Consent storage, adapters and broadcast.                                                                                                                                                                   |
+| `names`           | [`NamesInput`](#names)                            |                                                  | Storage keys, globals and DOM event names. See [Names](/guides/names/).                                                                                                                                    |
+| `autoTracking`    | `AutoTracking`                                    |                                                  | `autoTracking()` from `consentlayer/auto-tracking`: automatic page session, click, scroll, time-on-page, outbound link, download, site search, video and form events. See [`autoTracking`](#autotracking). |
+| `server`          | `{ endpoint?: string; consentEndpoint?: string }` |                                                  | Server routes. See [`server`](#server).                                                                                                                                                                    |
+| `errors`          | `boolean \| { globalHandlers?: boolean }`         | `true`                                           | `false` disables `captureError` and the global handlers. `{ globalHandlers: false }` keeps `captureError` but does not listen to the window's `error` and `unhandledrejection` events.                     |
+| `nonce`           | `string`                                          | none                                             | Set on every `<script>` ConsentLayer injects, inline or external, for a Content Security Policy that allows scripts by nonce.                                                                              |
+| `enabled`         | `boolean \| (() => boolean)`                      | `true`                                           | When `false`, or when the function returns `false`, no provider runs and calls are dropped. The function is evaluated on every call.                                                                       |
+| `debug`           | `boolean \| DebugOptions`                         | `false`                                          | Logs what ConsentLayer does. See [`debug`](#debug).                                                                                                                                                        |
+| `onError`         | `(error: AnalyticsError) => void`                 |                                                  | Receives every [`AnalyticsError`](#analyticserror), including consent adapter errors. Exceptions it throws are swallowed.                                                                                  |
+| `identityStorage` | `IdentityStorageAdapter`                          | `localStorage`, under `names.identityStorageKey` | Where the user identity is kept.                                                                                                                                                                           |
 
 **Returns** an [`Analytics`](#the-analytics-instance) instance.
 
@@ -168,15 +168,20 @@ enables every kind it does not set to `false`, the same rule as
 analytics consent is granted, and are sent with `requireAnalyticsConsent: true`.
 Their names are listed in [Names](/guides/names/).
 
-| Field              | Type                                   | Default                                                                              | Description                                                                                                                     |
-| ------------------ | -------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `pageViews`        | `boolean`                              | `true`                                                                               | Sends `pageSessionStart` with `{ session_id }` at the start of each page session.                                               |
-| `clicks`           | `boolean \| AutoTrackingClickConfig`   | enabled                                                                              | Sends `uiClick` with `{ ui_target, ui_element, ui_id, path, session_id }`.                                                      |
-| `clicks.mode`      | `'all' \| 'attribute'`                 | `'all'`                                                                              | `'all'` tracks elements matching `selectors`; `'attribute'` tracks only elements that have `attribute`.                         |
-| `clicks.attribute` | `string`                               | `'data-track'`                                                                       | Its value is used as `ui_target`, before `aria-label`. The element's text is never sent.                                        |
-| `clicks.selectors` | `string[]`                             | `['button', '[role="button"]', 'a', 'input[type="submit"]', 'input[type="button"]']` | Elements tracked in `'all'` mode.                                                                                               |
-| `scroll`           | `boolean \| { thresholds?: number[] }` | `[25, 50, 75, 100]`                                                                  | Scroll depths, in percent, that each send `scrollDepth` with `{ depth, session_id }` once per page session. `100` fires at 95%. |
-| `timeOnPage`       | `boolean \| { intervals?: number[] }`  | `[5, 15, 30, 60, 120]`                                                               | Seconds on the page that each send `timeOnPage` with `{ seconds, session_id }`.                                                 |
+| Field              | Type                                   | Default                                                                              | Description                                                                                                                                                                                                                                                     |
+| ------------------ | -------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pageViews`        | `boolean`                              | `true`                                                                               | Sends `pageSessionStart` with `{ session_id }` at the start of each page session.                                                                                                                                                                               |
+| `clicks`           | `boolean \| AutoTrackingClickConfig`   | enabled                                                                              | Sends `uiClick` with `{ ui_target, ui_element, ui_id, path, session_id }`.                                                                                                                                                                                      |
+| `clicks.mode`      | `'all' \| 'attribute'`                 | `'all'`                                                                              | `'all'` tracks elements matching `selectors`; `'attribute'` tracks only elements that have `attribute`.                                                                                                                                                         |
+| `clicks.attribute` | `string`                               | `'data-track'`                                                                       | Its value is used as `ui_target`, before `aria-label`. The element's text is never sent.                                                                                                                                                                        |
+| `clicks.selectors` | `string[]`                             | `['button', '[role="button"]', 'a', 'input[type="submit"]', 'input[type="button"]']` | Elements tracked in `'all'` mode.                                                                                                                                                                                                                               |
+| `scroll`           | `boolean \| { thresholds?: number[] }` | `[25, 50, 75, 100]`                                                                  | Scroll depths, in percent, that each send `scrollDepth` with `{ depth, session_id }` once per page session. `100` fires at 95%.                                                                                                                                 |
+| `timeOnPage`       | `boolean \| { intervals?: number[] }`  | `[5, 15, 30, 60, 120]`                                                               | Seconds on the page that each send `timeOnPage` with `{ seconds, session_id }`.                                                                                                                                                                                 |
+| `outboundClicks`   | `boolean`                              | enabled                                                                              | Sends `outboundClick` with `{ link_url, link_domain, link_id, session_id }` for a link to another host name.                                                                                                                                                    |
+| `downloads`        | `boolean \| { extensions?: string[] }` | [The list in Auto-tracking](/guides/auto-tracking/#events)                           | Sends `fileDownload` with `{ link_url, link_id, file_name, file_extension, session_id }` for a link whose path ends in one of the extensions, in lower case without the dot.                                                                                    |
+| `siteSearch`       | `boolean \| { params?: string[] }`     | `['q', 's', 'search', 'query', 'keyword']`                                           | Sends `siteSearch` with `{ search_term, session_id }` at the start of a page session whose URL has one of the query parameters.                                                                                                                                 |
+| `video`            | `boolean`                              | enabled                                                                              | Sends `videoStart`, `videoProgress` at 10, 25, 50 and 75% and `videoComplete` for `<video>` elements and YouTube embeds with `enablejsapi=1`, with `{ video_provider, video_url, video_title, video_current_time, video_duration, video_percent, session_id }`. |
+| `forms`            | `boolean`                              | enabled                                                                              | Sends `formStart` on the first focus inside a form and `formSubmit` on each submit, with `{ form_id, form_name, form_destination, session_id }`. Field values are never sent.                                                                                   |
 
 #### `debug`
 
@@ -500,6 +505,14 @@ interface ConsentIntegrationAdapter {
 | `autoTrackingEvents.scrollDepth`      | `string`  | `` `${prefix}.scroll_depth` ``                                   |
 | `autoTrackingEvents.timeOnPage`       | `string`  | `` `${prefix}.time_on_page` ``                                   |
 | `autoTrackingEvents.uiClick`          | `string`  | `` `${prefix}.ui_click` ``                                       |
+| `autoTrackingEvents.outboundClick`    | `string`  | `` `${prefix}.outbound_click` ``                                 |
+| `autoTrackingEvents.fileDownload`     | `string`  | `` `${prefix}.file_download` ``                                  |
+| `autoTrackingEvents.siteSearch`       | `string`  | `` `${prefix}.site_search` ``                                    |
+| `autoTrackingEvents.videoStart`       | `string`  | `` `${prefix}.video_start` ``                                    |
+| `autoTrackingEvents.videoProgress`    | `string`  | `` `${prefix}.video_progress` ``                                 |
+| `autoTrackingEvents.videoComplete`    | `string`  | `` `${prefix}.video_complete` ``                                 |
+| `autoTrackingEvents.formStart`        | `string`  | `` `${prefix}.form_start` ``                                     |
+| `autoTrackingEvents.formSubmit`       | `string`  | `` `${prefix}.form_submit` ``                                    |
 
 <details>
 <summary>Type signatures</summary>
@@ -510,6 +523,14 @@ type AutoTrackingEventNames = {
   scrollDepth: string
   timeOnPage: string
   uiClick: string
+  outboundClick: string
+  fileDownload: string
+  siteSearch: string
+  videoStart: string
+  videoProgress: string
+  videoComplete: string
+  formStart: string
+  formSubmit: string
 }
 
 type Names = {
@@ -1449,12 +1470,13 @@ marketing consent.
 **Throws** an `Error` when `measurementId` is invalid.
 
 The entry point also exports the types `Ga4Options` and `Ga4ConsentMode`, and
-two helpers:
+three helpers:
 
-| Export         | Signature                                            | Description                                                                                                         |
-| -------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `ga4EventName` | `(name: string) => string`                           | The GA4 name of an event: `lead` becomes `generate_lead`; other characters than letters, digits and `_` become `_`. |
-| `ga4UserData`  | `(identity: UserIdentity) => Record<string, string>` | GA4 `user_data`: `email`, and `phone_number` with a leading `+`. Empty without an email or phone.                   |
+| Export         | Signature                                                                                              | Description                                                                                                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ga4EventName` | `(name: string) => string`                                                                             | The GA4 name of an event: `lead` becomes `generate_lead`, [auto-tracking events](/guides/auto-tracking/#google-analytics) become their enhanced measurement names, and other characters than letters, digits and `_` become `_`. |
+| `ga4Event`     | `(name: string, params: Record<string, unknown>) => { name: string; params: Record<string, unknown> }` | `ga4EventName(name)`, and the params with `outbound: true` for an outbound click and `percent_scrolled` for a scroll depth.                                                                                                      |
+| `ga4UserData`  | `(identity: UserIdentity) => Record<string, string>`                                                   | GA4 `user_data`: `email`, and `phone_number` with a leading `+`. Empty without an email or phone.                                                                                                                                |
 
 ### `gtm(options)`
 

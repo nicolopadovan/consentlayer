@@ -201,6 +201,158 @@ describe('granular auto-tracking', () => {
   })
 })
 
+describe('enhanced measurement auto-tracking', () => {
+  const names = (events: CollectedEvent[]) => events.map((e) => e.name)
+  const link = (href: string) => {
+    const a = document.body.appendChild(document.createElement('a'))
+    a.href = href
+    a.addEventListener('click', (event) => event.preventDefault())
+    return a
+  }
+
+  beforeEach(() => {
+    document.body.replaceChildren()
+    window.history.replaceState(null, '', '/')
+  })
+
+  it('sends nothing before analytics consent', async () => {
+    const events: CollectedEvent[] = []
+    const manager = setupManager(events)
+    await manager.boot()
+    await manager.updateConsent({ preferences: true, analytics: false, marketing: true })
+    link('https://other.example/report.pdf').click()
+    expect(events).toEqual([])
+  })
+
+  it('tracks outbound links and downloads, but not internal pages', async () => {
+    const events: CollectedEvent[] = []
+    await boot(setupManager(events, { outboundClicks: true, downloads: true }))
+    link('/about').click()
+    link('/files/Report.PDF').click()
+    link('https://other.example/page').click()
+    expect(events).toEqual([
+      {
+        name: 'consentlayer.file_download',
+        params: {
+          link_url: `${window.location.origin}/files/Report.PDF`,
+          link_id: undefined,
+          file_name: '/files/Report.PDF',
+          file_extension: 'pdf',
+          session_id: 1,
+        },
+      },
+      {
+        name: 'consentlayer.outbound_click',
+        params: {
+          link_url: 'https://other.example/page',
+          link_id: undefined,
+          link_domain: 'other.example',
+          session_id: 1,
+        },
+      },
+    ])
+  })
+
+  it('uses the configured download extensions', async () => {
+    const events: CollectedEvent[] = []
+    await boot(setupManager(events, { downloads: { extensions: ['dmg'] } }))
+    link('/a.pdf').click()
+    link('/a.dmg').click()
+    expect(events.map((e) => e.params.file_extension)).toEqual(['dmg'])
+  })
+
+  it('sends the site search term from the URL', async () => {
+    window.history.replaceState(null, '', '/search?query=red+shoes')
+    const events: CollectedEvent[] = []
+    await boot(setupManager(events, { siteSearch: true }))
+    expect(events).toEqual([{ name: 'consentlayer.site_search', params: { search_term: 'red shoes', session_id: 1 } }])
+  })
+
+  it('sends form_start once per form and form_submit on each submit, without field values', async () => {
+    const events: CollectedEvent[] = []
+    await boot(setupManager(events, { forms: true }))
+    const form = document.body.appendChild(document.createElement('form'))
+    form.id = 'contact'
+    form.setAttribute('action', '/send')
+    const input = form.appendChild(document.createElement('input'))
+    input.name = 'id'
+    input.value = 'jane@example.com'
+    input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+    input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+    form.dispatchEvent(new Event('submit', { bubbles: true }))
+    const params = {
+      form_id: 'contact',
+      form_name: undefined,
+      form_destination: `${window.location.origin}/send`,
+      session_id: 1,
+    }
+    expect(events).toEqual([
+      { name: 'consentlayer.form_start', params },
+      { name: 'consentlayer.form_submit', params },
+    ])
+  })
+
+  it('tracks a video element from start to completion', async () => {
+    const events: CollectedEvent[] = []
+    await boot(setupManager(events, { video: true }))
+    const video = document.body.appendChild(document.createElement('video'))
+    video.title = 'Intro'
+    const at = (currentTime: number, type: string) => {
+      Object.defineProperties(video, {
+        currentTime: { configurable: true, value: currentTime },
+        duration: { configurable: true, value: 100 },
+        paused: { configurable: true, value: false },
+      })
+      video.dispatchEvent(new Event(type))
+    }
+    at(0, 'play')
+    at(30, 'timeupdate')
+    at(30, 'timeupdate')
+    at(100, 'ended')
+    expect(names(events)).toEqual([
+      'consentlayer.video_start',
+      'consentlayer.video_progress',
+      'consentlayer.video_progress',
+      'consentlayer.video_progress',
+      'consentlayer.video_progress',
+      'consentlayer.video_complete',
+    ])
+    expect(events.filter((e) => e.name === 'consentlayer.video_progress').map((e) => e.params.video_percent)).toEqual([
+      10, 25, 50, 75,
+    ])
+    expect(events[0]?.params).toMatchObject({ video_provider: 'html5', video_title: 'Intro', video_duration: 100 })
+  })
+
+  it('tracks a YouTube embed with enablejsapi=1 from its messages', async () => {
+    const events: CollectedEvent[] = []
+    const frame = document.body.appendChild(document.createElement('iframe'))
+    frame.src = 'https://www.youtube.com/embed/abc?enablejsapi=1'
+    const post = vi.spyOn(frame.contentWindow!, 'postMessage')
+    await boot(setupManager(events, { video: true }))
+    expect(post).toHaveBeenCalledWith(JSON.stringify({ event: 'listening', channel: 'widget' }), '*')
+    const deliver = (origin: string, info: object) =>
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin,
+          source: frame.contentWindow,
+          data: JSON.stringify({ event: 'infoDelivery', info }),
+        }),
+      )
+    deliver('https://evil.example', { playerState: 1, duration: 60 })
+    deliver('https://www.youtube.com', { playerState: 1, currentTime: 0, duration: 60, videoData: { title: 'Demo' } })
+    deliver('https://www.youtube.com', { playerState: 0, currentTime: 60 })
+    expect(names(events)).toEqual([
+      'consentlayer.video_start',
+      'consentlayer.video_progress',
+      'consentlayer.video_progress',
+      'consentlayer.video_progress',
+      'consentlayer.video_progress',
+      'consentlayer.video_complete',
+    ])
+    expect(events[0]?.params).toMatchObject({ video_provider: 'youtube', video_title: 'Demo', video_duration: 60 })
+  })
+})
+
 describe('autoTracking failures', () => {
   it('rejects a value that is not autoTracking()', () => {
     // @ts-expect-error the v0 boolean form

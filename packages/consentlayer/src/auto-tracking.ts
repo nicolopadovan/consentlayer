@@ -6,22 +6,41 @@ export type {
   AutoTrackingClickConfig,
   AutoTrackingClickMode,
   AutoTrackingConfig,
+  AutoTrackingDownloadConfig,
   AutoTrackingScrollConfig,
+  AutoTrackingSiteSearchConfig,
   AutoTrackingTimeConfig,
 } from './core/types'
 
 const DEFAULT_CLICK_SELECTORS = ['button', '[role="button"]', 'a', 'input[type="submit"]', 'input[type="button"]']
 const DEFAULT_SCROLL_THRESHOLDS = [25, 50, 75, 100]
 const DEFAULT_TIME_INTERVALS = [5, 15, 30, 60, 120]
+const DEFAULT_DOWNLOAD_EXTENSIONS =
+  'pdf xls xlsx doc docx txt rtf csv exe key pps ppt pptx 7z pkg rar gz zip avi mov mp4 mpe mpeg wmv mid midi mp3 wav wma'.split(
+    ' ',
+  )
+const DEFAULT_SEARCH_PARAMS = ['q', 's', 'search', 'query', 'keyword']
+const VIDEO_PERCENTS = [10, 25, 50, 75]
+const YOUTUBE_ORIGIN = /^https:\/\/www\.youtube(-nocookie)?\.com$/
+
+type YouTubeInfo = {
+  playerState?: number
+  currentTime?: number
+  duration?: number
+  videoUrl?: string
+  videoData?: { title?: string }
+}
 
 /**
- * Tracks page sessions, clicks, scroll depth and time on page once analytics
+ * Tracks page sessions, clicks, scroll depth, time on page, outbound links, downloads, site search, video and forms once analytics
  * consent is granted: `createAnalytics({ autoTracking: autoTracking() })`.
  * An object turns on only the kinds it names, unless it names none.
  */
 export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
-  const { clicks, scroll, timeOnPage, pageViews } = config
-  const named = [clicks, scroll, timeOnPage, pageViews].some((kind) => kind != null && kind !== false)
+  const { clicks, scroll, timeOnPage, pageViews, outboundClicks, downloads, siteSearch, video, forms } = config
+  const named = [clicks, scroll, timeOnPage, pageViews, outboundClicks, downloads, siteSearch, video, forms].some(
+    (kind) => kind != null && kind !== false,
+  )
   const on = (kind: unknown) => (kind == null ? !named : kind !== false)
   const settings = <T extends object>(kind: boolean | T | undefined): Partial<T> =>
     typeof kind === 'object' ? kind : {}
@@ -50,6 +69,27 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
       window.addEventListener('click', onClick, { signal })
     }
 
+    if (on(outboundClicks) || on(downloads)) {
+      const extensions = settings(downloads).extensions ?? DEFAULT_DOWNLOAD_EXTENSIONS
+      const onLinkClick = (event: Event) => {
+        const link = (event.target as Element | null)?.closest('a[href]')
+        if (!(link instanceof HTMLAnchorElement) || !/^https?:$/.test(link.protocol)) return
+        const params = { link_url: link.href, link_id: link.id || undefined, session_id: session }
+        const extension = /\.([a-z\d]+)$/i.exec(link.pathname)?.[1]?.toLowerCase()
+        if (on(downloads) && extension && extensions.includes(extension)) {
+          send(getNames().autoTrackingEvents.fileDownload, {
+            ...params,
+            file_name: link.pathname,
+            file_extension: extension,
+          })
+        }
+        if (on(outboundClicks) && link.hostname !== window.location.hostname) {
+          send(getNames().autoTrackingEvents.outboundClick, { ...params, link_domain: link.hostname })
+        }
+      }
+      window.addEventListener('click', onLinkClick, { signal })
+    }
+
     return () => {
       page.abort()
       page = new AbortController()
@@ -57,6 +97,112 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
       const sessionId = ++session
 
       if (on(pageViews)) send(getNames().autoTrackingEvents.pageSessionStart, { session_id: sessionId })
+
+      if (on(siteSearch)) {
+        const query = new URLSearchParams(window.location.search)
+        const term = (settings(siteSearch).params ?? DEFAULT_SEARCH_PARAMS).map((name) => query.get(name)).find(Boolean)
+        if (term) send(getNames().autoTrackingEvents.siteSearch, { search_term: term, session_id: sessionId })
+      }
+
+      if (on(forms)) {
+        const started = new WeakSet<HTMLFormElement>()
+        const formParams = (form: HTMLFormElement) => ({
+          form_id: form.getAttribute('id') || undefined,
+          form_name: form.getAttribute('name') || undefined,
+          form_destination: new URL(form.getAttribute('action') ?? '', document.baseURI).href,
+          session_id: sessionId,
+        })
+        const onFocus = (event: Event) => {
+          const form = event.target instanceof Element ? event.target.closest('form') : null
+          if (!form || started.has(form)) return
+          started.add(form)
+          send(getNames().autoTrackingEvents.formStart, formParams(form))
+        }
+        const onSubmit = (event: Event) => {
+          if (event.target instanceof HTMLFormElement)
+            send(getNames().autoTrackingEvents.formSubmit, formParams(event.target))
+        }
+        document.addEventListener('focusin', onFocus, { signal: pageSignal })
+        document.addEventListener('submit', onSubmit, { signal: pageSignal })
+      }
+
+      if (on(video)) {
+        const sent = new WeakMap<object, Set<string | number>>()
+        const report = (
+          player: object,
+          state: 'playing' | 'ended' | undefined,
+          current: number,
+          duration: number,
+          details: { video_provider: string; video_url?: string; video_title?: string },
+        ) => {
+          const seen = sent.get(player) ?? new Set()
+          sent.set(player, seen)
+          const params = {
+            ...details,
+            video_current_time: Math.round(current),
+            video_duration: Number.isFinite(duration) ? Math.round(duration) : undefined,
+            session_id: sessionId,
+          }
+          const once = (key: string | number, name: string, extra?: object) => {
+            if (seen.has(key)) return
+            seen.add(key)
+            send(name, { ...params, ...extra })
+          }
+          const names = getNames().autoTrackingEvents
+          if (state === 'playing') once('start', names.videoStart)
+          if (!seen.has('start')) return
+          for (const percent of VIDEO_PERCENTS) {
+            if (duration > 0 && (current / duration) * 100 >= percent) {
+              once(percent, names.videoProgress, { video_percent: percent })
+            }
+          }
+          if (state === 'ended') once('end', names.videoComplete)
+        }
+        const onMedia = (event: Event) => {
+          const element = event.target
+          if (!(element instanceof HTMLVideoElement)) return
+          const state =
+            event.type === 'ended' ? 'ended' : event.type === 'play' || !element.paused ? 'playing' : undefined
+          report(element, state, element.currentTime, element.duration, {
+            video_provider: 'html5',
+            video_url: element.currentSrc,
+            video_title: element.title || undefined,
+          })
+        }
+        for (const type of ['play', 'timeupdate', 'ended']) {
+          document.addEventListener(type, onMedia, { capture: true, signal: pageSignal })
+        }
+
+        const youtube = new WeakMap<object, YouTubeInfo>()
+        const listen = (frame: EventTarget | null) => {
+          if (!(frame instanceof HTMLIFrameElement) || !frame.src) return
+          const src = new URL(frame.src)
+          if (!YOUTUBE_ORIGIN.test(src.origin) || src.searchParams.get('enablejsapi') !== '1') return
+          // The message holds no data; '*' avoids a console error when the frame has not navigated yet.
+          frame.contentWindow?.postMessage(JSON.stringify({ event: 'listening', channel: 'widget' }), '*')
+        }
+        const onMessage = (event: MessageEvent) => {
+          if (!event.source || !YOUTUBE_ORIGIN.test(event.origin) || typeof event.data !== 'string') return
+          let message: { event?: string; info?: YouTubeInfo }
+          try {
+            message = JSON.parse(event.data) as typeof message
+          } catch {
+            return
+          }
+          if (message.event !== 'infoDelivery' && message.event !== 'initialDelivery') return
+          const info = { ...youtube.get(event.source), ...message.info }
+          youtube.set(event.source, info)
+          const state = info.playerState === 1 ? 'playing' : info.playerState === 0 ? 'ended' : undefined
+          report(event.source, state, info.currentTime ?? 0, info.duration ?? 0, {
+            video_provider: 'youtube',
+            video_url: info.videoUrl,
+            video_title: info.videoData?.title,
+          })
+        }
+        window.addEventListener('message', onMessage, { signal: pageSignal })
+        document.addEventListener('load', (event) => listen(event.target), { capture: true, signal: pageSignal })
+        document.querySelectorAll('iframe').forEach(listen)
+      }
 
       if (on(scroll)) {
         const thresholds = (settings(scroll).thresholds ?? DEFAULT_SCROLL_THRESHOLDS)

@@ -1,5 +1,5 @@
 import { isValidEmail, isValidPhoneE164 } from '../core/validation'
-import { ga4EventName } from '../providers/ga4'
+import { ga4Event } from '../providers/ga4'
 import type { ServerEvent, ServerRequestInfo } from './handler'
 import { sha256 } from './http'
 
@@ -37,6 +37,7 @@ export async function sendMeasurementProtocol(
         }).filter(([, value]) => value),
       )
     : {}
+  const ga4 = ga4Event(event.name, { ...(event.url && { page_location: event.url }), ...event.params })
   const response = await fetchImpl(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -45,12 +46,7 @@ export async function sendMeasurementProtocol(
       user_id: event.identity?.userId,
       user_data: Object.keys(userData).length ? userData : undefined,
       consent: { ad_user_data: consentValue(marketing), ad_personalization: consentValue(marketing) },
-      events: [
-        {
-          name: ga4EventName(event.name),
-          params: { ...(event.url && { page_location: event.url }), ...event.params, ...event.providers?.ga4 },
-        },
-      ],
+      events: [{ name: ga4.name, params: { ...ga4.params, ...event.providers?.ga4 } }],
     }),
   })
   if (!response.ok) throw new Error(`${receiver} ${response.status}: ${await response.text()}`)
