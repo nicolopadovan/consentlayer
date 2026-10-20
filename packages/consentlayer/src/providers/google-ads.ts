@@ -1,4 +1,4 @@
-import { builtInConsentMode, ensureGtag, loadGtag } from '../core/consent-mode'
+import { builtInConsentMode, ensureGtag, loadGtag, setGtagPage } from '../core/consent-mode'
 import { definePlugin, getFlag, setFlag, skippedPlugin } from '../core/plugin'
 import type { EventName, LoadTiming } from '../core/types'
 import { expireCookies } from '../core/utils'
@@ -65,10 +65,13 @@ export function googleAds(options: GoogleAdsOptions) {
         }),
       )
     },
-    page(page) {
-      if (typeof window === 'undefined' || options.pageViews === false) return
+    page(page, { redact }) {
+      if (typeof window === 'undefined') return
+      const url = page.url ?? redact(window.location.href)
+      setGtagPage(url, redact)
+      if (options.pageViews === false) return
       gtag('event', 'page_view', {
-        page_location: page.url ?? window.location.href,
+        page_location: url,
         page_path: page.path ?? window.location.pathname,
         page_title: page.title ?? document.title,
         send_to: conversionId,

@@ -60,6 +60,7 @@ each call:
 | `debug`     | Whether the `debug` option is on                                                      |
 | `log`       | Logs a message under the `providers` debug topic, attributed to this plugin           |
 | `emitError` | Reports an `AnalyticsError` to `onError`; `providerId` defaults to this plugin's `id` |
+| `redact`    | Applies the `redact` option to a string, such as a URL the plugin reads itself        |
 
 | Hook       | When it runs                                                                                                                                                                                                                      | Arguments before `ctx`                                      |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |

@@ -1,4 +1,4 @@
-import { builtInConsentMode, ensureGtag, loadGtag } from '../core/consent-mode'
+import { builtInConsentMode, ensureGtag, loadGtag, setGtagPage } from '../core/consent-mode'
 import type { EventName, UserIdentity } from '../core/types'
 import { getNames } from '../core/names'
 import { definePlugin, getFlag, setFlag, skippedPlugin } from '../core/plugin'
@@ -132,10 +132,12 @@ export function ga4(options: Ga4Options) {
         }),
       )
     },
-    page(page) {
+    page(page, { redact }) {
       if (typeof window === 'undefined') return
+      const url = page.url ?? redact(window.location.href)
+      setGtagPage(url, redact)
       gtag('event', 'page_view', {
-        page_location: page.url ?? window.location.href,
+        page_location: url,
         page_path: page.path ?? window.location.pathname,
         page_title: page.title ?? document.title,
         send_to: measurementId,

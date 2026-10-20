@@ -1,6 +1,7 @@
 import type { PostHog } from 'posthog-js'
 import { definePlugin, skippedPlugin } from '../core/plugin'
 import type { EventName, LoadTiming, PluginContext } from '../core/types'
+import { redactDeep } from '../core/utils'
 
 /** Options for `posthog`. */
 export type PostHogOptions = {
@@ -81,6 +82,14 @@ export function posthog(options: PostHogOptions) {
           advanced_disable_flags: !options.recording,
           advanced_disable_feature_flags: true,
           disable_external_dependency_loading: true,
+          before_send: (event) =>
+            event && event.event !== '$snapshot'
+              ? {
+                  ...event,
+                  properties: redactDeep(event.properties, ctx.redact),
+                  $set_once: redactDeep(event.$set_once, ctx.redact),
+                }
+              : event,
         })
         return client
       })

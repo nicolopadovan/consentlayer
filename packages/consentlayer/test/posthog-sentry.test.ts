@@ -103,6 +103,33 @@ describe('posthog', () => {
     expect(ph.startSessionRecording).toHaveBeenCalled()
   })
 
+  it('redacts the URLs PostHog reads itself, but not $set traits or replay snapshots', async () => {
+    const manager = await start(posthog({ apiKey: 'phc_test' }))
+    const beforeSend = (ph.init.mock.calls[0]?.[1] as { before_send: (event: unknown) => unknown }).before_send
+    const url = 'https://a.com/?email=jane%40example.com'
+    expect(
+      beforeSend({
+        event: '$pageview',
+        properties: { $current_url: url, $referrer: url, n: 1 },
+        $set: { email: 'jane@example.com' },
+        $set_once: { $initial_current_url: url },
+      }),
+    ).toEqual({
+      event: '$pageview',
+      properties: {
+        $current_url: 'https://a.com/?email=(redacted)',
+        $referrer: 'https://a.com/?email=(redacted)',
+        n: 1,
+      },
+      $set: { email: 'jane@example.com' },
+      $set_once: { $initial_current_url: 'https://a.com/?email=(redacted)' },
+    })
+    const snapshot = { event: '$snapshot', properties: { url } }
+    expect(beforeSend(snapshot)).toBe(snapshot)
+    expect(beforeSend(null)).toBeNull()
+    manager.destroy()
+  })
+
   it('loads nothing before consent with cookieless off', async () => {
     const manager = await start(posthog({ apiKey: 'phc_test', cookieless: false }))
     expect(ph.init).not.toHaveBeenCalled()

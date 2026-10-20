@@ -64,6 +64,7 @@ describe('googleAds', () => {
       ['consent', 'update', expect.objectContaining({ ad_storage: 'granted' })],
       ['js'],
       ['config', 'AW-123', { send_page_view: false }],
+      ['set', { page_location: 'https://example.com/b' }],
       [
         'event',
         'page_view',

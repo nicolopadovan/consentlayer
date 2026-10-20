@@ -357,6 +357,13 @@ export type DebugOptions = Partial<Record<DebugTopic, boolean>> & {
 /** Receives every `AnalyticsError`. */
 export type AnalyticsErrorHandler = (error: AnalyticsError) => void
 
+export type RedactOptions = {
+  /** Defaults to `true`. */
+  emails?: boolean
+  /** Query parameters whose values are redacted, compared without regard to case. */
+  queryParams?: string[]
+}
+
 export type AnalyticsManagerOptions = {
   providers?: AnalyticsPlugin[]
   consent?: ConsentState | null
@@ -374,6 +381,11 @@ export type AnalyticsManagerOptions = {
   errors?: boolean | { globalHandlers?: boolean }
   /** Set on every `<script>` ConsentLayer injects, for a Content Security Policy that allows scripts by nonce. */
   nonce?: string
+  /**
+   * Replaces email addresses and the values of `queryParams` with `(redacted)` in page views, event params and the
+   * URLs providers send. On by default for emails; `false` turns it off. `identify` data is never redacted.
+   */
+  redact?: false | RedactOptions
   /** HTTPS URLs or paths starting with "/". */
   server?: {
     /** Also send each event to this route (see `createAnalyticsHandler`). */
@@ -410,6 +422,8 @@ export type PluginContext = {
   /** Logs under the `providers` debug topic, attributed to this plugin. */
   log: (message: string, ...data: unknown[]) => void
   emitError: AnalyticsErrorHandler
+  /** Applies the `redact` option to a string, such as a URL the vendor would otherwise read itself. */
+  redact: (value: string) => string
 }
 
 /** A page view as plugins receive it. */

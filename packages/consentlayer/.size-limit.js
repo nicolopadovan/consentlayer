@@ -8,8 +8,8 @@ const modifyEsbuildConfig = (config) => ({
 })
 
 export default [
-  ['core', 'dist/index.js', '8.4 kB'],
-  ['core: createAnalytics only', 'dist/index.js', '6.9 kB', '{ createAnalytics }'],
+  ['core', 'dist/index.js', '8.7 kB'],
+  ['core: createAnalytics only', 'dist/index.js', '7.3 kB', '{ createAnalytics }'],
   ['core: tree-shaken to createConsentController', 'dist/index.js', '1.5 kB', '{ createConsentController }'],
   ['auto-tracking', 'dist/auto-tracking.js', '2.3 kB'],
   ['banner', 'dist/banner.js', '4.8 kB'],
@@ -35,13 +35,13 @@ export default [
   ['providers/google-ads', 'dist/providers/google-ads.js', '2 kB'],
   ['providers/clarity', 'dist/providers/clarity.js', '1.2 kB'],
   ['providers/linkedin', 'dist/providers/linkedin.js', '1.3 kB'],
-  ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.2 kB'],
+  ['providers/contentsquare', 'dist/providers/contentsquare.js', '1.3 kB'],
   ['providers/posthog', 'dist/providers/posthog.js', '1.2 kB'],
   ['providers/sentry', 'dist/providers/sentry.js', '1.2 kB'],
   ['server', 'dist/server/index.js', '2.7 kB'],
   ['server/meta', 'dist/server/meta.js', '1.5 kB'],
   ['server/tiktok', 'dist/server/tiktok.js', '1.4 kB'],
   ['server/sgtm', 'dist/server/sgtm.js', '1.5 kB'],
-  ['script tag', 'dist/consentlayer.global.js', '17.9 kB'],
+  ['script tag', 'dist/consentlayer.global.js', '18.3 kB'],
   ['script tag banner', 'dist/consentlayer-banner.global.js', '5.2 kB'],
 ].map(([name, path, limit, imports]) => ({ name, path, limit, import: imports, modifyEsbuildConfig }))
