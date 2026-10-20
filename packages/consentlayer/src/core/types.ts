@@ -386,6 +386,11 @@ export type AnalyticsManagerOptions = {
    * URLs providers send. On by default for emails; `false` turns it off. `identify` data is never redacted.
    */
   redact?: false | RedactOptions
+  /**
+   * Keeps the landing page's campaign parameters in memory and adds those the URL no longer has to the first page view
+   * each provider and server destination receives. `params` adds names to the `utm_*` defaults; `false` turns it off.
+   */
+  campaign?: false | { params?: string[] }
   /** HTTPS URLs or paths starting with "/". */
   server?: {
     /** Also send each event to this route (see `createAnalyticsHandler`). */

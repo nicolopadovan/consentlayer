@@ -76,6 +76,24 @@ export function createRedact(options: false | RedactOptions = {}): (value: strin
   }
 }
 
+const CAMPAIGN_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id']
+
+export function getCampaign(options: false | { params?: string[] } = {}): [string, string][] {
+  if (options === false || !isBrowser()) return []
+  const names = [...CAMPAIGN_PARAMS, ...(options.params ?? [])]
+  return [...new URLSearchParams(window.location.search)].filter(([name]) => names.includes(name))
+}
+
+export function withCampaign<T extends { url?: string; path?: string }>(page: T, campaign: [string, string][]): T {
+  if (!page.url) return page
+  const url = new URL(page.url)
+  const added = new URLSearchParams(campaign.filter(([name]) => !url.searchParams.has(name))).toString()
+  if (!added) return page
+  url.search += (url.search ? '&' : '') + added
+  const path = page.path && page.path + (page.path.includes('?') ? '&' : '?') + added
+  return { ...page, url: url.href, path }
+}
+
 export function redactDeep<T>(value: T, redact: (value: string) => string): T {
   if (typeof value === 'string') return redact(value) as T
   if (Array.isArray(value)) return value.map((item: unknown) => redactDeep(item, redact)) as T
