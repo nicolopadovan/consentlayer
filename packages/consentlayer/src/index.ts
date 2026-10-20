@@ -59,6 +59,7 @@ export type {
   PluginContext,
   Register,
   ProviderConsentRequirement,
+  RedactOptions,
   Law,
   RegionRule,
   ServerEvent,

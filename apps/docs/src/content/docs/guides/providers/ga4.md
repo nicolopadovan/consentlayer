@@ -76,6 +76,13 @@ data redaction, add the
 [Google Consent Mode adapter](/guides/adapters/google-consent-mode/). `ga4()`
 then leaves the defaults and updates to it.
 
+## Redaction
+
+ConsentLayer's [redaction](/guides/redaction/) sets the redacted page URL and
+referrer on gtag.js, so every hit GA4 sends carries them. GA4's own data
+redaction, in the web data stream settings, does not conflict with it and can
+stay on.
+
 ## Enhanced measurement
 
 GA4's enhanced measurement runs in gtag.js and does not wait for

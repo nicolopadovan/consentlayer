@@ -240,6 +240,7 @@ describe('providers', () => {
       debug: false,
       log: () => undefined,
       emitError: () => undefined,
+      redact: (value: string) => value,
     })
     const bootstrap = (append.mock.calls[0]?.[0] as HTMLScriptElement).text
     append.mockRestore()
@@ -348,6 +349,7 @@ describe('ga4 consent mode', () => {
       ['config', 'G-ADV123', { send_page_view: false }],
       ['set', { user_id: null }],
       ['set', 'user_data', {}],
+      ['set', { page_location: 'https://example.com/a' }],
       [
         'event',
         'page_view',

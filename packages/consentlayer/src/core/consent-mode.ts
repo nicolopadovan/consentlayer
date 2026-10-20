@@ -38,6 +38,11 @@ export function ensureGtag() {
     }
 }
 
+/** gtag.js sends the URL and referrer it reads itself unless they are set, so they are set, redacted, for later hits. */
+export function setGtagPage(url: string, redact: (value: string) => string) {
+  window.gtag?.('set', { page_location: url, ...(document.referrer && { page_referrer: redact(document.referrer) }) })
+}
+
 /** gtag.js loads once per page, with the first tag ID; every other Google tag is configured on it. */
 export function loadGtag(tagId: string): Promise<void> {
   return (

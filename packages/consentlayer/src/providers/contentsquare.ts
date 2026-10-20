@@ -19,6 +19,10 @@ export type ContentsquareOptions = {
 
 const push = (...command: unknown[]) => (window._uxa = window._uxa ?? []).push(command)
 const pathOf = (path = location.pathname) => path.split(/[?#]/)[0]
+const maskQuery = (redact: (value: string) => string) => {
+  const query = redact(location.search)
+  if (query !== location.search) push('setQuery', query)
+}
 
 /** Contentsquare (Hotjar's successor), after analytics consent. */
 export function contentsquare(options: ContentsquareOptions) {
@@ -33,20 +37,23 @@ export function contentsquare(options: ContentsquareOptions) {
       // ponytail: Contentsquare has no web opt-in; dropping the opt-out cookie takes effect on the next page load
       if (typeof window !== 'undefined' && context.consent?.analytics) expireCookies((name) => name === '_cs_optout')
     },
-    load() {
+    load({ redact }) {
       if (typeof window === 'undefined' || getFlag('ContentsquareInitialized')) return
       window._uxa = window._uxa ?? []
       loadedPath = pathOf()
+      maskQuery(redact)
+      if (redact(document.referrer) !== document.referrer) push('referrer:removeQueryString')
       void loadScript(`https://t.contentsquare.net/uxa/${tagId}.js`).catch(() => undefined)
       setFlag('ContentsquareInitialized', true)
     },
-    page(page) {
+    page(page, { redact }) {
       const path = pathOf(page.path)
       if (path === loadedPath) {
         loadedPath = undefined
         return
       }
       loadedPath = undefined
+      maskQuery(redact)
       push('trackPageview', path)
     },
     track(event) {

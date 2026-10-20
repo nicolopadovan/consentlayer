@@ -4,6 +4,7 @@ import type {
   ConsentState,
   DebugOptions,
   DebugTopic,
+  RedactOptions,
   ProviderConsentRequirement,
   UserIdentity,
 } from './types'
@@ -61,6 +62,26 @@ export function createEventId(): string {
   } catch {
     return Math.random().toString(36).slice(2)
   }
+}
+
+const EMAIL = /[\w.+%-]+(?:@|%40)[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}/gi
+
+export function createRedact(options: false | RedactOptions = {}): (value: string) => string {
+  if (options === false) return (value) => value
+  const params = options.queryParams?.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  const query = params && new RegExp(`([?&](?:${params})=)[^&#]*`, 'gi')
+  return (value) => {
+    const redacted = options.emails === false ? value : value.replace(EMAIL, '(redacted)')
+    return query ? redacted.replace(query, '$1(redacted)') : redacted
+  }
+}
+
+export function redactDeep<T>(value: T, redact: (value: string) => string): T {
+  if (typeof value === 'string') return redact(value) as T
+  if (Array.isArray(value)) return value.map((item: unknown) => redactDeep(item, redact)) as T
+  if (value && Object.getPrototypeOf(value) === Object.prototype)
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, redactDeep(item, redact)])) as T
+  return value
 }
 
 /** Expires matching cookies on this host and every parent domain, wherever the vendor set them. */

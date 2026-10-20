@@ -19,11 +19,13 @@ import { createMemoryIdentityStorage } from './storage'
 import {
   createEventId,
   createDebugLog,
+  createRedact,
   getWindowLocation,
   hasRequiredConsent,
   isBrowser,
   normalizeIdentity,
   receivesEvent,
+  redactDeep,
 } from './utils'
 import { assertHttpsOrRelativeUrl } from './validation'
 
@@ -79,6 +81,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     throw new Error('[consentlayer] autoTracking must be autoTracking() from consentlayer/auto-tracking')
   }
   const debugLog = createDebugLog(options.debug)
+  const redact = createRedact(options.redact)
   if (options.nonce) setScriptNonce(options.nonce)
   const listeners = new Set<(snapshot: AnalyticsManagerStateSnapshot) => void>()
   const providerStates = new Map<string, ProviderState>()
@@ -241,6 +244,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     debug: Boolean(options.debug),
     log: (message, ...data) => debugLog('providers', providerId, message, ...data),
     emitError: providerEmitError(providerId),
+    redact,
   })
 
   const call = async (
@@ -473,7 +477,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       return consent
     },
     async page(payload = {}, { only, server } = {}) {
-      const page = { ...getWindowLocation(), ...payload, id: createEventId() }
+      const page = { ...redactDeep({ ...getWindowLocation(), ...payload }, redact), id: createEventId() }
       await trackAgainstProviders(
         'page',
         only,
@@ -494,7 +498,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       const event: AnalyticsEventPayload = {
         id: optionsInput.eventId ?? createEventId(),
         name,
-        params: params ?? {},
+        params: redactDeep(params ?? {}, redact),
         options: optionsInput,
       }
       const allowed = () =>
@@ -513,7 +517,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
                 id: event.id,
                 name,
                 params: event.params,
-                url: getWindowLocation().url,
+                url: redactDeep(getWindowLocation().url, redact),
                 only: optionsInput.only,
                 providers: optionsInput.providers,
               }

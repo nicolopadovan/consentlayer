@@ -73,11 +73,11 @@ export function gtm(options: GtmOptions) {
         }),
       )
     },
-    page(page) {
+    page(page, { redact }) {
       if (typeof window === 'undefined') return
       push({
         event: 'page_view',
-        page_location: page.url ?? window.location.href,
+        page_location: page.url ?? redact(window.location.href),
         page_path: page.path ?? window.location.pathname,
         page_title: page.title ?? document.title,
       })
