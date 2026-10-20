@@ -88,6 +88,7 @@ export default defineConfig({
             },
             'guides/server-side-tracking',
             'guides/redaction',
+            'guides/campaign',
             'guides/consent-records',
             'guides/names',
             'guides/bundle-size',

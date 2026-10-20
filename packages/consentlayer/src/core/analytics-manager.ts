@@ -20,12 +20,14 @@ import {
   createEventId,
   createDebugLog,
   createRedact,
+  getCampaign,
   getWindowLocation,
   hasRequiredConsent,
   isBrowser,
   normalizeIdentity,
   receivesEvent,
   redactDeep,
+  withCampaign,
 } from './utils'
 import { assertHttpsOrRelativeUrl } from './validation'
 
@@ -82,6 +84,8 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
   }
   const debugLog = createDebugLog(options.debug)
   const redact = createRedact(options.redact)
+  const campaign = getCampaign(options.campaign)
+  const campaignSent = new Set<string>()
   if (options.nonce) setScriptNonce(options.nonce)
   const listeners = new Set<(snapshot: AnalyticsManagerStateSnapshot) => void>()
   const providerStates = new Map<string, ProviderState>()
@@ -199,9 +203,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
   const saved = serverEndpoint ? learned() : null
   if (saved === 'off') serverEndpoint = undefined
   let serverEvents = saved === null || saved === 'off' ? undefined : saved ? saved.split(',') : []
+  const forwards = (event: Omit<ServerEvent, 'consent' | 'identity'>) =>
+    Boolean(serverEndpoint && (consent?.analytics || consent?.marketing)) &&
+    (!serverEvents || Boolean(event.only) || serverEvents.includes(event.name))
   const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
-    if (!serverEndpoint || !(consent?.analytics || consent?.marketing)) return
-    if (serverEvents && !event.only && !serverEvents.includes(event.name)) return
+    if (!serverEndpoint || !forwards(event)) return
     const body = JSON.stringify({ ...event, consent, identity: sharedIdentity() })
     const fail = (cause: unknown) =>
       emitError({ scope: 'server-forward', message: `Sending ${event.name} to ${serverEndpoint} failed`, cause })
@@ -478,20 +484,21 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     },
     async page(payload = {}, { only, server } = {}) {
       const page = { ...redactDeep({ ...getWindowLocation(), ...payload }, redact), id: createEventId() }
+      const firstFor = (key: string) => {
+        if (!campaign.length || campaignSent.has(key)) return page
+        campaignSent.add(key)
+        return redactDeep(withCampaign(page, campaign), redact)
+      }
       await trackAgainstProviders(
         'page',
         only,
-        (state) => call(state, 'page', (p, ctx) => p.page?.(page, ctx), page),
-        () =>
-          server === false
-            ? undefined
-            : {
-                id: page.id,
-                name: 'page_view',
-                url: page.url,
-                only: server ? undefined : only,
-                categories: Array.isArray(server) ? server : undefined,
-              },
+        (state) => call(state, 'page', (p, ctx) => p.page?.(firstFor(p.id), ctx), page),
+        () => {
+          if (server === false) return undefined
+          const categories = Array.isArray(server) ? server : undefined
+          const event = { id: page.id, name: 'page_view', url: page.url, only: server ? undefined : only, categories }
+          return forwards(event) ? { ...event, url: firstFor(`server:${categories?.join() ?? ''}`).url } : event
+        },
       )
     },
     async track(name, params, optionsInput = {}) {
