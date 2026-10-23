@@ -343,7 +343,7 @@ every `newPageSession()`:
 The listeners stay bound if consent is later withdrawn, but every
 auto-tracked event is sent with `requireAnalyticsConsent: true` (and
 its `only` option, if set), so delivery drops it. `newPageSession()` clears
-the timers, rebinds the scroll listener and increments the `session_id`
+the timers, rebinds the scroll listener and increments the `page_index`
 attached to every auto-tracked event.
 
 <details>
@@ -352,7 +352,7 @@ attached to every auto-tracked event.
 A click's `ui_target` is the first non-empty value of: the tracking
 attribute, `aria-label`, or `'unknown'`. The element's text is never sent,
 since it can hold what the visitor typed or sees about themselves. The event also carries `ui_element` (the
-lowercase tag name), `ui_id`, `path` (`location.pathname`) and `session_id`.
+lowercase tag name), `ui_id`, `path` (`location.pathname`) and `page_index`.
 
 The 100 percent threshold fires from 95 percent, because scroll positions
 rarely land exactly on the bottom. Thresholds outside `(0, 100]` and

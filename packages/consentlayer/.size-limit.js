@@ -11,7 +11,7 @@ export default [
   ['core', 'dist/index.js', '9 kB'],
   ['core: createAnalytics only', 'dist/index.js', '7.5 kB', '{ createAnalytics }'],
   ['core: tree-shaken to createConsentController', 'dist/index.js', '1.5 kB', '{ createConsentController }'],
-  ['auto-tracking', 'dist/auto-tracking.js', '2.3 kB'],
+  ['auto-tracking', 'dist/auto-tracking.js', '2.4 kB'],
   ['banner', 'dist/banner.js', '4.8 kB'],
   ['react', 'dist/react/index.js', '2.7 kB'],
   ['next', 'dist/next.js', '2.5 kB'],

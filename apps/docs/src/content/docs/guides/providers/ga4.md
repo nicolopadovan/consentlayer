@@ -97,3 +97,8 @@ measurement** and turn off every option except **Page views**. Under the
 **Page views** settings, untick **Page changes based on browser history
 events**: ConsentLayer sends a page view for each route itself. Otherwise
 GA4 counts each interaction twice.
+
+To keep GA4's settings as they are, turn off the
+[matching auto-tracking kinds](/guides/auto-tracking/#google-analytics)
+instead. GA4 then collects those interactions without waiting for consent
+and without redaction.

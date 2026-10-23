@@ -46,9 +46,17 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
     typeof kind === 'object' ? kind : {}
 
   return ({ track, signal }) => {
+    let pageIndex = 0
+    const extensions = settings(downloads).extensions ?? DEFAULT_DOWNLOAD_EXTENSIONS
+    const linkEvent = (link: HTMLAnchorElement) => {
+      if (!/^https?:$/.test(link.protocol)) return undefined
+      const found = /\.([a-z\d]+)$/i.exec(link.pathname)?.[1]?.toLowerCase()
+      const extension = on(downloads) && found && extensions.includes(found) ? found : undefined
+      const outbound = on(outboundClicks) && link.hostname !== window.location.hostname
+      return extension || outbound ? { extension, outbound } : undefined
+    }
     const send = (name: string, params: Record<string, unknown>) =>
-      void track(name, params, { requireAnalyticsConsent: true })
-    let session = 0
+      void track(name, { ...params, page_index: pageIndex, session_id: pageIndex }, { requireAnalyticsConsent: true })
     let page = new AbortController()
     signal.addEventListener('abort', () => page.abort())
 
@@ -58,34 +66,32 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
       const onClick = (event: Event) => {
         const element = selector ? (event.target as Element | null)?.closest(selector) : null
         if (!(element instanceof HTMLElement)) return
+        const link = element.closest('a[href]')
+        if (link instanceof HTMLAnchorElement && !element.hasAttribute(attribute) && linkEvent(link)) return
         send(getNames().autoTrackingEvents.uiClick, {
           ui_target: element.getAttribute(attribute) || element.getAttribute('aria-label') || 'unknown',
           ui_element: element.tagName.toLowerCase(),
           ui_id: element.id || undefined,
           path: window.location.pathname,
-          session_id: session,
         })
       }
       window.addEventListener('click', onClick, { signal })
     }
 
     if (on(outboundClicks) || on(downloads)) {
-      const extensions = settings(downloads).extensions ?? DEFAULT_DOWNLOAD_EXTENSIONS
       const onLinkClick = (event: Event) => {
         const link = (event.target as Element | null)?.closest('a[href]')
-        if (!(link instanceof HTMLAnchorElement) || !/^https?:$/.test(link.protocol)) return
-        const params = { link_url: link.href, link_id: link.id || undefined, session_id: session }
-        const extension = /\.([a-z\d]+)$/i.exec(link.pathname)?.[1]?.toLowerCase()
-        if (on(downloads) && extension && extensions.includes(extension)) {
+        if (!(link instanceof HTMLAnchorElement)) return
+        const params = { link_url: link.href, link_id: link.id || undefined }
+        const { extension, outbound } = linkEvent(link) ?? {}
+        if (extension) {
           send(getNames().autoTrackingEvents.fileDownload, {
             ...params,
             file_name: link.pathname,
             file_extension: extension,
           })
         }
-        if (on(outboundClicks) && link.hostname !== window.location.hostname) {
-          send(getNames().autoTrackingEvents.outboundClick, { ...params, link_domain: link.hostname })
-        }
+        if (outbound) send(getNames().autoTrackingEvents.outboundClick, { ...params, link_domain: link.hostname })
       }
       window.addEventListener('click', onLinkClick, { signal })
     }
@@ -94,14 +100,14 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
       page.abort()
       page = new AbortController()
       const pageSignal = page.signal
-      const sessionId = ++session
+      pageIndex += 1
 
-      if (pageViews) send(getNames().autoTrackingEvents.pageSessionStart, { session_id: sessionId })
+      if (pageViews) send(getNames().autoTrackingEvents.pageSessionStart, {})
 
       if (on(siteSearch)) {
         const query = new URLSearchParams(window.location.search)
         const term = (settings(siteSearch).params ?? DEFAULT_SEARCH_PARAMS).map((name) => query.get(name)).find(Boolean)
-        if (term) send(getNames().autoTrackingEvents.siteSearch, { search_term: term, session_id: sessionId })
+        if (term) send(getNames().autoTrackingEvents.siteSearch, { search_term: term })
       }
 
       if (on(forms)) {
@@ -110,7 +116,6 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
           form_id: form.getAttribute('id') || undefined,
           form_name: form.getAttribute('name') || undefined,
           form_destination: new URL(form.getAttribute('action') ?? '', document.baseURI).href,
-          session_id: sessionId,
         })
         const onFocus = (event: Event) => {
           const form = event.target instanceof Element ? event.target.closest('form') : null
@@ -141,7 +146,6 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
             ...details,
             video_current_time: Math.round(current),
             video_duration: Number.isFinite(duration) ? Math.round(duration) : undefined,
-            session_id: sessionId,
           }
           const once = (key: string | number, name: string, extra?: object) => {
             if (seen.has(key)) return
@@ -218,7 +222,7 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
             // Scroll positions rarely land exactly on the bottom, so 100 fires from 95.
             if (depth < (threshold === 100 ? 95 : threshold) || emitted.has(threshold)) continue
             emitted.add(threshold)
-            send(getNames().autoTrackingEvents.scrollDepth, { depth: threshold, session_id: sessionId })
+            send(getNames().autoTrackingEvents.scrollDepth, { depth: threshold })
           }
           if (emitted.size === thresholds.length) window.removeEventListener('scroll', onScroll)
         }
@@ -229,7 +233,7 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
         for (const seconds of settings(timeOnPage).intervals ?? DEFAULT_TIME_INTERVALS) {
           if (!Number.isFinite(seconds) || seconds <= 0) continue
           const handle = window.setTimeout(
-            () => send(getNames().autoTrackingEvents.timeOnPage, { seconds, session_id: sessionId }),
+            () => send(getNames().autoTrackingEvents.timeOnPage, { seconds }),
             seconds * 1000,
           )
           pageSignal.addEventListener('abort', () => window.clearTimeout(handle))
