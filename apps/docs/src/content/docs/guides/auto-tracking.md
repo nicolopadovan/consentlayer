@@ -47,8 +47,17 @@ while `autoTracking({ scroll: false })` keeps every kind but scroll.
 
 With `clicks: { mode: 'attribute' }`, only elements carrying the attribute
 are tracked. `ui_target` is the first non-empty value of the attribute and
-`aria-label`, never the element's text. The
-event names derive from [`names.prefix`](/guides/names/).
+`aria-label`, or `'unknown'` when the element has neither. The element's text
+is never sent, since it can hold what the visitor typed or sees about
+themselves, such as their name or email address. To tell clicks apart, give
+each element you want to report the tracking attribute:
+
+```html
+<button data-track="add_to_cart">Add to cart</button>
+```
+
+An `'unknown'` click still carries `path` and, when the element has an `id`,
+`ui_id`. The event names derive from [`names.prefix`](/guides/names/).
 
 The parameters of the newer kinds use the names Google Analytics uses, so
 every provider receives the same readable data. No kind sends the text of a
