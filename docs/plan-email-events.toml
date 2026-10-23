@@ -410,7 +410,7 @@ every fact against packages/consentlayer/src/email and src/server/posthog.ts as 
   page description and intro updated to name PostHog.
 - reference/api.md: sections for `consentlayer/email` (createEmailHandler, EmailEvent, EmailEventName,
   EmailService), each `consentlayer/email/<service>` factory, `consentlayer/server/posthog`, and `time` on ServerEvent.
-- roadmap.md: leave the planned entry as is (it is removed when 1.10.0 ships).
+- roadmap.md: leave the planned entry as is (it is removed when 1.11.0 ships).
 - A changeset (`pnpm changeset`, minor for consentlayer) describing the email handler, the five services,
   posthogServer and ServerEvent.time, and listing the size budgets added.
 Run pnpm format, then every CI check.

@@ -1,6 +1,6 @@
-# Spec: email events from sending services (1.10.0)
+# Spec: email events from sending services (1.11.0)
 
-Status: planned · 2026-10-15 · issue [#63](https://github.com/nicolopadovan/consentlayer/issues/63), milestone 1.10.0
+Status: planned · 2026-10-15 · issue [#63](https://github.com/nicolopadovan/consentlayer/issues/63), milestone 1.11.0
 
 ## Goal
 
@@ -34,7 +34,7 @@ export const POST = createEmailHandler({
 ## Given (decided by the user, not re-opened)
 
 - ConsentLayer reads the events the services already emit. No tracking pixel and no link rewriting of its own.
-- Services in 1.10.0: Resend, Postmark, SendGrid, Mailgun, Amazon SES.
+- Services in 1.11.0: Resend, Postmark, SendGrid, Mailgun, Amazon SES.
 - Normalized events `email_sent`, `email_delivered`, `email_bounced` (hard or soft), `email_complained`,
   `email_opened`, `email_clicked`, `email_unsubscribed`.
 - One handler, used like `createAnalyticsHandler`; one import per service.
@@ -182,7 +182,7 @@ interface EmailService {
 | `email_complained`   | `email.complained`                         | `SpamComplaint`, and `Bounce` of type `SpamComplaint` | `spamreport`                                          | `complained`                                   | `Complaint`, per complained recipient           |
 | `email_opened`       | `email.opened`                             | `Open`                                                | `open`                                                | `opened`                                       | `Open`                                          |
 | `email_clicked`      | `email.clicked`                            | `Click`                                               | `click`                                               | `clicked`                                      | `Click`                                         |
-| `email_unsubscribed` | none in 1.10.0                             | `SubscriptionChange` with `SuppressSending: true`     | `unsubscribe`, `group_unsubscribe`                    | `unsubscribed`                                 | `Subscription`                                  |
+| `email_unsubscribed` | none in 1.11.0                             | `SubscriptionChange` with `SuppressSending: true`     | `unsubscribe`, `group_unsubscribe`                    | `unsubscribed`                                 | `Subscription`                                  |
 | `automated`          | absent                                     | absent                                                | `sg_machine_open` (opens)                             | `client-info.bot` non-empty                    | `open.isBotEvent` / `click.isBotEvent` `Likely` |
 | `metadata`           | `data.tags`                                | `Metadata`                                            | custom args (top-level fields outside SendGrid's own) | `user-variables`                               | `mail.tags`, first value per key                |
 
@@ -208,7 +208,7 @@ fixture that differs from a real payload.
 1. Resend/Svix: the 5-minute tolerance Svix's own libraries use, and whether each retry is signed with a fresh
    `svix-timestamp`.
 2. Resend: the payloads of `email.failed` and `email.suppressed`; whether `contact.topics.updated` or
-   `suppression.added` should map to `email_unsubscribed` (not mapped in 1.10.0 until verified).
+   `suppression.added` should map to `email_unsubscribed` (not mapped in 1.11.0 until verified).
 3. Postmark: that a URL with credentials produces an `Authorization: Basic` header; that `X-PM-Webhook-Trace-Id` is
    stable across retries; the full bounce `Type` table behind the hard/soft split.
 4. SendGrid: the key is P-256 in base64 SPKI DER; the signature is DER; whether the timestamp header changes on
