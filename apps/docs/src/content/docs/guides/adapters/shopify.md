@@ -9,7 +9,8 @@ the visitor's existing choice from `Shopify.customerPrivacy.currentVisitorConsen
 at bootstrap. Every choice made through ConsentLayer is written to Shopify with
 `setTrackingConsent()`, and Shopify's `visitorConsentCollected` DOM event is
 applied back to the instance. The optional `sale_of_data` flag is passed
-through in both directions.
+through in both directions. Turning marketing off does not set it; see
+[Known gaps](/guides/roadmap/#known-gaps).
 
 ```ts
 import { shopifyCustomerPrivacy } from 'consentlayer/adapters/shopify'

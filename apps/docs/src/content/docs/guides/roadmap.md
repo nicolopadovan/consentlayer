@@ -196,11 +196,37 @@ commitment either way.
 | PostHog feature flags and surveys | `posthog()` covers events, identity, groups, error tracking, autocapture and session recording, but not feature flags or surveys.                                                                                                                                                                                                                                                                                                                                   |
 | A setup CLI, after 1.0            | Setup is manual, following your framework's page under Getting started. A `consentlayer init` command would detect the framework, install the SDKs of the chosen providers, and write the instance, the provider setup and the consent banner into your project. Only `posthog()` and `sentry()` need an SDK installed. `vercel()` calls the `track` function you pass from `@vercel/analytics`, and the other providers load their vendor's script in the browser. |
 | Retention helpers                 | A `ConsentStore` only appends. Deleting old records is your application's job; see [Retention and deletion](/guides/consent-records/#retention-and-deletion).                                                                                                                                                                                                                                                                                                       |
+| An opt-out of the sale of data    | `sale_of_data` is stored, broadcast, sent to the server and synced with Shopify, but no built-in provider is gated by it and the banner never sets it. Native support would let a visitor opt out of the sale or sharing of their data without turning marketing off, keeping each marketing provider in its platform's restricted mode where one exists. See [#87](https://github.com/nicolopadovan/consentlayer/issues/87).                                       |
 
 ## Known gaps
 
 These are limits of the current release that are not tracked as planned work
 above.
+
+<details>
+<summary>Turning marketing off does not set `sale_of_data`</summary>
+
+`sale_of_data` is set only by an adapter, such as
+[`shopifyCustomerPrivacy()`](/guides/adapters/shopify/), or by your own code.
+When a visitor turns marketing off in ConsentLayer, the Shopify adapter sends
+`marketing: false` without `sale_of_data`, and Shopify keeps the value it
+already had, which may still allow the sale of data. Shopify treats the two
+separately: marketing covers your own marketing and attribution, the sale of
+data covers sharing with third parties. A visitor who refuses marketing
+cannot have their data shared for advertising, so set `sale_of_data` to
+`false` whenever marketing is off:
+
+```ts
+analytics.consent.subscribe(({ consent }) => {
+  if (consent && !consent.marketing && consent.sale_of_data !== false) {
+    void analytics.consent.update({ sale_of_data: false })
+  }
+})
+```
+
+Native support is [under consideration](#under-consideration).
+
+</details>
 
 <details>
 <summary>Global Privacy Control and IAB TCF are tested against their specifications</summary>
