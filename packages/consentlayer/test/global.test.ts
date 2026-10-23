@@ -114,17 +114,19 @@ describe('createGlobal', () => {
 
 describe('data-auto-tracking', () => {
   it('starts auto-tracking from the attribute once analytics is granted', async () => {
+    history.replaceState({}, '', '/?q=mugs')
     const global = createGlobal(readConfig(undefined, script({ autoTracking: '' })))
     const track = vi.fn()
     global.registerProvider({ id: 'spy', requiredConsent: 'analytics', track })
     await global.consent.update({ analytics: true })
     await vi.waitFor(() =>
       expect(track).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'consentlayer.page_session_start' }),
+        expect.objectContaining({ name: 'consentlayer.site_search' }),
         expect.anything(),
       ),
     )
     global.destroy()
+    history.replaceState({}, '', '/')
   })
 })
 

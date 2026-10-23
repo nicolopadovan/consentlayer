@@ -140,7 +140,7 @@ describe('analytics manager', () => {
         },
       ],
       identityStorage: createMemoryIdentityStorage(),
-      autoTracking: autoTracking(),
+      autoTracking: autoTracking({ clicks: true, scroll: true, timeOnPage: true, pageViews: true }),
     })
 
     await manager.boot()

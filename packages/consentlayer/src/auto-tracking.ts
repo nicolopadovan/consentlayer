@@ -96,7 +96,7 @@ export function autoTracking(config: AutoTrackingConfig = {}): AutoTracking {
       const pageSignal = page.signal
       const sessionId = ++session
 
-      if (on(pageViews)) send(getNames().autoTrackingEvents.pageSessionStart, { session_id: sessionId })
+      if (pageViews) send(getNames().autoTrackingEvents.pageSessionStart, { session_id: sessionId })
 
       if (on(siteSearch)) {
         const query = new URLSearchParams(window.location.search)

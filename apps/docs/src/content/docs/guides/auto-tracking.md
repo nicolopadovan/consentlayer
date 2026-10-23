@@ -29,13 +29,13 @@ Auto-tracking starts after boot, once `analytics` consent is granted, and sends
 each event to every active provider whose
 [`events` option](/guides/events/#routing-events) includes it. The Meta and
 TikTok pixels leave them out by default. `autoTracking()` from `consentlayer/auto-tracking` enables
-every kind with its defaults. An object that turns kinds on enables only
+every kind except `pageViews` with its defaults. An object that turns kinds on enables only
 those: `autoTracking({ clicks: { mode: 'attribute' } })` sends clicks alone,
 while `autoTracking({ scroll: false })` keeps every kind but scroll.
 
 | Option           | Default                                                | Event                                                                                                                                                   | Params                                                                                                                              |
 | ---------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `pageViews`      | `true`                                                 | `consentlayer.page_session_start`, on start and on every route change                                                                                   | `session_id`                                                                                                                        |
+| `pageViews`      | `false`                                                | `consentlayer.page_session_start`, on start and on every route change                                                                                   | `session_id`                                                                                                                        |
 | `clicks`         | `{ mode: 'all', attribute: 'data-track' }`             | `consentlayer.ui_click`, for clicks on `button`, `[role="button"]`, `a`, `input[type="submit"]` and `input[type="button"]`                              | `ui_target`, `ui_element`, `ui_id`, `path`, `session_id`                                                                            |
 | `scroll`         | `{ thresholds: [25, 50, 75, 100] }`                    | `consentlayer.scroll_depth`, once per threshold and page session                                                                                        | `depth`, `session_id`                                                                                                               |
 | `timeOnPage`     | `{ intervals: [5, 15, 30, 60, 120] }`                  | `consentlayer.time_on_page`, after each interval in seconds                                                                                             | `seconds`, `session_id`                                                                                                             |
@@ -96,7 +96,8 @@ each interaction is counted twice.
 ## Page sessions
 
 Each route is a page session. `analytics.newPageSession()` starts a new one: it
-sends `page_session_start` again and restarts the scroll and time counters. The
+increments `session_id`, restarts the scroll and time counters and, with
+`pageViews: true`, sends `page_session_start`. The
 consent controller behind every framework integration calls it when the route
 key changes, as described in [Add the banner](/start/react/#3-add-the-banner);
 call it yourself when you track routes without one.

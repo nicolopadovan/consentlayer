@@ -247,7 +247,7 @@ describe('createAnalytics', () => {
     const ga4 = spyProvider('ga4')
     const analytics = createAnalytics({
       providers: [ga4],
-      autoTracking: autoTracking({ clicks: false, scroll: false, timeOnPage: false }),
+      autoTracking: autoTracking({ pageViews: true }),
     })
     const hotjar = Object.assign(spyProvider('hotjar'), { events: false as const })
     analytics.registerProvider(hotjar)

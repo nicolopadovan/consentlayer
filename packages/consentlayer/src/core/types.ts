@@ -189,6 +189,7 @@ export type AutoTrackingConfig = {
   clicks?: boolean | AutoTrackingClickConfig
   scroll?: boolean | AutoTrackingScrollConfig
   timeOnPage?: boolean | AutoTrackingTimeConfig
+  /** Off unless set; the providers' own page views already count each page. */
   pageViews?: boolean
   outboundClicks?: boolean
   downloads?: boolean | AutoTrackingDownloadConfig

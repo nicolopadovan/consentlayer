@@ -335,7 +335,7 @@ every `newPageSession()`:
 
 | Tracker      | Mechanism                                                                                                               | Event (default name)              |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| Page session | Sent when tracking starts and on each `newPageSession()`, unless `pageViews: false`                                     | `consentlayer.page_session_start` |
+| Page session | Sent when tracking starts and on each `newPageSession()`, with `pageViews: true`                                        | `consentlayer.page_session_start` |
 | Clicks       | One `click` listener on `window`; matches `selectors` (mode `'all'`) or the `data-track` attribute (mode `'attribute'`) | `consentlayer.ui_click`           |
 | Scroll depth | A passive `scroll` listener; thresholds 25, 50, 75 and 100 percent by default, each sent once per page session          | `consentlayer.scroll_depth`       |
 | Time on page | One `setTimeout` per interval; 5, 15, 30, 60 and 120 seconds by default                                                 | `consentlayer.time_on_page`       |
