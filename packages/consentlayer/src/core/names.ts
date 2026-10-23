@@ -17,6 +17,7 @@ export type AutoTrackingEventNames = {
 /** Storage keys, globals and DOM events in use. */
 export type Names = {
   prefix: string
+  /** @deprecated Removed in 2.0. Pass `legacyKeys` to the storage factories instead; see the Names guide. */
   legacy: boolean
   consentStorageKey: string
   identityStorageKey: string

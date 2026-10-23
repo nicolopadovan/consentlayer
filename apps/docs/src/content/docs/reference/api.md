@@ -383,7 +383,7 @@ function getNames(): Names
 
 ### `createEnvConfig(env)`
 
-**Deprecated.** Pass `process.env` values to the providers directly; an unset
+**Deprecated**, and removed in 2.0. Pass `process.env` values to the providers directly; an unset
 one turns its provider off. For the instance options, use
 `enabled: process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true'`
 and `debug: process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true'`.
@@ -496,27 +496,27 @@ interface ConsentIntegrationAdapter {
 `getNames()` returns. Every name not given derives from `prefix`. See
 [Names](/guides/names/).
 
-| Field                                 | Type      | Default                                                          |
-| ------------------------------------- | --------- | ---------------------------------------------------------------- |
-| `prefix`                              | `string`  | `'consentlayer'`                                                 |
-| `legacy`                              | `boolean` | `false`. When `true`, the `acm` names are also read and written. |
-| `consentStorageKey`                   | `string`  | `` `${prefix}_consent` ``                                        |
-| `identityStorageKey`                  | `string`  | `` `${prefix}_user_identity` ``                                  |
-| `consentEventName`                    | `string`  | `` `${prefix}:consent` ``                                        |
-| `consentGlobalKey`                    | `string`  | `` `${PREFIX}_CONSENT` `` (upper case)                           |
-| `openConsentGlobalKey`                | `string`  | `` `${PREFIX}_openConsent` `` (upper-case prefix)                |
-| `autoTrackingEvents.pageSessionStart` | `string`  | `` `${prefix}.page_session_start` ``                             |
-| `autoTrackingEvents.scrollDepth`      | `string`  | `` `${prefix}.scroll_depth` ``                                   |
-| `autoTrackingEvents.timeOnPage`       | `string`  | `` `${prefix}.time_on_page` ``                                   |
-| `autoTrackingEvents.uiClick`          | `string`  | `` `${prefix}.ui_click` ``                                       |
-| `autoTrackingEvents.outboundClick`    | `string`  | `` `${prefix}.outbound_click` ``                                 |
-| `autoTrackingEvents.fileDownload`     | `string`  | `` `${prefix}.file_download` ``                                  |
-| `autoTrackingEvents.siteSearch`       | `string`  | `` `${prefix}.site_search` ``                                    |
-| `autoTrackingEvents.videoStart`       | `string`  | `` `${prefix}.video_start` ``                                    |
-| `autoTrackingEvents.videoProgress`    | `string`  | `` `${prefix}.video_progress` ``                                 |
-| `autoTrackingEvents.videoComplete`    | `string`  | `` `${prefix}.video_complete` ``                                 |
-| `autoTrackingEvents.formStart`        | `string`  | `` `${prefix}.form_start` ``                                     |
-| `autoTrackingEvents.formSubmit`       | `string`  | `` `${prefix}.form_submit` ``                                    |
+| Field                                 | Type      | Default                                                                                      |
+| ------------------------------------- | --------- | -------------------------------------------------------------------------------------------- |
+| `prefix`                              | `string`  | `'consentlayer'`                                                                             |
+| `legacy`                              | `boolean` | `false`. When `true`, the `acm` names are also read and written. Deprecated, removed in 2.0. |
+| `consentStorageKey`                   | `string`  | `` `${prefix}_consent` ``                                                                    |
+| `identityStorageKey`                  | `string`  | `` `${prefix}_user_identity` ``                                                              |
+| `consentEventName`                    | `string`  | `` `${prefix}:consent` ``                                                                    |
+| `consentGlobalKey`                    | `string`  | `` `${PREFIX}_CONSENT` `` (upper case)                                                       |
+| `openConsentGlobalKey`                | `string`  | `` `${PREFIX}_openConsent` `` (upper-case prefix)                                            |
+| `autoTrackingEvents.pageSessionStart` | `string`  | `` `${prefix}.page_session_start` ``                                                         |
+| `autoTrackingEvents.scrollDepth`      | `string`  | `` `${prefix}.scroll_depth` ``                                                               |
+| `autoTrackingEvents.timeOnPage`       | `string`  | `` `${prefix}.time_on_page` ``                                                               |
+| `autoTrackingEvents.uiClick`          | `string`  | `` `${prefix}.ui_click` ``                                                                   |
+| `autoTrackingEvents.outboundClick`    | `string`  | `` `${prefix}.outbound_click` ``                                                             |
+| `autoTrackingEvents.fileDownload`     | `string`  | `` `${prefix}.file_download` ``                                                              |
+| `autoTrackingEvents.siteSearch`       | `string`  | `` `${prefix}.site_search` ``                                                                |
+| `autoTrackingEvents.videoStart`       | `string`  | `` `${prefix}.video_start` ``                                                                |
+| `autoTrackingEvents.videoProgress`    | `string`  | `` `${prefix}.video_progress` ``                                                             |
+| `autoTrackingEvents.videoComplete`    | `string`  | `` `${prefix}.video_complete` ``                                                             |
+| `autoTrackingEvents.formStart`        | `string`  | `` `${prefix}.form_start` ``                                                                 |
+| `autoTrackingEvents.formSubmit`       | `string`  | `` `${prefix}.form_submit` ``                                                                |
 
 <details>
 <summary>Type signatures</summary>

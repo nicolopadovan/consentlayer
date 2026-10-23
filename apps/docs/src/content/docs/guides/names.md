@@ -99,3 +99,35 @@ ones:
 Update dashboards and filters that match the old auto-tracking event names,
 or keep the old names with `autoTrackingEvents`. Setting `prefix: 'acm'`
 instead keeps every old name, which makes `legacy` unnecessary.
+
+### Before 2.0
+
+`legacy` is deprecated and will be removed in 2.0. To keep moving stored
+consent from the old keys after that, pass them as `legacyKeys` to the storage
+factories, which works the same way today and in 2.0:
+
+```ts
+import {
+  createAnalytics,
+  createLocalStorageConsentStorage,
+  createLocalStorageIdentityStorage,
+} from 'consentlayer'
+
+createAnalytics({
+  providers,
+  consent: {
+    storage: createLocalStorageConsentStorage({ key: 'consentlayer_consent', legacyKeys: ['acm_consent'] }),
+  },
+  identityStorage: createLocalStorageIdentityStorage({
+    key: 'consentlayer_user_identity',
+    legacyKeys: ['acm_user_identity'],
+  }),
+})
+```
+
+A value under an old key is moved to the new key the first time a visitor
+returns, so a visitor who has not returned since keeps their choice only
+while the old key is listed. Scripts that listen for `acm:consent` or read
+`ACM_CONSENT` or `ACM_openConsent` must move to `consentlayer:consent`,
+`CONSENTLAYER_CONSENT` and `CONSENTLAYER_openConsent`; `legacyKeys` covers
+storage only. `prefix: 'acm'` is not deprecated and keeps every old name.

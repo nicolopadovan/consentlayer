@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { createAnalytics } from '../src/core/create-analytics'
 import { configureNames, getFlag, getNames, setFlag } from '../src/core/names'
-import { createLocalStorageConsentStorage } from '../src/core/storage'
+import { createLocalStorageConsentStorage, createLocalStorageIdentityStorage } from '../src/core/storage'
 import type { ConsentState } from '../src/core/types'
 
 const granted: ConsentState = { preferences: true, analytics: true, marketing: true }
@@ -39,6 +39,24 @@ describe('names', () => {
     localStorage.setItem('acm_consent', JSON.stringify(granted))
     const storage = createLocalStorageConsentStorage({ key: 'consentlayer_consent' })
     expect(storage.read()).toBeNull()
+  })
+
+  it('moves the old keys through legacyKeys without legacy', async () => {
+    localStorage.setItem('acm_consent', JSON.stringify(granted))
+    localStorage.setItem('acm_user_identity', JSON.stringify({ userId: 'u1' }))
+    const analytics = createAnalytics({
+      consent: {
+        storage: createLocalStorageConsentStorage({ key: 'consentlayer_consent', legacyKeys: ['acm_consent'] }),
+      },
+      identityStorage: createLocalStorageIdentityStorage({
+        key: 'consentlayer_user_identity',
+        legacyKeys: ['acm_user_identity'],
+      }),
+    })
+    expect(await analytics.consent.bootstrap()).toEqual(granted)
+    expect(localStorage.getItem('acm_consent')).toBeNull()
+    expect(JSON.parse(localStorage.getItem('consentlayer_user_identity') ?? '{}')).toMatchObject({ userId: 'u1' })
+    expect(localStorage.getItem('acm_user_identity')).toBeNull()
   })
 
   it('broadcasts under the new and legacy names', async () => {
