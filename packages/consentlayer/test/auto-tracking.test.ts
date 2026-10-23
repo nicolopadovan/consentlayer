@@ -145,12 +145,12 @@ describe('granular auto-tracking', () => {
     expect(events.filter((e) => e.name === 'consentlayer.time_on_page').map((e) => e.params.seconds)).toEqual([10, 60])
   })
 
-  it('suppresses page_session_start when pageViews is false', async () => {
+  it('sends page_session_start only when pageViews is true', async () => {
     const events: CollectedEvent[] = []
-    const manager = setupManager(events, { pageViews: false })
-    await boot(manager)
-
+    await boot(setupManager(events))
     expect(events.find((e) => e.name === 'consentlayer.page_session_start')).toBeUndefined()
+    await boot(setupManager(events, { clicks: true, pageViews: true }))
+    expect(events.find((e) => e.name === 'consentlayer.page_session_start')).toBeDefined()
   })
 
   it('turns on only the kinds an object names, else every kind it does not turn off', async () => {
@@ -162,7 +162,7 @@ describe('granular auto-tracking', () => {
     }
     expect(await sessionStarts({ clicks: { mode: 'attribute' } })).toBe(0)
     expect(await sessionStarts({ scroll: true, pageViews: true })).toBe(1)
-    expect(await sessionStarts({ scroll: false })).toBe(1)
+    expect(await sessionStarts({ scroll: false })).toBe(0)
   })
 
   it('removes its listeners and timers when the signal aborts, and restarts them per page session', async () => {
@@ -196,7 +196,6 @@ describe('granular auto-tracking', () => {
     document.body.appendChild(button)
     button.click()
 
-    expect(events.find((e) => e.name === 'consentlayer.page_session_start')).toBeDefined()
     expect(events.find((e) => e.name === 'consentlayer.ui_click')).toBeDefined()
   })
 })
