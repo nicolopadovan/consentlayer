@@ -35,15 +35,15 @@ while `autoTracking({ scroll: false })` keeps every kind but scroll.
 
 | Option           | Default                                                | Event                                                                                                                                                   | Params                                                                                                                              |
 | ---------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `pageViews`      | `false`                                                | `consentlayer.page_session_start`, on start and on every route change                                                                                   | `session_id`                                                                                                                        |
-| `clicks`         | `{ mode: 'all', attribute: 'data-track' }`             | `consentlayer.ui_click`, for clicks on `button`, `[role="button"]`, `a`, `input[type="submit"]` and `input[type="button"]`                              | `ui_target`, `ui_element`, `ui_id`, `path`, `session_id`                                                                            |
-| `scroll`         | `{ thresholds: [25, 50, 75, 100] }`                    | `consentlayer.scroll_depth`, once per threshold and page session                                                                                        | `depth`, `session_id`                                                                                                               |
-| `timeOnPage`     | `{ intervals: [5, 15, 30, 60, 120] }`                  | `consentlayer.time_on_page`, after each interval in seconds                                                                                             | `seconds`, `session_id`                                                                                                             |
-| `outboundClicks` | `true`                                                 | `consentlayer.outbound_click`, for a click on a link to another host name                                                                               | `link_url`, `link_domain`, `link_id`, `session_id`                                                                                  |
-| `downloads`      | `{ extensions: [...] }`, listed below                  | `consentlayer.file_download`, for a click on a link whose path ends in one of the extensions                                                            | `link_url`, `link_id`, `file_name`, `file_extension`, `session_id`                                                                  |
-| `siteSearch`     | `{ params: ['q', 's', 'search', 'query', 'keyword'] }` | `consentlayer.site_search`, at the start of a page session whose URL has one of the query parameters                                                    | `search_term`, `session_id`                                                                                                         |
-| `video`          | `true`                                                 | `consentlayer.video_start`, `consentlayer.video_progress` at 10, 25, 50 and 75% and `consentlayer.video_complete`, once each per video and page session | `video_provider`, `video_url`, `video_title`, `video_current_time`, `video_duration`, `video_percent` (progress only), `session_id` |
-| `forms`          | `true`                                                 | `consentlayer.form_start` on the first focus inside a form, once per form and page session, and `consentlayer.form_submit` on each submit               | `form_id`, `form_name`, `form_destination`, `session_id`                                                                            |
+| `pageViews`      | `false`                                                | `consentlayer.page_session_start`, on start and on every route change                                                                                   | `page_index`                                                                                                                        |
+| `clicks`         | `{ mode: 'all', attribute: 'data-track' }`             | `consentlayer.ui_click`, for clicks on `button`, `[role="button"]`, `a`, `input[type="submit"]` and `input[type="button"]`                              | `ui_target`, `ui_element`, `ui_id`, `path`, `page_index`                                                                            |
+| `scroll`         | `{ thresholds: [25, 50, 75, 100] }`                    | `consentlayer.scroll_depth`, once per threshold and page session                                                                                        | `depth`, `page_index`                                                                                                               |
+| `timeOnPage`     | `{ intervals: [5, 15, 30, 60, 120] }`                  | `consentlayer.time_on_page`, after each interval in seconds                                                                                             | `seconds`, `page_index`                                                                                                             |
+| `outboundClicks` | `true`                                                 | `consentlayer.outbound_click`, for a click on a link to another host name                                                                               | `link_url`, `link_domain`, `link_id`, `page_index`                                                                                  |
+| `downloads`      | `{ extensions: [...] }`, listed below                  | `consentlayer.file_download`, for a click on a link whose path ends in one of the extensions                                                            | `link_url`, `link_id`, `file_name`, `file_extension`, `page_index`                                                                  |
+| `siteSearch`     | `{ params: ['q', 's', 'search', 'query', 'keyword'] }` | `consentlayer.site_search`, at the start of a page session whose URL has one of the query parameters                                                    | `search_term`, `page_index`                                                                                                         |
+| `video`          | `true`                                                 | `consentlayer.video_start`, `consentlayer.video_progress` at 10, 25, 50 and 75% and `consentlayer.video_complete`, once each per video and page session | `video_provider`, `video_url`, `video_title`, `video_current_time`, `video_duration`, `video_percent` (progress only), `page_index` |
+| `forms`          | `true`                                                 | `consentlayer.form_start` on the first focus inside a form, once per form and page session, and `consentlayer.form_submit` on each submit               | `form_id`, `form_name`, `form_destination`, `page_index`                                                                            |
 
 With `clicks: { mode: 'attribute' }`, only elements carrying the attribute
 are tracked. `ui_target` is the first non-empty value of the attribute and
@@ -52,7 +52,9 @@ event names derive from [`names.prefix`](/guides/names/).
 
 The parameters of the newer kinds use the names Google Analytics uses, so
 every provider receives the same readable data. No kind sends the text of a
-link or the values of a form's fields. A link to a file on another host sends
+link or the values of a form's fields. A click on a link that sends
+`outbound_click` or `file_download` does not also send `ui_click`, unless the
+link carries the tracking attribute. A link to a file on another host sends
 both `file_download` and `outbound_click`. The `downloads` extensions are
 compared in lower case, without the dot; the default list is `pdf`, `xls`,
 `xlsx`, `doc`, `docx`, `txt`, `rtf`, `csv`, `exe`, `key`, `pps`, `ppt`,
@@ -90,13 +92,28 @@ the names of GA4's enhanced measurement, so its built-in reports use them:
 | `consentlayer.video_start`, `consentlayer.video_progress`, `consentlayer.video_complete` | `video_start`, `video_progress`, `video_complete` |
 | `consentlayer.form_start`, `consentlayer.form_submit`                                    | `form_start`, `form_submit`                       |
 
-Turn GA4's own enhanced measurement off when auto-tracking sends these, or
-each interaction is counted twice.
+GA4's own enhanced measurement sends the same interactions, so with both on
+each one is counted twice. Turn enhanced measurement off, as described in
+[Enhanced measurement](/guides/providers/ga4/#enhanced-measurement):
+auto-tracking waits for analytics consent, applies
+[redaction](/guides/redaction/), reaches every provider and is configured in
+code. If you prefer to keep GA4's settings, turn off the matching kinds
+instead and keep the rest:
+
+```ts
+autoTracking({ scroll: false, outboundClicks: false, downloads: false, siteSearch: false, video: false, forms: false })
+```
 
 ## Page sessions
 
+Every auto-tracking event carries `page_index`, the number of the page
+session in the current page load: `1` for the first route, `2` after the next
+route change, and so on. It groups the scroll, time and click events of one
+route; it is not GA4's session ID. The same value is also sent as
+`session_id`, which is deprecated and will be removed in 2.0.
+
 Each route is a page session. `analytics.newPageSession()` starts a new one: it
-increments `session_id`, restarts the scroll and time counters and, with
+increments `page_index`, restarts the scroll and time counters and, with
 `pageViews: true`, sends `page_session_start`. The
 consent controller behind every framework integration calls it when the route
 key changes, as described in [Add the banner](/start/react/#3-add-the-banner);

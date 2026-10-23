@@ -178,7 +178,11 @@ describe('granular auto-tracking', () => {
     startPage()
     await vi.advanceTimersByTimeAsync(10000)
     expect(track.mock.calls.map(([name]) => name)).toEqual(['consentlayer.time_on_page'])
-    expect(track).toHaveBeenCalledWith('consentlayer.time_on_page', { seconds: 10, session_id: 2 }, expect.anything())
+    expect(track).toHaveBeenCalledWith(
+      'consentlayer.time_on_page',
+      { seconds: 10, page_index: 2, session_id: 2 },
+      expect.anything(),
+    )
 
     lifetime.abort()
     document.body.appendChild(document.createElement('button')).click()
@@ -237,6 +241,7 @@ describe('enhanced measurement auto-tracking', () => {
           link_id: undefined,
           file_name: '/files/Report.PDF',
           file_extension: 'pdf',
+          page_index: 1,
           session_id: 1,
         },
       },
@@ -246,9 +251,28 @@ describe('enhanced measurement auto-tracking', () => {
           link_url: 'https://other.example/page',
           link_id: undefined,
           link_domain: 'other.example',
+          page_index: 1,
           session_id: 1,
         },
       },
+    ])
+  })
+
+  it('sends ui_click for a link only when no outbound or download event covers it, or it has the attribute', async () => {
+    const events: CollectedEvent[] = []
+    await boot(setupManager(events, { clicks: true, outboundClicks: true, downloads: true }))
+    link('/about').click()
+    link('/files/report.pdf').click()
+    link('https://other.example/page').click()
+    const tagged = link('https://other.example/docs')
+    tagged.setAttribute('data-track', 'docs')
+    tagged.click()
+    expect(events.map((e) => [e.name, e.params.ui_target])).toEqual([
+      ['consentlayer.ui_click', 'unknown'],
+      ['consentlayer.file_download', undefined],
+      ['consentlayer.outbound_click', undefined],
+      ['consentlayer.ui_click', 'docs'],
+      ['consentlayer.outbound_click', undefined],
     ])
   })
 
@@ -264,7 +288,9 @@ describe('enhanced measurement auto-tracking', () => {
     window.history.replaceState(null, '', '/search?query=red+shoes')
     const events: CollectedEvent[] = []
     await boot(setupManager(events, { siteSearch: true }))
-    expect(events).toEqual([{ name: 'consentlayer.site_search', params: { search_term: 'red shoes', session_id: 1 } }])
+    expect(events).toEqual([
+      { name: 'consentlayer.site_search', params: { search_term: 'red shoes', page_index: 1, session_id: 1 } },
+    ])
   })
 
   it('sends form_start once per form and form_submit on each submit, without field values', async () => {
@@ -283,6 +309,7 @@ describe('enhanced measurement auto-tracking', () => {
       form_id: 'contact',
       form_name: undefined,
       form_destination: `${window.location.origin}/send`,
+      page_index: 1,
       session_id: 1,
     }
     expect(events).toEqual([
