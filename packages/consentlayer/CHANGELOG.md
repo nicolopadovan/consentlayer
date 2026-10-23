@@ -1,5 +1,19 @@
 # consentlayer
 
+## 1.5.0
+
+### Minor Changes
+
+- e465ece: Auto-tracking now sends outbound link clicks, file downloads, site search, video engagement (`<video>` and YouTube embeds with `enablejsapi=1`) and form interactions to every provider, after analytics consent. All five are on by default, so an app that uses `autoTracking()` sends these events after upgrading; turn a kind off with, for example, `autoTracking({ forms: false })`. The GA4 provider and the Measurement Protocol destination send them, and scroll depth, under GA4's enhanced measurement names. The GA4 entry point exports `ga4Event`.
+- 02129d3: The landing page's campaign parameters (`utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content` and `utm_id`) are kept in memory and added to the first page view each provider and server destination receives, so a visitor who consents on a later page is still attributed to the campaign. Nothing is stored before consent. The new `campaign` option adds parameter names with `params`, and `campaign: false` turns it off.
+- 8a6c20a: Auto-tracking events carry `page_index`, the number of the page session in the current page load. `session_id` still carries the same value but is deprecated and will be removed in 2.0; it was never a session ID. A click on a link that sends `outbound_click` or `file_download` no longer also sends `ui_click`, unless the link has the tracking attribute.
+- c56930f: Auto-tracking no longer sends `consentlayer.page_session_start` by default, because it duplicated the page view each provider already sends. Set `autoTracking({ pageViews: true })` to keep it. The other auto-tracking events still carry `session_id`.
+- 0add146: Redaction replaces email addresses with `(redacted)` in page views, event params and the URLs providers and server destinations receive, and the new `redact.queryParams` option does the same for the values of chosen query parameters. It is on by default for email addresses, so a URL or param that contains one arrives as `(redacted)` after upgrading; `redact: false` turns it off. GA4, Google Ads, PostHog and Contentsquare also receive the redacted page URL or query string they would otherwise read themselves. `identify` and `group` data is never redacted. `PluginContext` gains `redact`, and `RedactOptions` is exported.
+
+### Patch Changes
+
+- bbc14ca: Deprecate `names.legacy` and `createEnvConfig`, both removed in 2.0. To keep moving stored consent from the `acm_*` keys, pass them as `legacyKeys` to `createLocalStorageConsentStorage()` and `createLocalStorageIdentityStorage()`; see the Names guide.
+
 ## 1.4.0
 
 ### Minor Changes
