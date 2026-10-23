@@ -305,6 +305,10 @@ is removed. While `legacy` is on, ConsentLayer also dispatches `acm:consent`,
 sets `ACM_CONSENT` and `ACM_openConsent`, and reads and writes the `__acm*`
 window flags, so scripts that listen for the old names keep working.
 
+`legacy` is deprecated and will be removed in 2.0. To move stored consent
+without it, pass the old keys as `legacyKeys`, as shown in
+[Names](/guides/names/#before-20).
+
 **Keep the old names.** If the key is published, for example in your cookie
 policy, set the prefix instead. Every name, including the auto-tracking
 events, is then derived from `acm` exactly as before:
@@ -592,7 +596,7 @@ Crypto, so the server entry points run on the Edge runtime. See
 The storage factories (`createLocalStorageConsentStorage`,
 `createLocalStorageIdentityStorage` and the memory variants) are still
 exported from the package root. `createEnvConfig` is too, but it is
-deprecated: pass `process.env` values to the providers directly, since a
+deprecated and will be removed in 2.0: pass `process.env` values to the providers directly, since a
 provider whose ID is unset turns itself off.
 
 ## Update custom plugins
