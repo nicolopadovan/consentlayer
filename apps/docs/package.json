@@ -9,7 +9,7 @@
     "typecheck": "astro check && tsc --noEmit"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.11",
     "typescript": "^5.9.3"
   },
   "dependencies": {
