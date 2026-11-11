@@ -10,11 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@solidjs/router": "^1.0.0",
-    "@solidjs/start": "^2.0.6",
+    "@solidjs/router": "^1.0.1",
+    "@solidjs/start": "^2.2.1",
     "consentlayer": "workspace:*",
     "nitro": "3.0.260610-beta",
-    "solid-js": "^1.9.17"
+    "solid-js": "^1.9.18"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
