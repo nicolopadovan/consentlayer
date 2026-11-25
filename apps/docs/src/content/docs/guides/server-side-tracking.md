@@ -285,19 +285,19 @@ Each event is one `POST` to
 `access_token` (and `test_event_code`, when set) in the query string and a
 single entry in `data`:
 
-| Field                                              | Value                                                                                             |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `event_name`                                       | The Meta name for the event: a standard event where one maps, otherwise the original name.        |
-| `event_time`                                       | The send time, in Unix seconds.                                                                   |
-| `event_id`                                         | The event's `id`, which Meta uses to deduplicate it against the pixel event.                      |
-| `event_source_url`                                 | The event's `url`.                                                                                |
-| `action_source`                                    | `website`.                                                                                        |
-| `custom_data`                                      | The translated params, keeping only strings, numbers, booleans, `null`, arrays and plain objects. |
-| `user_data.client_ip_address`, `client_user_agent` | From the request, when there is one.                                                              |
-| `user_data.fbp`, `fbc`                             | The `_fbp` and `_fbc` cookies, when there is a request.                                           |
-| `user_data.em`                                     | The SHA-256 hex digest of the trimmed, lowercased email, if it is a valid address.                |
-| `user_data.ph`                                     | The SHA-256 hex digest of the phone number's digits, without `+`, if it is a valid E.164 number.  |
-| `user_data.external_id`                            | The SHA-256 hex digest of the user ID.                                                            |
+| Field                                              | Value                                                                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `event_name`                                       | The Meta name for the event: a standard event where one maps, otherwise the original name.                                |
+| `event_time`                                       | The send time, in Unix seconds.                                                                                           |
+| `event_id`                                         | The event's `id`, which Meta uses to deduplicate it against the pixel event.                                              |
+| `event_source_url`                                 | The event's `url`.                                                                                                        |
+| `action_source`                                    | `website`.                                                                                                                |
+| `custom_data`                                      | The translated params, keeping only strings, numbers, booleans, `null`, arrays and plain objects.                         |
+| `user_data.client_ip_address`, `client_user_agent` | From the request, when there is one.                                                                                      |
+| `user_data.fbp`, `fbc`                             | The `_fbp` and `_fbc` cookies, when there is a request. Without `_fbc`, `fbc` is built from an `fbclid` in the event URL. |
+| `user_data.em`                                     | The SHA-256 hex digest of the trimmed, lowercased email, if it is a valid address.                                        |
+| `user_data.ph`                                     | The SHA-256 hex digest of the phone number's digits, without `+`, if it is a valid E.164 number.                          |
+| `user_data.external_id`                            | The SHA-256 hex digest of the user ID.                                                                                    |
 
 A non-2xx response throws `Meta CAPI <status>: <response body>`.
 

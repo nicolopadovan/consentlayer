@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { googleConsentMode } from '../src/adapters/google-consent-mode'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
 import { createAnalytics } from '../src/core/create-analytics'
@@ -627,5 +627,64 @@ describe('withdrawal', () => {
     await manager.boot()
     expect(document.cookie).toBe('')
     manager.destroy()
+  })
+})
+
+describe('meta click ID', () => {
+  const granted = { preferences: true, analytics: true, marketing: true }
+  const fbc = () => document.cookie.match(/(?:^|; )_fbc=([^;]*)/)?.[1]
+
+  afterEach(() => {
+    document.cookie = '_fbc=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+    sessionStorage.clear()
+    history.replaceState({}, '', '/')
+  })
+
+  const visit = async (search: string, options: Partial<Parameters<typeof meta>[0]> = {}) => {
+    history.replaceState({}, '', `/${search}`)
+    const pixel = { ...meta({ pixelId: '123456789012345', ...options }), load: undefined }
+    const manager = createAnalyticsManager({ providers: [pixel], consent: null })
+    await manager.boot()
+    return manager
+  }
+
+  it('sets _fbc from the landing fbclid when marketing is granted on a later page, and not before', async () => {
+    const manager = await visit('?fbclid=IwAR_abc-1')
+    history.pushState({}, '', '/product')
+    expect(fbc()).toBeUndefined()
+    await manager.updateConsent(granted)
+    expect(fbc()).toMatch(/^fb\.0\.\d{13}\.IwAR_abc-1$/)
+    expect(sessionStorage.length).toBe(0)
+    manager.destroy()
+  })
+
+  it('keeps an _fbc the visitor already has', async () => {
+    document.cookie = '_fbc=fb.1.1700000000000.IwAR_old; path=/'
+    const manager = await visit('?fbclid=IwAR_new')
+    await manager.updateConsent(granted)
+    expect(fbc()).toBe('fb.1.1700000000000.IwAR_old')
+    manager.destroy()
+  })
+
+  it("carries the fbclid across a full page load only with clickId: 'session', and not with clickId: false", async () => {
+    ;(await visit('?fbclid=IwAR_abc-1', { clickId: 'session' })).destroy()
+    const next = await visit('', { clickId: 'session' })
+    await next.updateConsent(granted)
+    expect(fbc()).toMatch(/\.IwAR_abc-1$/)
+    expect(sessionStorage.length).toBe(0)
+    next.destroy()
+    document.cookie = '_fbc=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+
+    ;(await visit('?fbclid=IwAR_abc-1')).destroy()
+    expect(sessionStorage.length).toBe(0)
+    const memory = await visit('')
+    await memory.updateConsent(granted)
+    expect(fbc()).toBeUndefined()
+    memory.destroy()
+
+    const off = await visit('?fbclid=IwAR_abc-1', { clickId: false })
+    await off.updateConsent(granted)
+    expect(fbc()).toBeUndefined()
+    off.destroy()
   })
 })

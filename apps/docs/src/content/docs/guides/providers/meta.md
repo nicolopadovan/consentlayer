@@ -14,12 +14,13 @@ meta({ pixelId: process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID })
 
 ## Options
 
-| Option              | Type                  | Default                | Description                                                                                                                       |
-| ------------------- | --------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `pixelId`           | `string \| undefined` | Required               | The 8 to 20 digit pixel ID.                                                                                                       |
-| `locale`            | `string`              | `'en_US'`              | The locale segment of the `fbevents.js` URL.                                                                                      |
-| `loadBeforeConsent` | `boolean`             | `false`                | Loads the pixel at boot with `fbq('consent', 'revoke')`. See [Loading before consent](/guides/providers/#loading-before-consent). |
-| `events`            | `string[] \| false`   | Meta's standard events | The event names sent to the pixel. See [Which events are sent](#which-events-are-sent).                                           |
+| Option              | Type                             | Default                | Description                                                                                                                       |
+| ------------------- | -------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `pixelId`           | `string \| undefined`            | Required               | The 8 to 20 digit pixel ID.                                                                                                       |
+| `locale`            | `string`                         | `'en_US'`              | The locale segment of the `fbevents.js` URL.                                                                                      |
+| `loadBeforeConsent` | `boolean`                        | `false`                | Loads the pixel at boot with `fbq('consent', 'revoke')`. See [Loading before consent](/guides/providers/#loading-before-consent). |
+| `events`            | `string[] \| false`              | Meta's standard events | The event names sent to the pixel. See [Which events are sent](#which-events-are-sent).                                           |
+| `clickId`           | `'memory' \| 'session' \| false` | `'memory'`             | Keeps the landing page's `fbclid` until marketing consent and sets `_fbc` from it. See [Click ID](#click-id).                     |
 
 ## How it works
 
@@ -54,6 +55,42 @@ An event whose [`only`](/guides/events/#event-options) option names the
 provider is sent whatever `events` says. The
 [server destination](/guides/server-side-tracking/) `metaCapi` takes the same
 option and applies the same rule.
+
+## Click ID
+
+A visitor who arrives from a Meta ad lands on a URL with an `fbclid`
+parameter. The pixel turns it into the `_fbc` cookie, which Meta uses to match
+later events, such as a purchase, to the ad click. The pixel reads only the
+current URL, so if the visitor moves to another page before granting
+marketing consent, the `fbclid` is gone by the time the pixel loads.
+
+`meta()` keeps the landing page's `fbclid` and, when marketing consent is
+granted and the visitor has no `_fbc` cookie yet, sets `_fbc` in Meta's
+format, for example `fb.1.<landing time in ms>.<fbclid>` on `example.com`,
+before the pixel loads. The cookie
+lasts 90 days, like the pixel's own, and is set on the highest domain the
+browser accepts, so `www.example.com` and `shop.example.com` share it. An
+existing `_fbc` is never replaced, and the cookie is removed with Meta's other
+cookies when marketing consent is withdrawn.
+
+`clickId` sets where the `fbclid` is kept until then:
+
+- `'memory'` (default) keeps it for the life of the page. This covers apps
+  that navigate on the client, such as Next.js, Nuxt or SvelteKit apps.
+- `'session'` also writes it to sessionStorage under `consentlayer_fbclid`
+  (see [Names](/guides/names/)), so it survives full page loads in the same
+  tab. This stores the click ID before consent; the entry is removed once
+  marketing is granted, and otherwise when the tab closes. Use it for sites
+  that load a new document on each navigation.
+- `false` turns this off.
+
+```ts
+meta({ pixelId, clickId: 'session' })
+```
+
+The [Conversions API destination](/guides/server-side-tracking/) reads the
+same `_fbc` cookie from the request, and falls back to an `fbclid` in the
+event's URL when the cookie is missing.
 
 ## Advanced matching
 

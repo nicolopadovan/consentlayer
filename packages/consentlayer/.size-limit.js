@@ -8,8 +8,8 @@ const modifyEsbuildConfig = (config) => ({
 })
 
 export default [
-  ['core', 'dist/index.js', '9 kB'],
-  ['core: createAnalytics only', 'dist/index.js', '7.5 kB', '{ createAnalytics }'],
+  ['core', 'dist/index.js', '9.2 kB'],
+  ['core: createAnalytics only', 'dist/index.js', '7.7 kB', '{ createAnalytics }'],
   ['core: tree-shaken to createConsentController', 'dist/index.js', '1.5 kB', '{ createConsentController }'],
   ['auto-tracking', 'dist/auto-tracking.js', '2.4 kB'],
   ['banner', 'dist/banner.js', '4.8 kB'],
@@ -42,6 +42,6 @@ export default [
   ['server/meta', 'dist/server/meta.js', '1.5 kB'],
   ['server/tiktok', 'dist/server/tiktok.js', '1.4 kB'],
   ['server/sgtm', 'dist/server/sgtm.js', '1.5 kB'],
-  ['script tag', 'dist/consentlayer.global.js', '18.6 kB'],
+  ['script tag', 'dist/consentlayer.global.js', '19.2 kB'],
   ['script tag banner', 'dist/consentlayer-banner.global.js', '5.2 kB'],
 ].map(([name, path, limit, imports]) => ({ name, path, limit, import: imports, modifyEsbuildConfig }))

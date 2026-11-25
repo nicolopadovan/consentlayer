@@ -40,6 +40,8 @@ type ProviderState = {
   backlog?: Array<() => Promise<unknown>>
 }
 
+type Delivered = { providers: Set<string>; server: boolean }
+
 type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer' | 'events'>
 
 const LIFECYCLE_HOOKS = new Set<HookName>(['setup', 'consent', 'load', 'teardown'])
@@ -103,6 +105,9 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
   }
   settleStoredContact()
   const pending: Array<() => Promise<unknown>> = []
+  const held: Array<() => Promise<unknown>> = []
+  const undecided = () =>
+    Boolean(options.holdUntilChoice) && (options.consentEngine ? options.consentEngine.shouldAsk() : consent === null)
   let booted = false
   let ready = false
   let identifyQueued = false
@@ -371,47 +376,70 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
 
   const labelTopic = (label: string): DebugTopic => (label === 'captureError' ? 'errors' : 'events')
 
-  const trackAgainstProviders = async (
-    label: string,
-    selectedProviderIds: string[] | undefined,
-    callback: (state: ProviderState) => Promise<boolean>,
-    serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined,
-  ) => {
+  type Delivery = {
+    label: string
+    selectedProviderIds: string[] | undefined
+    callback: (state: ProviderState) => Promise<boolean>
+    serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined
+    /** Set for calls `holdUntilChoice` may hold: whether the call's own consent options keep it from everyone. */
+    blocked?: () => boolean
+  }
+
+  const trackAgainstProviders = async (delivery: Delivery) => {
     if (destroyed) return
+    const { label } = delivery
     if (!runtimeEnabled()) return debugLog(labelTopic(label), undefined, `${label} dropped: enabled is false`)
     if (!ready) {
       debugLog(labelTopic(label), undefined, `${label} held until boot`)
-      enqueue(pending, () => deliver(label, selectedProviderIds, callback, serverEvent))
+      enqueue(pending, () => deliver(delivery))
       return
     }
-    await deliver(label, selectedProviderIds, callback, serverEvent)
+    await deliver(delivery)
   }
 
   const deliver = async (
-    label: string,
-    selectedProviderIds: string[] | undefined,
-    callback: (state: ProviderState) => Promise<boolean>,
-    serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined,
-  ) => {
+    delivery: Delivery,
+    delivered: Delivered = { providers: new Set(), server: false },
+  ): Promise<void> => {
     if (destroyed) return
-    const event = serverEvent?.()
-    if (event) forward(event)
+    const { label, selectedProviderIds, callback, serverEvent, blocked } = delivery
+    const event = delivered.server ? undefined : serverEvent?.()
+    if (event && forwards(event)) {
+      forward(event)
+      delivered.server = true
+    }
     let reached = 0
+    let withheld = false
     for (const state of providerStates.values()) {
-      if (!state.active) continue
-      if (!hasRequiredConsent(consent, state.plugin.requiredConsent)) continue
-      if (selectedProviderIds && !selectedProviderIds.includes(state.plugin.id)) {
+      const { id } = state.plugin
+      if (delivered.providers.has(id)) continue
+      if (selectedProviderIds && !selectedProviderIds.includes(id)) continue
+      if (!state.active || !hasRequiredConsent(consent, state.plugin.requiredConsent)) {
+        withheld = true
         continue
       }
-      if (await callback(state)) reached += 1
+      if (await callback(state)) {
+        delivered.providers.add(id)
+        reached += 1
+      }
+    }
+    const serverWithheld = Boolean(
+      serverEndpoint && event && !delivered.server && !(consent?.analytics || consent?.marketing),
+    )
+    if (blocked && undecided() && (withheld || serverWithheld || blocked())) {
+      debugLog(labelTopic(label), undefined, `${label} held until the visitor chooses`)
+      enqueue(held, () => deliver(delivery, delivered))
+      return
     }
     if (!reached) debugLog(labelTopic(label), undefined, `${label} reached no provider`)
   }
 
   const identifyProviders = (traits: UserTraits, only?: string[]) =>
-    trackAgainstProviders('identify', only, (state) =>
-      call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx), traits),
-    )
+    trackAgainstProviders({
+      label: 'identify',
+      selectedProviderIds: only,
+      callback: (state) => call(state, 'identify', (p, ctx) => p.identify?.(sharedIdentity(), traits, ctx), traits),
+    })
 
   if (options.consentEngine) {
     unsubscribeConsent = options.consentEngine.subscribe(({ consent: nextConsent }) => {
@@ -469,6 +497,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       }
       persistIdentity()
       await queueLifecycle()
+      for (const run of held.splice(0)) await run()
       if (!hadContact || hadMarketing === Boolean(nextConsent?.marketing)) return
       if (hadMarketing) {
         for (const state of providerStates.values()) {
@@ -489,17 +518,18 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         campaignSent.add(key)
         return redactDeep(withCampaign(page, campaign), redact)
       }
-      await trackAgainstProviders(
-        'page',
-        only,
-        (state) => call(state, 'page', (p, ctx) => p.page?.(firstFor(p.id), ctx), page),
-        () => {
+      await trackAgainstProviders({
+        label: 'page',
+        selectedProviderIds: only,
+        callback: (state) => call(state, 'page', (p, ctx) => p.page?.(firstFor(p.id), ctx), page),
+        serverEvent: () => {
           if (server === false) return undefined
           const categories = Array.isArray(server) ? server : undefined
           const event = { id: page.id, name: 'page_view', url: page.url, only: server ? undefined : only, categories }
           return forwards(event) ? { ...event, url: firstFor(`server:${categories?.join() ?? ''}`).url } : event
         },
-      )
+        blocked: () => false,
+      })
     },
     async track(name, params, optionsInput = {}) {
       const event: AnalyticsEventPayload = {
@@ -508,28 +538,30 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         params: redactDeep(params ?? {}, redact),
         options: optionsInput,
       }
+      const url = redactDeep(getWindowLocation().url, redact)
       const allowed = () =>
         !(optionsInput.requireAnalyticsConsent && !consent?.analytics) &&
         !(optionsInput.requireMarketingConsent && !consent?.marketing)
-      await trackAgainstProviders(
-        name,
-        optionsInput.only,
-        async (state) =>
+      await trackAgainstProviders({
+        label: name,
+        selectedProviderIds: optionsInput.only,
+        callback: async (state) =>
           allowed() &&
           receivesEvent(state.plugin, name, optionsInput.only) &&
           (await call(state, 'track', (p, ctx) => (allowed() ? p.track?.(event, ctx) : undefined), name, event.params)),
-        () =>
+        serverEvent: () =>
           allowed()
             ? {
                 id: event.id,
                 name,
                 params: event.params,
-                url: redactDeep(getWindowLocation().url, redact),
+                url,
                 only: optionsInput.only,
                 providers: optionsInput.providers,
               }
             : undefined,
-      )
+        blocked: () => !allowed(),
+      })
     },
     async identify(userId, traits = {}) {
       if (userId && userId !== identity.userId) identity = {}
@@ -553,9 +585,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       }
     },
     async group(groupId, traits = {}) {
-      await trackAgainstProviders('group', undefined, (state) =>
-        call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx), groupId, traits),
-      )
+      await trackAgainstProviders({
+        label: 'group',
+        selectedProviderIds: undefined,
+        callback: (state) => call(state, 'group', (p, ctx) => p.group?.(groupId, traits, ctx), groupId, traits),
+      })
     },
     async captureError(error, errorContext = {}) {
       if (!errorsEnabled) return
@@ -564,9 +598,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         reportedErrors.add(error)
       }
       const captured = { source: 'manual' as const, ...errorContext }
-      await trackAgainstProviders('captureError', undefined, (state) =>
-        call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx), error),
-      )
+      await trackAgainstProviders({
+        label: 'captureError',
+        selectedProviderIds: undefined,
+        callback: (state) => call(state, 'error', (p, ctx) => p.error?.(error, captured, ctx), error),
+      })
     },
     newPageSession() {
       try {
@@ -593,6 +629,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       }
       providerStates.clear()
       listeners.clear()
+      held.length = 0
     },
   }
 
