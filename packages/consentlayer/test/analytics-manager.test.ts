@@ -2,7 +2,7 @@ import { autoTracking } from '../src/auto-tracking'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
 import { createAnalytics, type AnalyticsOptions } from '../src/core/create-analytics'
-import type { AnalyticsPlugin } from '../src/core/types'
+import type { AnalyticsPlugin, ConsentState } from '../src/core/types'
 import { ukStatisticsRegions } from '../src/core/regions'
 import { createMemoryIdentityStorage } from '../src/core/storage'
 
@@ -453,6 +453,33 @@ describe('holdUntilChoice', () => {
       'page_view to preferences,marketing',
       'view_item to preferences,marketing',
     ])
+    analytics.destroy()
+  })
+
+  it('sends a held server replay with the consent current when it is sent', async () => {
+    const { analytics } = await landed({
+      holdUntilChoice: true,
+      consent: { region: 'DE' },
+      server: { endpoint: '/api/analytics', consentEndpoint: '/api/consent' },
+    })
+    const fetchMock = vi.mocked(fetch)
+    const recordings: Array<() => void> = []
+    fetchMock.mockImplementation((input) =>
+      input === '/api/consent'
+        ? new Promise((resolve) => recordings.push(() => resolve(new Response(null, { status: 204 }))))
+        : Promise.resolve(new Response(null, { status: 204 })),
+    )
+    const accepted = choose(analytics, granted)
+    await settle()
+    const withdrawn = analytics.consent.update({ marketing: false })
+    await settle()
+    for (const recorded of recordings) recorded()
+    await Promise.all([accepted, withdrawn])
+    await settle()
+    const sent = fetchMock.mock.calls
+      .filter(([input]) => input === '/api/analytics')
+      .map(([, init]) => (JSON.parse(init?.body as string) as { consent: ConsentState }).consent.marketing)
+    expect(sent).toEqual([false, false])
     analytics.destroy()
   })
 

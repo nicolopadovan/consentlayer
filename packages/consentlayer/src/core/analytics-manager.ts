@@ -227,11 +227,9 @@ export function createAnalyticsManager(
     Boolean(serverEndpoint && (consent?.analytics || consent?.marketing)) &&
     (!serverEvents || Boolean(event.only) || serverEvents.includes(event.name))
   const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>, recorded?: Promise<void>) => {
+    if (recorded) return void recorded.then(() => forward(event))
     if (!serverEndpoint || !forwards(event)) return
-    const endpoint = serverEndpoint
-    const body = JSON.stringify({ ...event, consent, identity: sharedIdentity() })
-    if (recorded) void recorded.then(() => send(endpoint, event.name, body))
-    else send(endpoint, event.name, body)
+    send(serverEndpoint, event.name, JSON.stringify({ ...event, consent, identity: sharedIdentity() }))
   }
   const send = (endpoint: string, name: string, body: string) => {
     const fail = (cause: unknown) =>
