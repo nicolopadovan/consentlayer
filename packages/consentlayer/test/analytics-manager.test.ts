@@ -456,8 +456,8 @@ describe('holdUntilChoice', () => {
     analytics.destroy()
   })
 
-  it('waits at most 3 seconds for a consent endpoint that does not answer, and only with held events', async () => {
-    const { analytics, forwarded } = await landed({
+  it('holds the server replay at most 3 seconds for a consent endpoint that does not answer, and not the providers', async () => {
+    const { analytics, ads, forwarded } = await landed({
       holdUntilChoice: true,
       consent: { region: 'GB', regions: ukStatisticsRegions },
       server: { endpoint: '/api/analytics', consentEndpoint: '/api/consent' },
@@ -468,6 +468,7 @@ describe('holdUntilChoice', () => {
     vi.useFakeTimers()
     void choose(analytics, granted)
     await vi.advanceTimersByTimeAsync(2900)
+    expect(names(ads)).toEqual(['view_item'])
     await analytics.track('purchase')
     expect(forwarded()).toEqual(['page_view', 'view_item', 'purchase'])
     await vi.advanceTimersByTimeAsync(200)

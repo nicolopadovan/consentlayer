@@ -120,7 +120,7 @@ export function createAnalyticsManager(
   }
   settleStoredContact()
   const pending: Array<() => Promise<unknown>> = []
-  const held: Array<() => Promise<unknown>> = []
+  const held: Array<(recorded: Promise<void> | undefined) => Promise<unknown>> = []
   const undecided = () =>
     Boolean(options.holdUntilChoice) && (options.consentEngine ? options.consentEngine.shouldAsk() : consent === null)
   let booted = false
@@ -166,12 +166,7 @@ export function createAnalyticsManager(
 
   // ponytail: fixed cap so a runaway caller can't grow memory; overflow is reported once per queue
   const overflowed = new WeakSet<unknown[]>()
-  const enqueue = (
-    queue: Array<() => Promise<unknown>>,
-    run: () => Promise<unknown>,
-    waiting: string,
-    providerId?: string,
-  ) => {
+  const enqueue = <Run>(queue: Run[], run: Run, waiting: string, providerId?: string) => {
     if (queue.length < 100) {
       queue.push(run)
     } else if (!overflowed.has(queue)) {
@@ -231,11 +226,12 @@ export function createAnalyticsManager(
   const forwards = (event: Omit<ServerEvent, 'consent' | 'identity'>) =>
     Boolean(serverEndpoint && (consent?.analytics || consent?.marketing)) &&
     (!serverEvents || Boolean(event.only) || serverEvents.includes(event.name))
-  const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
+  const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>, recorded?: Promise<void>) => {
     if (!serverEndpoint || !forwards(event)) return
     const endpoint = serverEndpoint
     const body = JSON.stringify({ ...event, consent, identity: sharedIdentity() })
-    send(endpoint, event.name, body)
+    if (recorded) void recorded.then(() => send(endpoint, event.name, body))
+    else send(endpoint, event.name, body)
   }
   const send = (endpoint: string, name: string, body: string) => {
     const fail = (cause: unknown) =>
@@ -440,6 +436,7 @@ export function createAnalyticsManager(
   const deliver = async (
     delivery: Delivery,
     delivered: Delivered = { providers: new Set(), server: new Set() },
+    recorded?: Promise<void>,
   ): Promise<void> => {
     if (destroyed) return
     const { label, selectedProviderIds, callback, serverEvent, blocked } = delivery
@@ -450,7 +447,7 @@ export function createAnalyticsManager(
     const granted = serverCategories.filter((category) => consent?.[category])
     if (base && granted.length && forwards(base)) {
       const event = delivered.event ?? serverEvent?.(true) ?? base
-      forward(delivered.server.size ? { ...event, categories: granted } : event)
+      forward(delivered.server.size ? { ...event, categories: granted } : event, recorded)
       for (const category of granted) delivered.server.add(category)
       delivered.event = event
     }
@@ -472,7 +469,7 @@ export function createAnalyticsManager(
     const serverWithheld = Boolean(serverEndpoint && base && granted.length < serverCategories.length)
     if (blocked && undecided() && (withheld || serverWithheld || blocked())) {
       debugLog(labelTopic(label), undefined, `${label} held until the visitor chooses`)
-      enqueue(held, () => deliver(delivery, delivered), 'for the visitor to choose')
+      enqueue(held, (recorded) => deliver(delivery, delivered, recorded), 'for the visitor to choose')
       return
     }
     if (!reached) debugLog(labelTopic(label), undefined, `${label} reached no provider`)
@@ -541,9 +538,9 @@ export function createAnalyticsManager(
       }
       persistIdentity()
       await queueLifecycle()
-      if (held.length) await untilRecorded()
+      const recorded = held.length ? untilRecorded() : undefined
       overflowed.delete(held)
-      for (const run of held.splice(0)) await run()
+      for (const run of held.splice(0)) await run(recorded)
       if (!hadContact || hadMarketing === Boolean(nextConsent?.marketing)) return
       if (hadMarketing) {
         for (const state of providerStates.values()) {

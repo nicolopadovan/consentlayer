@@ -247,9 +247,9 @@ createAnalytics({ providers, holdUntilChoice: true })
 - A call the server already received under one category, such as analytics,
   is sent again only for the categories the choice adds, with `categories`
   set to them, so each server destination receives it once. With
-  `server.consentEndpoint`, held calls wait up to 3 seconds for the endpoint
-  to record a choice made in the same tab, so a handler with `consentCookie`
-  sees it. A choice made in another tab is not waited for.
+  `server.consentEndpoint`, held calls reach providers at once and the server
+  after up to 3 seconds, once the endpoint has recorded a choice made in the
+  same tab, so a handler with `consentCookie` sees it. A choice made in another tab is not waited for.
 - Calls the choice does not allow are dropped, as they would have been
   without the option.
 
