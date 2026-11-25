@@ -246,7 +246,9 @@ createAnalytics({ providers, holdUntilChoice: true })
   themselves record those of delivery.
 - A call the server already received under one category, such as analytics,
   is sent again only for the categories the choice adds, with `categories`
-  set to them, so each server destination receives it once.
+  set to them, so each server destination receives it once. With
+  `server.consentEndpoint`, it is sent once the endpoint has recorded the
+  choice, so the handler's consent cookie already holds it.
 - Calls the choice does not allow are dropped, as they would have been
   without the option.
 

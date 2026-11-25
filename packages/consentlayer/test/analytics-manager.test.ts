@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
 import { createAnalytics, type AnalyticsOptions } from '../src/core/create-analytics'
 import type { AnalyticsPlugin } from '../src/core/types'
+import { ukStatisticsRegions } from '../src/core/regions'
 import { createMemoryIdentityStorage } from '../src/core/storage'
 
 describe('analytics manager', () => {
@@ -386,10 +387,12 @@ describe('holdUntilChoice', () => {
     await analytics.page()
     await analytics.track('view_item', { item_id: 'sku-1' })
     const forwarded = () =>
-      fetchMock.mock.calls.map(([, init]) => {
-        const { name, categories } = JSON.parse(init?.body as string) as { name: string; categories?: string[] }
-        return categories ? `${name} to ${categories.join()}` : name
-      })
+      fetchMock.mock.calls
+        .filter(([input]) => input === '/api/analytics')
+        .map(([, init]) => {
+          const { name, categories } = JSON.parse(init?.body as string) as { name: string; categories?: string[] }
+          return categories ? `${name} to ${categories.join()}` : name
+        })
     return { analytics, stats, ads, forwarded }
   }
 
@@ -423,6 +426,33 @@ describe('holdUntilChoice', () => {
     expect([names(off.ads), off.ads.page.mock.calls.length]).toEqual([[], 0])
     expect(off.forwarded()).toEqual(['page_view', 'view_item'])
     off.analytics.destroy()
+  })
+
+  it('forwards held events for every category the choice adds, after the consent endpoint records it', async () => {
+    const { analytics, forwarded } = await landed({
+      holdUntilChoice: true,
+      consent: { region: 'GB', regions: ukStatisticsRegions },
+      server: { endpoint: '/api/analytics', consentEndpoint: '/api/consent' },
+    })
+    const fetchMock = vi.mocked(fetch)
+    let recorded = () => {}
+    fetchMock.mockImplementation((input) =>
+      input === '/api/consent'
+        ? new Promise((resolve) => (recorded = () => resolve(new Response(null, { status: 204 }))))
+        : Promise.resolve(new Response(null, { status: 204 })),
+    )
+    const choice = choose(analytics, granted)
+    await settle()
+    expect(forwarded()).toEqual(['page_view', 'view_item'])
+    recorded()
+    await choice
+    expect(forwarded()).toEqual([
+      'page_view',
+      'view_item',
+      'page_view to preferences,marketing',
+      'view_item to preferences,marketing',
+    ])
+    analytics.destroy()
   })
 
   it('forwards held events to the server once the choice allows it', async () => {

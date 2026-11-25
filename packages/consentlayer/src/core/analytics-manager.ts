@@ -44,7 +44,13 @@ type ProviderState = {
 type ServerPayload = Omit<ServerEvent, 'consent' | 'identity'>
 type Delivered = { providers: Set<string>; server: Set<keyof ConsentState>; event?: ServerPayload }
 
-const SERVER_CATEGORIES: (keyof ConsentState)[] = ['analytics', 'marketing']
+const BUILT_IN_CATEGORIES: readonly (keyof ConsentState)[] = ['preferences', 'analytics', 'marketing']
+
+/** Wiring `createAnalytics` provides. */
+type ManagerInternals = {
+  /** Settles once the consent endpoint has recorded the latest choice, while a recording is in flight. */
+  consentRecorded?: () => Promise<void> | undefined
+}
 
 type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer' | 'events'>
 
@@ -84,7 +90,10 @@ function whenDue(timing: Exclude<LoadTiming, false>, signal: AbortSignal): Promi
   })
 }
 
-export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): AnalyticsManager {
+export function createAnalyticsManager(
+  options: AnalyticsManagerOptions = {},
+  internals: ManagerInternals = {},
+): AnalyticsManager {
   if (options.autoTracking !== undefined && typeof options.autoTracking !== 'function') {
     throw new Error('[consentlayer] autoTracking must be autoTracking() from consentlayer/auto-tracking')
   }
@@ -222,16 +231,22 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     (!serverEvents || Boolean(event.only) || serverEvents.includes(event.name))
   const forward = (event: Omit<ServerEvent, 'consent' | 'identity'>) => {
     if (!serverEndpoint || !forwards(event)) return
+    const endpoint = serverEndpoint
     const body = JSON.stringify({ ...event, consent, identity: sharedIdentity() })
+    const recording = internals.consentRecorded?.()
+    if (recording) void recording.then(() => send(endpoint, event.name, body))
+    else send(endpoint, event.name, body)
+  }
+  const send = (endpoint: string, name: string, body: string) => {
     const fail = (cause: unknown) =>
-      emitError({ scope: 'server-forward', message: `Sending ${event.name} to ${serverEndpoint} failed`, cause })
+      emitError({ scope: 'server-forward', message: `Sending ${name} to ${endpoint} failed`, cause })
     if (typeof fetch !== 'function') {
-      if (!navigator.sendBeacon(serverEndpoint, new Blob([body], { type: 'application/json' }))) {
+      if (!navigator.sendBeacon(endpoint, new Blob([body], { type: 'application/json' }))) {
         fail(undefined)
       }
       return
     }
-    fetch(serverEndpoint, {
+    fetch(endpoint, {
       method: 'POST',
       keepalive: true,
       headers: { 'content-type': 'application/json' },
@@ -389,7 +404,8 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     label: string
     selectedProviderIds: string[] | undefined
     callback: (state: ProviderState) => Promise<boolean>
-    serverEvent?: () => ServerPayload | undefined
+    /** `sending` is true when the event is about to be forwarded. */
+    serverEvent?: (sending: boolean) => ServerPayload | undefined
     /** Set for calls `holdUntilChoice` may hold: whether the call's own consent options keep it from everyone. */
     blocked?: () => boolean
   }
@@ -412,12 +428,13 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
   ): Promise<void> => {
     if (destroyed) return
     const { label, selectedProviderIds, callback, serverEvent, blocked } = delivery
-    const event = delivered.event ?? serverEvent?.()
-    const serverCategories = (event?.categories ?? SERVER_CATEGORIES).filter(
+    const base = delivered.event ?? serverEvent?.(false)
+    const serverCategories = (base?.categories ?? options.consentEngine?.categories ?? BUILT_IN_CATEGORIES).filter(
       (category) => !delivered.server.has(category),
     )
     const granted = serverCategories.filter((category) => consent?.[category])
-    if (event && granted.length && forwards(event)) {
+    if (base && granted.length && forwards(base)) {
+      const event = delivered.event ?? serverEvent?.(true) ?? base
       forward(delivered.server.size ? { ...event, categories: granted } : event)
       for (const category of granted) delivered.server.add(category)
       delivered.event = event
@@ -437,7 +454,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         reached += 1
       }
     }
-    const serverWithheld = Boolean(serverEndpoint && event && granted.length < serverCategories.length)
+    const serverWithheld = Boolean(serverEndpoint && base && granted.length < serverCategories.length)
     if (blocked && undecided() && (withheld || serverWithheld || blocked())) {
       debugLog(labelTopic(label), undefined, `${label} held until the visitor chooses`)
       enqueue(held, () => deliver(delivery, delivered), 'for the visitor to choose')
@@ -535,11 +552,11 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         label: 'page',
         selectedProviderIds: only,
         callback: (state) => call(state, 'page', (p, ctx) => p.page?.(firstFor(p.id), ctx), page),
-        serverEvent: () => {
+        serverEvent: (sending) => {
           if (server === false) return undefined
           const categories = Array.isArray(server) ? server : undefined
           const event = { id: page.id, name: 'page_view', url: page.url, only: server ? undefined : only, categories }
-          return forwards(event) ? { ...event, url: firstFor(`server:${categories?.join() ?? ''}`).url } : event
+          return sending ? { ...event, url: firstFor(`server:${categories?.join() ?? ''}`).url } : event
         },
         blocked: () => false,
       })
