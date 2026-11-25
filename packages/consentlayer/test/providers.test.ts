@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { googleConsentMode } from '../src/adapters/google-consent-mode'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
 import { createAnalytics } from '../src/core/create-analytics'
+import { configureNames } from '../src/core/names'
 import { loadScript } from '../src/core/plugin'
 import { contentsquare } from '../src/providers/contentsquare'
 import { ga4 } from '../src/providers/ga4'
@@ -664,6 +665,21 @@ describe('meta click ID', () => {
     await manager.updateConsent(granted)
     expect(fbc()).toBe('fb.1.1700000000000.IwAR_old')
     manager.destroy()
+  })
+
+  it('stores the fbclid under the names prefix createAnalytics sets', async () => {
+    history.replaceState({}, '', '/?fbclid=IwAR_abc-1')
+    const analytics = createAnalytics({
+      names: { prefix: 'acme' },
+      providers: [{ ...meta({ pixelId: '123456789012345', clickId: 'session' }), load: undefined }],
+    })
+    await analytics.boot()
+    expect([sessionStorage.getItem('acme_fbclid'), sessionStorage.getItem('consentlayer_fbclid')]).toEqual([
+      expect.stringContaining('IwAR_abc-1'),
+      null,
+    ])
+    analytics.destroy()
+    configureNames()
   })
 
   it("carries the fbclid across a full page load only with clickId: 'session', and not with clickId: false", async () => {

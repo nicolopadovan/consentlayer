@@ -79,8 +79,9 @@ cookies when marketing consent is withdrawn.
   that navigate on the client, such as Next.js, Nuxt or SvelteKit apps.
 - `'session'` also writes it to sessionStorage under `consentlayer_fbclid`
   (see [Names](/guides/names/)), so it survives full page loads in the same
-  tab. This stores the click ID before consent; the entry is removed once
-  marketing is granted, and otherwise when the tab closes. Use it for sites
+  tab. This stores the click ID before consent, and also when the visitor
+  has declined marketing; the entry is removed once marketing is granted, and
+  otherwise when the tab closes. Use it for sites
   that load a new document on each navigation.
 - `false` turns this off.
 

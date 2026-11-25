@@ -56,23 +56,29 @@ function readSaved(key: string) {
 }
 
 function clickIdStore(mode: 'memory' | 'session') {
-  const key = `${getNames().prefix}_fbclid`
-  const session = (run: () => void) => {
+  const landed = toClickId(new URLSearchParams(window.location.search).get('fbclid'), Date.now())
+  let current: ClickId | undefined
+  const session = (run: (key: string) => void) => {
     if (mode !== 'session') return
     try {
-      run()
+      run(`${getNames().prefix}_fbclid`)
     } catch {
       // sessionStorage can be unavailable; the click ID then lasts for the page load
     }
   }
-  let current = toClickId(new URLSearchParams(window.location.search).get('fbclid'), Date.now())
-  if (current) session(() => sessionStorage.setItem(key, JSON.stringify(current)))
-  else if (mode === 'session') current = readSaved(key)
   return {
+    restore() {
+      current = landed
+      if (current) session((key) => sessionStorage.setItem(key, JSON.stringify(current)))
+      else
+        session((key) => {
+          current = readSaved(key)
+        })
+    },
     take() {
       const taken = current
       current = undefined
-      session(() => sessionStorage.removeItem(key))
+      session((key) => sessionStorage.removeItem(key))
       return taken
     },
   }
@@ -133,6 +139,9 @@ fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(loadContex
       )
 
       setFlag('MetaPixelInitialized', true)
+    },
+    setup() {
+      clickIds?.restore()
     },
     consent(context) {
       if (typeof window !== 'undefined' && context.consent && !context.consent.marketing) expireCookies(isOwnCookie)

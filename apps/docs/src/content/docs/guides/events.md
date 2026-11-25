@@ -244,6 +244,9 @@ createAnalytics({ providers, holdUntilChoice: true })
   API and the pixel still deduplicate it, and the server receives the URL it
   was made with. Browser providers that read the page URL or the time
   themselves record those of delivery.
+- A call the server already received under one category, such as analytics,
+  is sent again only for the categories the choice adds, with `categories`
+  set to them, so each server destination receives it once.
 - Calls the choice does not allow are dropped, as they would have been
   without the option.
 

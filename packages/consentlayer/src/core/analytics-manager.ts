@@ -8,6 +8,7 @@ import type {
   AnalyticsPlugin,
   DebugTopic,
   LoadTiming,
+  ConsentState,
   PluginContext,
   ServerEvent,
   UserIdentity,
@@ -40,7 +41,10 @@ type ProviderState = {
   backlog?: Array<() => Promise<unknown>>
 }
 
-type Delivered = { providers: Set<string>; server: boolean }
+type ServerPayload = Omit<ServerEvent, 'consent' | 'identity'>
+type Delivered = { providers: Set<string>; server: Set<keyof ConsentState>; event?: ServerPayload }
+
+const SERVER_CATEGORIES: (keyof ConsentState)[] = ['analytics', 'marketing']
 
 type HookName = Exclude<keyof AnalyticsPlugin, 'id' | 'requiredConsent' | 'loadBeforeConsent' | 'defer' | 'events'>
 
@@ -151,7 +155,12 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
 
   // ponytail: fixed cap so a runaway caller can't grow memory; overflow is reported once per queue
   const overflowed = new WeakSet<unknown[]>()
-  const enqueue = (queue: Array<() => Promise<unknown>>, run: () => Promise<unknown>, providerId?: string) => {
+  const enqueue = (
+    queue: Array<() => Promise<unknown>>,
+    run: () => Promise<unknown>,
+    waiting: string,
+    providerId?: string,
+  ) => {
     if (queue.length < 100) {
       queue.push(run)
     } else if (!overflowed.has(queue)) {
@@ -159,7 +168,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       emitError({
         scope: 'queue-full',
         providerId,
-        message: `100 calls are already waiting ${providerId ? `for ${providerId} to load` : 'for boot'}; later ones are dropped`,
+        message: `100 calls are already waiting ${waiting}; later ones are dropped`,
       })
     }
   }
@@ -267,7 +276,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     if (destroyed) return false
     const { plugin } = state
     if (state.backlog && !LIFECYCLE_HOOKS.has(hook)) {
-      enqueue(state.backlog, () => call(state, hook, run, ...detail), plugin.id)
+      enqueue(state.backlog, () => call(state, hook, run, ...detail), `for ${plugin.id} to load`, plugin.id)
       return Boolean(plugin[hook])
     }
     if (plugin[hook]) debugLog(HOOK_TOPICS[hook], plugin.id, `${plugin.id}.${hook}`, ...detail)
@@ -380,7 +389,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     label: string
     selectedProviderIds: string[] | undefined
     callback: (state: ProviderState) => Promise<boolean>
-    serverEvent?: () => Omit<ServerEvent, 'consent' | 'identity'> | undefined
+    serverEvent?: () => ServerPayload | undefined
     /** Set for calls `holdUntilChoice` may hold: whether the call's own consent options keep it from everyone. */
     blocked?: () => boolean
   }
@@ -391,7 +400,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
     if (!runtimeEnabled()) return debugLog(labelTopic(label), undefined, `${label} dropped: enabled is false`)
     if (!ready) {
       debugLog(labelTopic(label), undefined, `${label} held until boot`)
-      enqueue(pending, () => deliver(delivery))
+      enqueue(pending, () => deliver(delivery), 'for boot')
       return
     }
     await deliver(delivery)
@@ -399,14 +408,19 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
 
   const deliver = async (
     delivery: Delivery,
-    delivered: Delivered = { providers: new Set(), server: false },
+    delivered: Delivered = { providers: new Set(), server: new Set() },
   ): Promise<void> => {
     if (destroyed) return
     const { label, selectedProviderIds, callback, serverEvent, blocked } = delivery
-    const event = delivered.server ? undefined : serverEvent?.()
-    if (event && forwards(event)) {
-      forward(event)
-      delivered.server = true
+    const event = delivered.event ?? serverEvent?.()
+    const serverCategories = (event?.categories ?? SERVER_CATEGORIES).filter(
+      (category) => !delivered.server.has(category),
+    )
+    const granted = serverCategories.filter((category) => consent?.[category])
+    if (event && granted.length && forwards(event)) {
+      forward(delivered.server.size ? { ...event, categories: granted } : event)
+      for (const category of granted) delivered.server.add(category)
+      delivered.event = event
     }
     let reached = 0
     let withheld = false
@@ -423,12 +437,10 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
         reached += 1
       }
     }
-    const serverWithheld = Boolean(
-      serverEndpoint && event && !delivered.server && !(consent?.analytics || consent?.marketing),
-    )
+    const serverWithheld = Boolean(serverEndpoint && event && granted.length < serverCategories.length)
     if (blocked && undecided() && (withheld || serverWithheld || blocked())) {
       debugLog(labelTopic(label), undefined, `${label} held until the visitor chooses`)
-      enqueue(held, () => deliver(delivery, delivered))
+      enqueue(held, () => deliver(delivery, delivered), 'for the visitor to choose')
       return
     }
     if (!reached) debugLog(labelTopic(label), undefined, `${label} reached no provider`)
@@ -497,6 +509,7 @@ export function createAnalyticsManager(options: AnalyticsManagerOptions = {}): A
       }
       persistIdentity()
       await queueLifecycle()
+      overflowed.delete(held)
       for (const run of held.splice(0)) await run()
       if (!hadContact || hadMarketing === Boolean(nextConsent?.marketing)) return
       if (hadMarketing) {

@@ -386,7 +386,10 @@ describe('holdUntilChoice', () => {
     await analytics.page()
     await analytics.track('view_item', { item_id: 'sku-1' })
     const forwarded = () =>
-      fetchMock.mock.calls.map(([, init]) => (JSON.parse(init?.body as string) as { name: string }).name)
+      fetchMock.mock.calls.map(([, init]) => {
+        const { name, categories } = JSON.parse(init?.body as string) as { name: string; categories?: string[] }
+        return categories ? `${name} to ${categories.join()}` : name
+      })
     return { analytics, stats, ads, forwarded }
   }
 
@@ -398,9 +401,10 @@ describe('holdUntilChoice', () => {
     expect([names(stats), names(ads)]).toEqual([['view_item'], ['view_item']])
     expect([stats.page.mock.calls.length, ads.page.mock.calls.length]).toEqual([1, 1])
     expect(ads.track.mock.calls[0]?.[0].params).toEqual({ item_id: 'sku-1' })
-    expect(forwarded()).toEqual(['page_view', 'view_item'])
+    expect(forwarded()).toEqual(['page_view', 'view_item', 'page_view to marketing', 'view_item to marketing'])
     await analytics.track('view_item')
     expect(names(ads)).toEqual(['view_item', 'view_item'])
+    expect(forwarded().slice(4)).toEqual(['view_item'])
     analytics.destroy()
   })
 
@@ -409,12 +413,15 @@ describe('holdUntilChoice', () => {
     await choose(declined.analytics, { preferences: false, analytics: true, marketing: false })
     await choose(declined.analytics, granted)
     expect(names(declined.ads)).toEqual([])
+    expect(declined.forwarded()).toEqual(['page_view', 'view_item'])
     declined.analytics.destroy()
     localStorage.clear()
+    vi.restoreAllMocks()
 
     const off = await landed()
     await choose(off.analytics, granted)
     expect([names(off.ads), off.ads.page.mock.calls.length]).toEqual([[], 0])
+    expect(off.forwarded()).toEqual(['page_view', 'view_item'])
     off.analytics.destroy()
   })
 
