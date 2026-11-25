@@ -392,6 +392,11 @@ export type AnalyticsManagerOptions = {
    * each provider and server destination receives. `params` adds names to the `utm_*` defaults; `false` turns it off.
    */
   campaign?: false | { params?: string[] }
+  /**
+   * Holds page views and events that consent keeps from a provider or the server while the banner asks, then
+   * delivers them to whatever the visitor's choice allows. Up to 100, in memory only; off by default.
+   */
+  holdUntilChoice?: boolean
   /** HTTPS URLs or paths starting with "/". */
   server?: {
     /** Also send each event to this route (see `createAnalyticsHandler`). */

@@ -1,5 +1,6 @@
 import type { EventName } from '../core/types'
 import { META_EVENTS, metaUserData, toMetaEvent } from '../core/meta-events'
+import { getNames } from '../core/names'
 import { definePlugin, getFlag, loadScript, runInlineScript, setFlag, skippedPlugin } from '../core/plugin'
 import { expireCookies } from '../core/utils'
 import { assertValidMetaPixelId } from '../core/validation'
@@ -30,7 +31,71 @@ export type MetaOptions = {
   loadBeforeConsent?: boolean
   /** Event names sent to the pixel; defaults to the events with a Meta standard event. */
   events?: readonly EventName[] | false
+  /**
+   * Keeps the landing page's `fbclid` until marketing consent, then sets the `_fbc` cookie from it if the pixel has not.
+   * `'memory'` (default) lasts for the page load; `'session'` also keeps it in sessionStorage, before consent, so it
+   * survives full page loads in the tab. `false` turns it off.
+   */
+  clickId?: 'memory' | 'session' | false
 }
+
+type ClickId = { fbclid: string; at: number }
+
+const FBC_MAX_AGE = 90 * 86_400
+
+const toClickId = (fbclid: unknown, at: unknown): ClickId | undefined =>
+  typeof fbclid === 'string' && /^[\w-]+$/.test(fbclid) && typeof at === 'number' ? { fbclid, at } : undefined
+
+function readSaved(key: string) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(key) ?? 'null') as Partial<ClickId> | null
+    return toClickId(saved?.fbclid, saved?.at)
+  } catch {
+    return undefined
+  }
+}
+
+function clickIdStore(mode: 'memory' | 'session') {
+  const landed = toClickId(new URLSearchParams(window.location.search).get('fbclid'), Date.now())
+  let current: ClickId | undefined
+  const session = (run: (key: string) => void) => {
+    if (mode !== 'session') return
+    try {
+      run(`${getNames().prefix}_fbclid`)
+    } catch {
+      // sessionStorage can be unavailable; the click ID then lasts for the page load
+    }
+  }
+  return {
+    restore() {
+      current = landed
+      if (current) session((key) => sessionStorage.setItem(key, JSON.stringify(current)))
+      else
+        session((key) => {
+          current = readSaved(key)
+        })
+    },
+    take() {
+      const taken = current
+      current = undefined
+      session((key) => sessionStorage.removeItem(key))
+      return taken
+    },
+  }
+}
+
+function setFbc({ fbclid, at }: ClickId) {
+  const labels = window.location.hostname.split('.')
+  const attributes = `; max-age=${FBC_MAX_AGE}; path=/; SameSite=Lax`
+  for (let start = labels.length - 2; start >= 0; start--) {
+    const domain = labels.slice(start).join('.')
+    document.cookie = `_fbc=fb.${labels.length - start - 1}.${at}.${fbclid}${attributes}; domain=${domain}`
+    if (hasCookie('_fbc')) return
+  }
+  document.cookie = `_fbc=fb.0.${at}.${fbclid}${attributes}`
+}
+
+const hasCookie = (name: string) => document.cookie.split(';').some((cookie) => cookie.trim().startsWith(`${name}=`))
 
 /** Meta Pixel, after marketing consent. Pass `server` to `createAnalytics` to also send events to the Conversions API. */
 const isOwnCookie = (name: string) => name === '_fbp' || name === '_fbc'
@@ -39,6 +104,8 @@ export function meta(options: MetaOptions) {
   if (!options.pixelId?.trim()) return skippedPlugin('meta', 'pixelId')
   const pixelId = assertValidMetaPixelId(options.pixelId.trim())
   const locale = options.locale ?? 'en_US'
+  const clickMode = options.clickId ?? 'memory'
+  const clickIds = clickMode && typeof window !== 'undefined' ? clickIdStore(clickMode) : undefined
 
   const isReady = () =>
     typeof window !== 'undefined' && typeof window.fbq === 'function' && getFlag('MetaPixelInitialized') === true
@@ -73,8 +140,15 @@ fbq('init', ${JSON.stringify(pixelId)}, ${JSON.stringify(metaUserData(loadContex
 
       setFlag('MetaPixelInitialized', true)
     },
+    setup() {
+      clickIds?.restore()
+    },
     consent(context) {
       if (typeof window !== 'undefined' && context.consent && !context.consent.marketing) expireCookies(isOwnCookie)
+      if (context.consent?.marketing) {
+        const clickId = clickIds?.take()
+        if (clickId && !hasCookie('_fbc')) setFbc(clickId)
+      }
       if (!isReady()) return
       if (matched && !context.consent?.marketing) stale = true
       window.fbq?.('consent', context.consent?.marketing && !stale ? 'grant' : 'revoke')

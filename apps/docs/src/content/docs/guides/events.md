@@ -219,6 +219,40 @@ while analytics or marketing is granted, with its ID, name, params, URL and
 the `only` and `providers` options. See
 [server-side tracking](/guides/server-side-tracking/).
 
+### Before the visitor chooses
+
+By default, a page view or event is delivered when it is made, to the
+providers and server destinations consent allows at that moment. One made
+while the banner is still up, such as a `view_item` sent as a product page
+loads, never reaches a provider that needs a category the visitor has not
+granted yet.
+
+With `holdUntilChoice: true`, such calls are held instead, and delivered once
+the visitor chooses, to whatever the choice allows:
+
+```ts
+createAnalytics({ providers, holdUntilChoice: true })
+```
+
+- Only `page` and `track` calls are held, and only while the banner asks
+  (`analytics.consent.shouldAsk()`). Providers that consent already allows
+  receive the call when it is made, and are not sent it again.
+- Held calls are kept in memory, up to 100; later ones are dropped and a
+  single `queue-full` error is reported to `onError`. Calls held when the page
+  unloads are lost.
+- A held call keeps the ID and params it was made with, so the Conversions
+  API and the pixel still deduplicate it, and the server receives the URL it
+  was made with. Browser providers that read the page URL or the time
+  themselves record those of delivery.
+- A call the server already received under one category, such as analytics,
+  is sent again only for the categories the choice adds, with `categories`
+  set to them, so each server destination receives it once. With
+  `server.consentEndpoint`, held calls reach providers at once and the server
+  after up to 3 seconds, once the endpoint has recorded a choice made in the
+  same tab, so a handler with `consentCookie` sees it. A choice made in another tab is not waited for.
+- Calls the choice does not allow are dropped, as they would have been
+  without the option.
+
 ## Routing events
 
 Each provider decides which events it receives with its `events` option.

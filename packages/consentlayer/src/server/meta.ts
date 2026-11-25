@@ -9,6 +9,16 @@ const isPlainValue = (value: unknown) =>
   Array.isArray(value) ||
   (typeof value === 'object' && value.constructor === Object)
 
+const fbcFromUrl = (url: string | undefined) => {
+  if (!url) return undefined
+  try {
+    const fbclid = new URL(url, 'https://localhost').searchParams.get('fbclid')
+    return fbclid ? `fb.1.${Date.now()}.${fbclid}` : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** Meta Conversions API. Receives browser events too; Meta dedupes them by event ID. Off (`undefined`) while `pixelId` or `accessToken` is unset. */
 export function metaCapi(options: {
   pixelId: string | undefined
@@ -60,7 +70,7 @@ export function metaCapi(options: {
                 client_ip_address: request?.ip,
                 client_user_agent: request?.userAgent,
                 fbp: request?.cookies._fbp,
-                fbc: request?.cookies._fbc,
+                fbc: request?.cookies._fbc ?? fbcFromUrl(event.url),
                 em: email && isValidEmail(email) ? await sha256(email) : undefined,
                 ph: phone && isValidPhoneE164(phone) ? await sha256(phone.slice(1)) : undefined,
                 external_id: await sha256(event.identity?.userId),

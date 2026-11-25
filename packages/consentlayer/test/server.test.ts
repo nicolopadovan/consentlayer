@@ -83,6 +83,21 @@ describe('server destinations', () => {
     })
   })
 
+  it('sends Meta CAPI an fbc built from the fbclid in the event URL only when the request has no _fbc cookie', async () => {
+    const fbcSent = async (cookie: string) => {
+      const fetchImpl = okFetch()
+      const POST = createAnalyticsHandler({
+        destinations: [metaCapi({ pixelId: '123456789012345', accessToken: 'token', fetchImpl })],
+      })
+      const url = 'https://shop.example/p?fbclid=IwAR_abc-1'
+      await POST(post({ id: 'evt-1', name: 'page_view', url, consent: granted }, { cookie }))
+      const [event] = sentBody(fetchImpl).data as { user_data: { fbc?: string } }[]
+      return event?.user_data.fbc
+    }
+    expect(await fbcSent('_fbp=fb.1.1.2')).toMatch(/^fb\.1\.\d{13}\.IwAR_abc-1$/)
+    expect(await fbcSent('_fbc=fb.1.1700000000000.IwAR_old')).toBe('fb.1.1700000000000.IwAR_old')
+  })
+
   it('sends Meta CAPI and the TikTok Events API only standard events, the names in events, or an event whose only names them', async () => {
     const sentNames = async (events?: string[]) => {
       const fetchImpl = vi.fn<typeof fetch>().mockImplementation(() => Promise.resolve(Response.json({ code: 0 })))

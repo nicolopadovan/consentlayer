@@ -34,15 +34,26 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
   const consentEndpoint = options.server?.consentEndpoint
     ? assertHttpsOrRelativeUrl(options.server.consentEndpoint, 'server.consentEndpoint')
     : undefined
+  let recording: Promise<void> | undefined
   const recorder: ConsentIntegrationAdapter = {
     id: 'consent-endpoint',
-    async apply(consent) {
-      const response = await fetch(consentEndpoint!, {
+    apply(consent) {
+      const sent = fetch(consentEndpoint!, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ consent }),
+      }).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
       })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const settled = sent.then(
+        () => undefined,
+        () => undefined,
+      )
+      recording = settled
+      void settled.then(() => {
+        if (recording === settled) recording = undefined
+      })
+      return sent
     },
   }
 
@@ -58,13 +69,16 @@ export function createAnalytics(options: AnalyticsOptions = {}): Analytics {
     debug: options.debug,
     onError: options.onError,
   })
-  const manager = createAnalyticsManager({
-    identityStorage: createLocalStorageIdentityStorage({
-      key: getNames().identityStorageKey,
-    }),
-    ...managerOptions,
-    consentEngine: engine,
-  })
+  const manager = createAnalyticsManager(
+    {
+      identityStorage: createLocalStorageIdentityStorage({
+        key: getNames().identityStorageKey,
+      }),
+      ...managerOptions,
+      consentEngine: engine,
+    },
+    { consentRecorded: () => recording },
+  )
 
   const analytics: Analytics = {
     boot: manager.boot,

@@ -1,6 +1,9 @@
 import { autoTracking } from '../src/auto-tracking'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAnalyticsManager } from '../src/core/analytics-manager'
+import { createAnalytics, type AnalyticsOptions } from '../src/core/create-analytics'
+import type { AnalyticsPlugin, ConsentState } from '../src/core/types'
+import { ukStatisticsRegions } from '../src/core/regions'
 import { createMemoryIdentityStorage } from '../src/core/storage'
 
 describe('analytics manager', () => {
@@ -345,5 +348,166 @@ describe('analytics manager', () => {
     expect(onError).toHaveBeenCalledTimes(1)
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ scope: 'queue-full' }))
     expect(provider.track).toHaveBeenCalledTimes(100)
+  })
+})
+
+describe('holdUntilChoice', () => {
+  const granted = { preferences: true, analytics: true, marketing: true }
+  const spy = (id: string, requiredConsent: 'analytics' | 'marketing' | 'none') =>
+    ({
+      id,
+      requiredConsent,
+      page: vi.fn<NonNullable<AnalyticsPlugin['page']>>(),
+      track: vi.fn<NonNullable<AnalyticsPlugin['track']>>(),
+    }) satisfies AnalyticsPlugin
+  const names = (plugin: ReturnType<typeof spy>) => plugin.track.mock.calls.map(([event]) => event.name)
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
+  const choose = async (analytics: ReturnType<typeof createAnalytics>, consent: typeof granted) => {
+    await analytics.consent.update(consent)
+    await settle()
+  }
+
+  afterEach(() => {
+    vi.useRealTimers()
+    localStorage.clear()
+    vi.restoreAllMocks()
+  })
+
+  const landed = async (options: Partial<AnalyticsOptions> = {}) => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }))
+    const stats = spy('stats', 'analytics')
+    const ads = spy('ads', 'marketing')
+    const analytics = createAnalytics({
+      providers: [stats, ads],
+      consent: { region: 'CH' },
+      server: { endpoint: '/api/analytics' },
+      ...options,
+    })
+    await analytics.consent.bootstrap()
+    await analytics.boot()
+    await analytics.page()
+    await analytics.track('view_item', { item_id: 'sku-1' })
+    const forwarded = () =>
+      fetchMock.mock.calls
+        .filter(([input]) => input === '/api/analytics')
+        .map(([, init]) => {
+          const { name, categories } = JSON.parse(init?.body as string) as { name: string; categories?: string[] }
+          return categories ? `${name} to ${categories.join()}` : name
+        })
+    return { analytics, stats, ads, forwarded }
+  }
+
+  it('delivers events made while the banner asks to what the choice allows, once each', async () => {
+    const { analytics, stats, ads, forwarded } = await landed({ holdUntilChoice: true })
+    expect([names(stats), names(ads), stats.page.mock.calls.length]).toEqual([['view_item'], [], 1])
+    expect(forwarded()).toEqual(['page_view', 'view_item'])
+    await choose(analytics, granted)
+    expect([names(stats), names(ads)]).toEqual([['view_item'], ['view_item']])
+    expect([stats.page.mock.calls.length, ads.page.mock.calls.length]).toEqual([1, 1])
+    expect(ads.track.mock.calls[0]?.[0].params).toEqual({ item_id: 'sku-1' })
+    expect(forwarded()).toEqual(['page_view', 'view_item', 'page_view to marketing', 'view_item to marketing'])
+    await analytics.track('view_item')
+    expect(names(ads)).toEqual(['view_item', 'view_item'])
+    expect(forwarded().slice(4)).toEqual(['view_item'])
+    analytics.destroy()
+  })
+
+  it('drops held events the choice does not allow, and holds nothing without the option', async () => {
+    const declined = await landed({ holdUntilChoice: true })
+    await choose(declined.analytics, { preferences: false, analytics: true, marketing: false })
+    await choose(declined.analytics, granted)
+    expect(names(declined.ads)).toEqual([])
+    expect(declined.forwarded()).toEqual(['page_view', 'view_item'])
+    declined.analytics.destroy()
+    localStorage.clear()
+    vi.restoreAllMocks()
+
+    const off = await landed()
+    await choose(off.analytics, granted)
+    expect([names(off.ads), off.ads.page.mock.calls.length]).toEqual([[], 0])
+    expect(off.forwarded()).toEqual(['page_view', 'view_item'])
+    off.analytics.destroy()
+  })
+
+  it('forwards held events for every category the choice adds, after the consent endpoint records it', async () => {
+    const { analytics, forwarded } = await landed({
+      holdUntilChoice: true,
+      consent: { region: 'GB', regions: ukStatisticsRegions },
+      server: { endpoint: '/api/analytics', consentEndpoint: '/api/consent' },
+    })
+    const fetchMock = vi.mocked(fetch)
+    let recorded = () => {}
+    fetchMock.mockImplementation((input) =>
+      input === '/api/consent'
+        ? new Promise((resolve) => (recorded = () => resolve(new Response(null, { status: 204 }))))
+        : Promise.resolve(new Response(null, { status: 204 })),
+    )
+    const choice = choose(analytics, granted)
+    await settle()
+    expect(forwarded()).toEqual(['page_view', 'view_item'])
+    recorded()
+    await choice
+    expect(forwarded()).toEqual([
+      'page_view',
+      'view_item',
+      'page_view to preferences,marketing',
+      'view_item to preferences,marketing',
+    ])
+    analytics.destroy()
+  })
+
+  it('sends a held server replay with the consent current when it is sent', async () => {
+    const { analytics } = await landed({
+      holdUntilChoice: true,
+      consent: { region: 'DE' },
+      server: { endpoint: '/api/analytics', consentEndpoint: '/api/consent' },
+    })
+    const fetchMock = vi.mocked(fetch)
+    const recordings: Array<() => void> = []
+    fetchMock.mockImplementation((input) =>
+      input === '/api/consent'
+        ? new Promise((resolve) => recordings.push(() => resolve(new Response(null, { status: 204 }))))
+        : Promise.resolve(new Response(null, { status: 204 })),
+    )
+    const accepted = choose(analytics, granted)
+    await settle()
+    const withdrawn = analytics.consent.update({ marketing: false })
+    await settle()
+    for (const recorded of recordings) recorded()
+    await Promise.all([accepted, withdrawn])
+    await settle()
+    const sent = fetchMock.mock.calls
+      .filter(([input]) => input === '/api/analytics')
+      .map(([, init]) => (JSON.parse(init?.body as string) as { consent: ConsentState }).consent.marketing)
+    expect(sent).toEqual([false, false])
+    analytics.destroy()
+  })
+
+  it('holds the server replay at most 3 seconds for a consent endpoint that does not answer, and not the providers', async () => {
+    const { analytics, ads, forwarded } = await landed({
+      holdUntilChoice: true,
+      consent: { region: 'GB', regions: ukStatisticsRegions },
+      server: { endpoint: '/api/analytics', consentEndpoint: '/api/consent' },
+    })
+    vi.mocked(fetch).mockImplementation((input) =>
+      input === '/api/consent' ? new Promise(() => {}) : Promise.resolve(new Response(null, { status: 204 })),
+    )
+    vi.useFakeTimers()
+    void choose(analytics, granted)
+    await vi.advanceTimersByTimeAsync(2900)
+    expect(names(ads)).toEqual(['view_item'])
+    await analytics.track('purchase')
+    expect(forwarded()).toEqual(['page_view', 'view_item', 'purchase'])
+    await vi.advanceTimersByTimeAsync(200)
+    expect(forwarded().slice(3)).toEqual(['page_view to preferences,marketing', 'view_item to preferences,marketing'])
+    analytics.destroy()
+  })
+
+  it('forwards held events to the server once the choice allows it', async () => {
+    const { analytics, forwarded } = await landed({ holdUntilChoice: true, consent: { region: 'DE' } })
+    expect(forwarded()).toEqual([])
+    await choose(analytics, { preferences: false, analytics: false, marketing: true })
+    expect(forwarded()).toEqual(['page_view', 'view_item'])
+    analytics.destroy()
   })
 })
