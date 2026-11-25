@@ -44,6 +44,8 @@ type ProviderState = {
 type ServerPayload = Omit<ServerEvent, 'consent' | 'identity'>
 type Delivered = { providers: Set<string>; server: Set<keyof ConsentState>; event?: ServerPayload }
 
+const RECORDING_DEADLINE_MS = 3000
+
 const BUILT_IN_CATEGORIES: readonly (keyof ConsentState)[] = ['preferences', 'analytics', 'marketing']
 
 /** Wiring `createAnalytics` provides. */
@@ -233,9 +235,7 @@ export function createAnalyticsManager(
     if (!serverEndpoint || !forwards(event)) return
     const endpoint = serverEndpoint
     const body = JSON.stringify({ ...event, consent, identity: sharedIdentity() })
-    const recording = internals.consentRecorded?.()
-    if (recording) void recording.then(() => send(endpoint, event.name, body))
-    else send(endpoint, event.name, body)
+    send(endpoint, event.name, body)
   }
   const send = (endpoint: string, name: string, body: string) => {
     const fail = (cause: unknown) =>
@@ -410,6 +410,21 @@ export function createAnalyticsManager(
     blocked?: () => boolean
   }
 
+  const untilRecorded = () => {
+    const recording = internals.consentRecorded?.()
+    if (!recording) return
+    return new Promise<void>((resolve) => {
+      const done = () => {
+        clearTimeout(timer)
+        lifetime.signal.removeEventListener('abort', done)
+        resolve()
+      }
+      const timer = setTimeout(done, RECORDING_DEADLINE_MS)
+      lifetime.signal.addEventListener('abort', done, { once: true })
+      void recording.then(done)
+    })
+  }
+
   const trackAgainstProviders = async (delivery: Delivery) => {
     if (destroyed) return
     const { label } = delivery
@@ -526,6 +541,7 @@ export function createAnalyticsManager(
       }
       persistIdentity()
       await queueLifecycle()
+      if (held.length) await untilRecorded()
       overflowed.delete(held)
       for (const run of held.splice(0)) await run()
       if (!hadContact || hadMarketing === Boolean(nextConsent?.marketing)) return

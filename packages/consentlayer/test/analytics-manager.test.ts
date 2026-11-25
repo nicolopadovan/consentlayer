@@ -368,6 +368,7 @@ describe('holdUntilChoice', () => {
   }
 
   afterEach(() => {
+    vi.useRealTimers()
     localStorage.clear()
     vi.restoreAllMocks()
   })
@@ -452,6 +453,25 @@ describe('holdUntilChoice', () => {
       'page_view to preferences,marketing',
       'view_item to preferences,marketing',
     ])
+    analytics.destroy()
+  })
+
+  it('waits at most 3 seconds for a consent endpoint that does not answer, and only with held events', async () => {
+    const { analytics, forwarded } = await landed({
+      holdUntilChoice: true,
+      consent: { region: 'GB', regions: ukStatisticsRegions },
+      server: { endpoint: '/api/analytics', consentEndpoint: '/api/consent' },
+    })
+    vi.mocked(fetch).mockImplementation((input) =>
+      input === '/api/consent' ? new Promise(() => {}) : Promise.resolve(new Response(null, { status: 204 })),
+    )
+    vi.useFakeTimers()
+    void choose(analytics, granted)
+    await vi.advanceTimersByTimeAsync(2900)
+    await analytics.track('purchase')
+    expect(forwarded()).toEqual(['page_view', 'view_item', 'purchase'])
+    await vi.advanceTimersByTimeAsync(200)
+    expect(forwarded().slice(3)).toEqual(['page_view to preferences,marketing', 'view_item to preferences,marketing'])
     analytics.destroy()
   })
 

@@ -8,8 +8,8 @@ const modifyEsbuildConfig = (config) => ({
 })
 
 export default [
-  ['core', 'dist/index.js', '9.3 kB'],
-  ['core: createAnalytics only', 'dist/index.js', '7.9 kB', '{ createAnalytics }'],
+  ['core', 'dist/index.js', '9.4 kB'],
+  ['core: createAnalytics only', 'dist/index.js', '8 kB', '{ createAnalytics }'],
   ['core: tree-shaken to createConsentController', 'dist/index.js', '1.5 kB', '{ createConsentController }'],
   ['auto-tracking', 'dist/auto-tracking.js', '2.4 kB'],
   ['banner', 'dist/banner.js', '4.8 kB'],
