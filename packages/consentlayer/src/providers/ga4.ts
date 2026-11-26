@@ -59,8 +59,13 @@ export function ga4EventName(name: string): string {
   return GA4_EVENT_NAMES[name] ?? autoTrackingEventNames()[name] ?? name.replace(/[^A-Za-z0-9_]/g, '_')
 }
 
-/** The GA4 name of an event, and its params with those GA4's enhanced measurement reports read. */
-export function ga4Event(name: string, params: Record<string, unknown>) {
+/**
+ * The GA4 name of an event, and its params with those GA4's enhanced measurement reports read. `session_id` is left
+ * out: gtag.js and the Measurement Protocol read it as GA4's own session ID.
+ */
+export function ga4Event(name: string, input: Record<string, unknown>) {
+  const params = { ...input }
+  delete params.session_id
   const names = getNames().autoTrackingEvents
   const extra =
     name === names.outboundClick

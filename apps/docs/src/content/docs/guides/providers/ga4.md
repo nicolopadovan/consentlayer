@@ -46,6 +46,11 @@ views are sent as `page_view` events with `page_location`, `page_path` and
 phone number prefixed with `+`); `reset` clears both. A failed script load is
 reported to `onError` with scope `provider-script-load`.
 
+Event params are sent as they are, except `session_id`: gtag.js and the
+Measurement Protocol read it as GA4's own session ID, so it is left out of
+every event `ga4()`, `ga4Server()` and `sgtm()` send. To set it on purpose,
+pass it in `track(name, params, { providers: { ga4: { session_id } } })`.
+
 ## Advanced mode
 
 `ga4()` uses Consent Mode v2 in what Google calls basic mode by default: the

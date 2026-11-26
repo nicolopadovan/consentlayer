@@ -279,6 +279,24 @@ describe('providers', () => {
   })
 })
 
+describe('ga4 events', () => {
+  it('leaves out session_id, which gtag reads as its own session ID', async () => {
+    const win = window as unknown as Record<string, unknown>
+    for (const key of ['dataLayer', 'gtag', '__consentlayerGa4Configured', '__consentlayerGtagLoaded']) delete win[key]
+    const manager = createAnalyticsManager({
+      providers: [ga4({ measurementId: 'G-ABC123' })],
+      consent: { preferences: false, analytics: true, marketing: false },
+    })
+    await manager.boot()
+    await manager.track('ui_click', { ui_target: 'buy', page_index: 1, session_id: 1 })
+    const sent = (window.dataLayer ?? [])
+      .map((entry) => Array.from(entry as ArrayLike<unknown>))
+      .find(([command, name]) => command === 'event' && name === 'ui_click')
+    expect(sent?.[2]).toEqual({ ui_target: 'buy', page_index: 1, send_to: 'G-ABC123' })
+    manager.destroy()
+  })
+})
+
 describe('ga4 consent mode', () => {
   const entries = () =>
     (window.dataLayer ?? []).map((entry) =>

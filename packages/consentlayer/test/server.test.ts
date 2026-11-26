@@ -190,6 +190,25 @@ describe('server destinations', () => {
     expect(String(onError.mock.calls[0]?.[0])).toMatch(/Meta CAPI 400/)
   })
 
+  it('never sends the auto-tracking session_id as GA4 session_id through the Measurement Protocol', async () => {
+    const fetchImpl = okFetch()
+    const POST = createAnalyticsHandler({
+      destinations: [
+        sgtm({ url: 'https://sgtm.example.com/mp/collect', measurementId: 'G-ABC123', apiSecret: 's', fetchImpl }),
+      ],
+    })
+    await POST(
+      post(
+        { name: 'ui_click', params: { ui_target: 'buy', page_index: 1, session_id: 1 }, consent: granted },
+        { cookie: '_ga=GA1.1.111.222' },
+      ),
+    )
+    expect((sentBody(fetchImpl) as { events: { params: object }[] }).events[0]?.params).toEqual({
+      ui_target: 'buy',
+      page_index: 1,
+    })
+  })
+
   it('forwards browser events to a server-side GTM container as Measurement Protocol requests', async () => {
     const fetchImpl = okFetch()
     const POST = createAnalyticsHandler({

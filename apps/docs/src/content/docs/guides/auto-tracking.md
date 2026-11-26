@@ -119,7 +119,8 @@ Every auto-tracking event carries `page_index`, the number of the page
 session in the current page load: `1` for the first route, `2` after the next
 route change, and so on. It groups the scroll, time and click events of one
 route; it is not GA4's session ID. The same value is also sent as
-`session_id`, which is deprecated and will be removed in 2.0.
+`session_id`, which is deprecated and will be removed in 2.0. GA4 never
+receives it, because GA4 reads `session_id` as its own session ID.
 
 Each route is a page session. `analytics.newPageSession()` starts a new one: it
 increments `page_index`, restarts the scroll and time counters and, with

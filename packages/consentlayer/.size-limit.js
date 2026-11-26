@@ -41,7 +41,7 @@ export default [
   ['server', 'dist/server/index.js', '2.8 kB'],
   ['server/meta', 'dist/server/meta.js', '1.5 kB'],
   ['server/tiktok', 'dist/server/tiktok.js', '1.4 kB'],
-  ['server/sgtm', 'dist/server/sgtm.js', '1.5 kB'],
+  ['server/sgtm', 'dist/server/sgtm.js', '1.6 kB'],
   ['script tag', 'dist/consentlayer.global.js', '19.5 kB'],
   ['script tag banner', 'dist/consentlayer-banner.global.js', '5.2 kB'],
 ].map(([name, path, limit, imports]) => ({ name, path, limit, import: imports, modifyEsbuildConfig }))
